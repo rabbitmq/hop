@@ -1,11 +1,9 @@
 package com.novemberain.hop.client.domain;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.util.List;
 
-@JsonIgnoreProperties({"contexts"})
 @SuppressWarnings("unused")
 public class OverviewResponse {
 
@@ -38,6 +36,8 @@ public class OverviewResponse {
   private ObjectTotals objectTotals;
   @JsonProperty("listeners")
   private List<NetworkListener> listeners;
+  @JsonProperty("contexts")
+  private List<PluginContext> contexts;
 
   //
   // API
@@ -146,6 +146,14 @@ public class OverviewResponse {
 
   public void setMessageStats(MessageStats messageStats) {
     this.messageStats = messageStats;
+  }
+
+  public List<PluginContext> getContexts() {
+    return contexts;
+  }
+
+  public void setContexts(List<PluginContext> contexts) {
+    this.contexts = contexts;
   }
 
   @Override
