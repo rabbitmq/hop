@@ -1,0 +1,11 @@
+.gradle
+build/
+gradle-app.setting
+
+/target
+*.jar
+*.log
+
+*~
+*#
+~*
