@@ -20,8 +20,6 @@ import java.util.List;
 
 public class Client {
   private final URL url;
-  private final String username;
-  private final String password;
   private final RestTemplate rt;
 
   public Client(String url, String username, String password) throws MalformedURLException {
@@ -30,8 +28,6 @@ public class Client {
 
   public Client(URL url, String username, String password) throws MalformedURLException {
     this.url = url;
-    this.username = username;
-    this.password = password;
 
     this.rt = new RestTemplate(getMessageConverters());
     this.rt.setRequestFactory(getRequestFactory(url, username, password));
