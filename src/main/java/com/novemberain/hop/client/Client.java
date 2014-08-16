@@ -22,6 +22,11 @@ public class Client {
   private final URL url;
   private final RestTemplate rt;
 
+
+  //
+  // API
+  //
+
   public Client(String url, String username, String password) throws MalformedURLException {
     this(new URL(url), username, password);
   }
@@ -32,6 +37,23 @@ public class Client {
     this.rt = new RestTemplate(getMessageConverters());
     this.rt.setRequestFactory(getRequestFactory(url, username, password));
   }
+
+  public OverviewResponse getOverview() {
+    return rt.getForObject(url + "/overview", OverviewResponse.class);
+  }
+
+
+  //
+  // Implementation
+  //
+
+
+  private List<HttpMessageConverter<?>> getMessageConverters() {
+    List<HttpMessageConverter<?>> xs = new ArrayList<>();
+    xs.add(new MappingJackson2HttpMessageConverter());
+    return xs;
+  }
+
 
   private ClientHttpRequestFactory getRequestFactory(URL url, String username, String password) throws MalformedURLException {
     HttpClient httpClient = HttpClientBuilder.create().
@@ -46,19 +68,5 @@ public class Client {
         new UsernamePasswordCredentials(username, password));
 
     return cp;
-  }
-
-  public OverviewResponse getOverview() {
-    return rt.getForObject(url + "/overview", OverviewResponse.class);
-  }
-
-  //
-  // Implementation
-  //
-
-  private List<HttpMessageConverter<?>> getMessageConverters() {
-    List<HttpMessageConverter<?>> xs = new ArrayList<>();
-    xs.add(new MappingJackson2HttpMessageConverter());
-    return xs;
   }
 }
