@@ -159,6 +159,11 @@ public class OverviewResponse {
         ", fullErlangVersion='" + fullErlangVersion + '\'' +
         ", statisticsLevel='" + statisticsLevel + '\'' +
         ", statisticsDbNode='" + statisticsDbNode + '\'' +
+        ", exchangeTypes=" + exchangeTypes +
+        ", messageStats=" + messageStats +
+        ", queueTotals=" + queueTotals +
+        ", objectTotals=" + objectTotals +
+        ", listeners=" + listeners +
         '}';
   }
 }
