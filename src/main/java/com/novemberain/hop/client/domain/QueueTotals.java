@@ -2,6 +2,7 @@ package com.novemberain.hop.client.domain;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+@SuppressWarnings("unused")
 public class QueueTotals {
   private long messages;
   @JsonProperty("messages_details")
