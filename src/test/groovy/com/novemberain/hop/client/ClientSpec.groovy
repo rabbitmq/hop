@@ -22,6 +22,16 @@ class ClientSpec extends Specification {
     res.getErlangVersion() != null
     res.getStatisticsDbNode().startsWith("rabbit@")
 
+    final msgStats = res.getMessageStats()
+    msgStats.basicPublish >= 0
+    msgStats.basicPublishDetails.rate >= 0.0
+    msgStats.publisherConfirm >= 0
+    msgStats.publisherConfirmDetails.rate >= 0.0
+    msgStats.basicDeliver >= 0
+    msgStats.basicDeliverDetails.rate >= 0.0
+    msgStats.basicReturn >= 0
+    msgStats.basicReturnDetails.rate >= 0.0
+
     final qTotals = res.getQueueTotals()
     qTotals.messages >= 0
     qTotals.messagesReady >= 0
