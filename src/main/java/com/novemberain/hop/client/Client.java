@@ -38,8 +38,11 @@ public class Client {
     this.rt.setRequestFactory(getRequestFactory(url, username, password));
   }
 
+  /**
+   * @return cluster state overview
+   */
   public OverviewResponse getOverview() {
-    return rt.getForObject(url + "/overview", OverviewResponse.class);
+    return this.rt.getForObject(urlWithPath("/overview"), OverviewResponse.class);
   }
 
 
@@ -68,5 +71,9 @@ public class Client {
         new UsernamePasswordCredentials(username, password));
 
     return cp;
+  }
+
+  private String urlWithPath(String path) {
+    return this.url + path;
   }
 }
