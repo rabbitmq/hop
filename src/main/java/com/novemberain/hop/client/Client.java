@@ -72,6 +72,7 @@ public class Client {
     return this.rootUri.resolve(path);
   }
 
+  @SuppressWarnings("deprecation")
   private String encodePathSegment(String vhost) {
     return URLEncoder.encode(vhost);
   }
