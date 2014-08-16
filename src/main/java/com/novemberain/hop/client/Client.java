@@ -1,7 +1,6 @@
 package com.novemberain.hop.client;
 
 import com.novemberain.hop.client.domain.OverviewResponse;
-import org.apache.commons.codec.net.URLCodec;
 import org.apache.http.auth.AuthScope;
 import org.apache.http.auth.UsernamePasswordCredentials;
 import org.apache.http.client.CredentialsProvider;
@@ -20,9 +19,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class Client {
-  private final URL url;
   private final RestTemplate rt;
-  private final URLCodec codec = new URLCodec();
   private final URI rootUri;
 
 
@@ -35,7 +32,6 @@ public class Client {
   }
 
   public Client(URL url, String username, String password) throws MalformedURLException, URISyntaxException {
-    this.url = url;
     this.rootUri = url.toURI();
 
     this.rt = new RestTemplate(getMessageConverters());
