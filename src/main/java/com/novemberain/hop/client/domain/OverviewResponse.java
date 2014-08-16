@@ -3,7 +3,9 @@ package com.novemberain.hop.client.domain;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-@JsonIgnoreProperties({"exchange_types", "message_stats", "queue_totals", "object_totals",
+import java.util.List;
+
+@JsonIgnoreProperties({"message_stats", "queue_totals", "object_totals",
                        "listeners", "contexts"})
 public class OverviewResponse {
 
@@ -26,6 +28,8 @@ public class OverviewResponse {
   private String statisticsLevel;
   @JsonProperty("statistics_db_node")
   private String statisticsDbNode;
+  @JsonProperty("exchange_types")
+  private List<ExchangeType> exchangeTypes;
 
   //
   // API
@@ -94,6 +98,14 @@ public class OverviewResponse {
 
   public void setClusterName(String clusterName) {
     this.clusterName = clusterName;
+  }
+
+  public List<ExchangeType> getExchangeTypes() {
+    return exchangeTypes;
+  }
+
+  public void setExchangeTypes(List<ExchangeType> exchangeTypes) {
+    this.exchangeTypes = exchangeTypes;
   }
 
   @Override

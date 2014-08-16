@@ -15,10 +15,15 @@ class ClientSpec extends Specification {
   def "GET /api/overview"() {
     when: "client requests GET /api/overview"
     def res = client.getOverview()
+    def xts = res.getExchangeTypes().collect { it.getName() }
 
     then: "the response is converted successfully"
     res.getNode().startsWith("rabbit@")
     res.getErlangVersion() != null
     res.getStatisticsDbNode().startsWith("rabbit@")
+    xts.contains("topic")
+    xts.contains("fanout")
+    xts.contains("direct")
+    xts.contains("headers")
   }
 }
