@@ -172,6 +172,7 @@ public class OverviewResponse {
         ", queueTotals=" + queueTotals +
         ", objectTotals=" + objectTotals +
         ", listeners=" + listeners +
+        ", contexts=" + contexts +
         '}';
   }
 }
