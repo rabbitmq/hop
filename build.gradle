@@ -10,6 +10,7 @@ dependencies {
     compile "org.codehaus.groovy:groovy-all:2.3.6"
     compile "org.springframework:spring-web:4.0.6.RELEASE"
     compile "org.apache.httpcomponents:httpclient:4.3.4"
+    compile "com.fasterxml.jackson.core:jackson-databind:2.3.4"
 
     testCompile "org.spockframework:spock-core:0.7-groovy-2.0"
 }
