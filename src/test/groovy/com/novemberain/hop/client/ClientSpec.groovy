@@ -52,4 +52,12 @@ class ClientSpec extends Specification {
     xts.contains("direct")
     xts.contains("headers")
   }
+
+  def "GET /api/aliveness-test/{vhost}"() {
+    when: "client performs aliveness check for the / vhost"
+    final hasSucceeded = client.alivenessTest("/")
+
+    then: "the check succeeds"
+    hasSucceeded
+  }
 }
