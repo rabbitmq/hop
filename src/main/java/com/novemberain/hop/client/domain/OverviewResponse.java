@@ -5,7 +5,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.util.List;
 
-@JsonIgnoreProperties({"message_stats", "listeners", "contexts"})
+@JsonIgnoreProperties({"message_stats", "contexts"})
 @SuppressWarnings("unused")
 public class OverviewResponse {
 
@@ -34,6 +34,8 @@ public class OverviewResponse {
   private QueueTotals queueTotals;
   @JsonProperty("object_totals")
   private ObjectTotals objectTotals;
+  @JsonProperty("listeners")
+  private List<NetworkListener> listeners;
 
   //
   // API
@@ -126,6 +128,14 @@ public class OverviewResponse {
 
   public void setObjectTotals(ObjectTotals objectTotals) {
     this.objectTotals = objectTotals;
+  }
+
+  public List<NetworkListener> getListeners() {
+    return listeners;
+  }
+
+  public void setListeners(List<NetworkListener> listeners) {
+    this.listeners = listeners;
   }
 
   @Override

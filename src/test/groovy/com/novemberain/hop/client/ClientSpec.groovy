@@ -34,6 +34,8 @@ class ClientSpec extends Specification {
     oTotals.queues >= 0
     oTotals.consumers >= 0
 
+    res.getListeners().size() >= 1
+
     xts.contains("topic")
     xts.contains("fanout")
     xts.contains("direct")
