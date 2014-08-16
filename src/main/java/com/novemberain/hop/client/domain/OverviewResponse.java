@@ -7,6 +7,7 @@ import java.util.List;
 
 @JsonIgnoreProperties({"message_stats", "queue_totals", "object_totals",
                        "listeners", "contexts"})
+@SuppressWarnings("unused")
 public class OverviewResponse {
 
   //
