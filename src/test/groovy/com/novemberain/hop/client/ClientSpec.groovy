@@ -21,9 +21,19 @@ class ClientSpec extends Specification {
     res.getNode().startsWith("rabbit@")
     res.getErlangVersion() != null
     res.getStatisticsDbNode().startsWith("rabbit@")
-    res.getQueueTotals().messages >= 0
-    res.getQueueTotals().messagesReady >= 0
-    res.getQueueTotals().messagesUnacknowledged >= 0
+
+    final qTotals = res.getQueueTotals()
+    qTotals.messages >= 0
+    qTotals.messagesReady >= 0
+    qTotals.messagesUnacknowledged >= 0
+
+    final oTotals = res.getObjectTotals();
+    oTotals.connections >= 0
+    oTotals.channels >= 0
+    oTotals.exchanges >= 0
+    oTotals.queues >= 0
+    oTotals.consumers >= 0
+
     xts.contains("topic")
     xts.contains("fanout")
     xts.contains("direct")
