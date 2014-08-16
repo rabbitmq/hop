@@ -6,7 +6,6 @@ import org.apache.http.auth.UsernamePasswordCredentials;
 import org.apache.http.client.CredentialsProvider;
 import org.apache.http.client.HttpClient;
 import org.apache.http.impl.client.BasicCredentialsProvider;
-import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.springframework.http.client.ClientHttpRequestFactory;
 import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
@@ -30,11 +29,11 @@ public class Client {
   }
 
   public Client(URL url, String username, String password) throws MalformedURLException {
-    this.url      = url;
+    this.url = url;
     this.username = username;
     this.password = password;
 
-    this.rt       = new RestTemplate(getMessageConverters());
+    this.rt = new RestTemplate(getMessageConverters());
     this.rt.setRequestFactory(getRequestFactory(url, username, password));
   }
 
@@ -48,7 +47,7 @@ public class Client {
   private CredentialsProvider getCredentialsProvider(URL url, String username, String password) {
     CredentialsProvider cp = new BasicCredentialsProvider();
     cp.setCredentials(new AuthScope(url.getHost(), url.getPort()),
-                      new UsernamePasswordCredentials(username, password));
+        new UsernamePasswordCredentials(username, password));
 
     return cp;
   }
