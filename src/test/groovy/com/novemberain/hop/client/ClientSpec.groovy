@@ -60,4 +60,13 @@ class ClientSpec extends Specification {
     then: "the check succeeds"
     hasSucceeded
   }
+
+  def "GET /api/whoami"() {
+    when: "client retrieves active name authentication details"
+    final res = client.whoAmI()
+
+    then: "the details are returned"
+    res.name == DEFAULT_USERNAME
+    res.tags ==~ /administrator/
+  }
 }

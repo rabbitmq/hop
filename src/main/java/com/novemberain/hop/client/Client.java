@@ -1,5 +1,6 @@
 package com.novemberain.hop.client;
 
+import com.novemberain.hop.client.domain.CurrentUserDetails;
 import com.novemberain.hop.client.domain.OverviewResponse;
 import org.apache.http.auth.AuthScope;
 import org.apache.http.auth.UsernamePasswordCredentials;
@@ -13,7 +14,6 @@ import org.springframework.http.converter.HttpMessageConverter;
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
 import org.springframework.web.client.RestTemplate;
 
-import java.io.UnsupportedEncodingException;
 import java.net.*;
 import java.util.ArrayList;
 import java.util.List;
@@ -52,9 +52,14 @@ public class Client {
    * @param vhost vhost to use to perform aliveness check in
    * @return true if the check succeeded
    */
-  public boolean alivenessTest(String vhost) throws UnsupportedEncodingException {
+  public boolean alivenessTest(String vhost) {
     final URI uri = uriWithPath("./aliveness-test/" + encodePathSegment(vhost));
     return this.rt.getForObject(uri, AlivenessTestResponse.class).isSuccessful();
+  }
+
+  public CurrentUserDetails whoAmI() {
+    final URI uri = uriWithPath("./whoami/");
+    return this.rt.getForObject(uri, CurrentUserDetails.class);
   }
 
   //
