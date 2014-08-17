@@ -60,31 +60,59 @@ public class Client {
     return this.rt.getForObject(uri, AlivenessTestResponse.class).isSuccessful();
   }
 
+  /**
+   * @return information about the user used by this client instance
+   */
   public CurrentUserDetails whoAmI() {
     final URI uri = uriWithPath("./whoami/");
     return this.rt.getForObject(uri, CurrentUserDetails.class);
   }
 
+  /**
+   * Retrieves state and metrics information for all nodes in the cluster.
+   *
+   * @return list of nodes in the cluster
+   */
   public List<NodeInfo> getNodes() {
     final URI uri = uriWithPath("./nodes/");
     return Arrays.asList(this.rt.getForObject(uri, NodeInfo[].class));
   }
 
+  /**
+   * Retrieves state and metrics information for individual node.
+   * @param name node name
+   * @return node information
+   */
   public NodeInfo getNode(String name) {
     final URI uri = uriWithPath("./nodes/" + encodePathSegment(name));
     return this.rt.getForObject(uri, NodeInfo.class);
   }
 
+  /**
+   * Retrieves state and metrics information for all client connections across the cluster.
+   * @return list of connections across the cluster
+   */
   public List<ConnectionInfo> getConnections() {
     final URI uri = uriWithPath("./connections/");
     return Arrays.asList(this.rt.getForObject(uri, ConnectionInfo[].class));
   }
 
+  /**
+   * Retrieves state and metrics information for individual client connection.
+   * @param name connection name
+   * @return connection information
+   */
   public ConnectionInfo getConnection(String name) {
     final URI uri = uriWithPath("./connections/" + encodePathSegment(name));
     return this.rt.getForObject(uri, ConnectionInfo.class);
   }
 
+  /**
+   * Forcefully closes individual connection.
+   * The client will receive a <i>connection.close</i> method frame.
+   *
+   * @param name connection name
+   */
   public void closeConnection(String name) {
     final URI uri = uriWithPath("./connections/" + encodePathSegment(name));
     this.rt.delete(uri);
