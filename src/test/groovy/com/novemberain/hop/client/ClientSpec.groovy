@@ -74,7 +74,6 @@ class ClientSpec extends Specification {
     when: "client retrieves a list of cluster nodes"
     final res = client.getNodes()
     final node = res.first()
-    println(node)
 
     then: "the list is returned"
     res.size() == 1
