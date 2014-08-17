@@ -1,7 +1,7 @@
 package com.novemberain.hop.client.domain;
 
 @SuppressWarnings("unused")
-public class AlivenessTestResponse {
+public class AlivenessTestResult {
   private static final String SUCCESS = "ok";
   private String status;
 

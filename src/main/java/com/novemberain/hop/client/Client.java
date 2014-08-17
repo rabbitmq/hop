@@ -54,7 +54,7 @@ public class Client {
    */
   public boolean alivenessTest(String vhost) {
     final URI uri = uriWithPath("./aliveness-test/" + encodePathSegment(vhost));
-    return this.rt.getForObject(uri, AlivenessTestResponse.class).isSuccessful();
+    return this.rt.getForObject(uri, AlivenessTestResult.class).isSuccessful();
   }
 
   /**
