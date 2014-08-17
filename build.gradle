@@ -1,17 +1,37 @@
 apply plugin: 'java'
+apply plugin: 'maven'
 
 version = '1.0.0-SNAPSHOT'
 
 repositories {
-    mavenCentral()
+  mavenCentral()
 }
 
 dependencies {
-    compile "org.codehaus.groovy:groovy-all:2.3.6"
-    compile "org.springframework:spring-web:4.0.6.RELEASE"
-    compile "org.apache.httpcomponents:httpclient:4.3.4"
-    compile "com.fasterxml.jackson.core:jackson-databind:2.3.4"
+  compile "org.codehaus.groovy:groovy-all:2.3.6"
+  compile "org.springframework:spring-web:4.0.6.RELEASE"
+  compile "org.apache.httpcomponents:httpclient:4.3.4"
+  compile "com.fasterxml.jackson.core:jackson-databind:2.3.4"
 
-    testCompile "org.spockframework:spock-core:0.7-groovy-2.0"
+  testCompile "org.spockframework:spock-core:0.7-groovy-2.0"
   testCompile "com.rabbitmq:amqp-client:3.3.5"
+}
+
+task pom << {
+  pom {
+    project {
+      groupId 'com.novemberain.hop'
+      artifactId 'hop-core'
+      version version
+
+      inceptionYear '2014'
+      licenses {
+        license {
+          name 'The Apache Software License, Version 2.0'
+          url 'http://www.apache.org/licenses/LICENSE-2.0.txt'
+          distribution 'repo'
+        }
+      }
+    }
+  }.writeTo("pom.xml")
 }
