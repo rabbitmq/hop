@@ -9,6 +9,7 @@ import java.util.List;
 @JsonIgnoreProperties({"partitions"})
 @SuppressWarnings("unused")
 public class NodeInfo {
+  private static final String DISK_TYPE = "disc";
 
   private String name;
   private String type;
@@ -254,5 +255,9 @@ public class NodeInfo {
 
   public void setPluginContexts(List<PluginContext> pluginContexts) {
     this.pluginContexts = pluginContexts;
+  }
+
+  public boolean isDiskNode() {
+    return this.type.equals(DISK_TYPE);
   }
 }

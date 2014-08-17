@@ -1,5 +1,6 @@
 package com.novemberain.hop.client
 
+import com.novemberain.hop.client.domain.NodeInfo
 import spock.lang.Specification
 
 class ClientSpec extends Specification {
@@ -77,14 +78,32 @@ class ClientSpec extends Specification {
 
     then: "the list is returned"
     res.size() == 1
-    node.socketsUsed < node.socketsTotal
-    node.erlangProcessesUsed < node.erlangProcessesTotal
-    node.erlangRunQueueLength >= 0
-    node.memoryUsed < node.memoryLimit
-    !node.memoryAlarmActive
-    node.diskFree > node.diskFreeLimit
-    !node.diskAlarmActive
-    node.authMechanisms.size() >= 1
-    node.erlangApps.size() >= 1
+    verifyNode(node)
+  }
+
+  def "GET /nodes/{name}"() {
+    when: "client retrieves a list of cluster nodes"
+    final res = client.getNodes()
+    final name = res.first().name
+    final node = client.getNode(name)
+
+    then: "the list is returned"
+    res.size() == 1
+    verifyNode(node)
+  }
+
+  protected void verifyNode(NodeInfo node) {
+    assert node.name != null
+    assert node.type == "disc"
+    assert node.isDiskNode()
+    assert node.socketsUsed < node.socketsTotal
+    assert node.erlangProcessesUsed < node.erlangProcessesTotal
+    assert node.erlangRunQueueLength >= 0
+    assert node.memoryUsed < node.memoryLimit
+    assert !node.memoryAlarmActive
+    assert node.diskFree > node.diskFreeLimit
+    assert !node.diskAlarmActive
+    assert node.authMechanisms.size() >= 1
+    assert node.erlangApps.size() >= 1
   }
 }

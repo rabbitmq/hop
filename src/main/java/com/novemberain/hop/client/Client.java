@@ -69,6 +69,11 @@ public class Client {
     return Arrays.asList(this.rt.getForObject(uri, NodeInfo[].class));
   }
 
+  public NodeInfo getNode(String name) {
+    final URI uri = uriWithPath("./nodes/" + encodePathSegment(name));
+    return this.rt.getForObject(uri, NodeInfo.class);
+  }
+
   //
   // Implementation
   //
