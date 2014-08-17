@@ -1,4 +1,4 @@
-package com.novemberain.hop.client;
+package com.novemberain.hop.client.domain;
 
 @SuppressWarnings("unused")
 public class AlivenessTestResponse {

@@ -1,9 +1,6 @@
 package com.novemberain.hop.client;
 
-import com.novemberain.hop.client.domain.ConnectionInfo;
-import com.novemberain.hop.client.domain.CurrentUserDetails;
-import com.novemberain.hop.client.domain.NodeInfo;
-import com.novemberain.hop.client.domain.OverviewResponse;
+import com.novemberain.hop.client.domain.*;
 import org.apache.http.auth.AuthScope;
 import org.apache.http.auth.UsernamePasswordCredentials;
 import org.apache.http.client.CredentialsProvider;
@@ -80,6 +77,7 @@ public class Client {
 
   /**
    * Retrieves state and metrics information for individual node.
+   *
    * @param name node name
    * @return node information
    */
@@ -90,6 +88,7 @@ public class Client {
 
   /**
    * Retrieves state and metrics information for all client connections across the cluster.
+   *
    * @return list of connections across the cluster
    */
   public List<ConnectionInfo> getConnections() {
@@ -99,6 +98,7 @@ public class Client {
 
   /**
    * Retrieves state and metrics information for individual client connection.
+   *
    * @param name connection name
    * @return connection information
    */
