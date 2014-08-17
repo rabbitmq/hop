@@ -21,7 +21,7 @@ task pom << {
   pom {
     project {
       groupId 'com.novemberain.hop'
-      artifactId 'hop-core'
+      artifactId 'hop'
       version version
 
       inceptionYear '2014'
