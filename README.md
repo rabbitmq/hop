@@ -35,6 +35,16 @@ definition to your `pom.xml`:
 </repository>
 ```
 
+The most recent release is
+
+``` xml
+<dependency>
+  <groupId>com.novemberain.hop</groupId>
+  <artifactId>hop</artifactId>
+  <version>1.0.0-beta2</version>
+</dependency>
+```
+
 ### Gradle
 
 Add the following to your `build.gradle`:
@@ -45,6 +55,12 @@ repositories {
         url "http://clojars.org/repo"
     }
 }
+```
+
+The most recent release is
+
+``` groovy
+compile "com.novemberain.hop:hop:1.0.0-beta2"
 ```
 
 
