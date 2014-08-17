@@ -4,14 +4,25 @@ import com.novemberain.hop.client.domain.ConnectionInfo
 import com.novemberain.hop.client.domain.NodeInfo
 import com.rabbitmq.client.Connection
 import com.rabbitmq.client.ConnectionFactory
+import com.rabbitmq.client.ShutdownListener
+import com.rabbitmq.client.ShutdownSignalException
 import spock.lang.Specification
+
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.TimeUnit
 
 class ClientSpec extends Specification {
   protected static final String DEFAULT_USERNAME = "guest"
   protected static final String DEFAULT_PASSWORD = "guest"
 
   protected Client client
-  private final ConnectionFactory cf = new ConnectionFactory()
+  private final ConnectionFactory cf = initializeConnectionFactory()
+
+  protected ConnectionFactory initializeConnectionFactory() {
+    final cf = new ConnectionFactory()
+    cf.setAutomaticRecoveryEnabled(false)
+    cf
+  }
 
   def setup() {
     client = new Client("http://127.0.0.1:15672/api/", DEFAULT_USERNAME, DEFAULT_PASSWORD)
@@ -125,6 +136,38 @@ class ClientSpec extends Specification {
 
     cleanup:
     conn.close()
+  }
+
+  def "DELETE /api/connections/{name}"() {
+    given: "an open RabbitMQ client connection"
+    final latch = new CountDownLatch(1)
+    final conn = openConnection()
+    conn.addShutdownListener(new ShutdownListener() {
+      @Override
+      void shutdownCompleted(ShutdownSignalException e) {
+        latch.countDown()
+      }
+    })
+    assert conn.isOpen()
+
+    when: "client closes the connection"
+    final xs = client.getConnections()
+    xs.forEach({ client.closeConnection(it.name) })
+
+    and: "some time passes"
+    awaitOn(latch)
+
+    then: "the connection is closed"
+    !conn.isOpen()
+
+    cleanup:
+    if (conn.isOpen()) {
+      conn.close()
+    }
+  }
+
+  protected boolean awaitOn(CountDownLatch latch) {
+    latch.await(5, TimeUnit.SECONDS)
   }
 
   protected void verifyConnectionInfo(ConnectionInfo info) {

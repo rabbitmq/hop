@@ -85,6 +85,11 @@ public class Client {
     return this.rt.getForObject(uri, ConnectionInfo.class);
   }
 
+  public void closeConnection(String name) {
+    final URI uri = uriWithPath("./connections/" + encodePathSegment(name));
+    this.rt.delete(uri);
+  }
+
   //
   // Implementation
   //
