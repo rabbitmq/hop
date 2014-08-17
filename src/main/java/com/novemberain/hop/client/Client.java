@@ -80,6 +80,11 @@ public class Client {
     return Arrays.asList(this.rt.getForObject(uri, ConnectionInfo[].class));
   }
 
+  public ConnectionInfo getConnection(String name) {
+    final URI uri = uriWithPath("./connections/" + encodePathSegment(name));
+    return this.rt.getForObject(uri, ConnectionInfo.class);
+  }
+
   //
   // Implementation
   //

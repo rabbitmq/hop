@@ -1,5 +1,6 @@
 package com.novemberain.hop.client
 
+import com.novemberain.hop.client.domain.ConnectionInfo
 import com.novemberain.hop.client.domain.NodeInfo
 import com.rabbitmq.client.Connection
 import com.rabbitmq.client.ConnectionFactory
@@ -105,12 +106,31 @@ class ClientSpec extends Specification {
 
     then: "the list is returned"
     res.size() >= 1
-    fst.port == ConnectionFactory.DEFAULT_AMQP_PORT
-    !fst.usesTLS
-    fst.peerHost.equals(fst.host)
+    verifyConnectionInfo(fst)
 
     cleanup:
     conn.close()
+  }
+
+  def "GET /api/connections/{name}"() {
+    given: "an open RabbitMQ client connection"
+    final conn = openConnection()
+
+    when: "client retrieves connection info with the correct name"
+    final xs = client.getConnections()
+    final fst = client.getConnection(xs.first().name)
+
+    then: "the info is returned"
+    verifyConnectionInfo(fst)
+
+    cleanup:
+    conn.close()
+  }
+
+  protected void verifyConnectionInfo(ConnectionInfo info) {
+    info.port == ConnectionFactory.DEFAULT_AMQP_PORT
+    !info.usesTLS
+    info.peerHost.equals(info.host)
   }
 
   protected Connection openConnection() {
