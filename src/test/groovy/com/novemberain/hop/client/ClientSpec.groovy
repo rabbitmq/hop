@@ -152,7 +152,7 @@ class ClientSpec extends Specification {
 
     when: "client closes the connection"
     final xs = client.getConnections()
-    xs.forEach({ client.closeConnection(it.name) })
+    xs.each({ client.closeConnection(it.name) })
 
     and: "some time passes"
     awaitOn(latch)
