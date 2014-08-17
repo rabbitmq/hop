@@ -19,7 +19,7 @@ public class AlivenessTestResult {
 
   @Override
   public String toString() {
-    return "AlivenessTestResponse{" +
+    return "AlivenessTestResult{" +
         "status='" + status + '\'' +
         '}';
   }
