@@ -40,4 +40,14 @@ public class ExchangeType {
   public void setEnabled(boolean enabled) {
     this.enabled = enabled;
   }
+
+  @Override
+  public String toString() {
+    return "ExchangeType{" +
+        "name='" + name + '\'' +
+        ", description='" + description + '\'' +
+        ", internalPurpose='" + internalPurpose + '\'' +
+        ", enabled=" + enabled +
+        '}';
+  }
 }

@@ -29,4 +29,13 @@ public class AuthMechanism {
   public void setEnabled(boolean enabled) {
     this.enabled = enabled;
   }
+
+  @Override
+  public String toString() {
+    return "AuthMechanism{" +
+        "name='" + name + '\'' +
+        ", description='" + description + '\'' +
+        ", enabled=" + enabled +
+        '}';
+  }
 }

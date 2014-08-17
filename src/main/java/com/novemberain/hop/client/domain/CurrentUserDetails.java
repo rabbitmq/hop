@@ -32,4 +32,13 @@ public class CurrentUserDetails {
   public void setAuthBackend(String authBackend) {
     this.authBackend = authBackend;
   }
+
+  @Override
+  public String toString() {
+    return "CurrentUserDetails{" +
+        "name='" + name + '\'' +
+        ", tags='" + tags + '\'' +
+        ", authBackend='" + authBackend + '\'' +
+        '}';
+  }
 }

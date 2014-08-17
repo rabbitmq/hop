@@ -29,4 +29,13 @@ public class ErlangApp {
   public void setVersion(String version) {
     this.version = version;
   }
+
+  @Override
+  public String toString() {
+    return "ErlangApp{" +
+        "name='" + name + '\'' +
+        ", description='" + description + '\'' +
+        ", version='" + version + '\'' +
+        '}';
+  }
 }

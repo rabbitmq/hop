@@ -144,4 +144,24 @@ public class MessageStats {
   public void setBasicGetNoAckDetails(RateDetails basicGetNoAckDetails) {
     this.basicGetNoAckDetails = basicGetNoAckDetails;
   }
+
+  @Override
+  public String toString() {
+    return "MessageStats{" +
+        "basicPublish=" + basicPublish +
+        ", basicPublishDetails=" + basicPublishDetails +
+        ", publisherConfirm=" + publisherConfirm +
+        ", publisherConfirmDetails=" + publisherConfirmDetails +
+        ", basicReturn=" + basicReturn +
+        ", basicReturnDetails=" + basicReturnDetails +
+        ", basicDeliver=" + basicDeliver +
+        ", basicGet=" + basicGet +
+        ", basicGetDetails=" + basicGetDetails +
+        ", basicDeliverDetails=" + basicDeliverDetails +
+        ", basicDeliverNoAck=" + basicDeliverNoAck +
+        ", basicDeliverNoAckDetails=" + basicDeliverNoAckDetails +
+        ", basicGetNoAck=" + basicGetNoAck +
+        ", basicGetNoAckDetails=" + basicGetNoAckDetails +
+        '}';
+  }
 }

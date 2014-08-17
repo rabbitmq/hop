@@ -12,4 +12,11 @@ public class RateDetails {
   public double getRate() {
     return rate;
   }
+
+  @Override
+  public String toString() {
+    return "RateDetails{" +
+        "rate=" + rate +
+        '}';
+  }
 }

@@ -38,4 +38,14 @@ public class PluginContext {
   public void setPort(int port) {
     this.port = port;
   }
+
+  @Override
+  public String toString() {
+    return "PluginContext{" +
+        "node='" + node + '\'' +
+        ", description='" + description + '\'' +
+        ", path='" + path + '\'' +
+        ", port=" + port +
+        '}';
+  }
 }

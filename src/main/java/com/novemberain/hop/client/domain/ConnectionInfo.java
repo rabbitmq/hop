@@ -287,4 +287,39 @@ public class ConnectionInfo {
   public void setHeartbeatTimeout(int heartbeatTimeout) {
     this.heartbeatTimeout = heartbeatTimeout;
   }
+
+  @Override
+  public String toString() {
+    return "ConnectionInfo{" +
+        "name='" + name + '\'' +
+        ", node='" + node + '\'' +
+        ", type='" + type + '\'' +
+        ", channels=" + channels +
+        ", state='" + state + '\'' +
+        ", user='" + user + '\'' +
+        ", vhost='" + vhost + '\'' +
+        ", protocol='" + protocol + '\'' +
+        ", port=" + port +
+        ", peerPort=" + peerPort +
+        ", host='" + host + '\'' +
+        ", peerHost='" + peerHost + '\'' +
+        ", frameMax=" + frameMax +
+        ", channelMax=" + channelMax +
+        ", heartbeatTimeout=" + heartbeatTimeout +
+        ", octetsReceived=" + octetsReceived +
+        ", octetsReceivedDetails=" + octetsReceivedDetails +
+        ", octetsSent=" + octetsSent +
+        ", octetsSentDetails=" + octetsSentDetails +
+        ", usesTLS=" + usesTLS +
+        ", peerCertificateSubject='" + peerCertificateSubject + '\'' +
+        ", peerCertificateIssuer='" + peerCertificateIssuer + '\'' +
+        ", peerCertificateValidity='" + peerCertificateValidity + '\'' +
+        ", authMechanism='" + authMechanism + '\'' +
+        ", sslProtocol='" + sslProtocol + '\'' +
+        ", sslKeyExchange='" + sslKeyExchange + '\'' +
+        ", sslCipher='" + sslCipher + '\'' +
+        ", sslHash='" + sslHash + '\'' +
+        ", clientProperties=" + clientProperties +
+        '}';
+  }
 }

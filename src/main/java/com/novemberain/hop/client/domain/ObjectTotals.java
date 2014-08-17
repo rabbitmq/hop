@@ -47,4 +47,15 @@ public class ObjectTotals {
   public void setConsumers(long consumers) {
     this.consumers = consumers;
   }
+
+  @Override
+  public String toString() {
+    return "ObjectTotals{" +
+        "connections=" + connections +
+        ", channels=" + channels +
+        ", exchanges=" + exchanges +
+        ", queues=" + queues +
+        ", consumers=" + consumers +
+        '}';
+  }
 }

@@ -63,4 +63,16 @@ public class QueueTotals {
   public void setMessagesUnacknowledgedDetails(RateDetails messagesUnacknowledgedDetails) {
     this.messagesUnacknowledgedDetails = messagesUnacknowledgedDetails;
   }
+
+  @Override
+  public String toString() {
+    return "QueueTotals{" +
+        "messages=" + messages +
+        ", messagesDetails=" + messagesDetails +
+        ", messagesReady=" + messagesReady +
+        ", messagesReadyDetails=" + messagesReadyDetails +
+        ", messagesUnacknowledged=" + messagesUnacknowledged +
+        ", messagesUnacknowledgedDetails=" + messagesUnacknowledgedDetails +
+        '}';
+  }
 }

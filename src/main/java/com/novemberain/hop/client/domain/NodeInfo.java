@@ -260,4 +260,34 @@ public class NodeInfo {
   public boolean isDiskNode() {
     return this.type.equals(DISK_TYPE);
   }
+
+  @Override
+  public String toString() {
+    return "NodeInfo{" +
+        "name='" + name + '\'' +
+        ", type='" + type + '\'' +
+        ", running=" + running +
+        ", fileDescriptorsUsed=" + fileDescriptorsUsed +
+        ", fileDescriptorsTotal=" + fileDescriptorsTotal +
+        ", socketsUsed=" + socketsUsed +
+        ", socketsTotal=" + socketsTotal +
+        ", memoryUsed=" + memoryUsed +
+        ", memoryLimit=" + memoryLimit +
+        ", memoryAlarmActive=" + memoryAlarmActive +
+        ", diskFreeLimit=" + diskFreeLimit +
+        ", diskFree=" + diskFree +
+        ", diskAlarmActive=" + diskAlarmActive +
+        ", erlangProcessesUsed=" + erlangProcessesUsed +
+        ", erlangProcessesTotal=" + erlangProcessesTotal +
+        ", statisticsLevel='" + statisticsLevel + '\'' +
+        ", uptime=" + uptime +
+        ", erlangRunQueueLength=" + erlangRunQueueLength +
+        ", numberOfProcessors=" + numberOfProcessors +
+        ", osPid='" + osPid + '\'' +
+        ", exchangeTypes=" + exchangeTypes +
+        ", authMechanisms=" + authMechanisms +
+        ", erlangApps=" + erlangApps +
+        ", pluginContexts=" + pluginContexts +
+        '}';
+  }
 }

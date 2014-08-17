@@ -58,4 +58,16 @@ public class ClientProperties {
   public void setCopyright(String copyright) {
     this.copyright = copyright;
   }
+
+  @Override
+  public String toString() {
+    return "ClientProperties{" +
+        "capabilities=" + capabilities +
+        ", product='" + product + '\'' +
+        ", platform='" + platform + '\'' +
+        ", version='" + version + '\'' +
+        ", information='" + information + '\'' +
+        ", copyright='" + copyright + '\'' +
+        '}';
+  }
 }
