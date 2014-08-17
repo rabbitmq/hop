@@ -1,5 +1,6 @@
 package com.novemberain.hop.client;
 
+import com.novemberain.hop.client.domain.ConnectionInfo;
 import com.novemberain.hop.client.domain.CurrentUserDetails;
 import com.novemberain.hop.client.domain.NodeInfo;
 import com.novemberain.hop.client.domain.OverviewResponse;
@@ -72,6 +73,11 @@ public class Client {
   public NodeInfo getNode(String name) {
     final URI uri = uriWithPath("./nodes/" + encodePathSegment(name));
     return this.rt.getForObject(uri, NodeInfo.class);
+  }
+
+  public List<ConnectionInfo> getConnections() {
+    final URI uri = uriWithPath("./connections/");
+    return Arrays.asList(this.rt.getForObject(uri, ConnectionInfo[].class));
   }
 
   //

@@ -1,13 +1,16 @@
 package com.novemberain.hop.client
 
 import com.novemberain.hop.client.domain.NodeInfo
+import com.rabbitmq.client.Connection
+import com.rabbitmq.client.ConnectionFactory
 import spock.lang.Specification
 
 class ClientSpec extends Specification {
   protected static final String DEFAULT_USERNAME = "guest"
   protected static final String DEFAULT_PASSWORD = "guest"
 
-  protected Client client;
+  protected Client client
+  private final ConnectionFactory cf = new ConnectionFactory()
 
   def setup() {
     client = new Client("http://127.0.0.1:15672/api/", DEFAULT_USERNAME, DEFAULT_PASSWORD)
@@ -71,7 +74,7 @@ class ClientSpec extends Specification {
     res.tags ==~ /administrator/
   }
 
-  def "GET /nodes"() {
+  def "GET /api/nodes"() {
     when: "client retrieves a list of cluster nodes"
     final res = client.getNodes()
     final node = res.first()
@@ -81,7 +84,7 @@ class ClientSpec extends Specification {
     verifyNode(node)
   }
 
-  def "GET /nodes/{name}"() {
+  def "GET /api/nodes/{name}"() {
     when: "client retrieves a list of cluster nodes"
     final res = client.getNodes()
     final name = res.first().name
@@ -90,6 +93,28 @@ class ClientSpec extends Specification {
     then: "the list is returned"
     res.size() == 1
     verifyNode(node)
+  }
+
+  def "GET /api/connections"() {
+    given: "an open RabbitMQ client connection"
+    final conn = openConnection()
+
+    when: "client retrieves a list of connections"
+    final res = client.getConnections()
+    final fst = res.first()
+
+    then: "the list is returned"
+    res.size() >= 1
+    fst.port == ConnectionFactory.DEFAULT_AMQP_PORT
+    !fst.usesTLS
+    fst.peerHost.equals(fst.host)
+
+    cleanup:
+    conn.close()
+  }
+
+  protected Connection openConnection() {
+    this.cf.newConnection()
   }
 
   protected void verifyNode(NodeInfo node) {
