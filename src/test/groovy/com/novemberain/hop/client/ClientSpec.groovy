@@ -69,4 +69,23 @@ class ClientSpec extends Specification {
     res.name == DEFAULT_USERNAME
     res.tags ==~ /administrator/
   }
+
+  def "GET /nodes"() {
+    when: "client retrieves a list of cluster nodes"
+    final res = client.getNodes()
+    final node = res.first()
+    println(node)
+
+    then: "the list is returned"
+    res.size() == 1
+    node.socketsUsed < node.socketsTotal
+    node.erlangProcessesUsed < node.erlangProcessesTotal
+    node.erlangRunQueueLength >= 0
+    node.memoryUsed < node.memoryLimit
+    !node.memoryAlarmActive
+    node.diskFree > node.diskFreeLimit
+    !node.diskAlarmActive
+    node.authMechanisms.size() >= 1
+    node.erlangApps.size() >= 1
+  }
 }

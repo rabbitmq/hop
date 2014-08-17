@@ -1,6 +1,7 @@
 package com.novemberain.hop.client;
 
 import com.novemberain.hop.client.domain.CurrentUserDetails;
+import com.novemberain.hop.client.domain.NodeInfo;
 import com.novemberain.hop.client.domain.OverviewResponse;
 import org.apache.http.auth.AuthScope;
 import org.apache.http.auth.UsernamePasswordCredentials;
@@ -16,6 +17,7 @@ import org.springframework.web.client.RestTemplate;
 
 import java.net.*;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 public class Client {
@@ -60,6 +62,11 @@ public class Client {
   public CurrentUserDetails whoAmI() {
     final URI uri = uriWithPath("./whoami/");
     return this.rt.getForObject(uri, CurrentUserDetails.class);
+  }
+
+  public List<NodeInfo> getNodes() {
+    final URI uri = uriWithPath("./nodes/");
+    return Arrays.asList(this.rt.getForObject(uri, NodeInfo[].class));
   }
 
   //
