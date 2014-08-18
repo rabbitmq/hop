@@ -30,6 +30,10 @@ class ClientSpec extends Specification {
 
   def "GET /api/overview"() {
     when: "client requests GET /api/overview"
+    final conn = openConnection()
+    final ch = conn.createChannel()
+    1000.times { ch.basicPublish("", "", null, null) }
+
     def res = client.getOverview()
     def xts = res.getExchangeTypes().collect { it.getName() }
 
@@ -42,11 +46,8 @@ class ClientSpec extends Specification {
     msgStats.basicPublish >= 0
     msgStats.basicPublishDetails.rate >= 0.0
     msgStats.publisherConfirm >= 0
-    msgStats.publisherConfirmDetails.rate >= 0.0
     msgStats.basicDeliver >= 0
-    msgStats.basicDeliverDetails.rate >= 0.0
     msgStats.basicReturn >= 0
-    msgStats.basicReturnDetails.rate >= 0.0
 
     final qTotals = res.getQueueTotals()
     qTotals.messages >= 0
@@ -67,6 +68,11 @@ class ClientSpec extends Specification {
     xts.contains("fanout")
     xts.contains("direct")
     xts.contains("headers")
+
+    cleanup:
+    if (conn.isOpen()) {
+      conn.close()
+    }
   }
 
   def "GET /api/aliveness-test/{vhost}"() {
@@ -159,6 +165,30 @@ class ClientSpec extends Specification {
 
     then: "the connection is closed"
     !conn.isOpen()
+
+    cleanup:
+    if (conn.isOpen()) {
+      conn.close()
+    }
+  }
+
+  def "GET /api/channels"() {
+    given: "an open RabbitMQ client connection with 1 channel"
+    final conn = openConnection()
+    final ch = conn.createChannel()
+
+    when: "client lists channels"
+    final chs = client.getChannels()
+    final chi = chs.first()
+
+    then: "the list is returned"
+    chi.getConsumerCount() == 0
+    chi.number == ch.getChannelNumber()
+    chi.node.startsWith("rabbit@")
+    chi.state == "running"
+    !chi.usesPublisherConfirms()
+    !chi.transactional
+
 
     cleanup:
     if (conn.isOpen()) {
