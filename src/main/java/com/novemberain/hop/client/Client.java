@@ -118,6 +118,16 @@ public class Client {
     this.rt.delete(uri);
   }
 
+  /**
+   * Retrieves state and metrics information for all channels across the cluster.
+   *
+   * @return list of channels across the cluster
+   */
+  public List<ChannelInfo> getChannels() {
+    final URI uri = uriWithPath("./channels/");
+    return Arrays.asList(this.rt.getForObject(uri, ChannelInfo[].class));
+  }
+
   //
   // Implementation
   //
