@@ -138,6 +138,17 @@ public class Client {
     return Arrays.asList(this.rt.getForObject(uri, ChannelInfo[].class));
   }
 
+  /**
+   * Retrieves state and metrics information for individual channel.
+   *
+   * @param name channel name
+   * @return channel information
+   */
+  public ChannelInfo getChannel(String name) {
+    final URI uri = uriWithPath("./channels/" + encodePathSegment(name));
+    return this.rt.getForObject(uri, ChannelInfo.class);
+  }
+
   //
   // Implementation
   //

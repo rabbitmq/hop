@@ -1,8 +1,13 @@
 package com.novemberain.hop.client.domain;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import java.util.List;
+
 @SuppressWarnings("unused")
+// TODO
+@JsonIgnoreProperties({"publishes", "deliveries"})
 public class ChannelInfo {
   private String vhost;
   private String user;
@@ -34,6 +39,14 @@ public class ChannelInfo {
   private String idleSince;
   @JsonProperty("connection_details")
   private ConnectionDetails connectionDetails;
+  @JsonProperty("message_stats")
+  private MessageStats messageStats;
+
+  @JsonProperty("consumer_details")
+  private List<ConsumerDetails> consumerDetails;
+
+  @JsonProperty("client_flow_blocked")
+  private boolean clientFlowBlocked;
 
   public String getVhost() {
     return vhost;
@@ -169,5 +182,21 @@ public class ChannelInfo {
 
   public void setConnectionDetails(ConnectionDetails connectionDetails) {
     this.connectionDetails = connectionDetails;
+  }
+
+  public boolean isClientFlowBlocked() {
+    return clientFlowBlocked;
+  }
+
+  public void setClientFlowBlocked(boolean clientFlowBlocked) {
+    this.clientFlowBlocked = clientFlowBlocked;
+  }
+
+  public MessageStats getMessageStats() {
+    return messageStats;
+  }
+
+  public void setMessageStats(MessageStats messageStats) {
+    this.messageStats = messageStats;
   }
 }

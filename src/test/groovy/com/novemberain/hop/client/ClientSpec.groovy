@@ -207,6 +207,24 @@ class ClientSpec extends Specification {
     }
   }
 
+  def "GET /api/channels/{name}"() {
+    given: "an open RabbitMQ client connection with 1 channel"
+    final conn = openConnection()
+    final ch = conn.createChannel()
+
+    when: "client retrieves channel info"
+    final chs = client.getChannels()
+    final chi = client.getChannel(chs.first().name)
+
+    then: "the info is returned"
+    verifyChannelInfo(chi, ch)
+
+    cleanup:
+    if (conn.isOpen()) {
+      conn.close()
+    }
+  }
+
   protected boolean awaitOn(CountDownLatch latch) {
     latch.await(5, TimeUnit.SECONDS)
   }
