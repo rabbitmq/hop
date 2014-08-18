@@ -1,11 +1,9 @@
 package com.novemberain.hop.client
 
+import com.novemberain.hop.client.domain.ChannelInfo
 import com.novemberain.hop.client.domain.ConnectionInfo
 import com.novemberain.hop.client.domain.NodeInfo
-import com.rabbitmq.client.Connection
-import com.rabbitmq.client.ConnectionFactory
-import com.rabbitmq.client.ShutdownListener
-import com.rabbitmq.client.ShutdownSignalException
+import com.rabbitmq.client.*
 import spock.lang.Specification
 
 import java.util.concurrent.CountDownLatch
@@ -182,13 +180,26 @@ class ClientSpec extends Specification {
     final chi = chs.first()
 
     then: "the list is returned"
-    chi.getConsumerCount() == 0
-    chi.number == ch.getChannelNumber()
-    chi.node.startsWith("rabbit@")
-    chi.state == "running"
-    !chi.usesPublisherConfirms()
-    !chi.transactional
+    verifyChannelInfo(chi, ch)
 
+    cleanup:
+    if (conn.isOpen()) {
+      conn.close()
+    }
+  }
+
+  def "GET /api/connections/{name}/channels/"() {
+    given: "an open RabbitMQ client connection with 1 channel"
+    final conn = openConnection()
+    final ch = conn.createChannel()
+
+    when: "client lists channels on that connection"
+    final cn = client.getConnections().first().name
+    final chs = client.getChannels(cn)
+    final chi = chs.first()
+
+    then: "the list is returned"
+    verifyChannelInfo(chi, ch)
 
     cleanup:
     if (conn.isOpen()) {
@@ -205,6 +216,16 @@ class ClientSpec extends Specification {
     !info.usesTLS
     info.peerHost.equals(info.host)
   }
+
+  protected void verifyChannelInfo(ChannelInfo chi, Channel ch) {
+    chi.getConsumerCount() == 0
+    chi.number == ch.getChannelNumber()
+    chi.node.startsWith("rabbit@")
+    chi.state == "running"
+    !chi.usesPublisherConfirms()
+    !chi.transactional
+  }
+
 
   protected Connection openConnection() {
     this.cf.newConnection()

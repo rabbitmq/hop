@@ -128,6 +128,16 @@ public class Client {
     return Arrays.asList(this.rt.getForObject(uri, ChannelInfo[].class));
   }
 
+  /**
+   * Retrieves state and metrics information for all channels on individual connection.
+   *
+   * @return list of channels on the connection
+   */
+  public List<ChannelInfo> getChannels(String connectionName) {
+    final URI uri = uriWithPath("./connections/" + encodePathSegment(connectionName) + "/channels/");
+    return Arrays.asList(this.rt.getForObject(uri, ChannelInfo[].class));
+  }
+
   //
   // Implementation
   //
