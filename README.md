@@ -111,7 +111,16 @@ c.closeConnection("127.0.0.1:61779 -> 127.0.0.1:5672");
 
 ### Operations on Channels
 
-TBD
+``` java
+// list all channels
+c.getChannels();
+
+// list channels on individual connection
+c.getChannels("127.0.0.1:61779 -> 127.0.0.1:5672");
+
+// list detailed channel info
+c.getChannel("127.0.0.1:61779 -> 127.0.0.1:5672 (3)");
+```
 
 
 ### Operations on Vhosts
