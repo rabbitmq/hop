@@ -149,6 +149,16 @@ public class Client {
     return this.rt.getForObject(uri, ChannelInfo.class);
   }
 
+  public List<VhostInfo> getVhosts() {
+    final URI uri = uriWithPath("./vhosts/");
+    return Arrays.asList(this.rt.getForObject(uri, VhostInfo[].class));
+  }
+
+  public VhostInfo getVhost(String name) {
+    final URI uri = uriWithPath("./vhosts/" + encodePathSegment(name));
+    return this.rt.getForObject(uri, VhostInfo.class);
+  }
+
   //
   // Implementation
   //

@@ -125,7 +125,10 @@ c.getChannel("127.0.0.1:61779 -> 127.0.0.1:5672 (3)");
 
 ### Operations on Vhosts
 
-TBD
+``` java
+// get status and metrics of individual vhost
+c.getVhost("/")
+```
 
 
 ### Managing Users

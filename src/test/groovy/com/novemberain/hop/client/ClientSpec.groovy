@@ -3,6 +3,7 @@ package com.novemberain.hop.client
 import com.novemberain.hop.client.domain.ChannelInfo
 import com.novemberain.hop.client.domain.ConnectionInfo
 import com.novemberain.hop.client.domain.NodeInfo
+import com.novemberain.hop.client.domain.VhostInfo
 import com.rabbitmq.client.*
 import spock.lang.Specification
 
@@ -225,6 +226,23 @@ class ClientSpec extends Specification {
     }
   }
 
+  def "GET /api/vhosts"() {
+    when: "client retrieves a list of vhosts"
+    final vhs = client.getVhosts()
+    final vhi = vhs.first()
+
+    then: "the info is returned"
+    verifyVhost(vhi)
+  }
+
+  def "GET /api/vhosts/{name}"() {
+    when: "client retrieves vhost info"
+    final vhi = client.getVhost("/")
+
+    then: "the info is returned"
+    verifyVhost(vhi)
+  }
+
   protected boolean awaitOn(CountDownLatch latch) {
     latch.await(5, TimeUnit.SECONDS)
   }
@@ -244,6 +262,10 @@ class ClientSpec extends Specification {
     !chi.transactional
   }
 
+  protected void verifyVhost(VhostInfo vhi) {
+    vhi.name == "/"
+    !vhi.tracing
+  }
 
   protected Connection openConnection() {
     this.cf.newConnection()
