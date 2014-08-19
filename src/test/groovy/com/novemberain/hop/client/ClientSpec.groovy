@@ -159,7 +159,7 @@ class ClientSpec extends Specification {
     xs.each({ client.closeConnection(it.name) })
 
     and: "some time passes"
-    awaitOn(latch)
+    assert awaitOn(latch)
 
     then: "the connection is closed"
     !conn.isOpen()
@@ -275,7 +275,7 @@ class ClientSpec extends Specification {
   }
 
   protected boolean awaitOn(CountDownLatch latch) {
-    assert latch.await(5, TimeUnit.SECONDS)
+    latch.await(5, TimeUnit.SECONDS)
   }
 
   protected void verifyConnectionInfo(ConnectionInfo info) {
