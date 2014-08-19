@@ -43,7 +43,6 @@ class ClientSpec extends Specification {
 
     final msgStats = res.getMessageStats()
     msgStats.basicPublish >= 0
-    msgStats.basicPublishDetails.rate >= 0.0
     msgStats.publisherConfirm >= 0
     msgStats.basicDeliver >= 0
     msgStats.basicReturn >= 0
@@ -241,6 +240,38 @@ class ClientSpec extends Specification {
 
     then: "the info is returned"
     verifyVhost(vhi)
+  }
+
+  def "PUT /api/vhosts/{name}"(String name) {
+    when:
+    "client creates a vhost named $name"
+    client.createVhost(name)
+    final vhi = client.getVhost(name)
+
+    then: "the vhost is created"
+    vhi.name == name
+
+    cleanup:
+    client.deleteVhost(name)
+
+    where:
+    name << [
+        "http-created",
+        "http-created2",
+        "http_created",
+        "http created",
+        "создан по хатэтэпэ",
+        "creado a través de HTTP",
+        "通过http",
+        "HTTP를 통해 생성",
+        "HTTPを介して作成",
+        "created over http?",
+        "created @ http API",
+        "erstellt über http",
+        "http पर बनाया",
+        "ถูกสร้างขึ้นผ่าน HTTP",
+        "±!@^&#*"
+    ]
   }
 
   protected boolean awaitOn(CountDownLatch latch) {

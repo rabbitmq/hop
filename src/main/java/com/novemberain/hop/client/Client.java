@@ -1,12 +1,15 @@
 package com.novemberain.hop.client;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.novemberain.hop.client.domain.*;
+import org.apache.http.HttpHeaders;
 import org.apache.http.auth.AuthScope;
 import org.apache.http.auth.UsernamePasswordCredentials;
 import org.apache.http.client.CredentialsProvider;
 import org.apache.http.client.HttpClient;
 import org.apache.http.impl.client.BasicCredentialsProvider;
 import org.apache.http.impl.client.HttpClientBuilder;
+import org.apache.http.message.BasicHeader;
 import org.springframework.http.client.ClientHttpRequestFactory;
 import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 import org.springframework.http.converter.HttpMessageConverter;
@@ -21,7 +24,6 @@ import java.util.List;
 public class Client {
   private final RestTemplate rt;
   private final URI rootUri;
-
 
   //
   // API
@@ -159,6 +161,16 @@ public class Client {
     return this.rt.getForObject(uri, VhostInfo.class);
   }
 
+  public void createVhost(String name) throws JsonProcessingException {
+    final URI uri = uriWithPath("./vhosts/" + encodePathSegment(name));
+    this.rt.put(uri, null);
+  }
+
+  public void deleteVhost(String name) {
+    final URI uri = uriWithPath("./vhosts/" + encodePathSegment(name));
+    this.rt.delete(uri);
+  }
+
   //
   // Implementation
   //
@@ -186,9 +198,10 @@ public class Client {
   }
 
   private ClientHttpRequestFactory getRequestFactory(URL url, String username, String password) throws MalformedURLException {
-    HttpClient httpClient = HttpClientBuilder.create().
-        setDefaultCredentialsProvider(getCredentialsProvider(url, username, password)).
-        build();
+    final HttpClientBuilder bldr = HttpClientBuilder.create().
+        setDefaultCredentialsProvider(getCredentialsProvider(url, username, password));
+    bldr.setDefaultHeaders(Arrays.asList(new BasicHeader(HttpHeaders.CONTENT_TYPE, "application/json")));
+    HttpClient httpClient = bldr.build();
     return new HttpComponentsClientHttpRequestFactory(httpClient);
   }
 
