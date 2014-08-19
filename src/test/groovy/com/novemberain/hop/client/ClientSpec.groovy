@@ -244,7 +244,7 @@ class ClientSpec extends Specification {
   }
 
   protected boolean awaitOn(CountDownLatch latch) {
-    latch.await(5, TimeUnit.SECONDS)
+    assert latch.await(5, TimeUnit.SECONDS)
   }
 
   protected void verifyConnectionInfo(ConnectionInfo info) {
