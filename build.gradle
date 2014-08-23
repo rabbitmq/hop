@@ -7,6 +7,10 @@ repositories {
   mavenCentral()
 }
 
+task wrapper(type: Wrapper) {
+  gradleVersion = '2.0'
+}
+
 dependencies {
   compile "org.codehaus.groovy:groovy-all:2.3.6"
   compile "org.springframework:spring-web:4.0.6.RELEASE"
