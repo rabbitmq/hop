@@ -181,6 +181,22 @@ public class Client {
     return Arrays.asList(this.rt.getForObject(uri, ExchangeInfo[].class));
   }
 
+  /**
+   * Returns a list of bindings where provided exchange is the source (other things are
+   * bound to it).
+   *
+   * @param vhost    vhost of the exchange
+   * @param exchange source exchange name
+   * @return list of bindings
+   */
+  public List<BindingInfo> getBindingsBySource(String vhost, String exchange) {
+    final String x = exchange.equals("") ? "amq.default" : exchange;
+    final URI uri = uriWithPath("./exchanges/" + encodePathSegment(vhost) +
+        "/" + encodePathSegment(x) +
+        "/bindings/source");
+    return Arrays.asList(this.rt.getForObject(uri, BindingInfo[].class));
+  }
+
   //
   // Implementation
   //

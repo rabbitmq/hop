@@ -289,6 +289,21 @@ class ClientSpec extends Specification {
     verifyExchangeInfo(x)
   }
 
+  def "GET /api/exchanges/{vhost}/{name}/bindings/source"() {
+    given: "a queue named hop.queue1"
+    final conn = openConnection()
+    final ch = conn.createChannel()
+    final q = "hop.queue1"
+    ch.queueDeclare(q, false, false, false, null);
+
+    when: "client lists bindings of default exchange"
+    final xs = client.getBindingsBySource("/", "");
+
+    then: "there is an automatic binding for hop.queue1"
+    final x = xs.find { it.source == "" && it.destinationType == "queue" && it.destination == q }
+    x != null
+  }
+
   protected boolean awaitOn(CountDownLatch latch) {
     latch.await(5, TimeUnit.SECONDS)
   }
