@@ -176,6 +176,11 @@ public class Client {
     return Arrays.asList(this.rt.getForObject(uri, ExchangeInfo[].class));
   }
 
+  public List<ExchangeInfo> getExchanges(String vhost) {
+    final URI uri = uriWithPath("./exchanges/" + encodePathSegment(vhost));
+    return Arrays.asList(this.rt.getForObject(uri, ExchangeInfo[].class));
+  }
+
   //
   // Implementation
   //

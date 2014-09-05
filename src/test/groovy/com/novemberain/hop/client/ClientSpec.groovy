@@ -1,9 +1,6 @@
 package com.novemberain.hop.client
 
-import com.novemberain.hop.client.domain.ChannelInfo
-import com.novemberain.hop.client.domain.ConnectionInfo
-import com.novemberain.hop.client.domain.NodeInfo
-import com.novemberain.hop.client.domain.VhostInfo
+import com.novemberain.hop.client.domain.*
 import com.rabbitmq.client.*
 import spock.lang.Specification
 
@@ -280,12 +277,17 @@ class ClientSpec extends Specification {
     final x = xs.first()
 
     then: "the list is returned"
-    x.type != null
-    x.durable != null
-    x.name != null
-    x.autoDelete != null
+    verifyExchangeInfo(x)
   }
 
+  def "GET /api/exchanges/{vhost}"() {
+    when: "client retrieves the list of exchanges in a particular vhost"
+    final xs = client.getExchanges("/")
+
+    then: "the list is returned"
+    final x = xs.find { it.name == "amq.fanout" }
+    verifyExchangeInfo(x)
+  }
 
   protected boolean awaitOn(CountDownLatch latch) {
     latch.await(5, TimeUnit.SECONDS)
@@ -328,5 +330,12 @@ class ClientSpec extends Specification {
     assert !node.diskAlarmActive
     assert node.authMechanisms.size() >= 1
     assert node.erlangApps.size() >= 1
+  }
+
+  protected void verifyExchangeInfo(ExchangeInfo x) {
+    assert x.type != null
+    assert x.durable != null
+    assert x.name != null
+    assert x.autoDelete != null
   }
 }
