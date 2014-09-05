@@ -41,7 +41,7 @@ The most recent release is
 <dependency>
   <groupId>com.novemberain.hop</groupId>
   <artifactId>hop</artifactId>
-  <version>1.0.0-beta2</version>
+  <version>1.0.0-beta3</version>
 </dependency>
 ```
 
@@ -60,7 +60,7 @@ repositories {
 The most recent release is
 
 ``` groovy
-compile "com.novemberain.hop:hop:1.0.0-beta2"
+compile "com.novemberain.hop:hop:1.0.0-beta3"
 ```
 
 
