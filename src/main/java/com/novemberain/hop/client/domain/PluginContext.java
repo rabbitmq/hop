@@ -6,6 +6,7 @@ public class PluginContext {
   private String description;
   private String path;
   private int port;
+  private boolean ssl;
 
   public String getNode() {
     return node;
@@ -37,6 +38,14 @@ public class PluginContext {
 
   public void setPort(int port) {
     this.port = port;
+  }
+
+  public boolean isSsl() {
+    return ssl;
+  }
+
+  public void setSsl(boolean ssl) {
+    this.ssl = ssl;
   }
 
   @Override
