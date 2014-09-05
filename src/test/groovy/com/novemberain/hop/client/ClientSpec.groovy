@@ -133,10 +133,10 @@ class ClientSpec extends Specification {
 
     when: "client retrieves connection info with the correct name"
     final xs = client.getConnections()
-    final fst = client.getConnection(xs.first().name)
+    final x = client.getConnection(xs.first().name)
 
     then: "the info is returned"
-    verifyConnectionInfo(fst)
+    verifyConnectionInfo(x)
 
     cleanup:
     conn.close()
@@ -273,6 +273,19 @@ class ClientSpec extends Specification {
         "±!@^&#*"
     ]
   }
+
+  def "GET /api/exchanges"() {
+    when: "client retrieves the list of exchanges across all vhosts"
+    final xs = client.getExchanges()
+    final x = xs.first()
+
+    then: "the list is returned"
+    x.type != null
+    x.durable != null
+    x.name != null
+    x.autoDelete != null
+  }
+
 
   protected boolean awaitOn(CountDownLatch latch) {
     latch.await(5, TimeUnit.SECONDS)

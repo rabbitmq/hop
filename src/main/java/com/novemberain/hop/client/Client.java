@@ -171,6 +171,11 @@ public class Client {
     this.rt.delete(uri);
   }
 
+  public List<ExchangeInfo> getExchanges() {
+    final URI uri = uriWithPath("./exchanges/");
+    return Arrays.asList(this.rt.getForObject(uri, ExchangeInfo[].class));
+  }
+
   //
   // Implementation
   //
