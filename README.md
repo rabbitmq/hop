@@ -150,6 +150,18 @@ TBD
 
 TBD
 
+### Operations on Bindings
+
+``` java
+// list bindings where exchange "an.exchange" is source
+// (other things are bound to it)
+c.getBindingsBySource("/", "an.exchange");
+
+// list bindings where exchange "an.exchange" is destination
+// (it is bound to other exchanges)
+c.getBindingsByDestination("/", "an.exchange");
+```
+
 
 
 ## License
