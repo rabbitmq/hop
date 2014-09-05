@@ -192,8 +192,22 @@ public class Client {
   public List<BindingInfo> getBindingsBySource(String vhost, String exchange) {
     final String x = exchange.equals("") ? "amq.default" : exchange;
     final URI uri = uriWithPath("./exchanges/" + encodePathSegment(vhost) +
-        "/" + encodePathSegment(x) +
-        "/bindings/source");
+        "/" + encodePathSegment(x) + "/bindings/source");
+    return Arrays.asList(this.rt.getForObject(uri, BindingInfo[].class));
+  }
+
+  /**
+   * Returns a list of bindings where provided exchange is the destination (it is
+   * bound to another exchange).
+   *
+   * @param vhost    vhost of the exchange
+   * @param exchange destination exchange name
+   * @return list of bindings
+   */
+  public List<BindingInfo> getBindingsByDestination(String vhost, String exchange) {
+    final String x = exchange.equals("") ? "amq.default" : exchange;
+    final URI uri = uriWithPath("./exchanges/" + encodePathSegment(vhost) +
+        "/" + encodePathSegment(x) + "/bindings/destination");
     return Arrays.asList(this.rt.getForObject(uri, BindingInfo[].class));
   }
 

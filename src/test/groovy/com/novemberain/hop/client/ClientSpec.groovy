@@ -302,6 +302,32 @@ class ClientSpec extends Specification {
     then: "there is an automatic binding for hop.queue1"
     final x = xs.find { it.source == "" && it.destinationType == "queue" && it.destination == q }
     x != null
+
+    cleanup:
+    ch.queueDelete(q)
+    conn.close()
+  }
+
+  def "GET /api/exchanges/{vhost}/{name}/bindings/destination"() {
+    given: "an exchange named hop.exchange1 which is bound to amq.fanout"
+    final conn = openConnection()
+    final ch = conn.createChannel()
+    final src = "amq.fanout"
+    final dest = "hop.exchange1"
+    ch.exchangeDeclare(dest, "fanout");
+    ch.exchangeBind(dest, src, "");
+
+    when: "client lists bindings of amq.fanout"
+    final xs = client.getBindingsByDestination("/", dest);
+
+    then: "there is a binding for hop.exchange1"
+    println(xs)
+    final x = xs.find { it.source == src && it.destinationType == "exchange" && it.destination == dest }
+    x != null
+
+    cleanup:
+    ch.exchangeDelete(dest);
+    conn.close()
   }
 
   protected boolean awaitOn(CountDownLatch latch) {
