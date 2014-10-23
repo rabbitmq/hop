@@ -34,6 +34,8 @@ public class OverviewResponse {
   private QueueTotals queueTotals;
   @JsonProperty("object_totals")
   private ObjectTotals objectTotals;
+  @JsonProperty("rates_mode")
+  private String ratesMode;
   @JsonProperty("listeners")
   private List<NetworkListener> listeners;
   @JsonProperty("contexts")
@@ -156,6 +158,14 @@ public class OverviewResponse {
     this.contexts = contexts;
   }
 
+  public String getRatesMode() {
+    return ratesMode;
+  }
+
+  public void setRatesMode(String ratesMode) {
+    this.ratesMode = ratesMode;
+  }
+
   @Override
   public String toString() {
     return "OverviewResponse{" +
@@ -171,6 +181,7 @@ public class OverviewResponse {
         ", messageStats=" + messageStats +
         ", queueTotals=" + queueTotals +
         ", objectTotals=" + objectTotals +
+        ", ratesMode='" + ratesMode + '\'' +
         ", listeners=" + listeners +
         ", contexts=" + contexts +
         '}';

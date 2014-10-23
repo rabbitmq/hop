@@ -32,6 +32,14 @@ public class MessageStats {
   private long basicGetNoAck;
   @JsonProperty("get_no_ack_details")
   private RateDetails basicGetNoAckDetails;
+  @JsonProperty("ack")
+  private long ack;
+  @JsonProperty("ack_details")
+  private RateDetails ackDetails;
+  @JsonProperty("get")
+  private long getCounter;
+  @JsonProperty("get_details")
+  private RateDetails getDetails;
 
   public long getBasicPublish() {
     return basicPublish;
@@ -145,6 +153,38 @@ public class MessageStats {
     this.basicGetNoAckDetails = basicGetNoAckDetails;
   }
 
+  public long getAck() {
+    return ack;
+  }
+
+  public void setAck(long ack) {
+    this.ack = ack;
+  }
+
+  public RateDetails getAckDetails() {
+    return ackDetails;
+  }
+
+  public void setAckDetails(RateDetails ackDetails) {
+    this.ackDetails = ackDetails;
+  }
+
+  public long getGetCounter() {
+    return getCounter;
+  }
+
+  public void setGetCounter(long getCounter) {
+    this.getCounter = getCounter;
+  }
+
+  public RateDetails getGetDetails() {
+    return getDetails;
+  }
+
+  public void setGetDetails(RateDetails getDetails) {
+    this.getDetails = getDetails;
+  }
+
   @Override
   public String toString() {
     return "MessageStats{" +
@@ -162,6 +202,10 @@ public class MessageStats {
         ", basicDeliverNoAckDetails=" + basicDeliverNoAckDetails +
         ", basicGetNoAck=" + basicGetNoAck +
         ", basicGetNoAckDetails=" + basicGetNoAckDetails +
+        ", ack=" + ack +
+        ", ackDetails=" + ackDetails +
+        ", getCounter=" + getCounter +
+        ", getDetails=" + getDetails +
         '}';
   }
 }
