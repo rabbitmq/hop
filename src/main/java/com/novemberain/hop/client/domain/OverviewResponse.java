@@ -40,6 +40,8 @@ public class OverviewResponse {
   private List<NetworkListener> listeners;
   @JsonProperty("contexts")
   private List<PluginContext> contexts;
+  @JsonProperty("statistics_db_event_queue")
+  private long statisticsDBEventQueueLength;
 
   //
   // API
@@ -184,6 +186,16 @@ public class OverviewResponse {
         ", ratesMode='" + ratesMode + '\'' +
         ", listeners=" + listeners +
         ", contexts=" + contexts +
+        ", statisticsDBEventQueueLength=" + statisticsDBEventQueueLength +
         '}';
   }
+
+  public long getStatisticsDBEventQueueLength() {
+    return statisticsDBEventQueueLength;
+  }
+
+  public void setStatisticsDBEventQueueLength(long statisticsDBEventQueueLength) {
+    this.statisticsDBEventQueueLength = statisticsDBEventQueueLength;
+  }
+
 }
