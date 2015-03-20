@@ -458,6 +458,58 @@ public class NodeInfo {
     this.saslLogFilePath = saslLogFilePath;
   }
 
+  @Override
+  public String toString() {
+    return "NodeInfo{" +
+        "name='" + name + '\'' +
+        ", type='" + type + '\'' +
+        ", running=" + running +
+        ", fileDescriptorsUsed=" + fileDescriptorsUsed +
+        ", fileDescriptorsTotal=" + fileDescriptorsTotal +
+        ", fdUsedDetails=" + fdUsedDetails +
+        ", socketsUsed=" + socketsUsed +
+        ", socketsTotal=" + socketsTotal +
+        ", socketsUsedDetails=" + socketsUsedDetails +
+        ", memoryUsed=" + memoryUsed +
+        ", memoryLimit=" + memoryLimit +
+        ", memoryAlarmActive=" + memoryAlarmActive +
+        ", memoryUsedDetails=" + memoryUsedDetails +
+        ", diskFreeLimit=" + diskFreeLimit +
+        ", diskFree=" + diskFree +
+        ", diskAlarmActive=" + diskAlarmActive +
+        ", diskFreeDetails=" + diskFreeDetails +
+        ", ioReadAvgTime=" + ioReadAvgTime +
+        ", ioReadAvgTimeDetails=" + ioReadAvgTimeDetails +
+        ", ioWriteAvgTime=" + ioWriteAvgTime +
+        ", ioWriteAvgTimeDetails=" + ioWriteAvgTimeDetails +
+        ", ioSyncAvgTime=" + ioSyncAvgTime +
+        ", ioSyncAvgTimeDetails=" + ioSyncAvgTimeDetails +
+        ", mnesiaDiskTransactionsCount=" + mnesiaDiskTransactionsCount +
+        ", mnesiaDiskTransactionCountDetails=" + mnesiaDiskTransactionCountDetails +
+        ", mnesiaRamTransactionsCount=" + mnesiaRamTransactionsCount +
+        ", mnesiaRamTransactionCountDetails=" + mnesiaRamTransactionCountDetails +
+        ", erlangProcessesUsed=" + erlangProcessesUsed +
+        ", erlangProcessesTotal=" + erlangProcessesTotal +
+        ", erlangProcessesUsedDetails=" + erlangProcessesUsedDetails +
+        ", statisticsLevel='" + statisticsLevel + '\'' +
+        ", ratesMode='" + ratesMode + '\'' +
+        ", logFilePath='" + logFilePath + '\'' +
+        ", saslLogFilePath='" + saslLogFilePath + '\'' +
+        ", dbDirectoryPath='" + dbDirectoryPath + '\'' +
+        ", configFilePaths=" + configFilePaths +
+        ", netTicktime=" + netTicktime +
+        ", enabledPlugins=" + enabledPlugins +
+        ", uptime=" + uptime +
+        ", erlangRunQueueLength=" + erlangRunQueueLength +
+        ", numberOfProcessors=" + numberOfProcessors +
+        ", osPid='" + osPid + '\'' +
+        ", exchangeTypes=" + exchangeTypes +
+        ", authMechanisms=" + authMechanisms +
+        ", erlangApps=" + erlangApps +
+        ", pluginContexts=" + pluginContexts +
+        '}';
+  }
+
   public String getDbDirectoryPath() {
     return dbDirectoryPath;
   }
@@ -490,37 +542,4 @@ public class NodeInfo {
     this.enabledPlugins = enabledPlugins;
   }
 
-  @Override
-  public String toString() {
-    return "NodeInfo{" +
-        "name='" + name + '\'' +
-        ", type='" + type + '\'' +
-        ", running=" + running +
-        ", fileDescriptorsUsed=" + fileDescriptorsUsed +
-        ", fileDescriptorsTotal=" + fileDescriptorsTotal +
-        ", fdUsedDetails=" + fdUsedDetails +
-        ", socketsUsed=" + socketsUsed +
-        ", socketsTotal=" + socketsTotal +
-        ", memoryUsed=" + memoryUsed +
-        ", memoryLimit=" + memoryLimit +
-        ", memoryAlarmActive=" + memoryAlarmActive +
-        ", diskFreeLimit=" + diskFreeLimit +
-        ", diskFree=" + diskFree +
-        ", diskAlarmActive=" + diskAlarmActive +
-        ", diskFreeDetails=" + diskFreeDetails +
-        ", ioReadAvgTime=" + ioReadAvgTime +
-        ", ioReadAvgTimeDetails=" + ioReadAvgTimeDetails +
-        ", erlangProcessesUsed=" + erlangProcessesUsed +
-        ", erlangProcessesTotal=" + erlangProcessesTotal +
-        ", statisticsLevel='" + statisticsLevel + '\'' +
-        ", uptime=" + uptime +
-        ", erlangRunQueueLength=" + erlangRunQueueLength +
-        ", numberOfProcessors=" + numberOfProcessors +
-        ", osPid='" + osPid + '\'' +
-        ", exchangeTypes=" + exchangeTypes +
-        ", authMechanisms=" + authMechanisms +
-        ", erlangApps=" + erlangApps +
-        ", pluginContexts=" + pluginContexts +
-        '}';
-  }
 }
