@@ -56,6 +56,45 @@ public class ConnectionInfo {
   @JsonProperty("client_properties")
   private ClientProperties clientProperties;
 
+  @Override
+  public String toString() {
+    return "ConnectionInfo{" +
+        "name='" + name + '\'' +
+        ", node='" + node + '\'' +
+        ", type='" + type + '\'' +
+        ", channels=" + channels +
+        ", state='" + state + '\'' +
+        ", user='" + user + '\'' +
+        ", vhost='" + vhost + '\'' +
+        ", protocol='" + protocol + '\'' +
+        ", port=" + port +
+        ", peerPort=" + peerPort +
+        ", host='" + host + '\'' +
+        ", peerHost='" + peerHost + '\'' +
+        ", frameMax=" + frameMax +
+        ", channelMax=" + channelMax +
+        ", heartbeatTimeout=" + heartbeatTimeout +
+        ", octetsReceived=" + octetsReceived +
+        ", octetsReceivedDetails=" + octetsReceivedDetails +
+        ", octetsSent=" + octetsSent +
+        ", octetsSentDetails=" + octetsSentDetails +
+        ", usesTLS=" + usesTLS +
+        ", peerCertificateSubject='" + peerCertificateSubject + '\'' +
+        ", peerCertificateIssuer='" + peerCertificateIssuer + '\'' +
+        ", peerCertificateValidity='" + peerCertificateValidity + '\'' +
+        ", authMechanism='" + authMechanism + '\'' +
+        ", sslProtocol='" + sslProtocol + '\'' +
+        ", sslKeyExchange='" + sslKeyExchange + '\'' +
+        ", sslCipher='" + sslCipher + '\'' +
+        ", sslHash='" + sslHash + '\'' +
+        ", clientProperties=" + clientProperties +
+        ", connectedAt=" + connectedAt +
+        '}';
+  }
+
+  @JsonProperty("connected_at")
+  private long connectedAt;
+
   public String getName() {
     return name;
   }
@@ -288,38 +327,12 @@ public class ConnectionInfo {
     this.heartbeatTimeout = heartbeatTimeout;
   }
 
-  @Override
-  public String toString() {
-    return "ConnectionInfo{" +
-        "name='" + name + '\'' +
-        ", node='" + node + '\'' +
-        ", type='" + type + '\'' +
-        ", channels=" + channels +
-        ", state='" + state + '\'' +
-        ", user='" + user + '\'' +
-        ", vhost='" + vhost + '\'' +
-        ", protocol='" + protocol + '\'' +
-        ", port=" + port +
-        ", peerPort=" + peerPort +
-        ", host='" + host + '\'' +
-        ", peerHost='" + peerHost + '\'' +
-        ", frameMax=" + frameMax +
-        ", channelMax=" + channelMax +
-        ", heartbeatTimeout=" + heartbeatTimeout +
-        ", octetsReceived=" + octetsReceived +
-        ", octetsReceivedDetails=" + octetsReceivedDetails +
-        ", octetsSent=" + octetsSent +
-        ", octetsSentDetails=" + octetsSentDetails +
-        ", usesTLS=" + usesTLS +
-        ", peerCertificateSubject='" + peerCertificateSubject + '\'' +
-        ", peerCertificateIssuer='" + peerCertificateIssuer + '\'' +
-        ", peerCertificateValidity='" + peerCertificateValidity + '\'' +
-        ", authMechanism='" + authMechanism + '\'' +
-        ", sslProtocol='" + sslProtocol + '\'' +
-        ", sslKeyExchange='" + sslKeyExchange + '\'' +
-        ", sslCipher='" + sslCipher + '\'' +
-        ", sslHash='" + sslHash + '\'' +
-        ", clientProperties=" + clientProperties +
-        '}';
+  public long getConnectedAt() {
+    return connectedAt;
   }
+
+  public void setConnectedAt(long connectedAt) {
+    this.connectedAt = connectedAt;
+  }
+
 }
