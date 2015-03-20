@@ -5,8 +5,8 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.util.List;
 
-// TODO: deserialize partitions
-@JsonIgnoreProperties({"partitions"})
+// TODO
+@JsonIgnoreProperties({"partitions", "cluster_links"})
 @SuppressWarnings("unused")
 public class NodeInfo {
   private static final String DISK_TYPE = "disc";
@@ -19,11 +19,15 @@ public class NodeInfo {
   private int fileDescriptorsUsed;
   @JsonProperty("fd_total")
   private int fileDescriptorsTotal;
+  @JsonProperty("fd_used_details")
+  private RateDetails fdUsedDetails;
 
   @JsonProperty("sockets_used")
   private int socketsUsed;
   @JsonProperty("sockets_total")
   private int socketsTotal;
+  @JsonProperty("sockets_used_details")
+  private RateDetails socketsUsedDetails;
 
   @JsonProperty("mem_used")
   private long memoryUsed;
@@ -31,6 +35,8 @@ public class NodeInfo {
   private long memoryLimit;
   @JsonProperty("mem_alarm")
   private boolean memoryAlarmActive;
+  @JsonProperty("mem_used_details")
+  private RateDetails memoryUsedDetails;
 
   @JsonProperty("disk_free_limit")
   private long diskFreeLimit;
@@ -38,14 +44,61 @@ public class NodeInfo {
   private long diskFree;
   @JsonProperty("disk_free_alarm")
   private boolean diskAlarmActive;
+  @JsonProperty("disk_free_details")
+  private RateDetails diskFreeDetails;
+
+  @JsonProperty("io_read_avg_time")
+  private long ioReadAvgTime;
+  @JsonProperty("io_read_avg_time_details")
+  private RateDetails ioReadAvgTimeDetails;
+
+  @JsonProperty("io_write_avg_time")
+  private long ioWriteAvgTime;
+  @JsonProperty("io_write_avg_time_details")
+  private RateDetails ioWriteAvgTimeDetails;
+
+  @JsonProperty("io_sync_avg_time")
+  private long ioSyncAvgTime;
+  @JsonProperty("io_sync_avg_time_details")
+  private RateDetails ioSyncAvgTimeDetails;
+
+  @JsonProperty("mnesia_disk_tx_count")
+  private long mnesiaDiskTransactionsCount;
+  @JsonProperty("mnesia_disk_tx_count_details")
+  private RateDetails mnesiaDiskTransactionCountDetails;
+
+  @JsonProperty("mnesia_ram_tx_count")
+  private long mnesiaRamTransactionsCount;
+  @JsonProperty("mnesia_ram_tx_count_details")
+  private RateDetails mnesiaRamTransactionCountDetails;
 
   @JsonProperty("proc_used")
   private int erlangProcessesUsed;
   @JsonProperty("proc_total")
   private int erlangProcessesTotal;
+  @JsonProperty("proc_used_details")
+  private RateDetails erlangProcessesUsedDetails;
 
   @JsonProperty("statistics_level")
   private String statisticsLevel;
+  @JsonProperty("rates_mode")
+  private String ratesMode;
+
+  @JsonProperty("log_file")
+  private String logFilePath;
+  @JsonProperty("sasl_log_file")
+  private String saslLogFilePath;
+
+  @JsonProperty("db_dir")
+  private String dbDirectoryPath;
+  @JsonProperty("config_files")
+  private List<String> configFilePaths;
+
+  @JsonProperty("net_ticktime")
+  private long netTicktime;
+
+  @JsonProperty("enabled_plugins")
+  private List<String> enabledPlugins;
 
   private int uptime;
   @JsonProperty("run_queue")
@@ -261,6 +314,182 @@ public class NodeInfo {
     return this.type.equals(DISK_TYPE);
   }
 
+  public RateDetails getDiskFreeDetails() {
+    return diskFreeDetails;
+  }
+
+  public void setDiskFreeDetails(RateDetails diskFreeDetails) {
+    this.diskFreeDetails = diskFreeDetails;
+  }
+
+  public RateDetails getFdUsedDetails() {
+    return fdUsedDetails;
+  }
+
+  public void setFdUsedDetails(RateDetails fdUsedDetails) {
+    this.fdUsedDetails = fdUsedDetails;
+  }
+
+  public long getIoReadAvgTime() {
+    return ioReadAvgTime;
+  }
+
+  public void setIoReadAvgTime(long ioReadAvgTime) {
+    this.ioReadAvgTime = ioReadAvgTime;
+  }
+
+  public RateDetails getIoReadAvgTimeDetails() {
+    return ioReadAvgTimeDetails;
+  }
+
+  public void setIoReadAvgTimeDetails(RateDetails ioReadAvgTimeDetails) {
+    this.ioReadAvgTimeDetails = ioReadAvgTimeDetails;
+  }
+
+  public long getIoWriteAvgTime() {
+    return ioWriteAvgTime;
+  }
+
+  public void setIoWriteAvgTime(long ioWriteAvgTime) {
+    this.ioWriteAvgTime = ioWriteAvgTime;
+  }
+
+  public RateDetails getIoWriteAvgTimeDetails() {
+    return ioWriteAvgTimeDetails;
+  }
+
+  public void setIoWriteAvgTimeDetails(RateDetails ioWriteAvgTimeDetails) {
+    this.ioWriteAvgTimeDetails = ioWriteAvgTimeDetails;
+  }
+
+  public long getIoSyncAvgTime() {
+    return ioSyncAvgTime;
+  }
+
+  public void setIoSyncAvgTime(long ioSyncAvgTime) {
+    this.ioSyncAvgTime = ioSyncAvgTime;
+  }
+
+  public RateDetails getIoSyncAvgTimeDetails() {
+    return ioSyncAvgTimeDetails;
+  }
+
+  public void setIoSyncAvgTimeDetails(RateDetails ioSyncAvgTimeDetails) {
+    this.ioSyncAvgTimeDetails = ioSyncAvgTimeDetails;
+  }
+
+  public RateDetails getMemoryUsedDetails() {
+    return memoryUsedDetails;
+  }
+
+  public void setMemoryUsedDetails(RateDetails memoryUsedDetails) {
+    this.memoryUsedDetails = memoryUsedDetails;
+  }
+
+  public long getMnesiaDiskTransactionsCount() {
+    return mnesiaDiskTransactionsCount;
+  }
+
+  public void setMnesiaDiskTransactionsCount(long mnesiaDiskTransactionsCount) {
+    this.mnesiaDiskTransactionsCount = mnesiaDiskTransactionsCount;
+  }
+
+  public RateDetails getMnesiaDiskTransactionCountDetails() {
+    return mnesiaDiskTransactionCountDetails;
+  }
+
+  public void setMnesiaDiskTransactionCountDetails(RateDetails mnesiaDiskTransactionCountDetails) {
+    this.mnesiaDiskTransactionCountDetails = mnesiaDiskTransactionCountDetails;
+  }
+
+  public long getMnesiaRamTransactionsCount() {
+    return mnesiaRamTransactionsCount;
+  }
+
+  public void setMnesiaRamTransactionsCount(long mnesiaRamTransactionsCount) {
+    this.mnesiaRamTransactionsCount = mnesiaRamTransactionsCount;
+  }
+
+  public RateDetails getMnesiaRamTransactionCountDetails() {
+    return mnesiaRamTransactionCountDetails;
+  }
+
+  public void setMnesiaRamTransactionCountDetails(RateDetails mnesiaRamTransactionCountDetails) {
+    this.mnesiaRamTransactionCountDetails = mnesiaRamTransactionCountDetails;
+  }
+
+  public RateDetails getErlangProcessesUsedDetails() {
+    return erlangProcessesUsedDetails;
+  }
+
+  public void setErlangProcessesUsedDetails(RateDetails erlangProcessesUsedDetails) {
+    this.erlangProcessesUsedDetails = erlangProcessesUsedDetails;
+  }
+
+  public RateDetails getSocketsUsedDetails() {
+    return socketsUsedDetails;
+  }
+
+  public void setSocketsUsedDetails(RateDetails socketsUsedDetails) {
+    this.socketsUsedDetails = socketsUsedDetails;
+  }
+
+  public String getRatesMode() {
+    return ratesMode;
+  }
+
+  public void setRatesMode(String ratesMode) {
+    this.ratesMode = ratesMode;
+  }
+
+  public String getLogFilePath() {
+    return logFilePath;
+  }
+
+  public void setLogFilePath(String logFilePath) {
+    this.logFilePath = logFilePath;
+  }
+
+  public String getSaslLogFilePath() {
+    return saslLogFilePath;
+  }
+
+  public void setSaslLogFilePath(String saslLogFilePath) {
+    this.saslLogFilePath = saslLogFilePath;
+  }
+
+  public String getDbDirectoryPath() {
+    return dbDirectoryPath;
+  }
+
+  public void setDbDirectoryPath(String dbDirectoryPath) {
+    this.dbDirectoryPath = dbDirectoryPath;
+  }
+
+  public List<String> getConfigFilePaths() {
+    return configFilePaths;
+  }
+
+  public void setConfigFilePaths(List<String> configFilePaths) {
+    this.configFilePaths = configFilePaths;
+  }
+
+  public long getNetTicktime() {
+    return netTicktime;
+  }
+
+  public void setNetTicktime(long netTicktime) {
+    this.netTicktime = netTicktime;
+  }
+
+  public List<String> getEnabledPlugins() {
+    return enabledPlugins;
+  }
+
+  public void setEnabledPlugins(List<String> enabledPlugins) {
+    this.enabledPlugins = enabledPlugins;
+  }
+
   @Override
   public String toString() {
     return "NodeInfo{" +
@@ -269,6 +498,7 @@ public class NodeInfo {
         ", running=" + running +
         ", fileDescriptorsUsed=" + fileDescriptorsUsed +
         ", fileDescriptorsTotal=" + fileDescriptorsTotal +
+        ", fdUsedDetails=" + fdUsedDetails +
         ", socketsUsed=" + socketsUsed +
         ", socketsTotal=" + socketsTotal +
         ", memoryUsed=" + memoryUsed +
@@ -277,6 +507,9 @@ public class NodeInfo {
         ", diskFreeLimit=" + diskFreeLimit +
         ", diskFree=" + diskFree +
         ", diskAlarmActive=" + diskAlarmActive +
+        ", diskFreeDetails=" + diskFreeDetails +
+        ", ioReadAvgTime=" + ioReadAvgTime +
+        ", ioReadAvgTimeDetails=" + ioReadAvgTimeDetails +
         ", erlangProcessesUsed=" + erlangProcessesUsed +
         ", erlangProcessesTotal=" + erlangProcessesTotal +
         ", statisticsLevel='" + statisticsLevel + '\'' +
