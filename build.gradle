@@ -24,7 +24,7 @@ dependencies {
 task pom << {
   pom {
     project {
-      groupId 'com.novemberain.hop'
+      groupId 'com.rabbitmq.hop'
       artifactId 'hop'
       version version
 

@@ -39,9 +39,9 @@ The most recent release is
 
 ``` xml
 <dependency>
-  <groupId>com.novemberain.hop</groupId>
+  <groupId>com.rabbitmq.hop</groupId>
   <artifactId>hop</artifactId>
-  <version>1.0.0-beta3</version>
+  <version>1.0.0-beta4-SNAPSHOT</version>
 </dependency>
 ```
 
@@ -57,10 +57,10 @@ repositories {
 }
 ```
 
-The most recent release is
+Current (unpublished) snapshot release is
 
 ``` groovy
-compile "com.novemberain.hop:hop:1.0.0-beta3"
+compile "com.rabbitmq.hop:hop:1.0.0-beta4-SNAPSHOT"
 ```
 
 
@@ -69,11 +69,11 @@ compile "com.novemberain.hop:hop:1.0.0-beta3"
 ### Instantiating a Client
 
 Hop faithfully follows RabbitMQ HTTP API conventions in its API. You interact with the server
-using a single class, `com.novemberain.hop.client.Client`, which needs an API endpoint and
+using a single class, `Client`, which needs an API endpoint and
 a pair of credentials to be instantiated:
 
 ``` java
-import com.novemberain.hop.client.Client;
+import com.rabbitmq.hop.Client;
 
 Client c = new Client("http://127.0.0.1:15672/api/", "guest", "guest");
 ```
