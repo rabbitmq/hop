@@ -1,6 +1,6 @@
 # Hop, Java Client for the RabbitMQ HTTP API
 
-Hop is a Java client for the [RabbitMQ HTTP API](http://hg.rabbitmq.com/rabbitmq-management/raw-file/rabbitmq_v3_3_5/priv/www/api/index.html).
+Hop is a Java client for the [RabbitMQ HTTP API](https://raw.githack.com/rabbitmq/rabbitmq-management/rabbitmq_v3_5_0/priv/www/api/index.html).
 
 
 ## Polyglot
