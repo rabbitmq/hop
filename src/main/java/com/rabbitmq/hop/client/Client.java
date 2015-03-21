@@ -191,6 +191,11 @@ public class Client {
     return asListOrNull(result);
   }
 
+  public UserPermissions getPermissions(String vhost, String username) {
+    final URI uri = uriWithPath("./permissions/" + encodePathSegment(vhost) + "/" + encodePathSegment(username));
+    return this.getForObjectReturningNullOn404(uri, UserPermissions.class);
+  }
+
   public List<ExchangeInfo> getExchanges() {
     final URI uri = uriWithPath("./exchanges/");
     return Arrays.asList(this.rt.getForObject(uri, ExchangeInfo[].class));

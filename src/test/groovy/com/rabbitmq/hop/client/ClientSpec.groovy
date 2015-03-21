@@ -478,12 +478,38 @@ class ClientSpec extends Specification {
     final xs = client.getPermissions()
 
     then: "they include permissions for user guest in vhost /"
-    UserPermissions x = xs.find { it.vhost.equals("/") && it.user.equals("guest") }
+    final UserPermissions x = xs.find { it.vhost.equals("/") && it.user.equals("guest") }
     x.read == ".*"
   }
 
-  def "GET /api/permissions/:vhost/:user"() {
-    // TODO
+  def "GET /api/permissions/:vhost/:user when both vhost and user exist"() {
+    when: "permissions of user guest in vhost / are listed"
+    final u = "guest"
+    final v = "/"
+    final UserPermissions x = client.getPermissions(v, u)
+
+    then: "a single permissions object is returned"
+    x.read == ".*"
+  }
+
+  def "GET /api/permissions/:vhost/:user when vhost DOES NOT exist"() {
+    when: "permissions of user guest in vhost lolwut are listed"
+    final u = "guest"
+    final v = "lolwut"
+    final UserPermissions x = client.getPermissions(v, u)
+
+    then: "null is returned"
+    x == null
+  }
+
+  def "GET /api/permissions/:vhost/:user when username DOES NOT exist"() {
+    when: "permissions of user lolwut in vhost / are listed"
+    final u = "lolwut"
+    final v = "/"
+    final UserPermissions x = client.getPermissions(v, u)
+
+    then: "null is returned"
+    x == null
   }
 
   def "PUT /api/permissions/:vhost/:user"() {
