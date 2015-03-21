@@ -453,6 +453,16 @@ class ClientSpec extends Specification {
     x.read == ".*"
   }
 
+  def "GET /api/users/:name/permissions when users DOES NOT exist"() {
+    when: "permissions for user trololowut are listed"
+    final s = "trololowut"
+    final xs = client.getPermissionsOf(s)
+
+    then: "method returns null"
+    xs == null
+  }
+
+
   def "GET /api/whoami"() {
     when: "client retrieves active name authentication details"
     final res = client.whoAmI()
