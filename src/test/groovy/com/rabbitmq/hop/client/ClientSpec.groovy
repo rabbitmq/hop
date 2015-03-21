@@ -473,7 +473,13 @@ class ClientSpec extends Specification {
   }
 
   def "GET /api/permissions"() {
-    // TODO
+    when: "all permissions are listed"
+    final s = "guest"
+    final xs = client.getPermissions()
+
+    then: "they include permissions for user guest in vhost /"
+    UserPermissions x = xs.find { it.vhost.equals("/") && it.user.equals("guest") }
+    x.read == ".*"
   }
 
   def "GET /api/permissions/:vhost/:user"() {
