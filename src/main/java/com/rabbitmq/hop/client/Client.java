@@ -173,6 +173,13 @@ public class Client {
     deleteIgnoring404(uri);
   }
 
+  public List<UserPermissions> getPermissions(String vhost) {
+    final URI uri = uriWithPath("./vhosts/" + encodePathSegment(vhost) + "/permissions");
+    UserPermissions[] result = this.getForObjectReturningNullOn404(uri, UserPermissions[].class);
+    return asListOrNull(result);
+
+  }
+
   public List<ExchangeInfo> getExchanges() {
     final URI uri = uriWithPath("./exchanges/");
     return Arrays.asList(this.rt.getForObject(uri, ExchangeInfo[].class));
@@ -274,6 +281,14 @@ public class Client {
       if(!(ce.getStatusCode() == HttpStatus.NOT_FOUND)) {
         throw ce;
       }
+    }
+  }
+
+  private <T> List<T> asListOrNull(T[] result) {
+    if(result == null) {
+      return null;
+    } else {
+      return Arrays.asList(result);
     }
   }
 }

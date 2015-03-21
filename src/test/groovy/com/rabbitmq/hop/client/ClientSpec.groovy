@@ -408,8 +408,23 @@ class ClientSpec extends Specification {
     client.getVhost(s) == null
   }
 
-  def "GET /api/vhosts/:name/permissions"() {
-    // TODO
+  def "GET /api/vhosts/:name/permissions when vhost exists"() {
+    when: "permissions for vhost / are listed"
+    final s = "/"
+    final xs = client.getPermissions(s)
+
+    then: "they include permissions for at least one user"
+    UserPermissions x = xs.find { it.user.equals("guest") }
+    x.read == ".*"
+  }
+
+  def "GET /api/vhosts/:name/permissions when vhost DOES NOT exist"() {
+    when: "permissions for vhost trololowut are listed"
+    final s = "trololowut"
+    final xs = client.getPermissions(s)
+
+    then: "method returns null"
+    xs == null
   }
 
   def "GET /api/users"() {
