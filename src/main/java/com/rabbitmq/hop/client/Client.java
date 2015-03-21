@@ -10,10 +10,12 @@ import org.apache.http.client.HttpClient;
 import org.apache.http.impl.client.BasicCredentialsProvider;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.message.BasicHeader;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.client.ClientHttpRequestFactory;
 import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 import org.springframework.http.converter.HttpMessageConverter;
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
+import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 
 import java.net.*;
@@ -158,7 +160,7 @@ public class Client {
 
   public VhostInfo getVhost(String name) {
     final URI uri = uriWithPath("./vhosts/" + encodePathSegment(name));
-    return this.rt.getForObject(uri, VhostInfo.class);
+    return getForObjectReturningNullOn404(uri, VhostInfo.class);
   }
 
   public void createVhost(String name) throws JsonProcessingException {
@@ -222,12 +224,12 @@ public class Client {
    * @param path The path after /api/
    * @return resolved URI
    */
-  private URI uriWithPath(String path) {
+  private URI uriWithPath(final String path) {
     return this.rootUri.resolve(path);
   }
 
   @SuppressWarnings("deprecation")
-  private String encodePathSegment(String vhost) {
+  private String encodePathSegment(final String vhost) {
     return URLEncoder.encode(vhost);
   }
 
@@ -237,7 +239,7 @@ public class Client {
     return xs;
   }
 
-  private ClientHttpRequestFactory getRequestFactory(URL url, String username, String password) throws MalformedURLException {
+  private ClientHttpRequestFactory getRequestFactory(final URL url, final String username, final String password) throws MalformedURLException {
     final HttpClientBuilder bldr = HttpClientBuilder.create().
         setDefaultCredentialsProvider(getCredentialsProvider(url, username, password));
     bldr.setDefaultHeaders(Arrays.asList(new BasicHeader(HttpHeaders.CONTENT_TYPE, "application/json")));
@@ -245,11 +247,23 @@ public class Client {
     return new HttpComponentsClientHttpRequestFactory(httpClient);
   }
 
-  private CredentialsProvider getCredentialsProvider(URL url, String username, String password) {
+  private CredentialsProvider getCredentialsProvider(final URL url, final String username, final String password) {
     CredentialsProvider cp = new BasicCredentialsProvider();
     cp.setCredentials(new AuthScope(url.getHost(), url.getPort()),
         new UsernamePasswordCredentials(username, password));
 
     return cp;
+  }
+
+  private <T> T getForObjectReturningNullOn404(final URI uri, final Class<T> klass) {
+    try {
+      return this.rt.getForObject(uri, klass);
+    } catch (final HttpClientErrorException ce) {
+      if(ce.getStatusCode() == HttpStatus.NOT_FOUND) {
+        return null;
+      } else {
+        throw ce;
+      }
+    }
   }
 }

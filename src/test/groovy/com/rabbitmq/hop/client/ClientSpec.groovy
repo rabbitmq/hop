@@ -205,55 +205,6 @@ class ClientSpec extends Specification {
     }
   }
 
-  def "GET /api/vhosts"() {
-    when: "client retrieves a list of vhosts"
-    final vhs = client.getVhosts()
-    final vhi = vhs.first()
-
-    then: "the info is returned"
-    verifyVhost(vhi)
-  }
-
-  def "GET /api/vhosts/{name}"() {
-    when: "client retrieves vhost info"
-    final vhi = client.getVhost("/")
-
-    then: "the info is returned"
-    verifyVhost(vhi)
-  }
-
-  def "PUT /api/vhosts/{name}"(String name) {
-    when:
-    "client creates a vhost named $name"
-    client.createVhost(name)
-    final vhi = client.getVhost(name)
-
-    then: "the vhost is created"
-    vhi.name == name
-
-    cleanup:
-    client.deleteVhost(name)
-
-    where:
-    name << [
-        "http-created",
-        "http-created2",
-        "http_created",
-        "http created",
-        "создан по хатэтэпэ",
-        "creado a través de HTTP",
-        "通过http",
-        "HTTP를 통해 생성",
-        "HTTPを介して作成",
-        "created over http?",
-        "created @ http API",
-        "erstellt über http",
-        "http पर बनाया",
-        "ถูกสร้างขึ้นผ่าน HTTP",
-        "±!@^&#*"
-    ]
-  }
-
   def "GET /api/exchanges"() {
     when: "client retrieves the list of exchanges across all vhosts"
     final xs = client.getExchanges()
@@ -316,7 +267,6 @@ class ClientSpec extends Specification {
     final xs = client.getBindingsByDestination("/", dest);
 
     then: "there is a binding for hop.exchange1"
-    println(xs)
     final x = xs.find { it.source == src && it.destinationType == "exchange" && it.destination == dest }
     x != null
 
@@ -386,19 +336,64 @@ class ClientSpec extends Specification {
   }
 
   def "GET /api/vhosts"() {
-    // TODO
+    when: "client retrieves a list of vhosts"
+    final vhs = client.getVhosts()
+    final vhi = vhs.first()
+
+    then: "the info is returned"
+    verifyVhost(vhi)
   }
 
-  def "GET /api/vhosts/:name"() {
-    // TODO
+  def "GET /api/vhosts/{name}"() {
+    when: "client retrieves vhost info"
+    final vhi = client.getVhost("/")
+
+    then: "the info is returned"
+    verifyVhost(vhi)
   }
 
-  def "PUT /api/vhosts/:name"() {
-    // TODO
+  def "PUT /api/vhosts/{name}"(String name) {
+    when:
+    "client creates a vhost named $name"
+    client.createVhost(name)
+    final vhi = client.getVhost(name)
+
+    then: "the vhost is created"
+    vhi.name == name
+
+    cleanup:
+    client.deleteVhost(name)
+
+    where:
+    name << [
+        "http-created",
+        "http-created2",
+        "http_created",
+        "http created",
+        "создан по хатэтэпэ",
+        "creado a través de HTTP",
+        "通过http",
+        "HTTP를 통해 생성",
+        "HTTPを介して作成",
+        "created over http?",
+        "created @ http API",
+        "erstellt über http",
+        "http पर बनाया",
+        "ถูกสร้างขึ้นผ่าน HTTP",
+        "±!@^&#*"
+    ]
   }
 
   def "DELETE /api/vhosts/:name"() {
-    // TODO
+    given: "a vhost named hop-test-to-be-deleted"
+    final s = "hop-test-to-be-deleted"
+    client.createVhost(s)
+
+    when: "the vhost is deleted"
+    client.deleteVhost(s)
+
+    then: "it no longer exists"
+    client.getVhost(s) == null
   }
 
   def "GET /api/vhosts/:name/permissions"() {
