@@ -411,9 +411,9 @@ class ClientSpec extends Specification {
   def "GET /api/vhosts/:name/permissions when vhost exists"() {
     when: "permissions for vhost / are listed"
     final s = "/"
-    final xs = client.getPermissions(s)
+    final xs = client.getPermissionsIn(s)
 
-    then: "they include permissions for at least one user"
+    then: "they include permissions for the guest user"
     UserPermissions x = xs.find { it.user.equals("guest") }
     x.read == ".*"
   }
@@ -421,7 +421,7 @@ class ClientSpec extends Specification {
   def "GET /api/vhosts/:name/permissions when vhost DOES NOT exist"() {
     when: "permissions for vhost trololowut are listed"
     final s = "trololowut"
-    final xs = client.getPermissions(s)
+    final xs = client.getPermissionsIn(s)
 
     then: "method returns null"
     xs == null
@@ -443,8 +443,14 @@ class ClientSpec extends Specification {
     // TODO
   }
 
-  def "GET /api/users/:name/permissions"() {
-    // TODO
+  def "GET /api/users/:name/permissions when user exists"() {
+    when: "permissions for user guest are listed"
+    final s = "guest"
+    final xs = client.getPermissionsOf(s)
+
+    then: "they include permissions for the / vhost"
+    UserPermissions x = xs.find { it.vhost.equals("/") }
+    x.read == ".*"
   }
 
   def "GET /api/whoami"() {

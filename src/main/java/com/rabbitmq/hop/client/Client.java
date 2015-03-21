@@ -173,11 +173,16 @@ public class Client {
     deleteIgnoring404(uri);
   }
 
-  public List<UserPermissions> getPermissions(String vhost) {
+  public List<UserPermissions> getPermissionsIn(String vhost) {
     final URI uri = uriWithPath("./vhosts/" + encodePathSegment(vhost) + "/permissions");
     UserPermissions[] result = this.getForObjectReturningNullOn404(uri, UserPermissions[].class);
     return asListOrNull(result);
+  }
 
+  public List<UserPermissions> getPermissionsOf(String username) {
+    final URI uri = uriWithPath("./users/" + encodePathSegment(username) + "/permissions");
+    UserPermissions[] result = this.getForObjectReturningNullOn404(uri, UserPermissions[].class);
+    return asListOrNull(result);
   }
 
   public List<ExchangeInfo> getExchanges() {
