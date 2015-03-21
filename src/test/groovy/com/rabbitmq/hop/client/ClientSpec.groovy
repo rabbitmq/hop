@@ -70,23 +70,6 @@ class ClientSpec extends Specification {
     }
   }
 
-  def "GET /api/aliveness-test/{vhost}"() {
-    when: "client performs aliveness check for the / vhost"
-    final hasSucceeded = client.alivenessTest("/")
-
-    then: "the check succeeds"
-    hasSucceeded
-  }
-
-  def "GET /api/whoami"() {
-    when: "client retrieves active name authentication details"
-    final res = client.whoAmI()
-
-    then: "the details are returned"
-    res.name == DEFAULT_USERNAME
-    res.tags ==~ /administrator/
-  }
-
   def "GET /api/nodes"() {
     when: "client retrieves a list of cluster nodes"
     final res = client.getNodes()
@@ -289,6 +272,18 @@ class ClientSpec extends Specification {
     verifyExchangeInfo(x)
   }
 
+  def "PUT /api/exchanges/:vhost/:name"() {
+    // TODO
+  }
+
+  def "DELETE /api/exchanges/:vhost/:name"() {
+    // TODO
+  }
+
+  def "POST /api/exchanges/:vhost/:name/publish"() {
+    // TODO
+  }
+
   def "GET /api/exchanges/{vhost}/{name}/bindings/source"() {
     given: "a queue named hop.queue1"
     final conn = openConnection()
@@ -328,6 +323,151 @@ class ClientSpec extends Specification {
     cleanup:
     ch.exchangeDelete(dest);
     conn.close()
+  }
+
+  def "GET /api/queues when the queue exists"() {
+    // TODO
+  }
+
+  def "GET /api/queues when the queue DOES NOT exist"() {
+    // TODO
+  }
+
+  def "GET /api/queues/:vhost"() {
+    // TODO
+  }
+
+  def "GET /api/queues/:vhost/:name"() {
+    // TODO
+  }
+
+  def "PUT /api/queues/:vhost/:name"() {
+    // TODO
+  }
+
+  def "DELETE /api/queues/:vhost/:name"() {
+    // TODO
+  }
+
+  def "GET /api/queues/:vhost/:name/bindings"() {
+    // TODO
+  }
+
+  def "DELETE /api/queues/:vhost/:name/contents"() {
+    // TODO
+  }
+
+  def "POST /api/queues/:vhost/:name/get"() {
+    // TODO
+  }
+
+  def "GET /api/bindings"() {
+    // TODO
+  }
+
+  def "GET /api/bindings/:vhost"() {
+    // TODO
+  }
+
+  def "GET /api/bindings/:vhost/e/:exchange/q/:queue"() {
+    // TODO
+  }
+
+  def "POST /api/bindings/:vhost/e/:exchange/q/:queue"() {
+    // TODO
+  }
+
+  def "GET /api/bindings/:vhost/e/:exchange/q/:queue/props"() {
+    // TODO
+  }
+
+  def "DELETE /api/bindings/:vhost/e/:exchange/q/:queue/props"() {
+    // TODO
+  }
+
+  def "GET /api/vhosts"() {
+    // TODO
+  }
+
+  def "GET /api/vhosts/:name"() {
+    // TODO
+  }
+
+  def "PUT /api/vhosts/:name"() {
+    // TODO
+  }
+
+  def "DELETE /api/vhosts/:name"() {
+    // TODO
+  }
+
+  def "GET /api/vhosts/:name/permissions"() {
+    // TODO
+  }
+
+  def "GET /api/users"() {
+    // TODO
+  }
+
+  def "GET /api/users/:name"() {
+    // TODO
+  }
+
+  def "PUT /api/users/:name"() {
+    // TODO
+  }
+
+  def "DELETE /api/users/:name"() {
+    // TODO
+  }
+
+  def "GET /api/users/:name/permissions"() {
+    // TODO
+  }
+
+  def "GET /api/whoami"() {
+    when: "client retrieves active name authentication details"
+    final res = client.whoAmI()
+
+    then: "the details are returned"
+    res.name == DEFAULT_USERNAME
+    res.tags ==~ /administrator/
+  }
+
+  def "GET /api/permissions"() {
+    // TODO
+  }
+
+  def "GET /api/permissions/:vhost/:user"() {
+    // TODO
+  }
+
+  def "PUT /api/permissions/:vhost/:user"() {
+    // TODO
+  }
+
+  def "DELETE /api/permissions/:vhost/:user"() {
+    // TODO
+  }
+
+  def "GET /api/parameters"() {
+    // TODO
+  }
+
+  def "GET /api/policies"() {
+    // TODO
+  }
+
+  def "GET /api/policies/:vhost"() {
+    // TODO
+  }
+
+  def "GET /api/aliveness-test/{vhost}"() {
+    when: "client performs aliveness check for the / vhost"
+    final hasSucceeded = client.alivenessTest("/")
+
+    then: "the check succeeds"
+    hasSucceeded
   }
 
   protected boolean awaitOn(CountDownLatch latch) {
