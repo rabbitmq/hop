@@ -4,19 +4,24 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 public class ExchangeMessageStats {
   @JsonProperty("publish_in")
-  private int publishIn;
+  private long publishIn;
   @JsonProperty("publish_in_details")
   private RateDetails publishInDetails;
   @JsonProperty("publish_out")
-  private int publishOut;
+  private long publishOut;
   @JsonProperty("publish_out_details")
   private RateDetails publishOutDetails;
 
-  public int getPublishIn() {
+  @JsonProperty("confirm")
+  private long confirm;
+  @JsonProperty("confirm_details")
+  private RateDetails confirmDetails;
+
+  public long getPublishIn() {
     return publishIn;
   }
 
-  public void setPublishIn(int publishIn) {
+  public void setPublishIn(long publishIn) {
     this.publishIn = publishIn;
   }
 
@@ -28,11 +33,11 @@ public class ExchangeMessageStats {
     this.publishInDetails = publishInDetails;
   }
 
-  public int getPublishOut() {
+  public long getPublishOut() {
     return publishOut;
   }
 
-  public void setPublishOut(int publishOut) {
+  public void setPublishOut(long publishOut) {
     this.publishOut = publishOut;
   }
 
@@ -42,5 +47,33 @@ public class ExchangeMessageStats {
 
   public void setPublishOutDetails(RateDetails publishOutDetails) {
     this.publishOutDetails = publishOutDetails;
+  }
+
+  @Override
+  public String toString() {
+    return "ExchangeMessageStats{" +
+        "publishIn=" + publishIn +
+        ", publishInDetails=" + publishInDetails +
+        ", publishOut=" + publishOut +
+        ", publishOutDetails=" + publishOutDetails +
+        ", confirm=" + confirm +
+        ", confirmDetails=" + confirmDetails +
+        '}';
+  }
+
+  public long getConfirm() {
+    return confirm;
+  }
+
+  public void setConfirm(long confirm) {
+    this.confirm = confirm;
+  }
+
+  public RateDetails getConfirmDetails() {
+    return confirmDetails;
+  }
+
+  public void setConfirmDetails(RateDetails confirmDetails) {
+    this.confirmDetails = confirmDetails;
   }
 }
