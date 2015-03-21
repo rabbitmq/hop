@@ -119,7 +119,7 @@ public class Client {
    */
   public void closeConnection(String name) {
     final URI uri = uriWithPath("./connections/" + encodePathSegment(name));
-    this.rt.delete(uri);
+    deleteIgnoring404(uri);
   }
 
   /**
@@ -170,7 +170,7 @@ public class Client {
 
   public void deleteVhost(String name) {
     final URI uri = uriWithPath("./vhosts/" + encodePathSegment(name));
-    this.rt.delete(uri);
+    deleteIgnoring404(uri);
   }
 
   public List<ExchangeInfo> getExchanges() {
@@ -262,6 +262,16 @@ public class Client {
       if(ce.getStatusCode() == HttpStatus.NOT_FOUND) {
         return null;
       } else {
+        throw ce;
+      }
+    }
+  }
+
+  private void deleteIgnoring404(URI uri) {
+    try {
+      this.rt.delete(uri);
+    } catch (final HttpClientErrorException ce) {
+      if(!(ce.getStatusCode() == HttpStatus.NOT_FOUND)) {
         throw ce;
       }
     }

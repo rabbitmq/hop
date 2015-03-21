@@ -384,7 +384,7 @@ class ClientSpec extends Specification {
     ]
   }
 
-  def "DELETE /api/vhosts/:name"() {
+  def "DELETE /api/vhosts/:name when vhost exists"() {
     given: "a vhost named hop-test-to-be-deleted"
     final s = "hop-test-to-be-deleted"
     client.createVhost(s)
@@ -393,6 +393,18 @@ class ClientSpec extends Specification {
     client.deleteVhost(s)
 
     then: "it no longer exists"
+    client.getVhost(s) == null
+  }
+
+  def "DELETE /api/vhosts/:name when vhost DOES NOT exist"() {
+    given: "no vhost named hop-test-to-be-deleted"
+    final s = "hop-test-to-be-deleted"
+    client.deleteVhost(s)
+
+    when: "the vhost is deleted"
+    client.deleteVhost(s)
+
+    then: "it is a no-op"
     client.getVhost(s) == null
   }
 
