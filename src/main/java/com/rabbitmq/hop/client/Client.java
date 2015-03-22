@@ -215,6 +215,11 @@ public class Client {
     return Arrays.asList(this.rt.getForObject(uri, UserInfo[].class));
   }
 
+  public UserInfo getUser(String username) {
+    final URI uri = uriWithPath("./users/" + encodePathSegment(username));
+    return this.getForObjectReturningNullOn404(uri, UserInfo.class);
+  }
+
   public void createUser(String username, char[] password, List<String> tags) {
     Map<String, Object> body = new HashMap<>();
     body.put("password", new String(password));

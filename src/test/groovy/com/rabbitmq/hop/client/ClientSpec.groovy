@@ -440,8 +440,22 @@ class ClientSpec extends Specification {
     x.tags.contains("administrator")
   }
 
-  def "GET /api/users/:name"() {
-    // TODO
+  def "GET /api/users/:name when user exists"() {
+    when: "user guest if fetched"
+    final x = client.getUser("guest")
+
+    then: "user info returned"
+    x.name == "guest"
+    x.passwordHash != null
+    x.tags.contains("administrator")
+  }
+
+  def "GET /api/users/:name when user DOES NOT exist"() {
+    when: "user lolwut if fetched"
+    final x = client.getUser("lolwut")
+
+    then: "null is returned"
+    x == null
   }
 
   def "PUT /api/users/:name"() {
