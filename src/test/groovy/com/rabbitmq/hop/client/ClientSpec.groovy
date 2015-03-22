@@ -688,6 +688,14 @@ class ClientSpec extends Specification {
     hasSucceeded
   }
 
+  def "GET /api/cluster-name"() {
+    // TODO
+  }
+
+  def "PUT /api/cluster-name"() {
+    // TODO
+  }
+
   protected boolean awaitOn(CountDownLatch latch) {
     latch.await(5, TimeUnit.SECONDS)
   }
