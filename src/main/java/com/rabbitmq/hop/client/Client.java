@@ -3,15 +3,21 @@ package com.rabbitmq.hop.client;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.rabbitmq.hop.client.domain.*;
 import org.apache.http.HttpHeaders;
+import org.apache.http.HttpHost;
 import org.apache.http.auth.AuthScope;
 import org.apache.http.auth.UsernamePasswordCredentials;
+import org.apache.http.client.AuthCache;
 import org.apache.http.client.CredentialsProvider;
 import org.apache.http.client.HttpClient;
+import org.apache.http.client.protocol.HttpClientContext;
+import org.apache.http.impl.auth.BasicScheme;
+import org.apache.http.impl.client.BasicAuthCache;
 import org.apache.http.impl.client.BasicCredentialsProvider;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.message.BasicHeader;
+import org.apache.http.protocol.HttpContext;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.client.ClientHttpRequestFactory;
 import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 import org.springframework.http.converter.HttpMessageConverter;
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
@@ -19,9 +25,7 @@ import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 
 import java.net.*;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
 
 public class Client {
   private final RestTemplate rt;
@@ -38,8 +42,8 @@ public class Client {
   public Client(URL url, String username, String password) throws MalformedURLException, URISyntaxException {
     this.rootUri = url.toURI();
 
-    this.rt = new RestTemplate(getMessageConverters());
-    this.rt.setRequestFactory(getRequestFactory(url, username, password));
+    this.rt = new RestTemplate(getRequestFactory(url, username, password));
+    this.rt.setMessageConverters(getMessageConverters());
   }
 
   /**
@@ -206,6 +210,24 @@ public class Client {
     return Arrays.asList(this.rt.getForObject(uri, ExchangeInfo[].class));
   }
 
+  public void createUser(String username, char[] password, List<String> tags) {
+    Map<String, Object> body = new HashMap<>();
+    body.put("password", new String(password));
+    body.put("tags", joinStrings(",", tags));
+
+    final URI uri = uriWithPath("./users/" + encodePathSegment(username));
+    this.rt.put(uri, body);
+  }
+
+  public void deleteUser(String username) {
+    this.deleteIgnoring404(uriWithPath("./users/" + encodePathSegment(username)));
+  }
+
+  public void updatePermissions(String username, String vhost, UserPermissions permissions) {
+    final URI uri = uriWithPath("./permissions/" + encodePathSegment(vhost) + "/" + encodePathSegment(username));
+    this.rt.put(uri, permissions);
+  }
+
   /**
    * Returns a list of bindings where provided exchange is the source (other things are
    * bound to it).
@@ -262,17 +284,30 @@ public class Client {
     return xs;
   }
 
-  private ClientHttpRequestFactory getRequestFactory(final URL url, final String username, final String password) throws MalformedURLException {
+  private HttpComponentsClientHttpRequestFactory getRequestFactory(final URL url, final String username, final String password) throws MalformedURLException {
     final HttpClientBuilder bldr = HttpClientBuilder.create().
         setDefaultCredentialsProvider(getCredentialsProvider(url, username, password));
     bldr.setDefaultHeaders(Arrays.asList(new BasicHeader(HttpHeaders.CONTENT_TYPE, "application/json")));
+
     HttpClient httpClient = bldr.build();
-    return new HttpComponentsClientHttpRequestFactory(httpClient);
+
+    // RabbitMQ HTTP API currently does not support challenge/response for PUT methods.
+    AuthCache authCache = new BasicAuthCache();
+    BasicScheme basicScheme = new BasicScheme();
+    authCache.put(new HttpHost(rootUri.getHost(), rootUri.getPort(), rootUri.getScheme()), basicScheme);
+    final HttpClientContext ctx = HttpClientContext.create();
+    ctx.setAuthCache(authCache);
+    return new HttpComponentsClientHttpRequestFactory(httpClient) {
+      @Override
+      protected HttpContext createHttpContext(HttpMethod httpMethod, URI uri) {
+        return ctx;
+      }
+    };
   }
 
   private CredentialsProvider getCredentialsProvider(final URL url, final String username, final String password) {
     CredentialsProvider cp = new BasicCredentialsProvider();
-    cp.setCredentials(new AuthScope(url.getHost(), url.getPort()),
+    cp.setCredentials(new AuthScope(AuthScope.ANY_HOST, AuthScope.ANY_PORT),
         new UsernamePasswordCredentials(username, password));
 
     return cp;
@@ -306,5 +341,19 @@ public class Client {
     } else {
       return Arrays.asList(result);
     }
+  }
+
+  private String joinStrings(String delimiter, List<String> tags) {
+    StringBuilder sb = new StringBuilder();
+    boolean appendedFirst = false;
+    for (String tag : tags) {
+      if(!appendedFirst) {
+        sb.append(tag);
+        appendedFirst = true;
+      } else {
+        sb.append(tag).append(delimiter);
+      }
+    }
+    return sb.toString();
   }
 }

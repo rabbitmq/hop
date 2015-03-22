@@ -2,6 +2,8 @@ package com.rabbitmq.hop.client
 
 import com.rabbitmq.client.*
 import com.rabbitmq.hop.client.domain.*
+import org.springframework.http.HttpStatus
+import org.springframework.web.client.HttpClientErrorException
 import spock.lang.Specification
 
 import java.util.concurrent.CountDownLatch
@@ -512,11 +514,50 @@ class ClientSpec extends Specification {
     x == null
   }
 
-  def "PUT /api/permissions/:vhost/:user"() {
-    // TODO
+  def "PUT /api/permissions/:vhost/:user when both user and vhost exist"() {
+    given: "vhost hop-vhost1 exists"
+    final v = "hop-vhost1"
+    client.createVhost(v)
+    and: "user hop-user1 exists"
+    final u = "hop-user1"
+    client.createUser(u, "test".toCharArray(), Arrays.asList("management", "http", "policymaker"))
+
+    when: "permissions of user guest in vhost / are updated"
+    client.updatePermissions(u, v, new UserPermissions("read", "write", "configure"))
+
+    and: "permissions are reloaded"
+    final UserPermissions x = client.getPermissions(v, u)
+
+    then: "a single permissions object is returned"
+    x.read == "read"
+    x.write == "write"
+    x.configure == "configure"
+
+    cleanup:
+    client.deleteVhost(v)
+    client.deleteUser(u)
   }
 
-  def "DELETE /api/permissions/:vhost/:user"() {
+  def "PUT /api/permissions/:vhost/:user when vhost DOES NOT exist"() {
+    given: "vhost hop-vhost1 DOES NOT exist"
+    final v = "hop-vhost1"
+    client.deleteVhost(v)
+    and: "user hop-user1 exists"
+    final u = "hop-user1"
+    client.createUser(u, "test".toCharArray(), Arrays.asList("management", "http", "policymaker"))
+
+    when: "permissions of user guest in vhost / are updated"
+    client.updatePermissions(u, v, new UserPermissions("read", "write", "configure"))
+
+    then: "an exception is thrown"
+    final e = thrown(HttpClientErrorException)
+    e.getStatusCode() == HttpStatus.BAD_REQUEST
+
+    cleanup:
+    client.deleteUser(u)
+  }
+
+  def "DELETE /api/permissions/:vhost/:user when both vhost and username exist"() {
     // TODO
   }
 

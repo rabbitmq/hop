@@ -10,6 +10,13 @@ public class UserPermissions {
   private String write;
   private String configure;
 
+  public UserPermissions() {}
+  public UserPermissions(String read, String write, String configure) {
+    this.read = read;
+    this.write = write;
+    this.configure = configure;
+  }
+
   public String getUser() {
     return user;
   }
@@ -48,6 +55,16 @@ public class UserPermissions {
 
   public void setConfigure(String configure) {
     this.configure = configure;
+  }
+
+  public static UserPermissions FULL = fullPermissions();
+
+  private static UserPermissions fullPermissions() {
+    UserPermissions p = new UserPermissions();
+    p.setConfigure(".*");
+    p.setRead(".*");
+    p.setWrite(".*");
+    return p;
   }
 
   @Override
