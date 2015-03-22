@@ -221,11 +221,20 @@ class ClientSpec extends Specification {
     final xs = client.getExchanges("/")
 
     then: "the list is returned"
-    final x = xs.find { it.name == "amq.fanout" }
+    final x = xs.find { it.name.equals("amq.fanout") }
     verifyExchangeInfo(x)
   }
+  
+  def "GET /api/exchanges/{vhost}/{name} when both vhost and exchange exist"() {
+    when: "client retrieves exchange amq.fanout in vhost /"
+    final xs = client.getExchange("/", "amq.fanout")
 
-  def "PUT /api/exchanges/:vhost/:name when vhost exists"() {
+    then: "exchange info is returned"
+    final ExchangeInfo x = (ExchangeInfo)xs.find { it.name.equals("amq.fanout") && it.vhost.equals("/") }
+    verifyExchangeInfo(x)
+  }  
+
+  def "PUT /api/exchanges/{vhost}/{name} when vhost exists"() {
     given: "fanout exchange hop.test in vhost /"
     final v = "/"
     final s = "hop.test"
@@ -243,7 +252,7 @@ class ClientSpec extends Specification {
     client.deleteExchange(v, s)
   }
 
-  def "DELETE /api/exchanges/:vhost/:name"() {
+  def "DELETE /api/exchanges/{vhost}/{name}"() {
     given: "fanout exchange hop.test in vhost /"
     final v = "/"
     final s = "hop.test"
@@ -264,7 +273,7 @@ class ClientSpec extends Specification {
     xs.find { it.name == s } == null
   }
 
-  def "POST /api/exchanges/:vhost/:name/publish"() {
+  def "POST /api/exchanges/{vhost}/{name}/publish"() {
     // TODO
   }
 
@@ -316,31 +325,31 @@ class ClientSpec extends Specification {
     // TODO
   }
 
-  def "GET /api/queues/:vhost"() {
+  def "GET /api/queues/{vhost}"() {
     // TODO
   }
 
-  def "GET /api/queues/:vhost/:name"() {
+  def "GET /api/queues/{vhost}/{name}"() {
     // TODO
   }
 
-  def "PUT /api/queues/:vhost/:name"() {
+  def "PUT /api/queues/{vhost}/{name}"() {
     // TODO
   }
 
-  def "DELETE /api/queues/:vhost/:name"() {
+  def "DELETE /api/queues/{vhost}/{name}"() {
     // TODO
   }
 
-  def "GET /api/queues/:vhost/:name/bindings"() {
+  def "GET /api/queues/{vhost}/{name}/bindings"() {
     // TODO
   }
 
-  def "DELETE /api/queues/:vhost/:name/contents"() {
+  def "DELETE /api/queues/{vhost}/{name}/contents"() {
     // TODO
   }
 
-  def "POST /api/queues/:vhost/:name/get"() {
+  def "POST /api/queues/{vhost}/{name}/get"() {
     // TODO
   }
 
@@ -348,23 +357,23 @@ class ClientSpec extends Specification {
     // TODO
   }
 
-  def "GET /api/bindings/:vhost"() {
+  def "GET /api/bindings/{vhost}"() {
     // TODO
   }
 
-  def "GET /api/bindings/:vhost/e/:exchange/q/:queue"() {
+  def "GET /api/bindings/{vhost}/e/:exchange/q/:queue"() {
     // TODO
   }
 
-  def "POST /api/bindings/:vhost/e/:exchange/q/:queue"() {
+  def "POST /api/bindings/{vhost}/e/:exchange/q/:queue"() {
     // TODO
   }
 
-  def "GET /api/bindings/:vhost/e/:exchange/q/:queue/props"() {
+  def "GET /api/bindings/{vhost}/e/:exchange/q/:queue/props"() {
     // TODO
   }
 
-  def "DELETE /api/bindings/:vhost/e/:exchange/q/:queue/props"() {
+  def "DELETE /api/bindings/{vhost}/e/:exchange/q/:queue/props"() {
     // TODO
   }
 
@@ -417,7 +426,7 @@ class ClientSpec extends Specification {
     ]
   }
 
-  def "DELETE /api/vhosts/:name when vhost exists"() {
+  def "DELETE /api/vhosts/{name} when vhost exists"() {
     given: "a vhost named hop-test-to-be-deleted"
     final s = "hop-test-to-be-deleted"
     client.createVhost(s)
@@ -429,7 +438,7 @@ class ClientSpec extends Specification {
     client.getVhost(s) == null
   }
 
-  def "DELETE /api/vhosts/:name when vhost DOES NOT exist"() {
+  def "DELETE /api/vhosts/{name} when vhost DOES NOT exist"() {
     given: "no vhost named hop-test-to-be-deleted"
     final s = "hop-test-to-be-deleted"
     client.deleteVhost(s)
@@ -441,7 +450,7 @@ class ClientSpec extends Specification {
     client.getVhost(s) == null
   }
 
-  def "GET /api/vhosts/:name/permissions when vhost exists"() {
+  def "GET /api/vhosts/{name}/permissions when vhost exists"() {
     when: "permissions for vhost / are listed"
     final s = "/"
     final xs = client.getPermissionsIn(s)
@@ -451,7 +460,7 @@ class ClientSpec extends Specification {
     x.read == ".*"
   }
 
-  def "GET /api/vhosts/:name/permissions when vhost DOES NOT exist"() {
+  def "GET /api/vhosts/{name}/permissions when vhost DOES NOT exist"() {
     when: "permissions for vhost trololowut are listed"
     final s = "trololowut"
     final xs = client.getPermissionsIn(s)
@@ -471,7 +480,7 @@ class ClientSpec extends Specification {
     x.tags.contains("administrator")
   }
 
-  def "GET /api/users/:name when user exists"() {
+  def "GET /api/users/{name} when user exists"() {
     when: "user guest if fetched"
     final x = client.getUser("guest")
 
@@ -481,7 +490,7 @@ class ClientSpec extends Specification {
     x.tags.contains("administrator")
   }
 
-  def "GET /api/users/:name when user DOES NOT exist"() {
+  def "GET /api/users/{name} when user DOES NOT exist"() {
     when: "user lolwut if fetched"
     final x = client.getUser("lolwut")
 
@@ -489,7 +498,7 @@ class ClientSpec extends Specification {
     x == null
   }
 
-  def "PUT /api/users/:name"() {
+  def "PUT /api/users/{name}"() {
     given: "user alt"
     final u = "alt"
     client.deleteUser(u)
@@ -506,7 +515,7 @@ class ClientSpec extends Specification {
     !x.tags.contains("original")
   }
 
-  def "DELETE /api/users/:name"() {
+  def "DELETE /api/users/{name}"() {
     given: "user alt"
     final u = "alt"
     client.deleteUser(u)
@@ -522,7 +531,7 @@ class ClientSpec extends Specification {
     x == null
   }
 
-  def "GET /api/users/:name/permissions when user exists"() {
+  def "GET /api/users/{name}/permissions when user exists"() {
     when: "permissions for user guest are listed"
     final s = "guest"
     final xs = client.getPermissionsOf(s)
@@ -532,7 +541,7 @@ class ClientSpec extends Specification {
     x.read == ".*"
   }
 
-  def "GET /api/users/:name/permissions when users DOES NOT exist"() {
+  def "GET /api/users/{name}/permissions when users DOES NOT exist"() {
     when: "permissions for user trololowut are listed"
     final s = "trololowut"
     final xs = client.getPermissionsOf(s)
@@ -561,7 +570,7 @@ class ClientSpec extends Specification {
     x.read == ".*"
   }
 
-  def "GET /api/permissions/:vhost/:user when both vhost and user exist"() {
+  def "GET /api/permissions/{vhost}/:user when both vhost and user exist"() {
     when: "permissions of user guest in vhost / are listed"
     final u = "guest"
     final v = "/"
@@ -571,7 +580,7 @@ class ClientSpec extends Specification {
     x.read == ".*"
   }
 
-  def "GET /api/permissions/:vhost/:user when vhost DOES NOT exist"() {
+  def "GET /api/permissions/{vhost}/:user when vhost DOES NOT exist"() {
     when: "permissions of user guest in vhost lolwut are listed"
     final u = "guest"
     final v = "lolwut"
@@ -581,7 +590,7 @@ class ClientSpec extends Specification {
     x == null
   }
 
-  def "GET /api/permissions/:vhost/:user when username DOES NOT exist"() {
+  def "GET /api/permissions/{vhost}/:user when username DOES NOT exist"() {
     when: "permissions of user lolwut in vhost / are listed"
     final u = "lolwut"
     final v = "/"
@@ -591,7 +600,7 @@ class ClientSpec extends Specification {
     x == null
   }
 
-  def "PUT /api/permissions/:vhost/:user when both user and vhost exist"() {
+  def "PUT /api/permissions/{vhost}/:user when both user and vhost exist"() {
     given: "vhost hop-vhost1 exists"
     final v = "hop-vhost1"
     client.createVhost(v)
@@ -615,7 +624,7 @@ class ClientSpec extends Specification {
     client.deleteUser(u)
   }
 
-  def "PUT /api/permissions/:vhost/:user when vhost DOES NOT exist"() {
+  def "PUT /api/permissions/{vhost}/:user when vhost DOES NOT exist"() {
     given: "vhost hop-vhost1 DOES NOT exist"
     final v = "hop-vhost1"
     client.deleteVhost(v)
@@ -634,7 +643,7 @@ class ClientSpec extends Specification {
     client.deleteUser(u)
   }
 
-  def "DELETE /api/permissions/:vhost/:user when both vhost and username exist"() {
+  def "DELETE /api/permissions/{vhost}/:user when both vhost and username exist"() {
     given: "vhost hop-vhost1 exists"
     final v = "hop-vhost1"
     client.createVhost(v)
@@ -667,7 +676,7 @@ class ClientSpec extends Specification {
     // TODO
   }
 
-  def "GET /api/policies/:vhost"() {
+  def "GET /api/policies/{vhost}"() {
     // TODO
   }
 
