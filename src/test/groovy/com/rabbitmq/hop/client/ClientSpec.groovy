@@ -430,7 +430,14 @@ class ClientSpec extends Specification {
   }
 
   def "GET /api/users"() {
-    // TODO
+    when: "users are listed"
+    final xs = client.getUsers()
+
+    then: "a list of users is returned"
+    final x = xs.find { it.name.equals("guest") }
+    x.name == "guest"
+    x.passwordHash != null
+    x.tags.contains("administrator")
   }
 
   def "GET /api/users/:name"() {

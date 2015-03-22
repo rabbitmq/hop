@@ -210,6 +210,11 @@ public class Client {
     return Arrays.asList(this.rt.getForObject(uri, ExchangeInfo[].class));
   }
 
+  public List<UserInfo> getUsers() {
+    final URI uri = uriWithPath("./users/");
+    return Arrays.asList(this.rt.getForObject(uri, UserInfo[].class));
+  }
+
   public void createUser(String username, char[] password, List<String> tags) {
     Map<String, Object> body = new HashMap<>();
     body.put("password", new String(password));
