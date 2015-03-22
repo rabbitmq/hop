@@ -225,12 +225,43 @@ class ClientSpec extends Specification {
     verifyExchangeInfo(x)
   }
 
-  def "PUT /api/exchanges/:vhost/:name"() {
-    // TODO
+  def "PUT /api/exchanges/:vhost/:name when vhost exists"() {
+    given: "fanout exchange hop.test in vhost /"
+    final v = "/"
+    final s = "hop.test"
+    client.declareExchange(v, s, new ExchangeInfo("fanout", false, false))
+
+    when: "client lists exchanges in vhost /"
+    List<ExchangeInfo> xs = client.getExchanges(v)
+
+    then: "hop.test is listed"
+    ExchangeInfo x = xs.find { it.name == s }
+    x != null
+    verifyExchangeInfo(x)
+
+    cleanup:
+    client.deleteExchange(v, s)
   }
 
   def "DELETE /api/exchanges/:vhost/:name"() {
-    // TODO
+    given: "fanout exchange hop.test in vhost /"
+    final v = "/"
+    final s = "hop.test"
+    client.declareExchange(v, s, new ExchangeInfo("fanout", false, false))
+
+    List<ExchangeInfo> xs = client.getExchanges(v)
+    ExchangeInfo x = xs.find { it.name == s }
+    x != null
+    verifyExchangeInfo(x)
+
+    when: "client delete exchange hop.test in vhost /"
+    client.deleteExchange(v, s)
+
+    and: "exchange list in / is reloaded"
+    xs = client.getExchanges(v)
+
+    then: "hop.test no longer exists"
+    xs.find { it.name == s } == null
   }
 
   def "POST /api/exchanges/:vhost/:name/publish"() {

@@ -2,6 +2,7 @@ package com.rabbitmq.hop.client.domain;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import java.util.HashMap;
 import java.util.Map;
 
 @SuppressWarnings("unused")
@@ -17,6 +18,18 @@ public class ExchangeInfo {
 
   @JsonProperty("message_stats")
   private ExchangeMessageStats messageStats;
+
+  public ExchangeInfo(){}
+  public ExchangeInfo(String type, boolean durable, boolean autoDelete) {
+    this(type, durable, autoDelete, false, new HashMap<String, Object>());
+  }
+  public ExchangeInfo(String type, boolean durable, boolean autoDelete, boolean internal, Map<String, Object> arguments) {
+    this.type = type;
+    this.durable = durable;
+    this.autoDelete = autoDelete;
+    this.internal = internal;
+    this.arguments = arguments;
+  }
 
   public String getName() {
     return name;

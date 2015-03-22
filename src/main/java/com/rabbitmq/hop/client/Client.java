@@ -210,6 +210,15 @@ public class Client {
     return Arrays.asList(this.rt.getForObject(uri, ExchangeInfo[].class));
   }
 
+  public void declareExchange(String vhost, String name, ExchangeInfo info) {
+    final URI uri = uriWithPath("./exchanges/" + encodePathSegment(vhost) + "/" + encodePathSegment(name));
+    this.rt.put(uri, info);
+  }
+
+  public void deleteExchange(String vhost, String name) {
+    this.deleteIgnoring404(uriWithPath("./exchanges/" + encodePathSegment(vhost) + "/" + encodePathSegment(name)));
+  }
+
   public List<UserInfo> getUsers() {
     final URI uri = uriWithPath("./users/");
     return Arrays.asList(this.rt.getForObject(uri, UserInfo[].class));
