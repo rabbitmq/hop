@@ -221,8 +221,29 @@ public class Client {
   }
 
   public void createUser(String username, char[] password, List<String> tags) {
+    if(username == null) {
+      throw new IllegalArgumentException("username cannot be null");
+    }
+    if(password == null || password.length == 0) {
+      throw new IllegalArgumentException("password cannot be null or empty");
+    }
     Map<String, Object> body = new HashMap<>();
     body.put("password", new String(password));
+    body.put("tags", joinStrings(",", tags));
+
+    final URI uri = uriWithPath("./users/" + encodePathSegment(username));
+    this.rt.put(uri, body);
+  }
+
+  public void updateUser(String username, char[] password, List<String> tags) {
+    if(username == null) {
+      throw new IllegalArgumentException("username cannot be null");
+    }
+    Map<String, Object> body = new HashMap<>();
+    // only update password if provided
+    if(password != null) {
+      body.put("password", new String(password));
+    }
     body.put("tags", joinStrings(",", tags));
 
     final URI uri = uriWithPath("./users/" + encodePathSegment(username));
@@ -366,7 +387,10 @@ public class Client {
         sb.append(tag);
         appendedFirst = true;
       } else {
-        sb.append(tag).append(delimiter);
+        sb.append(delimiter);
+        if(tag != null) {
+          sb.append(tag);
+        }
       }
     }
     return sb.toString();

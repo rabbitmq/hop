@@ -459,11 +459,36 @@ class ClientSpec extends Specification {
   }
 
   def "PUT /api/users/:name"() {
-    // TODO
+    given: "user alt"
+    final u = "alt"
+    client.deleteUser(u)
+    client.createUser(u, u.toCharArray(), Arrays.asList("original", "management"))
+
+    when: "alt's tags are updated"
+    client.updateUser(u, null, Arrays.asList("management", "updated"))
+
+    and: "alt info is reloaded"
+    final x = client.getUser(u)
+
+    then: "alt has new tags"
+    x.tags.contains("updated")
+    !x.tags.contains("original")
   }
 
   def "DELETE /api/users/:name"() {
-    // TODO
+    given: "user alt"
+    final u = "alt"
+    client.deleteUser(u)
+    client.createUser(u, u.toCharArray(), Arrays.asList("original", "management"))
+
+    when: "alt is deleted"
+    client.deleteUser(u)
+
+    and: "alt info is reloaded"
+    final x = client.getUser(u)
+
+    then: "deleted user is gone"
+    x == null
   }
 
   def "GET /api/users/:name/permissions when user exists"() {
