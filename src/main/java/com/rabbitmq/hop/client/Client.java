@@ -313,6 +313,13 @@ public class Client {
     return this.rt.getForObject(uriWithPath("./cluster-name"), ClusterId.class);
   }
 
+  public void setClusterName(String name) {
+    final URI uri = uriWithPath("./cluster-name");
+    Map<String, String> m = new HashMap<>();
+    m.put("name", name);
+    this.rt.put(uri, m);
+  }
+
 
   //
   // Implementation

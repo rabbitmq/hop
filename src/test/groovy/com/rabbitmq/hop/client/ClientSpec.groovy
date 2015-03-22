@@ -697,7 +697,20 @@ class ClientSpec extends Specification {
   }
 
   def "PUT /api/cluster-name"() {
-    // TODO
+    given: "cluster name"
+    final String s = client.getClusterName().name;
+
+    when: "cluster name is set to rabbit@warren"
+    client.setClusterName("rabbit@warren")
+
+    and: "cluster name is reloaded"
+    final String x = client.getClusterName().name
+
+    then: "the name is updated"
+    x.equals("rabbit@warren")
+
+    cleanup:
+    client.setClusterName(s)
   }
 
   protected boolean awaitOn(CountDownLatch latch) {
