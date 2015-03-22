@@ -223,9 +223,14 @@ public class Client {
     this.deleteIgnoring404(uriWithPath("./users/" + encodePathSegment(username)));
   }
 
-  public void updatePermissions(String username, String vhost, UserPermissions permissions) {
+  public void updatePermissions(String vhost, String username, UserPermissions permissions) {
     final URI uri = uriWithPath("./permissions/" + encodePathSegment(vhost) + "/" + encodePathSegment(username));
     this.rt.put(uri, permissions);
+  }
+
+  public void clearPermissions(String vhost, String username) {
+    final URI uri = uriWithPath("./permissions/" + encodePathSegment(vhost) + "/" + encodePathSegment(username));
+    deleteIgnoring404(uri);
   }
 
   /**

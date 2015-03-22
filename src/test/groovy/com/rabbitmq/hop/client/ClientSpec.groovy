@@ -523,7 +523,7 @@ class ClientSpec extends Specification {
     client.createUser(u, "test".toCharArray(), Arrays.asList("management", "http", "policymaker"))
 
     when: "permissions of user guest in vhost / are updated"
-    client.updatePermissions(u, v, new UserPermissions("read", "write", "configure"))
+    client.updatePermissions(v, u, new UserPermissions("read", "write", "configure"))
 
     and: "permissions are reloaded"
     final UserPermissions x = client.getPermissions(v, u)
@@ -547,7 +547,7 @@ class ClientSpec extends Specification {
     client.createUser(u, "test".toCharArray(), Arrays.asList("management", "http", "policymaker"))
 
     when: "permissions of user guest in vhost / are updated"
-    client.updatePermissions(u, v, new UserPermissions("read", "write", "configure"))
+    client.updatePermissions(v, u, new UserPermissions("read", "write", "configure"))
 
     then: "an exception is thrown"
     final e = thrown(HttpClientErrorException)
@@ -558,7 +558,28 @@ class ClientSpec extends Specification {
   }
 
   def "DELETE /api/permissions/:vhost/:user when both vhost and username exist"() {
-    // TODO
+    given: "vhost hop-vhost1 exists"
+    final v = "hop-vhost1"
+    client.createVhost(v)
+    and: "user hop-user1 exists"
+    final u = "hop-user1"
+    client.createUser(u, "test".toCharArray(), Arrays.asList("management", "http", "policymaker"))
+
+    and: "permissions of user guest in vhost / are set"
+    client.updatePermissions(v, u, new UserPermissions("read", "write", "configure"))
+    final UserPermissions x = client.getPermissions(v, u)
+    x.read == "read"
+
+    when: "permissions are cleared"
+    client.clearPermissions(v, u)
+
+    then: "no permissions are returned on reload"
+    final UserPermissions y = client.getPermissions(v, u)
+    y == null
+
+    cleanup:
+    client.deleteVhost(v)
+    client.deleteUser(u)
   }
 
   def "GET /api/parameters"() {
