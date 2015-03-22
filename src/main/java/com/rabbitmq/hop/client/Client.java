@@ -308,6 +308,12 @@ public class Client {
     return Arrays.asList(this.rt.getForObject(uri, BindingInfo[].class));
   }
 
+
+  public ClusterId getClusterName() {
+    return this.rt.getForObject(uriWithPath("./cluster-name"), ClusterId.class);
+  }
+
+
   //
   // Implementation
   //

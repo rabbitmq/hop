@@ -689,7 +689,11 @@ class ClientSpec extends Specification {
   }
 
   def "GET /api/cluster-name"() {
-    // TODO
+    when: "client fetches cluster name"
+    final ClusterId s = client.getClusterName()
+
+    then: "cluster name is returned"
+    s.getName().startsWith("rabbit")
   }
 
   def "PUT /api/cluster-name"() {
