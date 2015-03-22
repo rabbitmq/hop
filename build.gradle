@@ -1,4 +1,5 @@
 apply plugin: 'java'
+apply plugin: 'groovy'
 apply plugin: 'maven'
 
 version = '1.0.0-beta4-SNAPSHOT'
@@ -8,7 +9,7 @@ repositories {
 }
 
 task wrapper(type: Wrapper) {
-  gradleVersion = '2.0'
+  gradleVersion = '2.3'
 }
 
 dependencies {
