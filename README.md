@@ -39,7 +39,7 @@ The most recent release is
 
 ``` xml
 <dependency>
-  <groupId>com.rabbitmq.hop</groupId>
+  <groupId>com.rabbitmq</groupId>
   <artifactId>hop</artifactId>
   <version>1.0.0-beta4-SNAPSHOT</version>
 </dependency>
@@ -60,7 +60,7 @@ repositories {
 Current (unpublished) snapshot release is
 
 ``` groovy
-compile "com.rabbitmq.hop:hop:1.0.0-beta4-SNAPSHOT"
+compile "com.rabbitmq:hop:1.0.0-beta4-SNAPSHOT"
 ```
 
 
