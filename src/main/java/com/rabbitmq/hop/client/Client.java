@@ -224,6 +224,11 @@ public class Client {
     this.deleteIgnoring404(uriWithPath("./exchanges/" + encodePathSegment(vhost) + "/" + encodePathSegment(name)));
   }
 
+  public List<QueueInfo> getQueues() {
+    final URI uri = uriWithPath("./queues/");
+    return Arrays.asList(this.rt.getForObject(uri, QueueInfo[].class));
+  }
+
   public List<UserInfo> getUsers() {
     final URI uri = uriWithPath("./users/");
     return Arrays.asList(this.rt.getForObject(uri, UserInfo[].class));

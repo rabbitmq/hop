@@ -1,13 +1,5 @@
 package com.rabbitmq.hop.client.domain;
 
-//Hashie::Mash ack_required=false arguments=#<Hashie::Mash>
-//  channel_details=#<…>
-//  consumer_tag="bunny-1408390423000-807786084138"
-//exclusive=false
-//prefetch_count=0
-//queue=#<Hashie::Mash name="amq.gen-P-zdjH8rqbuX5I8CYsK7BA" vhost="/">
-
-
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.util.Map;

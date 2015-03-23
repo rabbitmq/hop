@@ -317,15 +317,20 @@ class ClientSpec extends Specification {
     conn.close()
   }
 
-  def "GET /api/queues when the queue exists"() {
+  def "GET /api/queues"() {
+    when: "client lists queues"
+    final xs = client.getQueues()
+
+    then: "a list of queues is returned"
+    final x = xs.first()
+    verifyQueueInfo(x)
+  }
+
+  def "GET /api/queues/{vhost} when vhost exists"() {
     // TODO
   }
 
-  def "GET /api/queues when the queue DOES NOT exist"() {
-    // TODO
-  }
-
-  def "GET /api/queues/{vhost}"() {
+  def "GET /api/queues/{vhost} when vhost DOES NOT exist"() {
     // TODO
   }
 
@@ -760,6 +765,13 @@ class ClientSpec extends Specification {
     assert x.type != null
     assert x.durable != null
     assert x.name != null
+    assert x.autoDelete != null
+  }
+
+  protected void verifyQueueInfo(QueueInfo x) {
+    assert x.name != null
+    assert x.durable != null
+    assert x.exclusive != null
     assert x.autoDelete != null
   }
 }
