@@ -207,7 +207,8 @@ public class Client {
 
   public List<ExchangeInfo> getExchanges(String vhost) {
     final URI uri = uriWithPath("./exchanges/" + encodePathSegment(vhost));
-    return Arrays.asList(this.rt.getForObject(uri, ExchangeInfo[].class));
+    final ExchangeInfo[] result = this.getForObjectReturningNullOn404(uri, ExchangeInfo[].class);
+    return asListOrNull(result);
   }
 
   public ExchangeInfo getExchange(String vhost, String name) {
@@ -231,7 +232,7 @@ public class Client {
 
   public List<QueueInfo> getQueues(String vhost) {
     final URI uri = uriWithPath("./queues/" + encodePathSegment(vhost));
-    QueueInfo[] result = this.getForObjectReturningNullOn404(uri, QueueInfo[].class);
+    final QueueInfo[] result = this.getForObjectReturningNullOn404(uri, QueueInfo[].class);
     return asListOrNull(result);
   }
 

@@ -216,13 +216,25 @@ class ClientSpec extends Specification {
     verifyExchangeInfo(x)
   }
 
-  def "GET /api/exchanges/{vhost}"() {
+  def "GET /api/exchanges/{vhost} when vhost exists"() {
     when: "client retrieves the list of exchanges in a particular vhost"
     final xs = client.getExchanges("/")
 
     then: "the list is returned"
     final x = xs.find { it.name.equals("amq.fanout") }
     verifyExchangeInfo(x)
+  }
+
+  def "GET /api/exchanges/{vhost} when vhost DOES NOT exist"() {
+    given: "vhost lolwut does not exist"
+    final v = "lolwut"
+    client.deleteVhost(v)
+
+    when: "client retrieves the list of exchanges in that vhost"
+    final xs = client.getExchanges(v)
+
+    then: "null is returned"
+    xs == null
   }
   
   def "GET /api/exchanges/{vhost}/{name} when both vhost and exchange exist"() {
