@@ -231,7 +231,8 @@ public class Client {
 
   public List<QueueInfo> getQueues(String vhost) {
     final URI uri = uriWithPath("./queues/" + encodePathSegment(vhost));
-    return Arrays.asList(this.rt.getForObject(uri, QueueInfo[].class));
+    QueueInfo[] result = this.getForObjectReturningNullOn404(uri, QueueInfo[].class);
+    return asListOrNull(result);
   }
 
   public List<UserInfo> getUsers() {

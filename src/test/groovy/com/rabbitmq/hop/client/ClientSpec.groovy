@@ -354,7 +354,15 @@ class ClientSpec extends Specification {
   }
 
   def "GET /api/queues/{vhost} when vhost DOES NOT exist"() {
-    // TODO
+    given: "vhost lolwut DOES not exist"
+    final v = "lolwut"
+    client.deleteVhost(v)
+
+    when: "client lists queues"
+    final xs = client.getQueues(v)
+
+    then: "null is returned"
+    xs == null
   }
 
   def "GET /api/queues/{vhost}/{name}"() {
