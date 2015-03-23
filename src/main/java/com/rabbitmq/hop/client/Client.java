@@ -341,13 +341,20 @@ public class Client {
    * @param exchange destination exchange name
    * @return list of bindings
    */
-  public List<BindingInfo> getBindingsByDestination(String vhost, String exchange) {
+  public List<BindingInfo> getExchangeBindingsByDestination(String vhost, String exchange) {
     final String x = exchange.equals("") ? "amq.default" : exchange;
     final URI uri = uriWithPath("./exchanges/" + encodePathSegment(vhost) +
         "/" + encodePathSegment(x) + "/bindings/destination");
-    return Arrays.asList(this.rt.getForObject(uri, BindingInfo[].class));
+    final BindingInfo[] result = this.rt.getForObject(uri, BindingInfo[].class);
+    return asListOrNull(result);
   }
 
+  public List<BindingInfo> getQueueBindingsBetween(String vhost, String exchange, String queue) {
+    final URI uri = uriWithPath("./bindings/" + encodePathSegment(vhost) +
+        "/e/" + encodePathSegment(exchange) + "/q/" + encodePathSegment(queue));
+    final BindingInfo[] result = this.rt.getForObject(uri, BindingInfo[].class);
+    return asListOrNull(result);
+  }
 
   public ClusterId getClusterName() {
     return this.rt.getForObject(uriWithPath("./cluster-name"), ClusterId.class);

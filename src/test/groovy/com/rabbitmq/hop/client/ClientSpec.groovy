@@ -318,7 +318,7 @@ class ClientSpec extends Specification {
     ch.exchangeBind(dest, src, "");
 
     when: "client lists bindings of amq.fanout"
-    final xs = client.getBindingsByDestination("/", dest);
+    final xs = client.getExchangeBindingsByDestination("/", dest);
 
     then: "there is a binding for hop.exchange1"
     final x = xs.find { it.source.equals(src) &&
@@ -526,11 +526,47 @@ class ClientSpec extends Specification {
   }
 
   def "GET /api/queues/{vhost}/{name}/bindings"() {
-    // TODO
+    given: "queues hop.test bound to amq.topic in vhost /"
+    final Connection conn = cf.newConnection()
+    final Channel ch = conn.createChannel()
+    final String x  = 'amq.topic'
+    final String q  = "hop.test"
+    ch.queueDeclare(q, false, false, false, null)
+    ch.queueBind(q, x, "hop.*")
+
+    when: "all queue bindings are listed"
+    final List<BindingInfo> xs = client.getBindings("/")
+
+    then: "the amq.fanout binding is listed"
+    xs.find { it.destinationType.equals("queue") && it.source.equals(x) && it.destination.equals(q) }
+
+    cleanup:
+    ch.queueDelete(q)
+    conn.close()
   }
 
   def "GET /api/bindings/{vhost}/e/:exchange/q/:queue"() {
-    // TODO
+    given: "queues hop.test bound to amq.topic in vhost /"
+    final Connection conn = cf.newConnection()
+    final Channel ch = conn.createChannel()
+    final String x  = 'amq.topic'
+    final String q  = "hop.test"
+    ch.queueDeclare(q, false, false, false, null)
+    ch.queueBind(q, x, "hop.*")
+
+    when: "bindings between hop.test and amq.topic are listed"
+    final List<BindingInfo> xs = client.getQueueBindingsBetween("/", x, q)
+
+    then: "the amq.fanout binding is listed"
+    final b = xs.find()
+    xs.size() == 1
+    b.source.equals(x)
+    b.destination.equals(q)
+    b.destinationType.equals("queue")
+
+    cleanup:
+    ch.queueDelete(q)
+    conn.close()
   }
 
   def "POST /api/bindings/{vhost}/e/:exchange/q/:queue"() {
