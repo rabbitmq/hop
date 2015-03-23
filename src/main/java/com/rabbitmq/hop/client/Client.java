@@ -308,6 +308,11 @@ public class Client {
     deleteIgnoring404(uri);
   }
 
+  public List<BindingInfo> getBindings() {
+    final URI uri = uriWithPath("./bindings/");
+    return Arrays.asList(this.rt.getForObject(uri, BindingInfo[].class));
+  }
+
   /**
    * Returns a list of bindings where provided exchange is the source (other things are
    * bound to it).

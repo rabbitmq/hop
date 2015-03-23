@@ -476,23 +476,38 @@ class ClientSpec extends Specification {
     xs.find { it.name.equals(s) } == null
   }
 
-  def "GET /api/queues/{vhost}/{name}/bindings"() {
-    // TODO
-  }
-
-  def "DELETE /api/queues/{vhost}/{name}/contents"() {
-    // TODO
-  }
-
-  def "POST /api/queues/{vhost}/{name}/get"() {
-    // TODO
-  }
-
   def "GET /api/bindings"() {
-    // TODO
+    given: "3 queues bound to amq.fanout"
+    final Connection conn = cf.newConnection()
+    final Channel ch = conn.createChannel()
+    final String x  = 'amq.fanout'
+    final String q1 = ch.queueDeclare().queue
+    final String q2 = ch.queueDeclare().queue
+    final String q3 = ch.queueDeclare().queue
+    ch.queueBind(q1, x, "")
+    ch.queueBind(q2, x, "")
+    ch.queueBind(q3, x, "")
+
+    when: "all queue bindings are listed"
+    final List<BindingInfo> xs = client.getBindings()
+
+    then: "amq.fanout bindings are listed"
+    xs.findAll { it.destinationType.equals("queue") && it.source.equals(x) }
+      .size() >= 3
+
+    cleanup:
+    ch.queueDelete(q1)
+    ch.queueDelete(q2)
+    ch.queueDelete(q3)
+    conn.close()
+
   }
 
   def "GET /api/bindings/{vhost}"() {
+    // TODO
+  }
+
+  def "GET /api/queues/{vhost}/{name}/bindings"() {
     // TODO
   }
 
@@ -509,6 +524,14 @@ class ClientSpec extends Specification {
   }
 
   def "DELETE /api/bindings/{vhost}/e/:exchange/q/:queue/props"() {
+    // TODO
+  }
+
+  def "DELETE /api/queues/{vhost}/{name}/contents"() {
+    // TODO
+  }
+
+  def "POST /api/queues/{vhost}/{name}/get"() {
     // TODO
   }
 
