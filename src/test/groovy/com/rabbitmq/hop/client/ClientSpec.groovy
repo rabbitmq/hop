@@ -503,7 +503,7 @@ class ClientSpec extends Specification {
   }
 
   def "GET /api/bindings/{vhost}"() {
-    given: "3 queues bound to amq.topic in vhost /"
+    given: "2 queues bound to amq.topic in vhost /"
     final Connection conn = cf.newConnection()
     final Channel ch = conn.createChannel()
     final String x  = 'amq.topic'
