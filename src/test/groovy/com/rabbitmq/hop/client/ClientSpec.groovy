@@ -569,6 +569,30 @@ class ClientSpec extends Specification {
     conn.close()
   }
 
+  def "GET /api/bindings/{vhost}/e/:source/e/:destination"() {
+    given: "fanout exchange hop.test bound to amq.fanout in vhost /"
+    final Connection conn = cf.newConnection()
+    final Channel ch = conn.createChannel()
+    final String s  = 'amq.fanout'
+    final String d  = "hop.test"
+    ch.exchangeDeclare(d, "fanout", false)
+    ch.exchangeBind(d, s, "")
+
+    when: "bindings between hop.test and amq.topic are listed"
+    final List<BindingInfo> xs = client.getExchangeBindingsBetween("/", s, d)
+
+    then: "the amq.fanout binding is listed"
+    final b = xs.find()
+    xs.size() == 1
+    b.source.equals(s)
+    b.destination.equals(d)
+    b.destinationType.equals("exchange")
+
+    cleanup:
+    ch.exchangeDelete(d)
+    conn.close()
+  }
+
   def "POST /api/bindings/{vhost}/e/:exchange/q/:queue"() {
     // TODO
   }

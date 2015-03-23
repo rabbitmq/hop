@@ -356,6 +356,13 @@ public class Client {
     return asListOrNull(result);
   }
 
+  public List<BindingInfo> getExchangeBindingsBetween(String vhost, String source, String destination) {
+    final URI uri = uriWithPath("./bindings/" + encodePathSegment(vhost) +
+        "/e/" + encodePathSegment(source) + "/e/" + encodePathSegment(destination));
+    final BindingInfo[] result = this.rt.getForObject(uri, BindingInfo[].class);
+    return asListOrNull(result);
+  }
+
   public ClusterId getClusterName() {
     return this.rt.getForObject(uriWithPath("./cluster-name"), ClusterId.class);
   }
