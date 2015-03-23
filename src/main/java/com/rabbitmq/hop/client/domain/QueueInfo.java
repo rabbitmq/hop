@@ -69,8 +69,6 @@ import java.util.Map;
 //        "vhost": "/"
 //    }
 
-// see rabbitmq/rabbitmq-management#27
-@JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonIgnoreProperties("backing_queue_status")
 public class QueueInfo {
   private String vhost;

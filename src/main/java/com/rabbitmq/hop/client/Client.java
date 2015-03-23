@@ -1,5 +1,6 @@
 package com.rabbitmq.hop.client;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.rabbitmq.hop.client.domain.*;
 import org.apache.http.HttpHeaders;
@@ -20,6 +21,7 @@ import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 import org.springframework.http.converter.HttpMessageConverter;
+import org.springframework.http.converter.json.Jackson2ObjectMapperBuilder;
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
@@ -371,7 +373,10 @@ public class Client {
 
   private List<HttpMessageConverter<?>> getMessageConverters() {
     List<HttpMessageConverter<?>> xs = new ArrayList<>();
-    xs.add(new MappingJackson2HttpMessageConverter());
+    final Jackson2ObjectMapperBuilder bldr = Jackson2ObjectMapperBuilder
+        .json()
+        .serializationInclusion(JsonInclude.Include.NON_NULL);
+    xs.add(new MappingJackson2HttpMessageConverter(bldr.build()));
     return xs;
   }
 
