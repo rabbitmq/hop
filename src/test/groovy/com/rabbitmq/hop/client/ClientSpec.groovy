@@ -500,11 +500,29 @@ class ClientSpec extends Specification {
     ch.queueDelete(q2)
     ch.queueDelete(q3)
     conn.close()
-
   }
 
   def "GET /api/bindings/{vhost}"() {
-    // TODO
+    given: "3 queues bound to amq.topic in vhost /"
+    final Connection conn = cf.newConnection()
+    final Channel ch = conn.createChannel()
+    final String x  = 'amq.topic'
+    final String q1 = ch.queueDeclare().queue
+    final String q2 = ch.queueDeclare().queue
+    ch.queueBind(q1, x, "hop.*")
+    ch.queueBind(q2, x, "api.test.#")
+
+    when: "all queue bindings are listed"
+    final List<BindingInfo> xs = client.getBindings("/")
+
+    then: "amq.fanout bindings are listed"
+    xs.findAll { it.destinationType.equals("queue") && it.source.equals(x) }
+      .size() >= 2
+
+    cleanup:
+    ch.queueDelete(q1)
+    ch.queueDelete(q2)
+    conn.close()
   }
 
   def "GET /api/queues/{vhost}/{name}/bindings"() {

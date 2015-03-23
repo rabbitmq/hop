@@ -313,6 +313,11 @@ public class Client {
     return Arrays.asList(this.rt.getForObject(uri, BindingInfo[].class));
   }
 
+  public List<BindingInfo> getBindings(String vhost) {
+    final URI uri = uriWithPath("./bindings/" + encodePathSegment(vhost));
+    return Arrays.asList(this.rt.getForObject(uri, BindingInfo[].class));
+  }
+
   /**
    * Returns a list of bindings where provided exchange is the source (other things are
    * bound to it).
