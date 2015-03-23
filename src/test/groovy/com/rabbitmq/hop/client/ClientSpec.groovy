@@ -318,16 +318,39 @@ class ClientSpec extends Specification {
   }
 
   def "GET /api/queues"() {
+    given: "at least one queue was declared"
+    final Connection conn = cf.newConnection()
+    final Channel ch = conn.createChannel()
+    final String q = ch.queueDeclare().queue
+
     when: "client lists queues"
     final xs = client.getQueues()
 
     then: "a list of queues is returned"
     final x = xs.first()
     verifyQueueInfo(x)
+
+    cleanup:
+    ch.queueDelete(q)
+    conn.close()
   }
 
   def "GET /api/queues/{vhost} when vhost exists"() {
-    // TODO
+    given: "at least one queue was declared in vhost /"
+    final Connection conn = cf.newConnection()
+    final Channel ch = conn.createChannel()
+    final String q = ch.queueDeclare().queue
+
+    when: "client lists queues"
+    final xs = client.getQueues("/")
+
+    then: "a list of queues is returned"
+    final x = xs.first()
+    verifyQueueInfo(x)
+
+    cleanup:
+    ch.queueDelete(q)
+    conn.close()
   }
 
   def "GET /api/queues/{vhost} when vhost DOES NOT exist"() {

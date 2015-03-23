@@ -229,6 +229,11 @@ public class Client {
     return Arrays.asList(this.rt.getForObject(uri, QueueInfo[].class));
   }
 
+  public List<QueueInfo> getQueues(String vhost) {
+    final URI uri = uriWithPath("./queues/" + encodePathSegment(vhost));
+    return Arrays.asList(this.rt.getForObject(uri, QueueInfo[].class));
+  }
+
   public List<UserInfo> getUsers() {
     final URI uri = uriWithPath("./users/");
     return Arrays.asList(this.rt.getForObject(uri, UserInfo[].class));
