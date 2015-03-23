@@ -275,7 +275,7 @@ class ClientSpec extends Specification {
     x != null
     verifyExchangeInfo(x)
 
-    when: "client delete exchange hop.test in vhost /"
+    when: "client deletes exchange hop.test in vhost /"
     client.deleteExchange(v, s)
 
     and: "exchange list in / is reloaded"
@@ -456,7 +456,24 @@ class ClientSpec extends Specification {
   }
 
   def "DELETE /api/queues/{vhost}/{name}"() {
-    // TODO
+    final String s = UUID.randomUUID().toString()
+    given: "queue ${s} in vhost /"
+    final v = "/"
+    client.declareQueue(v, s, new QueueInfo(false, false, false))
+
+    List<QueueInfo> xs = client.getQueues(v)
+    QueueInfo x = xs.find { it.name.equals(s) }
+    x != null
+    verifyQueueInfo(x)
+
+    when: "client deletes queue ${s} in vhost /"
+    client.deleteQueue(v, s)
+
+    and: "queue list in / is reloaded"
+    xs = client.getQueues(v)
+
+    then: "${s} no longer exists"
+    xs.find { it.name.equals(s) } == null
   }
 
   def "GET /api/queues/{vhost}/{name}/bindings"() {
