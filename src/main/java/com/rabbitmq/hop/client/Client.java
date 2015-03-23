@@ -236,6 +236,12 @@ public class Client {
     return asListOrNull(result);
   }
 
+  public QueueInfo getQueue(String vhost, String name) {
+    final URI uri = uriWithPath("./queues/" + encodePathSegment(vhost) + "/" + encodePathSegment(name));
+    return this.getForObjectReturningNullOn404(uri, QueueInfo.class);
+  }
+
+
   public List<UserInfo> getUsers() {
     final URI uri = uriWithPath("./users/");
     return Arrays.asList(this.rt.getForObject(uri, UserInfo[].class));

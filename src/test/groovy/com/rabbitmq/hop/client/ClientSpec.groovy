@@ -377,8 +377,41 @@ class ClientSpec extends Specification {
     xs == null
   }
 
-  def "GET /api/queues/{vhost}/{name}"() {
-    // TODO
+  def "GET /api/queues/{vhost}/{name} when both vhost and queue exist"() {
+    given: "a queue was declared in vhost /"
+    final Connection conn = cf.newConnection()
+    final Channel ch = conn.createChannel()
+    final String q = ch.queueDeclare().queue
+
+    when: "client fetches info of the queue"
+    final x = client.getQueue("/", q)
+
+    then: "the info is returned"
+    x.vhost == "/"
+    x.name == q
+    verifyQueueInfo(x)
+
+    cleanup:
+    ch.queueDelete(q)
+    conn.close()
+  }
+
+  def "GET /api/queues/{vhost}/{name} when queue DOES NOT exist"() {
+    given: "queue lolwut does not exist in vhost /"
+    final Connection conn = cf.newConnection()
+    final Channel ch = conn.createChannel()
+    final String q = "lolwut"
+    ch.queueDelete(q)
+
+    when: "client fetches info of the queue"
+    final x = client.getQueue("/", q)
+
+    then: "null is returned"
+    x == null
+
+    cleanup:
+    ch.queueDelete(q)
+    conn.close()
   }
 
   def "PUT /api/queues/{vhost}/{name}"() {
