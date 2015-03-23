@@ -256,7 +256,7 @@ class ClientSpec extends Specification {
     List<ExchangeInfo> xs = client.getExchanges(v)
 
     then: "hop.test is listed"
-    ExchangeInfo x = xs.find { it.name == s }
+    ExchangeInfo x = xs.find { it.name.equals(s) }
     x != null
     verifyExchangeInfo(x)
 
@@ -271,7 +271,7 @@ class ClientSpec extends Specification {
     client.declareExchange(v, s, new ExchangeInfo("fanout", false, false))
 
     List<ExchangeInfo> xs = client.getExchanges(v)
-    ExchangeInfo x = xs.find { it.name == s }
+    ExchangeInfo x = xs.find { it.name.equals(s) }
     x != null
     verifyExchangeInfo(x)
 
@@ -282,7 +282,7 @@ class ClientSpec extends Specification {
     xs = client.getExchanges(v)
 
     then: "hop.test no longer exists"
-    xs.find { it.name == s } == null
+    xs.find { it.name.equals(s) } == null
   }
 
   def "POST /api/exchanges/{vhost}/{name}/publish"() {
@@ -300,7 +300,7 @@ class ClientSpec extends Specification {
     final xs = client.getBindingsBySource("/", "");
 
     then: "there is an automatic binding for hop.queue1"
-    final x = xs.find { it.source == "" && it.destinationType == "queue" && it.destination == q }
+    final x = xs.find { it.source.equals("") && it.destinationType.equals("queue") && it.destination.equals(q) }
     x != null
 
     cleanup:
@@ -321,7 +321,9 @@ class ClientSpec extends Specification {
     final xs = client.getBindingsByDestination("/", dest);
 
     then: "there is a binding for hop.exchange1"
-    final x = xs.find { it.source == src && it.destinationType == "exchange" && it.destination == dest }
+    final x = xs.find { it.source.equals(src) &&
+        it.destinationType.equals("exchange") &&
+        it.destination.equals(dest) }
     x != null
 
     cleanup:
@@ -414,8 +416,43 @@ class ClientSpec extends Specification {
     conn.close()
   }
 
-  def "PUT /api/queues/{vhost}/{name}"() {
-    // TODO
+  def "PUT /api/queues/{vhost}/{name} when vhost exists"() {
+    given: "vhost /"
+    final v = "/"
+
+    when: "client declares a queue hop.test"
+    final s = "hop.test"
+    client.declareQueue(v, s, new QueueInfo(false, false, false))
+
+    and: "client lists exchanges in vhost /"
+    List<QueueInfo> xs = client.getQueues(v)
+
+    then: "hop.test is listed"
+    QueueInfo x = xs.find { it.name.equals(s) }
+    x != null
+    x.vhost.equals(v)
+    x.name.equals(s)
+    !x.durable
+    !x.exclusive
+    !x.autoDelete
+
+    cleanup:
+    client.deleteQueue(v, s)
+  }
+
+  def "PUT /api/queues/{vhost}/{name} when vhost DOES NOT exist"() {
+    given: "vhost lolwut which does not exist"
+    final v = "lolwut"
+    client.deleteVhost(v)
+
+    when: "client declares a queue hop.test"
+    final s = "hop.test"
+    client.declareQueue(v, s, new QueueInfo(false, false, false))
+
+    then: "an exception is thrown"
+    final e = thrown(HttpClientErrorException)
+    e.getStatusCode() == HttpStatus.NOT_FOUND
+
   }
 
   def "DELETE /api/queues/{vhost}/{name}"() {

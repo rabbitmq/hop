@@ -2,7 +2,11 @@ package com.rabbitmq.hop.client.domain;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+
+import java.util.HashMap;
 
 import java.util.Map;
 
@@ -65,6 +69,8 @@ import java.util.Map;
 //        "vhost": "/"
 //    }
 
+// see rabbitmq/rabbitmq-management#27
+@JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonIgnoreProperties("backing_queue_status")
 public class QueueInfo {
   private String vhost;
@@ -74,8 +80,6 @@ public class QueueInfo {
   @JsonProperty("auto_delete")
   private boolean autoDelete;
   private Map<String, Object> arguments;
-
-
   private String node;
   @JsonProperty("exclusive_consumer_tag")
   private String exclusiveConsumerTag;
@@ -129,6 +133,20 @@ public class QueueInfo {
   // TODO: should we expose backing_queue_status,
   //       which is an implementation detail?
 
+
+  public QueueInfo() {
+  }
+
+  public QueueInfo(boolean durable, boolean exclusive, boolean autoDelete) {
+    this(durable, exclusive, autoDelete, new HashMap<String, Object>());
+  }
+
+  public QueueInfo(boolean durable, boolean exclusive, boolean autoDelete, Map<String, Object> arguments) {
+    this.durable = durable;
+    this.exclusive = exclusive;
+    this.autoDelete = autoDelete;
+    this.arguments = arguments;
+  }
 
   public String getVhost() {
     return vhost;

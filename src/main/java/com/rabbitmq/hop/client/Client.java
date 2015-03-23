@@ -241,6 +241,16 @@ public class Client {
     return this.getForObjectReturningNullOn404(uri, QueueInfo.class);
   }
 
+  public void declareQueue(String vhost, String name, QueueInfo info) {
+    final URI uri = uriWithPath("./queues/" + encodePathSegment(vhost) + "/" + encodePathSegment(name));
+    this.rt.put(uri, info);
+  }
+  
+  
+  public void deleteQueue(String vhost, String name) {
+    this.deleteIgnoring404(uriWithPath("./queues/" + encodePathSegment(vhost) + "/" + encodePathSegment(name)));
+  }
+  
 
   public List<UserInfo> getUsers() {
     final URI uri = uriWithPath("./users/");
