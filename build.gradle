@@ -26,7 +26,7 @@ task pom << {
   pom {
     project {
       groupId 'com.rabbitmq'
-      artifactId 'hop'
+      artifactId 'http-client'
       version version
 
       inceptionYear '2014'
