@@ -581,7 +581,7 @@ class ClientSpec extends Specification {
     when: "bindings between hop.test and amq.topic are listed"
     final List<BindingInfo> xs = client.getExchangeBindingsBetween("/", s, d)
 
-    then: "the amq.fanout binding is listed"
+    then: "the amq.topic binding is listed"
     final b = xs.find()
     xs.size() == 1
     b.source.equals(s)
@@ -591,6 +591,29 @@ class ClientSpec extends Specification {
     cleanup:
     ch.exchangeDelete(d)
     conn.close()
+  }
+
+  def "POST /api/bindings/{vhost}/e/:source/e/:destination"() {
+    given: "fanout hop.test bound to amq.fanout in vhost /"
+    final v = "/"
+    final String s  = 'amq.fanout'
+    final String d  = "hop.test"
+    client.deleteExchange(v, d)
+    client.declareExchange(v, d, new ExchangeInfo("fanout", false, false))
+    client.bindExchange(v, d, s, "")
+
+    when: "bindings between hop.test and amq.fanout are listed"
+    final List<BindingInfo> xs = client.getExchangeBindingsBetween(v, s, d)
+
+    then: "the amq.fanout binding is listed"
+    final b = xs.find()
+    xs.size() == 1
+    b.source.equals(s)
+    b.destination.equals(d)
+    b.destinationType.equals("exchange")
+
+    cleanup:
+    client.deleteExchange(v, d)
   }
 
   def "POST /api/bindings/{vhost}/e/:exchange/q/:queue"() {

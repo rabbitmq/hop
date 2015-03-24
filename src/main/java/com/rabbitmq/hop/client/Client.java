@@ -388,6 +388,31 @@ public class Client {
     this.rt.postForLocation(uri, body);
   }
 
+  public void bindExchange(String vhost, String destination, String source, String routingKey) {
+    bindExchange(vhost, destination, source, routingKey, new HashMap<String, Object>());
+  }
+
+  public void bindExchange(String vhost, String destination, String source, String routingKey, Map<String, Object> args) {
+    if(vhost == null || vhost.isEmpty()) {
+      throw new IllegalArgumentException("vhost cannot be null or blank");
+    }
+    if(destination == null || destination.isEmpty()) {
+      throw new IllegalArgumentException("destination cannot be null or blank");
+    }
+    if(source == null || source.isEmpty()) {
+      throw new IllegalArgumentException("source cannot be null or blank");
+    }
+    Map<String, Object> body = new HashMap<>();
+    if(!(args == null)) {
+      body.put("args", args);
+    }
+    body.put("routing_key", routingKey);
+
+    final URI uri = uriWithPath("./bindings/" + encodePathSegment(vhost) +
+      "/e/" + encodePathSegment(source) + "/e/" + encodePathSegment(destination));
+    this.rt.postForLocation(uri, body);
+  }
+
   public ClusterId getClusterName() {
     return this.rt.getForObject(uriWithPath("./cluster-name"), ClusterId.class);
   }
