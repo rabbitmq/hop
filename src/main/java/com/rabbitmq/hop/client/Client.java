@@ -363,11 +363,39 @@ public class Client {
     return asListOrNull(result);
   }
 
+  public void bindQueue(String vhost, String queue, String exchange, String routingKey) {
+    bindQueue(vhost, queue, exchange, routingKey, new HashMap<String, Object>());
+  }
+
+  public void bindQueue(String vhost, String queue, String exchange, String routingKey, Map<String, Object> args) {
+    if(vhost == null || vhost.isEmpty()) {
+      throw new IllegalArgumentException("vhost cannot be null or blank");
+    }
+    if(queue == null || queue.isEmpty()) {
+      throw new IllegalArgumentException("queue cannot be null or blank");
+    }
+    if(exchange == null || exchange.isEmpty()) {
+      throw new IllegalArgumentException("exchange cannot be null or blank");
+    }
+    Map<String, Object> body = new HashMap<>();
+    if(!(args == null)) {
+      body.put("args", args);
+    }
+    body.put("routing_key", routingKey);
+
+    final URI uri = uriWithPath("./bindings/" + encodePathSegment(vhost) +
+      "/e/" + encodePathSegment(exchange) + "/q/" + encodePathSegment(queue));
+    this.rt.postForLocation(uri, body);
+  }
+
   public ClusterId getClusterName() {
     return this.rt.getForObject(uriWithPath("./cluster-name"), ClusterId.class);
   }
 
   public void setClusterName(String name) {
+    if(name== null || name.isEmpty()) {
+      throw new IllegalArgumentException("name cannot be null or blank");
+    }
     final URI uri = uriWithPath("./cluster-name");
     Map<String, String> m = new HashMap<>();
     m.put("name", name);

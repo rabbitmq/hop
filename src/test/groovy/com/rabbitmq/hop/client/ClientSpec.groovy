@@ -594,7 +594,25 @@ class ClientSpec extends Specification {
   }
 
   def "POST /api/bindings/{vhost}/e/:exchange/q/:queue"() {
-    // TODO
+    given: "queues hop.test bound to amq.topic in vhost /"
+    final v = "/"
+    final String x  = 'amq.topic'
+    final String q  = "hop.test"
+    client.declareQueue(v, q, new QueueInfo(false, false, false))
+    client.bindQueue(v, q, x, "")
+
+    when: "bindings between hop.test and amq.topic are listed"
+    final List<BindingInfo> xs = client.getQueueBindingsBetween(v, x, q)
+
+    then: "the amq.fanout binding is listed"
+    final b = xs.find()
+    xs.size() == 1
+    b.source.equals(x)
+    b.destination.equals(q)
+    b.destinationType.equals("queue")
+
+    cleanup:
+    client.deleteQueue(v, q)
   }
 
   def "GET /api/bindings/{vhost}/e/:exchange/q/:queue/props"() {
