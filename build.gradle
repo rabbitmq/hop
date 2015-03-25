@@ -2,6 +2,7 @@ apply plugin: 'java'
 apply plugin: 'groovy'
 apply plugin: 'maven'
 
+group = 'com.rabbitmq'
 version = '1.0.0-beta4-SNAPSHOT'
 
 repositories {
