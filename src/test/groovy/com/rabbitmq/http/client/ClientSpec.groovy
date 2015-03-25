@@ -656,7 +656,29 @@ class ClientSpec extends Specification {
   }
 
   def "DELETE /api/queues/{vhost}/{name}/contents"() {
-    // TODO
+    given: "queue hop.test with 10 messages"
+    final Connection conn = cf.newConnection()
+    final Channel ch = conn.createChannel()
+    final q = "hop.test"
+    ch.queueDelete(q)
+    ch.queueDeclare(q, false, false, false, null)
+    ch.queueBind(q, "amq.fanout", "")
+    ch.confirmSelect()
+    100.times { ch.basicPublish("amq.fanout", "", null, "msg".getBytes()) }
+    assert ch.waitForConfirms()
+    final qi1 = ch.queueDeclarePassive(q)
+    qi1.messageCount == 100
+
+    when: "client purges the queue"
+    client.purgeQueue("/", q)
+
+    then: "the queue becomes empty"
+    final qi2 = ch.queueDeclarePassive(q)
+    qi2.messageCount == 0
+
+    cleanup:
+    ch.queueDelete(q)
+    conn.close()
   }
 
   def "POST /api/queues/{vhost}/{name}/get"() {

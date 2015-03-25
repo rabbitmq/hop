@@ -247,7 +247,10 @@ public class Client {
     final URI uri = uriWithPath("./queues/" + encodePathSegment(vhost) + "/" + encodePathSegment(name));
     this.rt.put(uri, info);
   }
-  
+
+  public void purgeQueue(String vhost, String name) {
+    this.deleteIgnoring404(uriWithPath("./queues/" + encodePathSegment(vhost) + "/" + encodePathSegment(name) + "/contents/"));
+  }
   
   public void deleteQueue(String vhost, String name) {
     this.deleteIgnoring404(uriWithPath("./queues/" + encodePathSegment(vhost) + "/" + encodePathSegment(name)));
