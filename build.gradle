@@ -1,43 +1,187 @@
+description = 'Java client for the RabbitMQ HTTP API'
+
 apply plugin: 'java'
 apply plugin: 'groovy'
-apply plugin: 'maven'
+apply from:   "${rootProject.projectDir}/publish-maven.gradle"
+apply plugin: 'eclipse'
+apply plugin: 'idea'
+
 
 group = 'com.rabbitmq'
-version = '1.0.0-beta4-SNAPSHOT'
 
 repositories {
   mavenCentral()
 }
 
-task wrapper(type: Wrapper) {
-  gradleVersion = '2.3'
+sourceCompatibility = targetCompatibility = 1.7
+
+// See http://www.gradle.org/docs/current/userguide/dependency_management.html#sub:configurations
+// and http://www.gradle.org/docs/current/dsl/org.gradle.api.artifacts.ConfigurationContainer.html
+configurations {
+  jacoco //Configuration Group used by Sonar to provide Code Coverage using JaCoCo
+}
+
+ext {
+  amqpClientVersion='3.5.0'
+  commonsHttpClientVersion = '4.3.6'
+  groovyVersion = '2.4.2'
+  jacksonVersion = '2.5.1'
+  jacocoVersion = '0.7.2.201409121644'
+  spockVersion = "0.7-groovy-2.0"
+  springWebVersion = '4.1.5.RELEASE'
+
+  linkHomepage = 'https://github.com/rabbitmq/hop'
+  linkCi       = 'https://build.spring.io/browse/RMQ'
+  linkIssue    = 'https://github.com/rabbitmq/hop/issues'
+  linkScmUrl           = 'https://github.com/rabbitmq/hop'
+  linkScmConnection    = 'https://github.com/rabbitmq/hop.git'
+  linkScmDevConnection = 'git@github.com:rabbitmq/hop.git'
 }
 
 dependencies {
-  compile "org.codehaus.groovy:groovy-all:2.4.2"
-  compile "org.springframework:spring-web:4.1.5.RELEASE"
-  compile "org.apache.httpcomponents:httpclient:4.3.6"
-  compile "com.fasterxml.jackson.core:jackson-databind:2.5.1"
+  compile "org.springframework:spring-web:$springWebVersion"
+  compile "org.apache.httpcomponents:httpclient:$commonsHttpClientVersion"
+  compile "com.fasterxml.jackson.core:jackson-databind:$jacksonVersion"
 
-  testCompile "org.spockframework:spock-core:0.7-groovy-2.0"
-  testCompile "com.rabbitmq:amqp-client:3.5.0"
+  testCompile "org.codehaus.groovy:groovy-all:$groovyVersion"
+  testCompile "org.spockframework:spock-core:$spockVersion"
+  testCompile "com.rabbitmq:amqp-client:$amqpClientVersion"
+
+  jacoco "org.jacoco:org.jacoco.agent:$jacocoVersion:runtime"
 }
 
-task pom << {
-  pom {
-    project {
-      groupId 'com.rabbitmq'
-      artifactId 'http-client'
-      version version
+eclipse.project.natures += 'org.springframework.ide.eclipse.core.springnature'
 
-      inceptionYear '2014'
-      licenses {
-        license {
-          name 'The Apache Software License, Version 2.0'
-          url 'http://www.apache.org/licenses/LICENSE-2.0.txt'
-          distribution 'repo'
+// enable all compiler warnings; individual projects may customize further
+[compileJava, compileTestJava]*.options*.compilerArgs = ['-Xlint:all,-options']
+
+test {
+  // suppress all console output during testing unless running `gradle -i`
+  logging.captureStandardOutput(LogLevel.INFO)
+  jvmArgs "-javaagent:${configurations.jacoco.asPath}=destfile=${buildDir}/jacoco.exec,includes=*"
+}
+
+task sourcesJar(type: Jar) {
+  classifier = 'sources'
+  from sourceSets.main.allJava
+}
+
+task javadocJar(type: Jar) {
+  classifier = 'javadoc'
+  from javadoc
+}
+
+artifacts {
+  archives sourcesJar
+  archives javadocJar
+}
+
+apply plugin: 'sonar-runner'
+
+sonarRunner {
+  sonarProperties {
+    property "sonar.jacoco.reportPath", "${buildDir.name}/jacoco.exec"
+    property "sonar.links.homepage", linkHomepage
+    property "sonar.links.ci", linkCi
+    property "sonar.links.issue", linkIssue
+    property "sonar.links.scm", linkScmUrl
+    property "sonar.links.scm_dev", linkScmDevConnection
+    property "sonar.java.coveragePlugin", "jacoco"
+  }
+}
+
+javadoc {
+  group = 'Documentation'
+  description = 'Generates the Javadoc API documentation.'
+  title = "${rootProject.description} ${version} API"
+  options.memberLevel = org.gradle.external.javadoc.JavadocMemberLevel.PROTECTED
+  options.author = true
+  options.header = rootProject.description
+  options.overview = 'src/api/overview.html'
+  options.stylesheetFile = file("src/api/stylesheet.css")
+
+  source = sourceSets.main.allJava
+  classpath = project.sourceSets.main.compileClasspath
+  destinationDir = new File(buildDir, "api")
+}
+
+task docsZip(type: Zip) {
+  group = 'Distribution'
+  classifier = 'docs'
+  description = "Builds -${classifier} archive containing the api"
+
+  from(javadoc) {
+    into 'api'
+  }
+}
+
+task distZip(type: Zip, dependsOn: docsZip) {
+  group = 'Distribution'
+  classifier = 'dist'
+  description = "Builds -${classifier} archive, containing all jars and docs, " +
+          "suitable for community download page."
+
+  ext.baseDir = "${project.name}-${project.version}";
+
+  from('src/dist') {
+    include 'license.txt'
+    include 'notice.txt'
+    into "${baseDir}"
+  }
+
+  from(zipTree(docsZip.archivePath)) {
+    into "${baseDir}/docs"
+  }
+
+  into("${baseDir}/libs") {
+    from project.jar
+    from project.sourcesJar
+    from project.javadocJar
+  }
+}
+
+// Create an optional "with dependencies" distribution.
+// Not published by default; only for use when building from source.
+task depsZip(type: Zip, dependsOn: distZip) { zipTask ->
+  group = 'Distribution'
+  classifier = 'dist-with-deps'
+  description = "Builds -${classifier} archive, containing everything " +
+          "in the -${distZip.classifier} archive plus all dependencies."
+
+  from zipTree(distZip.archivePath)
+
+  gradle.taskGraph.whenReady { taskGraph ->
+    if (taskGraph.hasTask(":${zipTask.name}")) {
+      def projectName = rootProject.name
+      def artifacts = new HashSet()
+
+      rootProject.configurations.runtime.resolvedConfiguration.resolvedArtifacts.each { artifact ->
+        def dependency = artifact.moduleVersion.id
+        if (!projectName.equals(dependency.name)) {
+          artifacts << artifact.file
         }
       }
+
+      zipTask.from(artifacts) {
+        into "${distZip.baseDir}/deps"
+      }
     }
-  }.writeTo("pom.xml")
+  }
+}
+
+artifacts {
+  archives distZip
+  archives docsZip
+}
+
+task dist(dependsOn: assemble) {
+  group = 'Distribution'
+  description = 'Builds -dist, -docs and distribution archives.'
+}
+
+
+task wrapper(type: Wrapper) {
+  description = 'Generates gradlew[.bat] scripts'
+  gradleVersion = '2.3'
+  distributionUrl = "http://services.gradle.org/distributions/gradle-${gradleVersion}-all.zip"
 }

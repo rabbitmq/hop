@@ -1,3 +1,19 @@
+/*
+ * Copyright 2015 the original author or authors.
+ *
+ *  Licensed under the Apache License, Version 2.0 (the "License");
+ *  you may not use this file except in compliance with the License.
+ *  You may obtain a copy of the License at
+ *
+ *       http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *  Unless required by applicable law or agreed to in writing, software
+ *  distributed under the License is distributed on an "AS IS" BASIS,
+ *  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *  See the License for the specific language governing permissions and
+ *  limitations under the License.
+ */
+
 package com.rabbitmq.http.client.domain;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
@@ -82,7 +98,7 @@ public class QueueInfo {
   private String policy;
   @JsonProperty("idle_since")
   private String idleSince;
-  
+
   @JsonProperty("disk_reads")
   private long diskReads;
   @JsonProperty("disk_writes")
@@ -114,7 +130,7 @@ public class QueueInfo {
   @JsonProperty("messages_unacknowledged")
   private long messagesUnacknowledged;
   @JsonProperty("messages_unacknowledged_details")
-  private RateDetails messagesUnacknowledgedDetails;  
+  private RateDetails messagesUnacknowledgedDetails;
   // TODO: messages_ready_ram
   // TODO: recoverable_slaves
 

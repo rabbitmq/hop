@@ -1,7 +1,35 @@
+/*
+ * Copyright 2015 the original author or authors.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
 package com.rabbitmq.http.client
 
-import com.rabbitmq.client.*
-import com.rabbitmq.hop.client.domain.*
+import spock.lang.Ignore
+import spock.lang.Specification
+
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.TimeUnit
+
+import org.springframework.http.HttpStatus
+import org.springframework.web.client.HttpClientErrorException
+
+import com.rabbitmq.client.Channel
+import com.rabbitmq.client.Connection
+import com.rabbitmq.client.ConnectionFactory
+import com.rabbitmq.client.ShutdownListener
+import com.rabbitmq.client.ShutdownSignalException
 import com.rabbitmq.http.client.domain.BindingInfo
 import com.rabbitmq.http.client.domain.ChannelInfo
 import com.rabbitmq.http.client.domain.ClusterId
@@ -11,12 +39,6 @@ import com.rabbitmq.http.client.domain.NodeInfo
 import com.rabbitmq.http.client.domain.QueueInfo
 import com.rabbitmq.http.client.domain.UserPermissions
 import com.rabbitmq.http.client.domain.VhostInfo
-import org.springframework.http.HttpStatus
-import org.springframework.web.client.HttpClientErrorException
-import spock.lang.Specification
-
-import java.util.concurrent.CountDownLatch
-import java.util.concurrent.TimeUnit
 
 class ClientSpec extends Specification {
   protected static final String DEFAULT_USERNAME = "guest"
@@ -245,7 +267,7 @@ class ClientSpec extends Specification {
     then: "null is returned"
     xs == null
   }
-  
+
   def "GET /api/exchanges/{vhost}/{name} when both vhost and exchange exist"() {
     when: "client retrieves exchange amq.fanout in vhost /"
     final xs = client.getExchange("/", "amq.fanout")
@@ -253,7 +275,7 @@ class ClientSpec extends Specification {
     then: "exchange info is returned"
     final ExchangeInfo x = (ExchangeInfo)xs.find { it.name.equals("amq.fanout") && it.vhost.equals("/") }
     verifyExchangeInfo(x)
-  }  
+  }
 
   def "PUT /api/exchanges/{vhost}/{name} when vhost exists"() {
     given: "fanout exchange hop.test in vhost /"
@@ -702,6 +724,21 @@ class ClientSpec extends Specification {
     verifyVhost(vhi)
   }
 
+  def "PUT /api/vhosts/{name}"() {
+    def name = "http-created"
+    when:
+    "client creates a vhost named $name"
+    client.createVhost(name)
+    final vhi = client.getVhost(name)
+
+    then: "the vhost is created"
+    vhi.name == name
+
+    cleanup:
+    client.deleteVhost(name)
+  }
+
+  @Ignore
   def "PUT /api/vhosts/{name}"(String name) {
     when:
     "client creates a vhost named $name"
