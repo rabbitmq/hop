@@ -19,7 +19,7 @@ package com.rabbitmq.http.client.domain;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 public class RateDetails {
-  private double rate;
+  private final double rate;
 
   public RateDetails(@JsonProperty("rate") double rate) {
     this.rate = rate;
