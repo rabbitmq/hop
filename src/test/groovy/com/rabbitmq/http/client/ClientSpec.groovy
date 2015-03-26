@@ -911,7 +911,7 @@ class ClientSpec extends Specification {
     final xs = client.getPermissions()
 
     then: "they include permissions for user guest in vhost /"
-    final UserPermissions x = xs.find { it.vhost.equals("/") && it.user.equals("guest") }
+    final UserPermissions x = xs.find { it.vhost.equals("/") && it.user.equals(s) }
     x.read == ".*"
   }
 
