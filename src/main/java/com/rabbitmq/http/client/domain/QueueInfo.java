@@ -82,6 +82,7 @@ import java.util.Map;
 //        "vhost": "/"
 //    }
 
+@SuppressWarnings("unused")
 @JsonIgnoreProperties("backing_queue_status")
 public class QueueInfo {
   private String vhost;
