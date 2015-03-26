@@ -312,7 +312,7 @@ public class Client {
     if(password == null || password.length == 0) {
       throw new IllegalArgumentException("password cannot be null or empty");
     }
-    Map<String, Object> body = new HashMap<>();
+    Map<String, Object> body = new HashMap<String, Object>();
     body.put("password", new String(password));
     body.put("tags", joinStrings(",", tags));
 
@@ -324,7 +324,7 @@ public class Client {
     if(username == null) {
       throw new IllegalArgumentException("username cannot be null");
     }
-    Map<String, Object> body = new HashMap<>();
+    Map<String, Object> body = new HashMap<String, Object>();
     // only update password if provided
     if(password != null) {
       body.put("password", new String(password));
@@ -418,7 +418,7 @@ public class Client {
     if(exchange == null || exchange.isEmpty()) {
       throw new IllegalArgumentException("exchange cannot be null or blank");
     }
-    Map<String, Object> body = new HashMap<>();
+    Map<String, Object> body = new HashMap<String, Object>();
     if(!(args == null)) {
       body.put("args", args);
     }
@@ -443,7 +443,7 @@ public class Client {
     if(source == null || source.isEmpty()) {
       throw new IllegalArgumentException("source cannot be null or blank");
     }
-    Map<String, Object> body = new HashMap<>();
+    Map<String, Object> body = new HashMap<String, Object>();
     if(!(args == null)) {
       body.put("args", args);
     }
@@ -463,7 +463,7 @@ public class Client {
       throw new IllegalArgumentException("name cannot be null or blank");
     }
     final URI uri = uriWithPath("./cluster-name");
-    Map<String, String> m = new HashMap<>();
+    Map<String, String> m = new HashMap<String, String>();
     m.put("name", name);
     this.rt.put(uri, m);
   }
@@ -490,7 +490,7 @@ public class Client {
   }
 
   private List<HttpMessageConverter<?>> getMessageConverters() {
-    List<HttpMessageConverter<?>> xs = new ArrayList<>();
+    List<HttpMessageConverter<?>> xs = new ArrayList<HttpMessageConverter<?>>();
     final Jackson2ObjectMapperBuilder bldr = Jackson2ObjectMapperBuilder
         .json()
         .serializationInclusion(JsonInclude.Include.NON_NULL);

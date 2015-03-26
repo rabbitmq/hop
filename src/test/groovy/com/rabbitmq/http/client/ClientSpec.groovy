@@ -16,7 +16,7 @@
 
 package com.rabbitmq.http.client
 
-import spock.lang.Ignore
+import spock.lang.IgnoreIf
 import spock.lang.Specification
 
 import java.util.concurrent.CountDownLatch
@@ -41,7 +41,9 @@ import com.rabbitmq.http.client.domain.UserPermissions
 import com.rabbitmq.http.client.domain.VhostInfo
 
 class ClientSpec extends Specification {
+
   protected static final String DEFAULT_USERNAME = "guest"
+
   protected static final String DEFAULT_PASSWORD = "guest"
 
   protected Client client
@@ -724,21 +726,7 @@ class ClientSpec extends Specification {
     verifyVhost(vhi)
   }
 
-  def "PUT /api/vhosts/{name}"() {
-    def name = "http-created"
-    when:
-    "client creates a vhost named $name"
-    client.createVhost(name)
-    final vhi = client.getVhost(name)
-
-    then: "the vhost is created"
-    vhi.name == name
-
-    cleanup:
-    client.deleteVhost(name)
-  }
-
-  @Ignore
+  @IgnoreIf({ os.windows })
   def "PUT /api/vhosts/{name}"(String name) {
     when:
     "client creates a vhost named $name"
