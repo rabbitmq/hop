@@ -21,7 +21,7 @@ This section will be updated as the API matures.
 
 ## Maven Artifacts
 
-Project artifacts are released to [Clojars](http://clojars.org).
+Project artifacts are released to [repo.spring.io](http://repo.spring.io).
 
 ### Maven
 
@@ -30,8 +30,8 @@ definition to your `pom.xml`:
 
 ``` xml
 <repository>
-  <id>clojars.org</id>
-  <url>http://clojars.org/repo</url>
+  <id>spring-milestones</id>
+  <url>http://repo.spring.io/milestone</url>
 </repository>
 ```
 
@@ -41,7 +41,7 @@ The most recent release is
 <dependency>
   <groupId>com.rabbitmq</groupId>
   <artifactId>http-client</artifactId>
-  <version>1.0.0-beta4-SNAPSHOT</version>
+  <version>1.0.0.M1</version>
 </dependency>
 ```
 
@@ -52,7 +52,7 @@ Add the following to your `build.gradle`:
 ``` groovy
 repositories {
     maven {
-        url "http://clojars.org/repo"
+        url "http://repo.spring.io/milestone"
     }
 }
 ```
@@ -60,7 +60,7 @@ repositories {
 Current (unpublished) snapshot release is
 
 ``` groovy
-compile "com.rabbitmq:http-client:1.0.0-beta4-SNAPSHOT"
+compile "com.rabbitmq:http-client:1.0.0.M1"
 ```
 
 
