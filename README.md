@@ -6,7 +6,7 @@ Hop is a Java client for the [RabbitMQ HTTP API](https://raw.githack.com/rabbitm
 ## Polyglot
 
 Hop is designed to be easy to use from other JVM languages, primarily Groovy, Scala,
-and Kotlin. 
+and Kotlin.
 
 N.B. that Clojure already includes an HTTP API client as part of [Langohr](http://clojurerabbitmq.info),
 and you should use Langohr instead.
@@ -30,8 +30,8 @@ definition to your `pom.xml`:
 
 ``` xml
 <repository>
-  <id>spring-milestones</id>
-  <url>http://repo.spring.io/milestone</url>
+  <id>spring-releases</id>
+  <url>https://repo.spring.io/release</url>
 </repository>
 ```
 
@@ -41,7 +41,7 @@ The most recent release is
 <dependency>
   <groupId>com.rabbitmq</groupId>
   <artifactId>http-client</artifactId>
-  <version>1.0.0.M1</version>
+  <version>1.0.0.RELEASE</version>
 </dependency>
 ```
 
@@ -52,7 +52,7 @@ Add the following to your `build.gradle`:
 ``` groovy
 repositories {
     maven {
-        url "http://repo.spring.io/milestone"
+        url "https://repo.spring.io/release"
     }
 }
 ```
@@ -60,7 +60,7 @@ repositories {
 Current (unpublished) snapshot release is
 
 ``` groovy
-compile "com.rabbitmq:http-client:1.0.0.M1"
+compile "com.rabbitmq:http-client:1.0.0.RELEASE"
 ```
 
 
