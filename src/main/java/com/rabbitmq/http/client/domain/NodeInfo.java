@@ -32,16 +32,16 @@ public class NodeInfo {
   private boolean running;
 
   @JsonProperty("fd_used")
-  private int fileDescriptorsUsed;
+  private long fileDescriptorsUsed;
   @JsonProperty("fd_total")
-  private int fileDescriptorsTotal;
+  private long fileDescriptorsTotal;
   @JsonProperty("fd_used_details")
   private RateDetails fdUsedDetails;
 
   @JsonProperty("sockets_used")
-  private int socketsUsed;
+  private long socketsUsed;
   @JsonProperty("sockets_total")
-  private int socketsTotal;
+  private long socketsTotal;
   @JsonProperty("sockets_used_details")
   private RateDetails socketsUsedDetails;
 
@@ -118,7 +118,7 @@ public class NodeInfo {
 
   private long uptime;
   @JsonProperty("run_queue")
-  private int erlangRunQueueLength;
+  private long erlangRunQueueLength;
   @JsonProperty("processors")
   private int numberOfProcessors;
 
@@ -158,7 +158,7 @@ public class NodeInfo {
     this.running = running;
   }
 
-  public int getFileDescriptorsUsed() {
+  public long getFileDescriptorsUsed() {
     return fileDescriptorsUsed;
   }
 
@@ -166,7 +166,7 @@ public class NodeInfo {
     this.fileDescriptorsUsed = fileDescriptorsUsed;
   }
 
-  public int getFileDescriptorsTotal() {
+  public long getFileDescriptorsTotal() {
     return fileDescriptorsTotal;
   }
 
@@ -174,7 +174,7 @@ public class NodeInfo {
     this.fileDescriptorsTotal = fileDescriptorsTotal;
   }
 
-  public int getSocketsUsed() {
+  public long getSocketsUsed() {
     return socketsUsed;
   }
 
@@ -182,7 +182,7 @@ public class NodeInfo {
     this.socketsUsed = socketsUsed;
   }
 
-  public int getSocketsTotal() {
+  public long getSocketsTotal() {
     return socketsTotal;
   }
 
@@ -270,7 +270,7 @@ public class NodeInfo {
     this.uptime = uptime;
   }
 
-  public int getErlangRunQueueLength() {
+  public long getErlangRunQueueLength() {
     return erlangRunQueueLength;
   }
 
