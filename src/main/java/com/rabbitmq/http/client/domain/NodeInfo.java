@@ -89,9 +89,9 @@ public class NodeInfo {
   private RateDetails mnesiaRamTransactionCountDetails;
 
   @JsonProperty("proc_used")
-  private int erlangProcessesUsed;
+  private long erlangProcessesUsed;
   @JsonProperty("proc_total")
-  private int erlangProcessesTotal;
+  private long erlangProcessesTotal;
   @JsonProperty("proc_used_details")
   private RateDetails erlangProcessesUsedDetails;
 
@@ -116,7 +116,7 @@ public class NodeInfo {
   @JsonProperty("enabled_plugins")
   private List<String> enabledPlugins;
 
-  private int uptime;
+  private long uptime;
   @JsonProperty("run_queue")
   private int erlangRunQueueLength;
   @JsonProperty("processors")
@@ -238,7 +238,7 @@ public class NodeInfo {
     this.diskAlarmActive = diskAlarmActive;
   }
 
-  public int getErlangProcessesUsed() {
+  public long getErlangProcessesUsed() {
     return erlangProcessesUsed;
   }
 
@@ -246,7 +246,7 @@ public class NodeInfo {
     this.erlangProcessesUsed = erlangProcessesUsed;
   }
 
-  public int getErlangProcessesTotal() {
+  public long getErlangProcessesTotal() {
     return erlangProcessesTotal;
   }
 
@@ -262,7 +262,7 @@ public class NodeInfo {
     this.statisticsLevel = statisticsLevel;
   }
 
-  public int getUptime() {
+  public long getUptime() {
     return uptime;
   }
 
