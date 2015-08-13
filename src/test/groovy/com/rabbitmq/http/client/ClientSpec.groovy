@@ -111,7 +111,7 @@ class ClientSpec extends Specification {
     final node = res.first()
 
     then: "the list is returned"
-    res.size() == 1
+    res.size() >= 1
     verifyNode(node)
   }
 
@@ -122,7 +122,7 @@ class ClientSpec extends Specification {
     final node = client.getNode(name)
 
     then: "the list is returned"
-    res.size() == 1
+    res.size() >= 1
     verifyNode(node)
   }
 
@@ -1026,7 +1026,7 @@ class ClientSpec extends Specification {
     final ClusterId s = client.getClusterName()
 
     then: "cluster name is returned"
-    s.getName().startsWith("rabbit")
+    ["rabbit", "hare"].any { s.getName().contains(it) }
   }
 
   def "PUT /api/cluster-name"() {
@@ -1075,18 +1075,12 @@ class ClientSpec extends Specification {
   }
 
   protected void verifyNode(NodeInfo node) {
+    assert node != null
     assert node.name != null
-    assert node.type == "disc"
-    assert node.isDiskNode()
-    assert node.socketsUsed < node.socketsTotal
-    assert node.erlangProcessesUsed < node.erlangProcessesTotal
+    assert node.socketsUsed <= node.socketsTotal
+    assert node.erlangProcessesUsed <= node.erlangProcessesTotal
     assert node.erlangRunQueueLength >= 0
-    assert node.memoryUsed < node.memoryLimit
-    assert !node.memoryAlarmActive
-    assert node.diskFree > node.diskFreeLimit
-    assert !node.diskAlarmActive
-    assert node.authMechanisms.size() >= 1
-    assert node.erlangApps.size() >= 1
+    assert node.memoryUsed <= node.memoryLimit
   }
 
   protected void verifyExchangeInfo(ExchangeInfo x) {
