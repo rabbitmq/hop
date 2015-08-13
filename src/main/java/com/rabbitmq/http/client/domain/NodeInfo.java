@@ -162,7 +162,7 @@ public class NodeInfo {
     return fileDescriptorsUsed;
   }
 
-  public void setFileDescriptorsUsed(int fileDescriptorsUsed) {
+  public void setFileDescriptorsUsed(long fileDescriptorsUsed) {
     this.fileDescriptorsUsed = fileDescriptorsUsed;
   }
 
@@ -170,7 +170,7 @@ public class NodeInfo {
     return fileDescriptorsTotal;
   }
 
-  public void setFileDescriptorsTotal(int fileDescriptorsTotal) {
+  public void setFileDescriptorsTotal(long fileDescriptorsTotal) {
     this.fileDescriptorsTotal = fileDescriptorsTotal;
   }
 
@@ -178,7 +178,7 @@ public class NodeInfo {
     return socketsUsed;
   }
 
-  public void setSocketsUsed(int socketsUsed) {
+  public void setSocketsUsed(long socketsUsed) {
     this.socketsUsed = socketsUsed;
   }
 
@@ -186,7 +186,7 @@ public class NodeInfo {
     return socketsTotal;
   }
 
-  public void setSocketsTotal(int socketsTotal) {
+  public void setSocketsTotal(long socketsTotal) {
     this.socketsTotal = socketsTotal;
   }
 
@@ -242,7 +242,7 @@ public class NodeInfo {
     return erlangProcessesUsed;
   }
 
-  public void setErlangProcessesUsed(int erlangProcessesUsed) {
+  public void setErlangProcessesUsed(long erlangProcessesUsed) {
     this.erlangProcessesUsed = erlangProcessesUsed;
   }
 
@@ -250,7 +250,7 @@ public class NodeInfo {
     return erlangProcessesTotal;
   }
 
-  public void setErlangProcessesTotal(int erlangProcessesTotal) {
+  public void setErlangProcessesTotal(long erlangProcessesTotal) {
     this.erlangProcessesTotal = erlangProcessesTotal;
   }
 
@@ -266,7 +266,7 @@ public class NodeInfo {
     return uptime;
   }
 
-  public void setUptime(int uptime) {
+  public void setUptime(long uptime) {
     this.uptime = uptime;
   }
 
@@ -274,7 +274,7 @@ public class NodeInfo {
     return erlangRunQueueLength;
   }
 
-  public void setErlangRunQueueLength(int erlangRunQueueLength) {
+  public void setErlangRunQueueLength(long erlangRunQueueLength) {
     this.erlangRunQueueLength = erlangRunQueueLength;
   }
 
