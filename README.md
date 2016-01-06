@@ -163,6 +163,13 @@ c.getBindingsByDestination("/", "an.exchange");
 ```
 
 
+## Running Tests
+
+    gradle check
+
+The test suite assumes RabbitMQ is running locally with
+stock settings and rabbitmq-management plugin enabled.
+
 
 ## License
 
@@ -171,4 +178,4 @@ c.getBindingsByDestination("/", "an.exchange");
 
 ## Copyright
 
-Michael Klishin, 2014.
+Michael Klishin, 2014-216.
