@@ -178,4 +178,4 @@ stock settings and rabbitmq-management plugin enabled.
 
 ## Copyright
 
-Michael Klishin, 2014-216.
+Michael Klishin, 2014-2016.
