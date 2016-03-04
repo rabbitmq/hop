@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.rabbitmq.http.client.domain;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
@@ -33,6 +32,8 @@ public class Definitions {
     private List<UserInfo> users = new ArrayList<UserInfo>();
 
     private List<UserPermissions> permissions = new ArrayList<UserPermissions>();
+
+    private List<QueueInfo> queues = new ArrayList<QueueInfo>();
 
     public String getRabbitmqVersion() {
         return rabbitmqVersion;
@@ -64,5 +65,13 @@ public class Definitions {
 
     public void setPermissions(List<UserPermissions> permissions) {
         this.permissions = permissions;
+    }
+
+    public List<QueueInfo> getQueues() {
+        return queues;
+    }
+
+    public void setQueues(List<QueueInfo> queues) {
+        this.queues = queues;
     }
 }

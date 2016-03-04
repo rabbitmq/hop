@@ -1058,8 +1058,7 @@ class ClientSpec extends Specification {
     !xs.isEmpty()
   }
 
-  def "GET /api/definitions"() {
-    given: "a node with the management plugin enabled"
+  def "GET /api/definitions (version, vhosts, users, permissions)"() {
     when: "client requests the definitions"
     Definitions d = client.getDefinitions()
 
@@ -1077,6 +1076,31 @@ class ClientSpec extends Specification {
     !d.getPermissions().isEmpty()
     d.getPermissions().get(0).getUser() != null
     !d.getPermissions().get(0).getUser().isEmpty()
+  }
+
+  def "GET /api/definitions (queues, exchanges, bindings)"() {
+    given: "a basic topology"
+    client.declareQueue("/","queue1",new QueueInfo(false,false,false))
+    client.declareQueue("/","queue2",new QueueInfo(false,false,false))
+    client.declareQueue("/","queue3",new QueueInfo(false,false,false))
+    when: "client requests the definitions"
+    Definitions d = client.getDefinitions()
+
+    then: "broker definitions are returned"
+    !d.getQueues().isEmpty()
+    d.getQueues().size() >= 3
+    QueueInfo q = d.getQueues().find { it.name.equals("queue1") }
+    q != null
+    q.vhost.equals("/")
+    q.name.equals("queue1")
+    !q.durable
+    !q.exclusive
+    !q.autoDelete
+
+    cleanup:
+    client.deleteQueue("/","queue1")
+    client.deleteQueue("/","queue2")
+    client.deleteQueue("/","queue3")
   }
 
   protected boolean awaitOn(CountDownLatch latch) {
