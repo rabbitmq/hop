@@ -16,6 +16,7 @@
 
 package com.rabbitmq.http.client
 
+import com.rabbitmq.http.client.domain.Definitions
 import spock.lang.IgnoreIf
 import spock.lang.Specification
 
@@ -1053,6 +1054,15 @@ class ClientSpec extends Specification {
 
     then: "a list of extensions is returned"
     !xs.isEmpty()
+  }
+
+  def "GET /api/definitions"() {
+    given: "a node with the management plugin enabled"
+    when: "client requests the definitions"
+    Definitions d = client.getDefinitions()
+
+    then: "broker definitions are returned"
+    d.getRabbitmqVersion() != null
   }
 
   protected boolean awaitOn(CountDownLatch latch) {
