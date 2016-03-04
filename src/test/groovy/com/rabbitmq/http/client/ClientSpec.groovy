@@ -811,6 +811,7 @@ class ClientSpec extends Specification {
     final x = xs.find { it.name.equals("guest") }
     x.name == "guest"
     x.passwordHash != null
+    x.hashingAlgorithm != null
     x.tags.contains("administrator")
   }
 
@@ -821,6 +822,7 @@ class ClientSpec extends Specification {
     then: "user info returned"
     x.name == "guest"
     x.passwordHash != null
+    x.hashingAlgorithm != null
     x.tags.contains("administrator")
   }
 
@@ -1063,6 +1065,16 @@ class ClientSpec extends Specification {
 
     then: "broker definitions are returned"
     d.getRabbitmqVersion() != null
+    !d.getRabbitmqVersion().trim().isEmpty()
+    !d.getVhosts().isEmpty()
+    !d.getVhosts().get(0).getName().isEmpty()
+    !d.getVhosts().isEmpty()
+    d.getVhosts().get(0).getName() != null
+    !d.getVhosts().get(0).getName().isEmpty()
+    !d.getUsers().isEmpty()
+    d.getUsers().get(0).getName() != null
+    !d.getUsers().get(0).getName().isEmpty()
+
   }
 
   protected boolean awaitOn(CountDownLatch latch) {

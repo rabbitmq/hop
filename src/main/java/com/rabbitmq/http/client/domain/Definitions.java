@@ -19,11 +19,18 @@ package com.rabbitmq.http.client.domain;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import java.util.ArrayList;
+import java.util.List;
+
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class Definitions {
 
     @JsonProperty("rabbit_version")
     private String rabbitmqVersion;
+
+    private List<VhostInfo> vhosts = new ArrayList<VhostInfo>();
+
+    private List<UserInfo> users = new ArrayList<UserInfo>();
 
     public String getRabbitmqVersion() {
         return rabbitmqVersion;
@@ -31,5 +38,21 @@ public class Definitions {
 
     public void setRabbitmqVersion(String rabbitmqVersion) {
         this.rabbitmqVersion = rabbitmqVersion;
+    }
+
+    public List<VhostInfo> getVhosts() {
+        return vhosts;
+    }
+
+    public void setVhosts(List<VhostInfo> vhosts) {
+        this.vhosts = vhosts;
+    }
+
+    public List<UserInfo> getUsers() {
+        return users;
+    }
+
+    public void setUsers(List<UserInfo> users) {
+        this.users = users;
     }
 }
