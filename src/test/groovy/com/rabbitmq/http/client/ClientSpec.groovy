@@ -1046,6 +1046,15 @@ class ClientSpec extends Specification {
     client.setClusterName(s)
   }
 
+  def "GET /api/extensions"() {
+    given: "a node with the management plugin enabled"
+    when: "client requests a list of (plugin) extensions"
+    List<Map<String, Object>> xs = client.getExtensions()
+
+    then: "a list of extensions is returned"
+    !xs.isEmpty()
+  }
+
   protected boolean awaitOn(CountDownLatch latch) {
     latch.await(5, TimeUnit.SECONDS)
   }

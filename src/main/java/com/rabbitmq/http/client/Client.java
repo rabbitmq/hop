@@ -468,6 +468,12 @@ public class Client {
     this.rt.put(uri, m);
   }
 
+  @SuppressWarnings("unchecked")
+  public List<Map> getExtensions() {
+    final URI uri = uriWithPath("./extensions/");
+    return Arrays.asList(this.rt.getForObject(uri, Map[].class));
+  }
+
 
   //
   // Implementation
