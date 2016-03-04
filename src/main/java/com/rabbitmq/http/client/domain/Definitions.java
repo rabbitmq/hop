@@ -32,6 +32,8 @@ public class Definitions {
 
     private List<UserInfo> users = new ArrayList<UserInfo>();
 
+    private List<UserPermissions> permissions = new ArrayList<UserPermissions>();
+
     public String getRabbitmqVersion() {
         return rabbitmqVersion;
     }
@@ -54,5 +56,13 @@ public class Definitions {
 
     public void setUsers(List<UserInfo> users) {
         this.users = users;
+    }
+
+    public List<UserPermissions> getPermissions() {
+        return permissions;
+    }
+
+    public void setPermissions(List<UserPermissions> permissions) {
+        this.permissions = permissions;
     }
 }

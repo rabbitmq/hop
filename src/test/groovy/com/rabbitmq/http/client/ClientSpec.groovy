@@ -1074,7 +1074,9 @@ class ClientSpec extends Specification {
     !d.getUsers().isEmpty()
     d.getUsers().get(0).getName() != null
     !d.getUsers().get(0).getName().isEmpty()
-
+    !d.getPermissions().isEmpty()
+    d.getPermissions().get(0).getUser() != null
+    !d.getPermissions().get(0).getUser().isEmpty()
   }
 
   protected boolean awaitOn(CountDownLatch latch) {
