@@ -35,6 +35,10 @@ public class Definitions {
 
     private List<QueueInfo> queues = new ArrayList<QueueInfo>();
 
+    private List<ExchangeInfo> exchanges = new ArrayList<ExchangeInfo>();
+
+    private List<BindingInfo> bindings = new ArrayList<BindingInfo>();
+
     public String getRabbitmqVersion() {
         return rabbitmqVersion;
     }
@@ -73,5 +77,21 @@ public class Definitions {
 
     public void setQueues(List<QueueInfo> queues) {
         this.queues = queues;
+    }
+
+    public List<ExchangeInfo> getExchanges() {
+        return exchanges;
+    }
+
+    public void setExchanges(List<ExchangeInfo> exchanges) {
+        this.exchanges = exchanges;
+    }
+
+    public List<BindingInfo> getBindings() {
+        return bindings;
+    }
+
+    public void setBindings(List<BindingInfo> bindings) {
+        this.bindings = bindings;
     }
 }

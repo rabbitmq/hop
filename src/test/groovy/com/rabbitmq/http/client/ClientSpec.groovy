@@ -1078,7 +1078,7 @@ class ClientSpec extends Specification {
     !d.getPermissions().get(0).getUser().isEmpty()
   }
 
-  def "GET /api/definitions (queues, exchanges, bindings)"() {
+  def "GET /api/definitions (queues)"() {
     given: "a basic topology"
     client.declareQueue("/","queue1",new QueueInfo(false,false,false))
     client.declareQueue("/","queue2",new QueueInfo(false,false,false))
@@ -1101,6 +1101,54 @@ class ClientSpec extends Specification {
     client.deleteQueue("/","queue1")
     client.deleteQueue("/","queue2")
     client.deleteQueue("/","queue3")
+  }
+
+  def "GET /api/definitions (exchanges)"() {
+    given: "a basic topology"
+    client.declareExchange("/", "exchange1", new ExchangeInfo("fanout", false, false))
+    client.declareExchange("/", "exchange2", new ExchangeInfo("direct", false, false))
+    client.declareExchange("/", "exchange3", new ExchangeInfo("topic", false, false))
+    when: "client requests the definitions"
+    Definitions d = client.getDefinitions()
+
+    then: "broker definitions are returned"
+    !d.getExchanges().isEmpty()
+    d.getExchanges().size() >= 3
+    ExchangeInfo e = d.getExchanges().find { it.name.equals("exchange1") }
+    e != null
+    e.vhost.equals("/")
+    e.name.equals("exchange1")
+    !e.durable
+    !e.internal
+    !e.autoDelete
+
+    cleanup:
+    client.deleteExchange("/","exchange1")
+    client.deleteExchange("/","exchange2")
+    client.deleteExchange("/","exchange3")
+  }
+
+  def "GET /api/definitions (bindings)"() {
+    given: "a basic topology"
+    client.declareQueue("/", "queue1", new QueueInfo(false, false, false))
+    client.bindQueue("/", "queue1", "amq.fanout", "")
+    when: "client requests the definitions"
+    Definitions d = client.getDefinitions()
+
+    then: "broker definitions are returned"
+    !d.getBindings().isEmpty()
+    d.getBindings().size() >= 1
+    BindingInfo b = d.getBindings().find {
+      it.source.equals("amq.fanout") && it.destination.equals("queue1") && it.destinationType.equals("queue")
+    }
+    b != null
+    b.vhost.equals("/")
+    b.source.equals("amq.fanout")
+    b.destination.equals("queue1")
+    b.destinationType.equals("queue")
+
+    cleanup:
+    client.deleteQueue("/","queue1")
   }
 
   protected boolean awaitOn(CountDownLatch latch) {
