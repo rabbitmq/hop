@@ -27,6 +27,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.rabbitmq.http.client.domain.*;
 import org.apache.http.HttpHeaders;
 import org.apache.http.HttpHost;
 import org.apache.http.auth.AuthScope;
@@ -53,19 +54,6 @@ import org.springframework.web.client.RestTemplate;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.rabbitmq.http.client.domain.AlivenessTestResult;
-import com.rabbitmq.http.client.domain.BindingInfo;
-import com.rabbitmq.http.client.domain.ChannelInfo;
-import com.rabbitmq.http.client.domain.ClusterId;
-import com.rabbitmq.http.client.domain.ConnectionInfo;
-import com.rabbitmq.http.client.domain.CurrentUserDetails;
-import com.rabbitmq.http.client.domain.ExchangeInfo;
-import com.rabbitmq.http.client.domain.NodeInfo;
-import com.rabbitmq.http.client.domain.OverviewResponse;
-import com.rabbitmq.http.client.domain.QueueInfo;
-import com.rabbitmq.http.client.domain.UserInfo;
-import com.rabbitmq.http.client.domain.UserPermissions;
-import com.rabbitmq.http.client.domain.VhostInfo;
 
 public class Client {
   private final RestTemplate rt;
@@ -468,10 +456,15 @@ public class Client {
     this.rt.put(uri, m);
   }
 
-  @SuppressWarnings("unchecked")
+  @SuppressWarnings({"unchecked","rawtypes"})
   public List<Map> getExtensions() {
     final URI uri = uriWithPath("./extensions/");
     return Arrays.asList(this.rt.getForObject(uri, Map[].class));
+  }
+
+  public Definitions getDefinitions() {
+    final URI uri = uriWithPath("./definitions/");
+    return this.rt.getForObject(uri, Definitions.class);
   }
 
 

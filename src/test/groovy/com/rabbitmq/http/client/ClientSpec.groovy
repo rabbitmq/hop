@@ -16,6 +16,7 @@
 
 package com.rabbitmq.http.client
 
+import com.rabbitmq.http.client.domain.Definitions
 import spock.lang.IgnoreIf
 import spock.lang.Specification
 
@@ -805,21 +806,25 @@ class ClientSpec extends Specification {
   def "GET /api/users"() {
     when: "users are listed"
     final xs = client.getUsers()
+    final version = client.getOverview().getRabbitMQVersion()
 
     then: "a list of users is returned"
     final x = xs.find { it.name.equals("guest") }
     x.name == "guest"
     x.passwordHash != null
+    isVersion36orMore(version) ? x.hashingAlgorithm != null : x.hashingAlgorithm == null
     x.tags.contains("administrator")
   }
 
   def "GET /api/users/{name} when user exists"() {
     when: "user guest if fetched"
     final x = client.getUser("guest")
+    final version = client.getOverview().getRabbitMQVersion();
 
     then: "user info returned"
     x.name == "guest"
     x.passwordHash != null
+    isVersion36orMore(version) ? x.hashingAlgorithm != null : x.hashingAlgorithm == null
     x.tags.contains("administrator")
   }
 
@@ -1055,6 +1060,99 @@ class ClientSpec extends Specification {
     !xs.isEmpty()
   }
 
+  def "GET /api/definitions (version, vhosts, users, permissions)"() {
+    when: "client requests the definitions"
+    Definitions d = client.getDefinitions()
+
+    then: "broker definitions are returned"
+    d.getRabbitMQVersion() != null
+    !d.getRabbitMQVersion().trim().isEmpty()
+    !d.getVhosts().isEmpty()
+    !d.getVhosts().get(0).getName().isEmpty()
+    !d.getVhosts().isEmpty()
+    d.getVhosts().get(0).getName() != null
+    !d.getVhosts().get(0).getName().isEmpty()
+    !d.getUsers().isEmpty()
+    d.getUsers().get(0).getName() != null
+    !d.getUsers().get(0).getName().isEmpty()
+    !d.getPermissions().isEmpty()
+    d.getPermissions().get(0).getUser() != null
+    !d.getPermissions().get(0).getUser().isEmpty()
+  }
+
+  def "GET /api/definitions (queues)"() {
+    given: "a basic topology"
+    client.declareQueue("/","queue1",new QueueInfo(false,false,false))
+    client.declareQueue("/","queue2",new QueueInfo(false,false,false))
+    client.declareQueue("/","queue3",new QueueInfo(false,false,false))
+    when: "client requests the definitions"
+    Definitions d = client.getDefinitions()
+
+    then: "broker definitions are returned"
+    !d.getQueues().isEmpty()
+    d.getQueues().size() >= 3
+    QueueInfo q = d.getQueues().find { it.name.equals("queue1") }
+    q != null
+    q.vhost.equals("/")
+    q.name.equals("queue1")
+    !q.durable
+    !q.exclusive
+    !q.autoDelete
+
+    cleanup:
+    client.deleteQueue("/","queue1")
+    client.deleteQueue("/","queue2")
+    client.deleteQueue("/","queue3")
+  }
+
+  def "GET /api/definitions (exchanges)"() {
+    given: "a basic topology"
+    client.declareExchange("/", "exchange1", new ExchangeInfo("fanout", false, false))
+    client.declareExchange("/", "exchange2", new ExchangeInfo("direct", false, false))
+    client.declareExchange("/", "exchange3", new ExchangeInfo("topic", false, false))
+    when: "client requests the definitions"
+    Definitions d = client.getDefinitions()
+
+    then: "broker definitions are returned"
+    !d.getExchanges().isEmpty()
+    d.getExchanges().size() >= 3
+    ExchangeInfo e = d.getExchanges().find { it.name.equals("exchange1") }
+    e != null
+    e.vhost.equals("/")
+    e.name.equals("exchange1")
+    !e.durable
+    !e.internal
+    !e.autoDelete
+
+    cleanup:
+    client.deleteExchange("/","exchange1")
+    client.deleteExchange("/","exchange2")
+    client.deleteExchange("/","exchange3")
+  }
+
+  def "GET /api/definitions (bindings)"() {
+    given: "a basic topology"
+    client.declareQueue("/", "queue1", new QueueInfo(false, false, false))
+    client.bindQueue("/", "queue1", "amq.fanout", "")
+    when: "client requests the definitions"
+    Definitions d = client.getDefinitions()
+
+    then: "broker definitions are returned"
+    !d.getBindings().isEmpty()
+    d.getBindings().size() >= 1
+    BindingInfo b = d.getBindings().find {
+      it.source.equals("amq.fanout") && it.destination.equals("queue1") && it.destinationType.equals("queue")
+    }
+    b != null
+    b.vhost.equals("/")
+    b.source.equals("amq.fanout")
+    b.destination.equals("queue1")
+    b.destinationType.equals("queue")
+
+    cleanup:
+    client.deleteQueue("/","queue1")
+  }
+
   protected boolean awaitOn(CountDownLatch latch) {
     latch.await(5, TimeUnit.SECONDS)
   }
@@ -1104,5 +1202,39 @@ class ClientSpec extends Specification {
     assert x.durable != null
     assert x.exclusive != null
     assert x.autoDelete != null
+  }
+
+  boolean isVersion36orMore(String currentVersion) {
+    versionCompare(currentVersion,"3.6.0") >= 0
+  }
+
+  /**
+   * http://stackoverflow.com/questions/6701948/efficient-way-to-compare-version-strings-in-java
+   *
+   */
+  Integer versionCompare(String str1, String str2) {
+    String[] vals1 = str1.split("\\.");
+    String[] vals2 = str2.split("\\.");
+    int i = 0;
+    // set index to first non-equal ordinal or length of shortest version string
+    while (i < vals1.length && i < vals2.length && vals1[i].equals(vals2[i])) {
+      i++;
+    }
+    // compare first non-equal ordinal number
+    if (i < vals1.length && i < vals2.length) {
+      if(vals1[i].indexOf('-') != -1) {
+        vals1[i] = vals1[i].substring(0,vals1[i].indexOf('-'));
+      }
+      if(vals2[i].indexOf('-') != -1) {
+        vals2[i] = vals2[i].substring(0,vals2[i].indexOf('-'));
+      }
+      int diff = Integer.valueOf(vals1[i]).compareTo(Integer.valueOf(vals2[i]));
+      return Integer.signum(diff);
+    }
+    // the strings are equal or one string is a substring of the other
+    // e.g. "1.2.3" = "1.2.3" or "1.2.3" < "1.2.3.4"
+    else {
+      return Integer.signum(vals1.length - vals2.length);
+    }
   }
 }

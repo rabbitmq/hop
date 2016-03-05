@@ -26,6 +26,8 @@ public class UserInfo {
   private String name;
   @JsonProperty("password_hash")
   private String passwordHash;
+  @JsonProperty("hashing_algorithm")
+  private String hashingAlgorithm;
   private List<String> tags;
 
   public String getName() {
@@ -34,6 +36,14 @@ public class UserInfo {
 
   public void setName(String name) {
     this.name = name;
+  }
+
+  public String getHashingAlgorithm() {
+    return hashingAlgorithm;
+  }
+
+  public void setHashingAlgorithm(String hashingAlgorithm) {
+    this.hashingAlgorithm = hashingAlgorithm;
   }
 
   public String getPasswordHash() {
