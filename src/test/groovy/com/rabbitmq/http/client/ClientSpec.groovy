@@ -806,23 +806,25 @@ class ClientSpec extends Specification {
   def "GET /api/users"() {
     when: "users are listed"
     final xs = client.getUsers()
+    final version = client.getOverview().getRabbitMQVersion()
 
     then: "a list of users is returned"
     final x = xs.find { it.name.equals("guest") }
     x.name == "guest"
     x.passwordHash != null
-    x.hashingAlgorithm != null
+    isVersion36orMore(version) ? x.hashingAlgorithm != null : x.hashingAlgorithm == null
     x.tags.contains("administrator")
   }
 
   def "GET /api/users/{name} when user exists"() {
     when: "user guest if fetched"
     final x = client.getUser("guest")
+    final version = client.getOverview().getRabbitMQVersion();
 
     then: "user info returned"
     x.name == "guest"
     x.passwordHash != null
-    x.hashingAlgorithm != null
+    isVersion36orMore(version) ? x.hashingAlgorithm != null : x.hashingAlgorithm == null
     x.tags.contains("administrator")
   }
 
@@ -1063,8 +1065,8 @@ class ClientSpec extends Specification {
     Definitions d = client.getDefinitions()
 
     then: "broker definitions are returned"
-    d.getRabbitmqVersion() != null
-    !d.getRabbitmqVersion().trim().isEmpty()
+    d.getRabbitMQVersion() != null
+    !d.getRabbitMQVersion().trim().isEmpty()
     !d.getVhosts().isEmpty()
     !d.getVhosts().get(0).getName().isEmpty()
     !d.getVhosts().isEmpty()
@@ -1200,5 +1202,39 @@ class ClientSpec extends Specification {
     assert x.durable != null
     assert x.exclusive != null
     assert x.autoDelete != null
+  }
+
+  boolean isVersion36orMore(String currentVersion) {
+    versionCompare(currentVersion,"3.6.0") >= 0
+  }
+
+  /**
+   * http://stackoverflow.com/questions/6701948/efficient-way-to-compare-version-strings-in-java
+   *
+   */
+  Integer versionCompare(String str1, String str2) {
+    String[] vals1 = str1.split("\\.");
+    String[] vals2 = str2.split("\\.");
+    int i = 0;
+    // set index to first non-equal ordinal or length of shortest version string
+    while (i < vals1.length && i < vals2.length && vals1[i].equals(vals2[i])) {
+      i++;
+    }
+    // compare first non-equal ordinal number
+    if (i < vals1.length && i < vals2.length) {
+      if(vals1[i].indexOf('-') != -1) {
+        vals1[i] = vals1[i].substring(0,vals1[i].indexOf('-'));
+      }
+      if(vals2[i].indexOf('-') != -1) {
+        vals2[i] = vals2[i].substring(0,vals2[i].indexOf('-'));
+      }
+      int diff = Integer.valueOf(vals1[i]).compareTo(Integer.valueOf(vals2[i]));
+      return Integer.signum(diff);
+    }
+    // the strings are equal or one string is a substring of the other
+    // e.g. "1.2.3" = "1.2.3" or "1.2.3" < "1.2.3.4"
+    else {
+      return Integer.signum(vals1.length - vals2.length);
+    }
   }
 }

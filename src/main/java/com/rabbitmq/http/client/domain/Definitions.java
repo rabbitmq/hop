@@ -25,7 +25,7 @@ import java.util.List;
 public class Definitions {
 
     @JsonProperty("rabbit_version")
-    private String rabbitmqVersion;
+    private String rabbitMQVersion;
 
     private List<VhostInfo> vhosts = new ArrayList<VhostInfo>();
 
@@ -39,12 +39,12 @@ public class Definitions {
 
     private List<BindingInfo> bindings = new ArrayList<BindingInfo>();
 
-    public String getRabbitmqVersion() {
-        return rabbitmqVersion;
+    public String getRabbitMQVersion() {
+        return rabbitMQVersion;
     }
 
-    public void setRabbitmqVersion(String rabbitmqVersion) {
-        this.rabbitmqVersion = rabbitmqVersion;
+    public void setRabbitMQVersion(String rabbitMQVersion) {
+        this.rabbitMQVersion = rabbitMQVersion;
     }
 
     public List<VhostInfo> getVhosts() {
