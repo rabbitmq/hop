@@ -127,7 +127,7 @@ c.getChannel("127.0.0.1:61779 -> 127.0.0.1:5672 (3)");
 
 ``` java
 // get status and metrics of individual vhost
-c.getVhost("/")
+c.getVhost("/");
 ```
 
 
@@ -148,7 +148,20 @@ TBD
 
 ### Operations on Queues
 
-TBD
+``` java
+// list all queues
+c.getQueues();
+
+// list all queues in a vhost
+c.getQueues();
+
+// declare a queue that's not durable, auto-delete,
+// and non-exclusive
+c.declareQueue("/", "queue1", new QueueInfo(false, true, false));
+
+// delete a queue
+c.deleteQueue("/", "queue1");
+```
 
 ### Operations on Bindings
 
