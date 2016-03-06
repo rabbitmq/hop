@@ -159,6 +159,9 @@ c.getQueues();
 // and non-exclusive
 c.declareQueue("/", "queue1", new QueueInfo(false, true, false));
 
+// bind a queue
+c.bindQueue("/", "queue1", "amq.fanout", "routing-key");
+
 // delete a queue
 c.deleteQueue("/", "queue1");
 ```
