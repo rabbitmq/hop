@@ -50,6 +50,8 @@ import java.util.Map;
 //        "disk_reads": 0,
 //        "disk_writes": 0,
 //        "durable": false,
+//        introduced in RabbitMQ 3.6.0; older versions have to check owner_pid_details.
+//        "exclusive": false,
 //        "exclusive_consumer_tag": "",
 //        "idle_since": "2015-03-21 0:04:25",
 //        "memory": 13960,
@@ -132,6 +134,8 @@ public class QueueInfo {
   private long messagesUnacknowledged;
   @JsonProperty("messages_unacknowledged_details")
   private RateDetails messagesUnacknowledgedDetails;
+  @JsonProperty("owner_pid_details")
+  private OwnerPidDetails ownerPidDetails;
   // TODO: messages_ready_ram
   // TODO: recoverable_slaves
 
@@ -185,7 +189,9 @@ public class QueueInfo {
   }
 
   public boolean isExclusive() {
-    return exclusive;
+    // versions prior to 3.6.0 did not have an exclusive field in the payload. Fallback to ownerPidDetails for
+    // compatibility.
+    return exclusive || (ownerPidDetails != null);
   }
 
   public void setExclusive(boolean exclusive) {
@@ -390,6 +396,10 @@ public class QueueInfo {
 
   public void setConsumerUtilisation(long consumerUtilisation) {
     this.consumerUtilisation = consumerUtilisation;
+  }
+
+  public void setOwnerPidDetails(OwnerPidDetails ownerPidDetails) {
+    this.ownerPidDetails = ownerPidDetails;
   }
 
   @Override
