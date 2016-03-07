@@ -432,6 +432,25 @@ class ClientSpec extends Specification {
     conn.close()
   }
 
+  def "GET /api/queues/{vhost}/{name} with an exclusive queue"() {
+    given: "an exclusive queue named hop.q1.exclusive"
+    final Connection conn = cf.newConnection()
+    final Channel ch = conn.createChannel()
+    String s = "hop.q1.exclusive"
+    ch.queueDelete(s)
+    final String q = ch.queueDeclare(s, false, true, false, null).queue
+
+    when: "client fetches info of the queue"
+    final x = client.getQueue("/", q)
+
+    then: "the queue is exclusive according to the response"
+    x.exclusive
+
+    cleanup:
+    ch.queueDelete(q)
+    conn.close()
+  }
+
   def "GET /api/queues/{vhost}/{name} when queue DOES NOT exist"() {
     given: "queue lolwut does not exist in vhost /"
     final Connection conn = cf.newConnection()
