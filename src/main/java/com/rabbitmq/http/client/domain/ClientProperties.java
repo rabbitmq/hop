@@ -16,6 +16,8 @@
 
 package com.rabbitmq.http.client.domain;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 import java.util.Map;
 
 @SuppressWarnings("unused")
@@ -26,6 +28,7 @@ public class ClientProperties {
   private String version;
   private String information;
   private String copyright;
+  @JsonProperty("connection_name")
   private String connectionName;
 
   public Map<String, Object> getCapabilities() {
