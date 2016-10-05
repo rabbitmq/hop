@@ -26,6 +26,7 @@ public class ClientProperties {
   private String version;
   private String information;
   private String copyright;
+  private String connectionName;
 
   public Map<String, Object> getCapabilities() {
     return capabilities;
@@ -82,8 +83,17 @@ public class ClientProperties {
         ", product='" + product + '\'' +
         ", platform='" + platform + '\'' +
         ", version='" + version + '\'' +
+        ", connectionName='" + connectionName + '\'' +
         ", information='" + information + '\'' +
-        ", copyright='" + copyright + '\'' +
-        '}';
+        ", copyright='" + copyright + '\'' + '}';
   }
+
+  public String getConnectionName() {
+    return connectionName;
+  }
+
+  public void setConnectionName(String connectionName) {
+    this.connectionName = connectionName;
+  }
+
 }
