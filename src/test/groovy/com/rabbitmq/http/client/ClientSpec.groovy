@@ -158,6 +158,23 @@ class ClientSpec extends Specification {
     conn.close()
   }
 
+  def "GET /api/connections/{name} with client-provided name"() {
+    given: "an open RabbitMQ client connection with client-provided name"
+    final s = "client-name"
+    final conn = openConnection(s)
+
+    when: "client retrieves connection info with the correct name"
+    final xs = client.getConnections()
+    final x = client.getConnection(xs.first().name)
+
+    then: "the info is returned"
+    verifyConnectionInfo(x)
+    x.clientProperties.connectionName == s
+
+    cleanup:
+    conn.close()
+  }
+
   def "DELETE /api/connections/{name}"() {
     given: "an open RabbitMQ client connection"
     final latch = new CountDownLatch(1)
@@ -1198,6 +1215,10 @@ class ClientSpec extends Specification {
 
   protected Connection openConnection() {
     this.cf.newConnection()
+  }
+
+  protected Connection openConnection(String clientProvidedName) {
+    this.cf.newConnection(clientProvidedName)
   }
 
   protected void verifyNode(NodeInfo node) {
