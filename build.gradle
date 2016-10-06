@@ -22,7 +22,7 @@ configurations {
 }
 
 ext {
-  amqpClientVersion='3.5.0'
+  amqpClientVersion='3.6.5'
   commonsHttpClientVersion = '4.3.6'
   groovyVersion = '2.4.2'
   jacksonVersion = '2.5.1'
