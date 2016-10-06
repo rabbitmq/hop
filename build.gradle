@@ -1,11 +1,14 @@
+plugins {
+  id 'groovy'
+  id 'eclipse'
+  id 'idea'
+  id 'jacoco'
+  id 'org.sonarqube' version '2.1'
+}
+
 description = 'Java client for the RabbitMQ HTTP API'
 
-apply plugin: 'java'
-apply plugin: 'groovy'
 apply from:   "${rootProject.projectDir}/publish-maven.gradle"
-apply plugin: 'eclipse'
-apply plugin: 'idea'
-
 
 group = 'com.rabbitmq'
 
@@ -15,18 +18,11 @@ repositories {
 
 sourceCompatibility = targetCompatibility = 1.6
 
-// See http://www.gradle.org/docs/current/userguide/dependency_management.html#sub:configurations
-// and http://www.gradle.org/docs/current/dsl/org.gradle.api.artifacts.ConfigurationContainer.html
-configurations {
-  jacoco //Configuration Group used by Sonar to provide Code Coverage using JaCoCo
-}
-
 ext {
   amqpClientVersion='3.6.5'
   commonsHttpClientVersion = '4.3.6'
   groovyVersion = '2.4.2'
   jacksonVersion = '2.5.1'
-  jacocoVersion = '0.7.2.201409121644'
   spockVersion = "1.0-groovy-2.4"
   springWebVersion = '4.1.5.RELEASE'
 
@@ -46,11 +42,13 @@ dependencies {
   testCompile "org.codehaus.groovy:groovy-all:$groovyVersion"
   testCompile "org.spockframework:spock-core:$spockVersion"
   testCompile "com.rabbitmq:amqp-client:$amqpClientVersion"
-
-  jacoco "org.jacoco:org.jacoco.agent:$jacocoVersion:runtime"
 }
 
 eclipse.project.natures += 'org.springframework.ide.eclipse.core.springnature'
+
+jacoco {
+  toolVersion = "0.7.7.201606060606"
+}
 
 // enable all compiler warnings; individual projects may customize further
 [compileJava, compileTestJava, compileTestGroovy]*.options*.compilerArgs = ['-Xlint:all,-options']
@@ -58,9 +56,11 @@ eclipse.project.natures += 'org.springframework.ide.eclipse.core.springnature'
 test {
   // suppress all console output during testing unless running `gradle -i`
   logging.captureStandardOutput(LogLevel.INFO)
-  jvmArgs "-javaagent:${configurations.jacoco.asPath}=destfile=${buildDir}/jacoco.exec,includes=*"
-
-  outputs.upToDateWhen { false }
+  maxHeapSize = "1024m"
+  jacoco {
+    append = false
+    destinationFile = file("$buildDir/jacoco.exec")
+  }
 }
 
 task sourcesJar(type: Jar) {
@@ -78,10 +78,18 @@ artifacts {
   archives javadocJar
 }
 
-apply plugin: 'sonar-runner'
+jacocoTestReport {
+  reports {
+    xml.enabled false
+    csv.enabled false
+    html.destination "${buildDir}/reports/jacoco/html"
+  }
+}
 
-sonarRunner {
-  sonarProperties {
+build.dependsOn jacocoTestReport
+
+sonarqube {
+  properties {
     property "sonar.jacoco.reportPath", "${buildDir.name}/jacoco.exec"
     property "sonar.links.homepage", linkHomepage
     property "sonar.links.ci", linkCi
@@ -179,11 +187,4 @@ artifacts {
 task dist(dependsOn: assemble) {
   group = 'Distribution'
   description = 'Builds -dist, -docs and distribution archives.'
-}
-
-
-task wrapper(type: Wrapper) {
-  description = 'Generates gradlew[.bat] scripts'
-  gradleVersion = '2.3'
-  distributionUrl = "http://services.gradle.org/distributions/gradle-${gradleVersion}-all.zip"
 }
