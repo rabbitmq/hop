@@ -63,15 +63,51 @@ public class Client {
   // API
   //
 
+  /**
+   * Construct an instance with the provided url and credentials.
+   * @param url the url e.g. "http://localhost:15672/api/".
+   * @param username the user name.
+   * @param password the password
+   * @throws MalformedURLException for a badly formed URL.
+   * @throws URISyntaxException for a badly formed URL.
+   */
   public Client(String url, String username, String password) throws MalformedURLException, URISyntaxException {
     this(new URL(url), username, password);
   }
 
+  /**
+   * Construct an instance with the provided url and credentials.
+   * @param url the url e.g. "http://localhost:15672/api/".
+   * @param username the user name.
+   * @param password the password
+   * @throws MalformedURLException for a badly formed URL.
+   * @throws URISyntaxException for a badly formed URL.
+   */
   public Client(URL url, String username, String password) throws MalformedURLException, URISyntaxException {
     this.rootUri = url.toURI();
 
     this.rt = new RestTemplate(getRequestFactory(url, username, password));
     this.rt.setMessageConverters(getMessageConverters());
+  }
+
+  /**
+   * Construct an instance with the provided url and credentials.
+   * @param url the url e.g. "http://guest:guest@localhost:15672/api/".
+   * @throws MalformedURLException for a badly formed URL.
+   * @throws URISyntaxException for a badly formed URL.
+   */
+  public Client(String url) throws MalformedURLException, URISyntaxException {
+    this(url, null, null);
+  }
+
+  /**
+   * Construct an instance with the provided url and credentials.
+   * @param url the url e.g. "http://guest:guest@localhost:15672/api/".
+   * @throws MalformedURLException for a badly formed URL.
+   * @throws URISyntaxException for a badly formed URL.
+   */
+  public Client(URL url) throws MalformedURLException, URISyntaxException {
+    this(url, null, null);
   }
 
   /**
@@ -498,8 +534,20 @@ public class Client {
   }
 
   private HttpComponentsClientHttpRequestFactory getRequestFactory(final URL url, final String username, final String password) throws MalformedURLException {
+    String theUser = username;
+    String thePassword = password;
+    String userInfo = url.getUserInfo();
+    if (userInfo != null && theUser == null) {
+      String[] userParts = userInfo.split(":");
+      if (userParts.length > 0) {
+        theUser = userParts[0];
+      }
+      if (userParts.length > 1) {
+        thePassword = userParts[1];
+      }
+    }
     final HttpClientBuilder bldr = HttpClientBuilder.create().
-        setDefaultCredentialsProvider(getCredentialsProvider(url, username, password));
+        setDefaultCredentialsProvider(getCredentialsProvider(url, theUser, thePassword));
     bldr.setDefaultHeaders(Arrays.asList(new BasicHeader(HttpHeaders.CONTENT_TYPE, "application/json")));
 
     HttpClient httpClient = bldr.build();
