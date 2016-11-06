@@ -21,6 +21,9 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.net.URLEncoder;
+import java.security.KeyManagementException;
+import java.security.KeyStoreException;
+import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -36,6 +39,9 @@ import org.apache.http.client.AuthCache;
 import org.apache.http.client.CredentialsProvider;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.protocol.HttpClientContext;
+import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
+import org.apache.http.conn.ssl.SSLContextBuilder;
+import org.apache.http.conn.ssl.TrustSelfSignedStrategy;
 import org.apache.http.impl.auth.BasicScheme;
 import org.apache.http.impl.client.BasicAuthCache;
 import org.apache.http.impl.client.BasicCredentialsProvider;
@@ -71,8 +77,8 @@ public class Client {
    * @throws MalformedURLException for a badly formed URL.
    * @throws URISyntaxException for a badly formed URL.
    */
-  public Client(String url, String username, String password) throws MalformedURLException, URISyntaxException {
-    this(new URL(url), username, password);
+  public Client(String url, String username, String password) throws MalformedURLException, URISyntaxException, NoSuchAlgorithmException, KeyStoreException, KeyManagementException {
+    this(new URL(url), username, password, false);
   }
 
   /**
@@ -83,10 +89,10 @@ public class Client {
    * @throws MalformedURLException for a badly formed URL.
    * @throws URISyntaxException for a badly formed URL.
    */
-  public Client(URL url, String username, String password) throws MalformedURLException, URISyntaxException {
+  public Client(URL url, String username, String password, boolean shouldTrustSelfSignedCertificates) throws MalformedURLException, URISyntaxException, NoSuchAlgorithmException, KeyStoreException, KeyManagementException {
     this.rootUri = url.toURI();
 
-    this.rt = new RestTemplate(getRequestFactory(url, username, password));
+    this.rt = new RestTemplate(getRequestFactory(url, username, password, shouldTrustSelfSignedCertificates));
     this.rt.setMessageConverters(getMessageConverters());
   }
 
@@ -96,7 +102,7 @@ public class Client {
    * @throws MalformedURLException for a badly formed URL.
    * @throws URISyntaxException for a badly formed URL.
    */
-  public Client(String url) throws MalformedURLException, URISyntaxException {
+  public Client(String url) throws MalformedURLException, URISyntaxException, NoSuchAlgorithmException, KeyStoreException, KeyManagementException {
     this(url, null, null);
   }
 
@@ -106,8 +112,8 @@ public class Client {
    * @throws MalformedURLException for a badly formed URL.
    * @throws URISyntaxException for a badly formed URL.
    */
-  public Client(URL url) throws MalformedURLException, URISyntaxException {
-    this(url, null, null);
+  public Client(URL url) throws MalformedURLException, URISyntaxException, NoSuchAlgorithmException, KeyStoreException, KeyManagementException {
+    this(url, null, null, false);
   }
 
   /**
@@ -533,7 +539,7 @@ public class Client {
     return xs;
   }
 
-  private HttpComponentsClientHttpRequestFactory getRequestFactory(final URL url, final String username, final String password) throws MalformedURLException {
+  private HttpComponentsClientHttpRequestFactory getRequestFactory(final URL url, final String username, final String password, boolean shouldTrustSelfSignedCertificates) throws MalformedURLException, KeyStoreException, NoSuchAlgorithmException, KeyManagementException {
     String theUser = username;
     String thePassword = password;
     String userInfo = url.getUserInfo();
@@ -549,6 +555,13 @@ public class Client {
     final HttpClientBuilder bldr = HttpClientBuilder.create().
         setDefaultCredentialsProvider(getCredentialsProvider(url, theUser, thePassword));
     bldr.setDefaultHeaders(Arrays.asList(new BasicHeader(HttpHeaders.CONTENT_TYPE, "application/json")));
+    if (shouldTrustSelfSignedCertificates) {
+      SSLContextBuilder builder = new SSLContextBuilder();
+      builder.loadTrustMaterial(null, new TrustSelfSignedStrategy());
+      SSLConnectionSocketFactory sslsf = new SSLConnectionSocketFactory(
+              builder.build());
+      bldr.setSSLSocketFactory(sslsf);
+    }
 
     HttpClient httpClient = bldr.build();
 
