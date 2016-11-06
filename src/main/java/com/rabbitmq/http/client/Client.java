@@ -36,6 +36,7 @@ import org.apache.http.client.AuthCache;
 import org.apache.http.client.CredentialsProvider;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.protocol.HttpClientContext;
+import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
 import org.apache.http.impl.auth.BasicScheme;
 import org.apache.http.impl.client.BasicAuthCache;
 import org.apache.http.impl.client.BasicCredentialsProvider;
@@ -54,6 +55,8 @@ import org.springframework.web.client.RestTemplate;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.JsonProcessingException;
+
+import javax.net.ssl.SSLContext;
 
 public class Client {
   private final RestTemplate rt;
@@ -86,7 +89,22 @@ public class Client {
   public Client(URL url, String username, String password) throws MalformedURLException, URISyntaxException {
     this.rootUri = url.toURI();
 
-    this.rt = new RestTemplate(getRequestFactory(url, username, password));
+    this.rt = new RestTemplate(getRequestFactory(url, username, password, null, null));
+    this.rt.setMessageConverters(getMessageConverters());
+  }
+
+  /**
+   * Construct an instance with the provided url and credentials.
+   * @param url the url e.g. "http://localhost:15672/api/".
+   * @param username the user name.
+   * @param password the password
+   * @throws MalformedURLException for a badly formed URL.
+   * @throws URISyntaxException for a badly formed URL.
+   */
+  public Client(URL url, String username, String password, SSLConnectionSocketFactory sslConnectionSocketFactory, SSLContext sslContext) throws MalformedURLException, URISyntaxException {
+    this.rootUri = url.toURI();
+
+    this.rt = new RestTemplate(getRequestFactory(url, username, password, sslConnectionSocketFactory, sslContext));
     this.rt.setMessageConverters(getMessageConverters());
   }
 
@@ -533,7 +551,7 @@ public class Client {
     return xs;
   }
 
-  private HttpComponentsClientHttpRequestFactory getRequestFactory(final URL url, final String username, final String password) throws MalformedURLException {
+  private HttpComponentsClientHttpRequestFactory getRequestFactory(final URL url, final String username, final String password, final SSLConnectionSocketFactory sslConnectionSocketFactory, final SSLContext sslContext) throws MalformedURLException {
     String theUser = username;
     String thePassword = password;
     String userInfo = url.getUserInfo();
@@ -549,6 +567,12 @@ public class Client {
     final HttpClientBuilder bldr = HttpClientBuilder.create().
         setDefaultCredentialsProvider(getCredentialsProvider(url, theUser, thePassword));
     bldr.setDefaultHeaders(Arrays.asList(new BasicHeader(HttpHeaders.CONTENT_TYPE, "application/json")));
+    if (sslConnectionSocketFactory != null) {
+      bldr.setSSLSocketFactory(sslConnectionSocketFactory);
+    }
+    if (sslContext != null) {
+      bldr.setSslcontext(sslContext);
+    }
 
     HttpClient httpClient = bldr.build();
 
