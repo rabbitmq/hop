@@ -87,9 +87,23 @@ public class Client {
    * @throws URISyntaxException for a badly formed URL.
    */
   public Client(URL url, String username, String password) throws MalformedURLException, URISyntaxException {
+    this(url, username, password, null, null);
+  }
+
+  /**
+   * Construct an instance with the provided url and credentials.
+   * @param url the url e.g. "http://localhost:15672/api/".
+   * @param username the user name.
+   * @param password the password
+   * @param sslConnectionSocketFactory ssl connection factory for http client
+   * @param sslContext ssl context for http client
+   * @throws MalformedURLException for a badly formed URL.
+   * @throws URISyntaxException for a badly formed URL.
+   */
+  private Client(URL url, String username, String password, SSLConnectionSocketFactory sslConnectionSocketFactory, SSLContext sslContext) throws MalformedURLException, URISyntaxException {
     this.rootUri = url.toURI();
 
-    this.rt = new RestTemplate(getRequestFactory(url, username, password, null, null));
+    this.rt = new RestTemplate(getRequestFactory(url, username, password, sslConnectionSocketFactory, sslContext));
     this.rt.setMessageConverters(getMessageConverters());
   }
 
@@ -98,14 +112,25 @@ public class Client {
    * @param url the url e.g. "http://localhost:15672/api/".
    * @param username the user name.
    * @param password the password
+   * @param sslContext ssl context for http client
    * @throws MalformedURLException for a badly formed URL.
    * @throws URISyntaxException for a badly formed URL.
    */
-  public Client(URL url, String username, String password, SSLConnectionSocketFactory sslConnectionSocketFactory, SSLContext sslContext) throws MalformedURLException, URISyntaxException {
-    this.rootUri = url.toURI();
+  public Client(URL url, String username, String password, SSLContext sslContext) throws MalformedURLException, URISyntaxException {
+    this(url, username, password, null, sslContext);
+  }
 
-    this.rt = new RestTemplate(getRequestFactory(url, username, password, sslConnectionSocketFactory, sslContext));
-    this.rt.setMessageConverters(getMessageConverters());
+  /**
+   * Construct an instance with the provided url and credentials.
+   * @param url the url e.g. "http://localhost:15672/api/".
+   * @param username the user name.
+   * @param password the password
+   * @param sslConnectionSocketFactory ssl connection factory for http client
+   * @throws MalformedURLException for a badly formed URL.
+   * @throws URISyntaxException for a badly formed URL.
+   */
+  private Client(URL url, String username, String password, SSLConnectionSocketFactory sslConnectionSocketFactory) throws MalformedURLException, URISyntaxException {
+    this(url, username, password, sslConnectionSocketFactory, null);
   }
 
   /**
