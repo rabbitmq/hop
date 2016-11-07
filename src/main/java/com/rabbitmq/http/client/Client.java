@@ -563,8 +563,8 @@ public class Client {
   }
 
   @SuppressWarnings("deprecation")
-  private String encodePathSegment(final String vhost) {
-    return URLEncoder.encode(vhost);
+  private String encodePathSegment(final String pathSegment) {
+    return URLEncoder.encode(pathSegment);
   }
 
   private List<HttpMessageConverter<?>> getMessageConverters() {
