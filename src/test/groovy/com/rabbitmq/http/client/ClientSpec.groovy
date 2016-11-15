@@ -1245,7 +1245,7 @@ class ClientSpec extends Specification {
   }
 
   boolean isVersion36orMore(String currentVersion) {
-    versionCompare(currentVersion,"3.6.0") >= 0
+    currentVersion == "0.0.0" ? true : versionCompare(currentVersion,"3.6.0") >= 0
   }
 
   /**
