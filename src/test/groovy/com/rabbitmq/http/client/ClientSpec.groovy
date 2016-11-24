@@ -72,7 +72,6 @@ class ClientSpec extends Specification {
     then: "the response is converted successfully"
     res.getNode().startsWith("rabbit@")
     res.getErlangVersion() != null
-    res.getStatisticsDbNode().startsWith("rabbit@")
 
     final msgStats = res.getMessageStats()
     msgStats.basicPublish >= 0
@@ -132,6 +131,7 @@ class ClientSpec extends Specification {
     final conn = openConnection()
 
     when: "client retrieves a list of connections"
+    awaitEventPropagation()
     final res = client.getConnections()
     final fst = res.first()
 
@@ -148,6 +148,7 @@ class ClientSpec extends Specification {
     final conn = openConnection()
 
     when: "client retrieves connection info with the correct name"
+    awaitEventPropagation()
     final xs = client.getConnections()
     final x = client.getConnection(xs.first().name)
 
@@ -164,6 +165,7 @@ class ClientSpec extends Specification {
     final conn = openConnection(s)
 
     when: "client retrieves connection info with the correct name"
+    awaitEventPropagation()
     final xs = client.getConnections()
     final x = client.getConnection(xs.first().name)
 
@@ -209,6 +211,7 @@ class ClientSpec extends Specification {
     final ch = conn.createChannel()
 
     when: "client lists channels"
+    awaitEventPropagation()
     final chs = client.getChannels()
     final chi = chs.first()
 
@@ -227,6 +230,7 @@ class ClientSpec extends Specification {
     final ch = conn.createChannel()
 
     when: "client lists channels on that connection"
+    awaitEventPropagation()
     final cn = client.getConnections().first().name
     final chs = client.getChannels(cn)
     final chi = chs.first()
@@ -246,6 +250,7 @@ class ClientSpec extends Specification {
     final ch = conn.createChannel()
 
     when: "client retrieves channel info"
+    awaitEventPropagation()
     final chs = client.getChannels()
     final chi = client.getChannel(chs.first().name)
 
@@ -1276,5 +1281,15 @@ class ClientSpec extends Specification {
     else {
       return Integer.signum(vals1.length - vals2.length);
     }
+  }
+
+  /**
+   * Statistics tables in the server are updated asynchronously,
+   * in particular starting with rabbitmq/rabbitmq-management#236,
+   * so in some cases we need to wait before GET'ing e.g. a newly opened connection.
+   */
+  protected void awaitEventPropagation() {
+    // same number as used in rabbit-hole test suite. Works OK.
+    Thread.sleep(1000)
   }
 }
