@@ -1291,6 +1291,6 @@ class ClientSpec extends Specification {
    */
   protected void awaitEventPropagation() {
     // same number as used in rabbit-hole test suite. Works OK.
-    Thread.sleep(5050)
+    Thread.sleep(1000)
   }
 }
