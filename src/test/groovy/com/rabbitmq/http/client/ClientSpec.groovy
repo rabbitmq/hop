@@ -190,6 +190,7 @@ class ClientSpec extends Specification {
     assert conn.isOpen()
 
     when: "client closes the connection"
+    awaitEventPropagation()
     final xs = client.getConnections()
     xs.each({ client.closeConnection(it.name) })
 
@@ -1290,6 +1291,6 @@ class ClientSpec extends Specification {
    */
   protected void awaitEventPropagation() {
     // same number as used in rabbit-hole test suite. Works OK.
-    Thread.sleep(1000)
+    Thread.sleep(5050)
   }
 }
