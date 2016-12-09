@@ -195,3 +195,4 @@ stock settings and rabbitmq-management plugin enabled.
 ## Copyright
 
 Michael Klishin, 2014-2016.
+Pivotal Software Inc., 2014-current.
