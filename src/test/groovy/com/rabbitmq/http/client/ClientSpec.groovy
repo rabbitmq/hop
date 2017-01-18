@@ -878,33 +878,37 @@ class ClientSpec extends Specification {
     x == null
   }
 
-  def "PUT /api/users/{name}"() {
-    given: "user alt"
-    final u = "alt"
+  def "PUT /api/users/{name} updates user tags"() {
+    given: "user alt-user"
+    final u = "alt-user"
     client.deleteUser(u)
     client.createUser(u, u.toCharArray(), Arrays.asList("original", "management"))
+    awaitEventPropagation()
 
-    when: "alt's tags are updated"
-    client.updateUser(u, null, Arrays.asList("management", "updated"))
+    when: "alt-user's tags are updated"
+    client.updateUser(u, u.toCharArray(), Arrays.asList("management", "updated"))
+    awaitEventPropagation()
 
-    and: "alt info is reloaded"
+    and: "alt-user info is reloaded"
     final x = client.getUser(u)
 
-    then: "alt has new tags"
+    then: "alt-user has new tags"
     x.tags.contains("updated")
     !x.tags.contains("original")
   }
 
   def "DELETE /api/users/{name}"() {
-    given: "user alt"
-    final u = "alt"
+    given: "user alt-user"
+    final u = "alt-user"
     client.deleteUser(u)
     client.createUser(u, u.toCharArray(), Arrays.asList("original", "management"))
+    awaitEventPropagation()
 
-    when: "alt is deleted"
+    when: "alt-user is deleted"
     client.deleteUser(u)
+    awaitEventPropagation()
 
-    and: "alt info is reloaded"
+    and: "alt-user info is reloaded"
     final x = client.getUser(u)
 
     then: "deleted user is gone"
