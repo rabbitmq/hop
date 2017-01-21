@@ -457,6 +457,20 @@ public class Client {
     return asListOrNull(result);
   }
 
+  /**
+   * Returns a list of bindings where provided queue is the destination.
+   *
+   * @param vhost    vhost of the exchange
+   * @param queue    destination queue name
+   * @return list of bindings
+   */
+  public List<BindingInfo> getQueueBindings(String vhost, String queue) {
+    final URI uri = uriWithPath("./queues/" + encodePathSegment(vhost) +
+        "/" + encodePathSegment(queue) + "/bindings");
+    final BindingInfo[] result = this.rt.getForObject(uri, BindingInfo[].class);
+    return asListOrNull(result);
+  }
+
   public List<BindingInfo> getQueueBindingsBetween(String vhost, String exchange, String queue) {
     final URI uri = uriWithPath("./bindings/" + encodePathSegment(vhost) +
         "/e/" + encodePathSegment(exchange) + "/q/" + encodePathSegment(queue));
