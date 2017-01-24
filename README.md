@@ -13,7 +13,7 @@ and you should use Langohr instead.
 
 ## Project Maturity
 
-This project is young and not 100% feature complete but the key API operations are covered.
+This project is relatively young and not 100% feature complete but the key API operations are covered.
 The docs largely don't exist. The API may change but radical changes are unlikely.
 
 This section will be updated as the project matures.
