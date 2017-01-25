@@ -21,7 +21,7 @@ This section will be updated as the project matures.
 
 ## Maven Artifacts
 
-Project artifacts are released to [repo.spring.io](http://repo.spring.io).
+Project artifacts are available from Maven Central and [repo.spring.io](http://repo.spring.io).
 
 ### Maven
 
