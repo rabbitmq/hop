@@ -577,7 +577,6 @@ public class Client {
     return this.rootUri.resolve(path);
   }
 
-  @SuppressWarnings("deprecation")
   private String encodePathSegment(final String pathSegment) {
     try {
       return UriUtils.encodePathSegment(pathSegment, "UTF-8");
