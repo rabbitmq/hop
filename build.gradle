@@ -24,7 +24,7 @@ ext {
   groovyVersion = '2.4.7'
   jacksonVersion = '2.8.4'
   spockVersion = "1.0-groovy-2.4"
-  springWebVersion = '4.3.3.RELEASE'
+  springWebVersion = '4.3.6.RELEASE'
 
   linkHomepage = 'https://github.com/rabbitmq/hop'
   linkCi       = 'https://build.spring.io/browse/RMQ'
@@ -47,7 +47,7 @@ dependencies {
 eclipse.project.natures += 'org.springframework.ide.eclipse.core.springnature'
 
 jacoco {
-  toolVersion = "0.7.7.201606060606"
+  toolVersion = "0.7.8"
 }
 
 // enable all compiler warnings; individual projects may customize further
