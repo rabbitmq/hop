@@ -16,11 +16,11 @@
 
 package com.rabbitmq.http.client;
 
+import java.io.UnsupportedEncodingException;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
-import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -55,6 +55,7 @@ import org.springframework.web.client.RestTemplate;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import org.springframework.web.util.UriUtils;
 
 import javax.net.ssl.SSLContext;
 
@@ -578,7 +579,12 @@ public class Client {
 
   @SuppressWarnings("deprecation")
   private String encodePathSegment(final String pathSegment) {
-    return URLEncoder.encode(pathSegment);
+    try {
+      return UriUtils.encodePathSegment(pathSegment, "UTF-8");
+    } catch (UnsupportedEncodingException e) {
+      // the best we can do without messing up all caller signatures :/ MK.
+      return pathSegment;
+    }
   }
 
   private List<HttpMessageConverter<?>> getMessageConverters() {
