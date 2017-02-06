@@ -601,7 +601,7 @@ class ClientSpec extends Specification {
     conn.close()
   }
 
-  def "GET /api/queues/{vhost}/{name}/bindings"() {
+  def "GET /api/bindings/{vhost} example 2"() {
     given: "queues hop.test bound to amq.topic in vhost /"
     final Connection conn = cf.newConnection()
     final Channel ch = conn.createChannel()
@@ -612,6 +612,26 @@ class ClientSpec extends Specification {
 
     when: "all queue bindings are listed"
     final List<BindingInfo> xs = client.getBindings("/")
+
+    then: "the amq.fanout binding is listed"
+    xs.find { it.destinationType.equals("queue") && it.source.equals(x) && it.destination.equals(q) }
+
+    cleanup:
+    ch.queueDelete(q)
+    conn.close()
+  }
+
+  def "GET /api/queues/{vhost}/{name}/bindings"() {
+    given: "queues hop.test bound to amq.topic in vhost /"
+    final Connection conn = cf.newConnection()
+    final Channel ch = conn.createChannel()
+    final String x  = 'amq.topic'
+    final String q  = "hop.test"
+    ch.queueDeclare(q, false, false, false, null)
+    ch.queueBind(q, x, "hop.*")
+
+    when: "all queue bindings are listed"
+    final List<BindingInfo> xs = client.getQueueBindings("/", q)
 
     then: "the amq.fanout binding is listed"
     xs.find { it.destinationType.equals("queue") && it.source.equals(x) && it.destination.equals(q) }

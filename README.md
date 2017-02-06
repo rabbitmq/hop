@@ -13,7 +13,7 @@ and you should use Langohr instead.
 
 ## Project Maturity
 
-This project is young and not 100% feature complete but the key API operations are covered.
+This project is relatively young and not 100% feature complete but the key API operations are covered.
 The docs largely don't exist. The API may change but radical changes are unlikely.
 
 This section will be updated as the project matures.
@@ -21,7 +21,7 @@ This section will be updated as the project matures.
 
 ## Maven Artifacts
 
-Project artifacts are released to [repo.spring.io](http://repo.spring.io).
+Project artifacts are available from Maven Central and [repo.spring.io](http://repo.spring.io).
 
 ### Maven
 
@@ -41,7 +41,7 @@ The most recent release is
 <dependency>
   <groupId>com.rabbitmq</groupId>
   <artifactId>http-client</artifactId>
-  <version>1.0.0.RELEASE</version>
+  <version>1.1.0.RELEASE</version>
 </dependency>
 ```
 
@@ -60,7 +60,7 @@ repositories {
 Current (unpublished) snapshot release is
 
 ``` groovy
-compile "com.rabbitmq:http-client:1.0.0.RELEASE"
+compile "com.rabbitmq:http-client:1.1.0.RELEASE"
 ```
 
 
