@@ -37,6 +37,7 @@ import com.rabbitmq.http.client.domain.ClusterId
 import com.rabbitmq.http.client.domain.ConnectionInfo
 import com.rabbitmq.http.client.domain.ExchangeInfo
 import com.rabbitmq.http.client.domain.NodeInfo
+import com.rabbitmq.http.client.domain.PolicyInfo
 import com.rabbitmq.http.client.domain.QueueInfo
 import com.rabbitmq.http.client.domain.UserPermissions
 import com.rabbitmq.http.client.domain.VhostInfo
@@ -500,7 +501,7 @@ class ClientSpec extends Specification {
     final s = "hop.test"
     client.declareQueue(v, s, new QueueInfo(false, false, false))
 
-    and: "client lists exchanges in vhost /"
+    and: "client lists queues in vhost /"
     List<QueueInfo> xs = client.getQueues(v)
 
     then: "hop.test is listed"
@@ -516,6 +517,32 @@ class ClientSpec extends Specification {
     client.deleteQueue(v, s)
   }
 
+  def "PUT /api/policies/{vhost}/{name}"() {
+    given: "vhost / and definition"
+    final v = "/"
+    final d = new HashMap<String, Object>()
+    d.put("ha-mode", "all")
+    
+    when: "client declares a policy hop.test"
+    final s = "hop.test"
+    client.declarePolicy(v, s, new PolicyInfo(".*", 1, null, d))
+    
+    and: "client lists policies in vhost /"
+    List<PolicyInfo> ps = client.getPolicies(v)
+    
+    then: "hop.test is listed"
+    PolicyInfo p = ps.find { it.name.equals(s) }
+    p != null
+    p.vhost.equals(v)
+    p.name.equals(s)
+    p.priority.equals(1)
+    p.applyTo.equals("all")
+    p.definition.equals(d)
+    
+    cleanup:
+    client.deletePolicy(v, s)
+  }
+  
   def "PUT /api/queues/{vhost}/{name} when vhost DOES NOT exist"() {
     given: "vhost lolwut which does not exist"
     final v = "lolwut"
@@ -1075,13 +1102,57 @@ class ClientSpec extends Specification {
   def "GET /api/parameters"() {
     // TODO
   }
-
+  
   def "GET /api/policies"() {
-    // TODO
+    given: "at least one policy was declared"
+    final v = "/"
+    final s = "hop.test"
+    final d = new HashMap<String, Object>()
+    final p = ".*"
+    d.put("ha-mode", "all")
+    client.declarePolicy(v, s, new PolicyInfo(p, 0, null, d))
+    
+    when: "client lists policies"
+    final xs = client.getPolicies()
+
+    then: "a list of policies is returned"
+    final x = xs.first()
+    verifyPolicyInfo(x)
+
+    cleanup:
+    client.deletePolicy(v, s)
   }
 
-  def "GET /api/policies/{vhost}"() {
-    // TODO
+  def "GET /api/policies/{vhost} when vhost exists"() {
+    given: "at least one policy was declared in vhost /"
+    final v = "/"
+    final s = "hop.test"
+    final d = new HashMap<String, Object>()
+    final p = ".*"
+    d.put("ha-mode", "all")
+    client.declarePolicy(v, s, new PolicyInfo(p, 0, null, d))
+
+    when: "client lists policies"
+    final xs = client.getPolicies("/")
+
+    then: "a list of queues is returned"
+    final x = xs.first()
+    verifyPolicyInfo(x)
+
+    cleanup:
+    client.deletePolicy(v, s)
+  }
+
+  def "GET /api/policies/{vhost} when vhost DOES NOT exists"() {
+    given: "vhost lolwut DOES not exist"
+    final v = "lolwut"
+    client.deleteVhost(v)
+
+    when: "client lists policies"
+    final xs = client.getPolicies(v)
+
+    then: "null is returned"
+    xs == null
   }
 
   def "GET /api/aliveness-test/{vhost}"() {
@@ -1267,6 +1338,14 @@ class ClientSpec extends Specification {
     assert x.autoDelete != null
   }
 
+  protected void verifyPolicyInfo(PolicyInfo x) {
+    assert x.name != null
+    assert x.vhost != null
+    assert x.pattern != null
+    assert x.definition != null
+    assert x.applyTo != null
+  }
+  
   protected void verifyQueueInfo(QueueInfo x) {
     assert x.name != null
     assert x.durable != null

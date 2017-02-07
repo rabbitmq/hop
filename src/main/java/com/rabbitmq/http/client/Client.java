@@ -349,6 +349,11 @@ public class Client {
     return this.getForObjectReturningNullOn404(uri, QueueInfo.class);
   }
 
+  public void declarePolicy(String vhost, String name, PolicyInfo info) {
+    final URI uri = uriWithPath("./policies/" + encodePathSegment(vhost) + "/" + encodePathSegment(name));
+    this.rt.put(uri, info);
+  }
+  
   public void declareQueue(String vhost, String name, QueueInfo info) {
     final URI uri = uriWithPath("./queues/" + encodePathSegment(vhost) + "/" + encodePathSegment(name));
     this.rt.put(uri, info);
@@ -362,6 +367,9 @@ public class Client {
     this.deleteIgnoring404(uriWithPath("./queues/" + encodePathSegment(vhost) + "/" + encodePathSegment(name)));
   }
 
+  public void deletePolicy(String vhost, String name) {
+    this.deleteIgnoring404(uriWithPath("./policies/" + encodePathSegment(vhost) + "/" + encodePathSegment(name)));
+  }
 
   public List<UserInfo> getUsers() {
     final URI uri = uriWithPath("./users/");
@@ -417,6 +425,17 @@ public class Client {
     deleteIgnoring404(uri);
   }
 
+  public List<PolicyInfo> getPolicies() {
+    final URI uri = uriWithPath("./policies/");
+    return Arrays.asList(this.rt.getForObject(uri, PolicyInfo[].class));
+  }
+
+  public List<PolicyInfo> getPolicies(String vhost) {
+    final URI uri = uriWithPath("./policies/" + encodePathSegment(vhost));
+    final PolicyInfo[] result = this.getForObjectReturningNullOn404(uri, PolicyInfo[].class);
+    return asListOrNull(result);
+  }
+  
   public List<BindingInfo> getBindings() {
     final URI uri = uriWithPath("./bindings/");
     return Arrays.asList(this.rt.getForObject(uri, BindingInfo[].class));
