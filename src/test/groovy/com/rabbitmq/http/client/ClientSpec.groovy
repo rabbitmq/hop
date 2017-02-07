@@ -1111,6 +1111,7 @@ class ClientSpec extends Specification {
     final p = ".*"
     d.put("ha-mode", "all")
     client.declarePolicy(v, s, new PolicyInfo(p, 0, null, d))
+    awaitEventPropagation()
 
     when: "client lists policies"
     final xs = client.getPolicies()
@@ -1131,6 +1132,7 @@ class ClientSpec extends Specification {
     final p = ".*"
     d.put("ha-mode", "all")
     client.declarePolicy(v, s, new PolicyInfo(p, 0, null, d))
+    awaitEventPropagation()
 
     when: "client lists policies"
     final xs = client.getPolicies("/")
@@ -1147,6 +1149,7 @@ class ClientSpec extends Specification {
     given: "vhost lolwut DOES not exist"
     final v = "lolwut"
     client.deleteVhost(v)
+    awaitEventPropagation()
 
     when: "client lists policies"
     final xs = client.getPolicies(v)
