@@ -522,14 +522,14 @@ class ClientSpec extends Specification {
     final v = "/"
     final d = new HashMap<String, Object>()
     d.put("ha-mode", "all")
-    
+
     when: "client declares a policy hop.test"
     final s = "hop.test"
     client.declarePolicy(v, s, new PolicyInfo(".*", 1, null, d))
-    
+
     and: "client lists policies in vhost /"
     List<PolicyInfo> ps = client.getPolicies(v)
-    
+
     then: "hop.test is listed"
     PolicyInfo p = ps.find { it.name.equals(s) }
     p != null
@@ -538,11 +538,11 @@ class ClientSpec extends Specification {
     p.priority.equals(1)
     p.applyTo.equals("all")
     p.definition.equals(d)
-    
+
     cleanup:
     client.deletePolicy(v, s)
   }
-  
+
   def "PUT /api/queues/{vhost}/{name} when vhost DOES NOT exist"() {
     given: "vhost lolwut which does not exist"
     final v = "lolwut"
@@ -1102,7 +1102,7 @@ class ClientSpec extends Specification {
   def "GET /api/parameters"() {
     // TODO
   }
-  
+
   def "GET /api/policies"() {
     given: "at least one policy was declared"
     final v = "/"
@@ -1111,7 +1111,7 @@ class ClientSpec extends Specification {
     final p = ".*"
     d.put("ha-mode", "all")
     client.declarePolicy(v, s, new PolicyInfo(p, 0, null, d))
-    
+
     when: "client lists policies"
     final xs = client.getPolicies()
 
@@ -1345,7 +1345,7 @@ class ClientSpec extends Specification {
     assert x.definition != null
     assert x.applyTo != null
   }
-  
+
   protected void verifyQueueInfo(QueueInfo x) {
     assert x.name != null
     assert x.durable != null
