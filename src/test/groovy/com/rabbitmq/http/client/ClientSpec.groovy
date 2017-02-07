@@ -51,7 +51,7 @@ class ClientSpec extends Specification {
   protected Client client
   private final ConnectionFactory cf = initializeConnectionFactory()
 
-  protected ConnectionFactory initializeConnectionFactory() {
+  protected static ConnectionFactory initializeConnectionFactory() {
     final cf = new ConnectionFactory()
     cf.setAutomaticRecoveryEnabled(false)
     cf
@@ -85,7 +85,7 @@ class ClientSpec extends Specification {
     qTotals.messagesReady >= 0
     qTotals.messagesUnacknowledged >= 0
 
-    final oTotals = res.getObjectTotals();
+    final oTotals = res.getObjectTotals()
     oTotals.connections >= 0
     oTotals.channels >= 0
     oTotals.exchanges >= 0
@@ -279,7 +279,7 @@ class ClientSpec extends Specification {
     final xs = client.getExchanges("/")
 
     then: "the list is returned"
-    final x = xs.find { it.name.equals("amq.fanout") }
+    final x = xs.find { (it.name == "amq.fanout") }
     verifyExchangeInfo(x)
   }
 
@@ -300,7 +300,7 @@ class ClientSpec extends Specification {
     final xs = client.getExchange("/", "amq.fanout")
 
     then: "exchange info is returned"
-    final ExchangeInfo x = (ExchangeInfo)xs.find { it.name.equals("amq.fanout") && it.vhost.equals("/") }
+    final ExchangeInfo x = (ExchangeInfo)xs.find { it.name == "amq.fanout" && it.vhost == "/" }
     verifyExchangeInfo(x)
   }
 
@@ -314,7 +314,7 @@ class ClientSpec extends Specification {
     List<ExchangeInfo> xs = client.getExchanges(v)
 
     then: "hop.test is listed"
-    ExchangeInfo x = xs.find { it.name.equals(s) }
+    ExchangeInfo x = xs.find { (it.name == s) }
     x != null
     verifyExchangeInfo(x)
 
@@ -329,7 +329,7 @@ class ClientSpec extends Specification {
     client.declareExchange(v, s, new ExchangeInfo("fanout", false, false))
 
     List<ExchangeInfo> xs = client.getExchanges(v)
-    ExchangeInfo x = xs.find { it.name.equals(s) }
+    ExchangeInfo x = xs.find { (it.name == s) }
     x != null
     verifyExchangeInfo(x)
 
@@ -340,7 +340,7 @@ class ClientSpec extends Specification {
     xs = client.getExchanges(v)
 
     then: "hop.test no longer exists"
-    xs.find { it.name.equals(s) } == null
+    xs.find { (it.name == s) } == null
   }
 
   def "POST /api/exchanges/{vhost}/{name}/publish"() {
@@ -352,13 +352,13 @@ class ClientSpec extends Specification {
     final conn = openConnection()
     final ch = conn.createChannel()
     final q = "hop.queue1"
-    ch.queueDeclare(q, false, false, false, null);
+    ch.queueDeclare(q, false, false, false, null)
 
     when: "client lists bindings of default exchange"
-    final xs = client.getBindingsBySource("/", "");
+    final xs = client.getBindingsBySource("/", "")
 
     then: "there is an automatic binding for hop.queue1"
-    final x = xs.find { it.source.equals("") && it.destinationType.equals("queue") && it.destination.equals(q) }
+    final x = xs.find { it.source == "" && it.destinationType == "queue" && it.destination == q }
     x != null
 
     cleanup:
@@ -372,20 +372,21 @@ class ClientSpec extends Specification {
     final ch = conn.createChannel()
     final src = "amq.fanout"
     final dest = "hop.exchange1"
-    ch.exchangeDeclare(dest, "fanout");
-    ch.exchangeBind(dest, src, "");
+    ch.exchangeDeclare(dest, "fanout")
+    ch.exchangeBind(dest, src, "")
 
     when: "client lists bindings of amq.fanout"
-    final xs = client.getExchangeBindingsByDestination("/", dest);
+    final xs = client.getExchangeBindingsByDestination("/", dest)
 
     then: "there is a binding for hop.exchange1"
-    final x = xs.find { it.source.equals(src) &&
-        it.destinationType.equals("exchange") &&
-        it.destination.equals(dest) }
+    final x = xs.find { it.source == src &&
+        it.destinationType == "exchange" &&
+        it.destination == dest
+    }
     x != null
 
     cleanup:
-    ch.exchangeDelete(dest);
+    ch.exchangeDelete(dest)
     conn.close()
   }
 
@@ -901,19 +902,19 @@ class ClientSpec extends Specification {
     final x = xs.find { it.name.equals("guest") }
     x.name == "guest"
     x.passwordHash != null
-    isVersion36orMore(version) ? x.hashingAlgorithm != null : x.hashingAlgorithm == null
+    isVersion36orLater(version) ? x.hashingAlgorithm != null : x.hashingAlgorithm == null
     x.tags.contains("administrator")
   }
 
   def "GET /api/users/{name} when user exists"() {
     when: "user guest if fetched"
     final x = client.getUser("guest")
-    final version = client.getOverview().getRabbitMQVersion();
+    final version = client.getOverview().getRabbitMQVersion()
 
     then: "user info returned"
     x.name == "guest"
     x.passwordHash != null
-    isVersion36orMore(version) ? x.hashingAlgorithm != null : x.hashingAlgorithm == null
+    isVersion36orLater(version) ? x.hashingAlgorithm != null : x.hashingAlgorithm == null
     x.tags.contains("administrator")
   }
 
@@ -1176,7 +1177,7 @@ class ClientSpec extends Specification {
 
   def "PUT /api/cluster-name"() {
     given: "cluster name"
-    final String s = client.getClusterName().name;
+    final String s = client.getClusterName().name
 
     when: "cluster name is set to rabbit@warren"
     client.setClusterName("rabbit@warren")
@@ -1293,17 +1294,17 @@ class ClientSpec extends Specification {
     client.deleteQueue("/","queue1")
   }
 
-  protected boolean awaitOn(CountDownLatch latch) {
+  protected static boolean awaitOn(CountDownLatch latch) {
     latch.await(5, TimeUnit.SECONDS)
   }
 
-  protected void verifyConnectionInfo(ConnectionInfo info) {
+  protected static void verifyConnectionInfo(ConnectionInfo info) {
     info.port == ConnectionFactory.DEFAULT_AMQP_PORT
     !info.usesTLS
     info.peerHost.equals(info.host)
   }
 
-  protected void verifyChannelInfo(ChannelInfo chi, Channel ch) {
+  protected static void verifyChannelInfo(ChannelInfo chi, Channel ch) {
     chi.getConsumerCount() == 0
     chi.number == ch.getChannelNumber()
     chi.node.startsWith("rabbit@")
@@ -1312,7 +1313,7 @@ class ClientSpec extends Specification {
     !chi.transactional
   }
 
-  protected void verifyVhost(VhostInfo vhi) {
+  protected static void verifyVhost(VhostInfo vhi) {
     vhi.name == "/"
     !vhi.tracing
   }
@@ -1325,7 +1326,7 @@ class ClientSpec extends Specification {
     this.cf.newConnection(clientProvidedName)
   }
 
-  protected void verifyNode(NodeInfo node) {
+  protected static void verifyNode(NodeInfo node) {
     assert node != null
     assert node.name != null
     assert node.socketsUsed <= node.socketsTotal
@@ -1334,14 +1335,14 @@ class ClientSpec extends Specification {
     assert node.memoryUsed <= node.memoryLimit
   }
 
-  protected void verifyExchangeInfo(ExchangeInfo x) {
+  protected static void verifyExchangeInfo(ExchangeInfo x) {
     assert x.type != null
     assert x.durable != null
     assert x.name != null
     assert x.autoDelete != null
   }
 
-  protected void verifyPolicyInfo(PolicyInfo x) {
+  protected static void verifyPolicyInfo(PolicyInfo x) {
     assert x.name != null
     assert x.vhost != null
     assert x.pattern != null
@@ -1349,44 +1350,44 @@ class ClientSpec extends Specification {
     assert x.applyTo != null
   }
 
-  protected void verifyQueueInfo(QueueInfo x) {
+  protected static void verifyQueueInfo(QueueInfo x) {
     assert x.name != null
     assert x.durable != null
     assert x.exclusive != null
     assert x.autoDelete != null
   }
 
-  boolean isVersion36orMore(String currentVersion) {
-    currentVersion == "0.0.0" ? true : versionCompare(currentVersion,"3.6.0") >= 0
+  boolean isVersion36orLater(String currentVersion) {
+    currentVersion == "0.0.0" ? true : compareVersions(currentVersion, "3.6.0") >= 0
   }
 
   /**
    * http://stackoverflow.com/questions/6701948/efficient-way-to-compare-version-strings-in-java
    *
    */
-  Integer versionCompare(String str1, String str2) {
-    String[] vals1 = str1.split("\\.");
-    String[] vals2 = str2.split("\\.");
-    int i = 0;
+  Integer compareVersions(String str1, String str2) {
+    String[] vals1 = str1.split("\\.")
+    String[] vals2 = str2.split("\\.")
+    int i = 0
     // set index to first non-equal ordinal or length of shortest version string
-    while (i < vals1.length && i < vals2.length && vals1[i].equals(vals2[i])) {
-      i++;
+    while (i < vals1.length && i < vals2.length && vals1[i] == vals2[i]) {
+      i++
     }
     // compare first non-equal ordinal number
     if (i < vals1.length && i < vals2.length) {
       if(vals1[i].indexOf('-') != -1) {
-        vals1[i] = vals1[i].substring(0,vals1[i].indexOf('-'));
+        vals1[i] = vals1[i].substring(0,vals1[i].indexOf('-'))
       }
       if(vals2[i].indexOf('-') != -1) {
-        vals2[i] = vals2[i].substring(0,vals2[i].indexOf('-'));
+        vals2[i] = vals2[i].substring(0,vals2[i].indexOf('-'))
       }
-      int diff = Integer.valueOf(vals1[i]).compareTo(Integer.valueOf(vals2[i]));
-      return Integer.signum(diff);
+      int diff = Integer.valueOf(vals1[i]) <=> Integer.valueOf(vals2[i])
+      return Integer.signum(diff)
     }
     // the strings are equal or one string is a substring of the other
     // e.g. "1.2.3" = "1.2.3" or "1.2.3" < "1.2.3.4"
     else {
-      return Integer.signum(vals1.length - vals2.length);
+      return Integer.signum(vals1.length - vals2.length)
     }
   }
 
@@ -1395,7 +1396,7 @@ class ClientSpec extends Specification {
    * in particular starting with rabbitmq/rabbitmq-management#236,
    * so in some cases we need to wait before GET'ing e.g. a newly opened connection.
    */
-  protected void awaitEventPropagation() {
+  protected static void awaitEventPropagation() {
     // same number as used in rabbit-hole test suite. Works OK.
     Thread.sleep(1000)
   }
