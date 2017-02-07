@@ -353,7 +353,7 @@ public class Client {
     final URI uri = uriWithPath("./policies/" + encodePathSegment(vhost) + "/" + encodePathSegment(name));
     this.rt.put(uri, info);
   }
-  
+
   public void declareQueue(String vhost, String name, QueueInfo info) {
     final URI uri = uriWithPath("./queues/" + encodePathSegment(vhost) + "/" + encodePathSegment(name));
     this.rt.put(uri, info);
@@ -435,7 +435,7 @@ public class Client {
     final PolicyInfo[] result = this.getForObjectReturningNullOn404(uri, PolicyInfo[].class);
     return asListOrNull(result);
   }
-  
+
   public List<BindingInfo> getBindings() {
     final URI uri = uriWithPath("./bindings/");
     return Arrays.asList(this.rt.getForObject(uri, BindingInfo[].class));

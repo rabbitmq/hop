@@ -12,21 +12,21 @@ public class PolicyInfo {
   private int priority;
   @JsonProperty("apply-to")
   private String applyTo;
-  
+
   public PolicyInfo() {
   }
-  
+
   public PolicyInfo(String pattern, int priority, String applyTo, Map<String, Object> definition) {
     this.pattern = pattern;
     this.priority = priority;
     this.applyTo = applyTo;
     this.definition = definition;
   }
-  
+
   public String getVhost() {
     return vhost;
   }
-  
+
   public void setVhost(String vhost) {
     this.vhost = vhost;
   }
@@ -54,11 +54,11 @@ public class PolicyInfo {
   public void setPriority(int priority) {
     this.priority = priority;
   }
-  
+
   public String getApplyTo() {
     return applyTo;
   }
-  
+
   public void setApplyTo(String applyTo) {
     this.applyTo = applyTo;
   }
@@ -70,5 +70,5 @@ public class PolicyInfo {
   public void setName(String name) {
     this.name = name;
   }
-  
+
 }
