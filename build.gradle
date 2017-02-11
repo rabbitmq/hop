@@ -19,7 +19,7 @@ repositories {
 sourceCompatibility = targetCompatibility = 1.6
 
 ext {
-  amqpClientVersion='3.6.5'
+  amqpClientVersion='4.0.2'
   commonsHttpClientVersion = '4.3.6'
   groovyVersion = '2.4.8'
   jacksonVersion = '2.8.4'
