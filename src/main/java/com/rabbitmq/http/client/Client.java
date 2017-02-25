@@ -385,11 +385,29 @@ public class Client {
     if(username == null) {
       throw new IllegalArgumentException("username cannot be null");
     }
-    if(password == null || password.length == 0) {
-      throw new IllegalArgumentException("password cannot be null or empty");
+    if(password == null) {
+      throw new IllegalArgumentException("password cannot be null or empty. If you need to create a user that "
+            + "will only authenticate using an x509 certificate, use createUserWithPasswordHash with a blank hash.");
     }
     Map<String, Object> body = new HashMap<String, Object>();
     body.put("password", new String(password));
+    body.put("tags", joinStrings(",", tags));
+
+    final URI uri = uriWithPath("./users/" + encodePathSegment(username));
+    this.rt.put(uri, body);
+  }
+
+  public void createUserWithPasswordHash(String username, char[] passwordHash, List<String> tags) {
+    if(username == null) {
+      throw new IllegalArgumentException("username cannot be null");
+    }
+    // passwordless authentication is a thing. See
+    // https://github.com/rabbitmq/hop/issues/94 and https://www.rabbitmq.com/authentication.html. MK.
+    if(passwordHash == null) {
+      passwordHash = "".toCharArray();
+    }
+    Map<String, Object> body = new HashMap<String, Object>();
+    body.put("password_hash", String.valueOf(passwordHash));
     body.put("tags", joinStrings(",", tags));
 
     final URI uri = uriWithPath("./users/" + encodePathSegment(username));

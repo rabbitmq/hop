@@ -16,6 +16,7 @@
 
 package com.rabbitmq.http.client
 
+import com.rabbitmq.client.AuthenticationFailureException
 import com.rabbitmq.http.client.domain.Definitions
 import spock.lang.IgnoreIf
 import spock.lang.Specification
@@ -982,6 +983,26 @@ class ClientSpec extends Specification {
     xs == null
   }
 
+  def "PUT /api/users/{name} with a blank password hash"() {
+    given: "user alt-user with a blank password hash"
+    final u = "alt-user"
+    // blank password hash means only authentication using alternative
+    // authentication mechanisms such as x509 certificates is possible. MK.
+    final h = ""
+    client.deleteUser(u)
+    client.createUserWithPasswordHash(u, h.toCharArray(), Arrays.asList("original", "management"))
+    client.updatePermissions("/", u, new UserPermissions(".*", ".*", ".*"))
+
+    when: "alt-user tries to connect with a blank password"
+    final conn = openConnection("alt-user", "alt-user")
+
+    then: "connection is refused"
+    // it would have a chance of being accepted if the x509 authentication mechanism was used. MK.
+    thrown AuthenticationFailureException
+
+    cleanup:
+    client.deleteUser(u)
+  }
 
   def "GET /api/whoami"() {
     when: "client retrieves active name authentication details"
@@ -1320,6 +1341,13 @@ class ClientSpec extends Specification {
 
   protected Connection openConnection() {
     this.cf.newConnection()
+  }
+
+  protected Connection openConnection(String username, String password) {
+    final cf = new ConnectionFactory()
+    cf.setUsername(username)
+    cf.setPassword(password)
+    cf.newConnection()
   }
 
   protected Connection openConnection(String clientProvidedName) {
