@@ -62,6 +62,7 @@ import javax.net.ssl.SSLContext;
 public class Client {
   private final RestTemplate rt;
   private final URI rootUri;
+  private HttpClientBuilderConfigurator httpClientBuilderConfigurator = new NoOpHttpClientBuilderConfigurator();
 
   //
   // API
@@ -152,6 +153,10 @@ public class Client {
    */
   public Client(URL url) throws MalformedURLException, URISyntaxException {
     this(url, null, null);
+  }
+
+  public void setHttpClientBuilderConfigurator(HttpClientBuilderConfigurator configurator) {
+    httpClientBuilderConfigurator = configurator;
   }
 
   /**
@@ -627,6 +632,8 @@ public class Client {
         thePassword = userParts[1];
       }
     }
+
+    // configure HttpClientBuilder essentials
     final HttpClientBuilder bldr = HttpClientBuilder.create().
         setDefaultCredentialsProvider(getCredentialsProvider(url, theUser, thePassword));
     bldr.setDefaultHeaders(Arrays.asList(new BasicHeader(HttpHeaders.CONTENT_TYPE, "application/json")));
@@ -637,7 +644,11 @@ public class Client {
       bldr.setSslcontext(sslContext);
     }
 
-    HttpClient httpClient = bldr.build();
+    HttpClient httpClient;
+    // this lets the user perform non-essential configuration (e.g. timeouts)
+    // but reduces the risk of essentials not being set. MK.
+    HttpClientBuilder b = httpClientBuilderConfigurator.configure(bldr);
+    httpClient = b.build();
 
     // RabbitMQ HTTP API currently does not support challenge/response for PUT methods.
     AuthCache authCache = new BasicAuthCache();
