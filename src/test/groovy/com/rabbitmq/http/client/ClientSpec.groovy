@@ -208,6 +208,35 @@ class ClientSpec extends Specification {
     }
   }
 
+  def "DELETE /api/connections/{name} with a user-provided reason"() {
+    given: "an open RabbitMQ client connection"
+    final latch = new CountDownLatch(1)
+    final conn = openConnection()
+    conn.addShutdownListener(new ShutdownListener() {
+      @Override
+      void shutdownCompleted(ShutdownSignalException e) {
+        latch.countDown()
+      }
+    })
+    assert conn.isOpen()
+
+    when: "client closes the connection"
+    awaitEventPropagation()
+    final xs = client.getConnections()
+    xs.each({ client.closeConnection(it.name, "because reasons!") })
+
+    and: "some time passes"
+    assert awaitOn(latch)
+
+    then: "the connection is closed"
+    !conn.isOpen()
+
+    cleanup:
+    if (conn.isOpen()) {
+      conn.close()
+    }
+  }
+
   def "GET /api/channels"() {
     given: "an open RabbitMQ client connection with 1 channel"
     final conn = openConnection()

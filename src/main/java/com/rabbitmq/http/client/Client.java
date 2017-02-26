@@ -21,11 +21,7 @@ import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 import com.rabbitmq.http.client.domain.*;
 import org.apache.http.HttpHeaders;
@@ -44,12 +40,15 @@ import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.message.BasicHeader;
 import org.apache.http.protocol.HttpContext;
 
+import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 import org.springframework.http.converter.HttpMessageConverter;
 import org.springframework.http.converter.json.Jackson2ObjectMapperBuilder;
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
+import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 
@@ -232,6 +231,21 @@ public class Client {
   public void closeConnection(String name) {
     final URI uri = uriWithPath("./connections/" + encodePathSegment(name));
     deleteIgnoring404(uri);
+  }
+
+  /**
+   * Forcefully closes individual connection with a user-provided message.
+   * The client will receive a <i>connection.close</i> method frame.
+   *
+   * @param name connection name
+   */
+  public void closeConnection(String name, String reason) {
+    final URI uri = uriWithPath("./connections/" + encodePathSegment(name));
+
+    MultiValueMap<String, String> headers = new LinkedMultiValueMap<String, String>();
+    headers.put("X-Reason", Collections.singletonList(reason));
+
+    deleteIgnoring404(uri, headers);
   }
 
   /**
@@ -694,6 +708,17 @@ public class Client {
   private void deleteIgnoring404(URI uri) {
     try {
       this.rt.delete(uri);
+    } catch (final HttpClientErrorException ce) {
+      if(!(ce.getStatusCode() == HttpStatus.NOT_FOUND)) {
+        throw ce;
+      }
+    }
+  }
+
+  private void deleteIgnoring404(URI uri, MultiValueMap headers) {
+    try {
+      HttpEntity<Object> entity = new HttpEntity<Object>(null, headers);
+      this.rt.exchange(uri, HttpMethod.DELETE, entity, Object.class);
     } catch (final HttpClientErrorException ce) {
       if(!(ce.getStatusCode() == HttpStatus.NOT_FOUND)) {
         throw ce;
