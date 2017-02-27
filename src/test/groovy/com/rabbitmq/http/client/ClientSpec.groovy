@@ -62,8 +62,12 @@ class ClientSpec extends Specification {
     client = newLocalhostNodeClient()
   }
 
-  protected Client newLocalhostNodeClient() {
+  protected static Client newLocalhostNodeClient() {
     new Client("http://127.0.0.1:15672/api/", DEFAULT_USERNAME, DEFAULT_PASSWORD)
+  }
+
+  protected static Client newLocalhostNodeClient(HttpClientBuilderConfigurator cfg) {
+    new Client("http://127.0.0.1:15672/api/", DEFAULT_USERNAME, DEFAULT_PASSWORD, cfg)
   }
 
   def "GET /api/overview"() {
@@ -123,8 +127,7 @@ class ClientSpec extends Specification {
 
   def "GET /api/nodes with a user-provided HTTP builder configurator"() {
     when: "a user-provided HTTP builder configurator is set"
-    client = newLocalhostNodeClient()
-    client.setHttpClientBuilderConfigurator(new HttpClientBuilderConfigurator() {
+    final cfg = new HttpClientBuilderConfigurator() {
       @Override
       HttpClientBuilder configure(HttpClientBuilder builder) {
         // this number has no particular meaning
@@ -133,7 +136,8 @@ class ClientSpec extends Specification {
         builder.setMaxConnTotal(8192)
         return builder
       }
-    })
+    }
+    final client = newLocalhostNodeClient(cfg)
 
     and: "client retrieves a list of cluster nodes"
     final res = client.getNodes()

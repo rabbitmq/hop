@@ -12,5 +12,5 @@ import org.apache.http.impl.client.HttpClientBuilder;
  * @see NoOpHttpClientBuilderConfigurator
  */
 public interface HttpClientBuilderConfigurator {
-  public HttpClientBuilder configure(HttpClientBuilder builder);
+  HttpClientBuilder configure(HttpClientBuilder builder);
 }

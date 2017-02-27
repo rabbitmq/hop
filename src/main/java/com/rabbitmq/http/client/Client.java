@@ -59,10 +59,13 @@ import org.springframework.web.util.UriUtils;
 
 import javax.net.ssl.SSLContext;
 
+import org.springframework.util.Assert;
+
 public class Client {
-  private final RestTemplate rt;
-  private final URI rootUri;
-  private HttpClientBuilderConfigurator httpClientBuilderConfigurator = new NoOpHttpClientBuilderConfigurator();
+  private static final HttpClientBuilderConfigurator NO_OP_HTTP_CLIENT_BUILDER_CONFIGURATOR = new NoOpHttpClientBuilderConfigurator();
+
+  private RestTemplate rt;
+  private URI rootUri;
 
   //
   // API
@@ -71,7 +74,7 @@ public class Client {
   /**
    * Construct an instance with the provided url and credentials.
    * @param url the url e.g. "http://localhost:15672/api/".
-   * @param username the user name.
+   * @param username the username.
    * @param password the password
    * @throws MalformedURLException for a badly formed URL.
    * @throws URISyntaxException for a badly formed URL.
@@ -83,7 +86,21 @@ public class Client {
   /**
    * Construct an instance with the provided url and credentials.
    * @param url the url e.g. "http://localhost:15672/api/".
-   * @param username the user name.
+   * @param username the username.
+   * @param password the password
+   * @param configurator {@link HttpClientBuilderConfigurator} to use
+   * @throws MalformedURLException for a badly formed URL.
+   * @throws URISyntaxException for a badly formed URL.
+   */
+  public Client(String url, String username, String password, HttpClientBuilderConfigurator configurator)
+      throws MalformedURLException, URISyntaxException {
+    this(new URL(url), username, password, configurator);
+  }
+
+  /**
+   * Construct an instance with the provided url and credentials.
+   * @param url the url e.g. "http://localhost:15672/api/".
+   * @param username the username.
    * @param password the password
    * @throws MalformedURLException for a badly formed URL.
    * @throws URISyntaxException for a badly formed URL.
@@ -95,24 +112,42 @@ public class Client {
   /**
    * Construct an instance with the provided url and credentials.
    * @param url the url e.g. "http://localhost:15672/api/".
-   * @param username the user name.
+   * @param username the username.
+   * @param password the password
+   * @param configurator {@link HttpClientBuilderConfigurator} to use
+   * @throws MalformedURLException for a badly formed URL.
+   * @throws URISyntaxException for a badly formed URL.
+   */
+  public Client(URL url, String username, String password, HttpClientBuilderConfigurator configurator)
+      throws MalformedURLException, URISyntaxException {
+    this(url, username, password, null, null, configurator);
+  }
+
+  /**
+   * Construct an instance with the provided url and credentials.
+   * @param url the url e.g. "http://localhost:15672/api/".
+   * @param username the username.
    * @param password the password
    * @param sslConnectionSocketFactory ssl connection factory for http client
    * @param sslContext ssl context for http client
    * @throws MalformedURLException for a badly formed URL.
    * @throws URISyntaxException for a badly formed URL.
    */
-  private Client(URL url, String username, String password, SSLConnectionSocketFactory sslConnectionSocketFactory, SSLContext sslContext) throws MalformedURLException, URISyntaxException {
+  private Client(URL url, String username, String password, SSLConnectionSocketFactory sslConnectionSocketFactory, SSLContext sslContext)
+      throws MalformedURLException, URISyntaxException {
+    Assert.notNull(url);
+    Assert.notNull(username);
+    Assert.notNull(password);
     this.rootUri = url.toURI();
 
-    this.rt = new RestTemplate(getRequestFactory(url, username, password, sslConnectionSocketFactory, sslContext));
+    this.rt = new RestTemplate(getRequestFactory(url, username, password, sslConnectionSocketFactory, sslContext, NO_OP_HTTP_CLIENT_BUILDER_CONFIGURATOR));
     this.rt.setMessageConverters(getMessageConverters());
   }
 
   /**
    * Construct an instance with the provided url and credentials.
    * @param url the url e.g. "http://localhost:15672/api/".
-   * @param username the user name.
+   * @param username the username.
    * @param password the password
    * @param sslContext ssl context for http client
    * @throws MalformedURLException for a badly formed URL.
@@ -125,7 +160,7 @@ public class Client {
   /**
    * Construct an instance with the provided url and credentials.
    * @param url the url e.g. "http://localhost:15672/api/".
-   * @param username the user name.
+   * @param username the username.
    * @param password the password
    * @param sslConnectionSocketFactory ssl connection factory for http client
    * @throws MalformedURLException for a badly formed URL.
@@ -155,8 +190,19 @@ public class Client {
     this(url, null, null);
   }
 
-  public void setHttpClientBuilderConfigurator(HttpClientBuilderConfigurator configurator) {
-    httpClientBuilderConfigurator = configurator;
+  private Client(URL url, String username, String password, SSLConnectionSocketFactory sslConnectionSocketFactory,
+                 SSLContext sslContext,
+                 HttpClientBuilderConfigurator configurator) throws URISyntaxException, MalformedURLException {
+    Assert.notNull(url);
+    Assert.notNull(username);
+    Assert.notNull(password);
+    Assert.notNull(configurator);
+    this.rootUri = url.toURI();
+
+    HttpComponentsClientHttpRequestFactory rf = getRequestFactory(url, username, password,
+        sslConnectionSocketFactory, sslContext, configurator);
+    this.rt = new RestTemplate(rf);
+    this.rt.setMessageConverters(getMessageConverters());
   }
 
   /**
@@ -619,7 +665,11 @@ public class Client {
     return xs;
   }
 
-  private HttpComponentsClientHttpRequestFactory getRequestFactory(final URL url, final String username, final String password, final SSLConnectionSocketFactory sslConnectionSocketFactory, final SSLContext sslContext) throws MalformedURLException {
+  private HttpComponentsClientHttpRequestFactory getRequestFactory(final URL url,
+                                                                   final String username, final String password,
+                                                                   final SSLConnectionSocketFactory sslConnectionSocketFactory,
+                                                                   final SSLContext sslContext,
+                                                                   final HttpClientBuilderConfigurator configurator) throws MalformedURLException {
     String theUser = username;
     String thePassword = password;
     String userInfo = url.getUserInfo();
@@ -647,7 +697,7 @@ public class Client {
     HttpClient httpClient;
     // this lets the user perform non-essential configuration (e.g. timeouts)
     // but reduces the risk of essentials not being set. MK.
-    HttpClientBuilder b = httpClientBuilderConfigurator.configure(bldr);
+    HttpClientBuilder b = configurator.configure(bldr);
     httpClient = b.build();
 
     // RabbitMQ HTTP API currently does not support challenge/response for PUT methods.
