@@ -18,6 +18,7 @@ package com.rabbitmq.http.client
 
 import com.rabbitmq.client.AuthenticationFailureException
 import com.rabbitmq.http.client.domain.Definitions
+import org.apache.http.impl.client.HttpClientBuilder
 import spock.lang.IgnoreIf
 import spock.lang.Specification
 
@@ -59,7 +60,15 @@ class ClientSpec extends Specification {
   }
 
   def setup() {
-    client = new Client("http://127.0.0.1:15672/api/", DEFAULT_USERNAME, DEFAULT_PASSWORD)
+    client = newLocalhostNodeClient()
+  }
+
+  protected static Client newLocalhostNodeClient() {
+    new Client("http://127.0.0.1:15672/api/", DEFAULT_USERNAME, DEFAULT_PASSWORD)
+  }
+
+  protected static Client newLocalhostNodeClient(HttpClientBuilderConfigurator cfg) {
+    new Client("http://127.0.0.1:15672/api/", DEFAULT_USERNAME, DEFAULT_PASSWORD, cfg)
   }
 
   def "GET /api/overview"() {
@@ -109,6 +118,29 @@ class ClientSpec extends Specification {
 
   def "GET /api/nodes"() {
     when: "client retrieves a list of cluster nodes"
+    final res = client.getNodes()
+    final node = res.first()
+
+    then: "the list is returned"
+    res.size() >= 1
+    verifyNode(node)
+  }
+
+  def "GET /api/nodes with a user-provided HTTP builder configurator"() {
+    when: "a user-provided HTTP builder configurator is set"
+    final cfg = new HttpClientBuilderConfigurator() {
+      @Override
+      HttpClientBuilder configure(HttpClientBuilder builder) {
+        // this number has no particular meaning
+        // but it should be enough connections for this test suite
+        // and then some. MK.
+        builder.setMaxConnTotal(8192)
+        return builder
+      }
+    }
+    final client = newLocalhostNodeClient(cfg)
+
+    and: "client retrieves a list of cluster nodes"
     final res = client.getNodes()
     final node = res.first()
 
