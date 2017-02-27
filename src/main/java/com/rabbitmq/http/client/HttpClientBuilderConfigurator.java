@@ -7,8 +7,6 @@ import org.apache.http.impl.client.HttpClientBuilder;
  * of {@link HttpClientBuilder} used by {@link Client} internally.
  * Note that {@link Client} will configure all essential settings
  * before invoking the configurator.
- *
- * @see NoOpHttpClientBuilderConfigurator
  */
 public interface HttpClientBuilderConfigurator {
   HttpClientBuilder configure(HttpClientBuilder builder);

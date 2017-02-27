@@ -62,7 +62,13 @@ import javax.net.ssl.SSLContext;
 import org.springframework.util.Assert;
 
 public class Client {
-  private static final HttpClientBuilderConfigurator NO_OP_HTTP_CLIENT_BUILDER_CONFIGURATOR = new NoOpHttpClientBuilderConfigurator();
+  private static final HttpClientBuilderConfigurator NO_OP_HTTP_CLIENT_BUILDER_CONFIGURATOR =
+      new HttpClientBuilderConfigurator() {
+      @Override
+      public HttpClientBuilder configure(HttpClientBuilder builder) {
+        return builder;
+      }
+    };
 
   private RestTemplate rt;
   private URI rootUri;
