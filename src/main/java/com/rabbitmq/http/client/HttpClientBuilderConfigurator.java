@@ -8,7 +8,6 @@ import org.apache.http.impl.client.HttpClientBuilder;
  * Note that {@link Client} will configure all essential settings
  * before invoking the configurator.
  *
- * @see Client#setHttpClientBuilderConfigurator(HttpClientBuilderConfigurator)
  * @see NoOpHttpClientBuilderConfigurator
  */
 public interface HttpClientBuilderConfigurator {
