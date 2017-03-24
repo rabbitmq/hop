@@ -1447,7 +1447,8 @@ class ClientSpec extends Specification {
   }
 
   boolean isVersion36orLater(String currentVersion) {
-    currentVersion == "0.0.0" ? true : compareVersions(currentVersion, "3.6.0") >= 0
+    String v = currentVersion.replaceAll("\\+.*\$", "");
+    v == "0.0.0" ? true : compareVersions(v, "3.6.0") >= 0
   }
 
   /**
