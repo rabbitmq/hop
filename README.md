@@ -41,7 +41,7 @@ The most recent release is
 <dependency>
   <groupId>com.rabbitmq</groupId>
   <artifactId>http-client</artifactId>
-  <version>1.1.0.RELEASE</version>
+  <version>1.2.0.RELEASE</version>
 </dependency>
 ```
 
@@ -60,7 +60,7 @@ repositories {
 Current (unpublished) snapshot release is
 
 ``` groovy
-compile "com.rabbitmq:http-client:1.1.0.RELEASE"
+compile "com.rabbitmq:http-client:1.2.0.RELEASE"
 ```
 
 
