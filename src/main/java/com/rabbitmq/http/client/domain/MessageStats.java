@@ -44,6 +44,27 @@ public class MessageStats {
   private long basicDeliverNoAck;
   @JsonProperty("deliver_no_ack_details")
   private RateDetails basicDeliverNoAckDetails;
+  @JsonProperty("redeliver")
+  private long redeliver;
+
+  public long getRedeliver() {
+    return redeliver;
+  }
+
+  public void setRedeliver(long redeliver) {
+    this.redeliver = redeliver;
+  }
+
+  public RateDetails getRedeliverDetails() {
+    return redeliverDetails;
+  }
+
+  public void setRedeliverDetails(RateDetails redeliverDetails) {
+    this.redeliverDetails = redeliverDetails;
+  }
+
+  @JsonProperty("redeliver_details")
+  private RateDetails redeliverDetails;
   @JsonProperty("get_no_ack")
   private long basicGetNoAck;
   @JsonProperty("get_no_ack_details")
