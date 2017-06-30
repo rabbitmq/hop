@@ -1,6 +1,11 @@
 #!/bin/sh
 
 ${HOP_RABBITMQCTL:="sudo rabbitmqctl"}
+${HOP_RABBITMQ_PLUGINS:="sudo rabbitmq-plugins"}
+
+$HOP_RABBITMQ_PLUGINS enable rabbitmq_management
+
+sleep 3
 
 # guest:guest has full access to /
 
