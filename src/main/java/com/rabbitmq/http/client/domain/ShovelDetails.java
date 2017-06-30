@@ -33,11 +33,11 @@ public class ShovelDetails {
 	private String sourceQueue;
 
 	@JsonProperty("dest-uri")
-	private String destURI;
+	private String destinationURI;
 	@JsonProperty("dest-exchange")
-	private String destExchange;
+	private String destinationExchange;
 	@JsonProperty("dest-queue")
-	private String destQueue;
+	private String destinationQueue;
 
 	@JsonProperty("reconnect-delay")
 	private long reconnectDelay;
@@ -52,7 +52,7 @@ public class ShovelDetails {
 
 	public ShovelDetails(String sourceURI, String destURI, long reconnectDelay, boolean addForwardHeaders, Map<String, Object> publishProperties) {
 		this.sourceURI = sourceURI;
-		this.destURI = destURI;
+		this.destinationURI = destURI;
 		this.reconnectDelay = reconnectDelay;
 		this.addForwardHeaders = addForwardHeaders;
 		this.publishProperties = publishProperties;
@@ -82,28 +82,28 @@ public class ShovelDetails {
 		this.sourceQueue = sourceQueue;
 	}
 
-	public String getDestURI() {
-		return destURI;
+	public String getDestinationURI() {
+		return destinationURI;
 	}
 
-	public void setDestURI(String destURI) {
-		this.destURI = destURI;
+	public void setDestinationURI(String destURI) {
+		this.destinationURI = destURI;
 	}
 
-	public String getDestExchange() {
-		return destExchange;
+	public String getDestinationExchange() {
+		return destinationExchange;
 	}
 
-	public void setDestExchange(String destExchange) {
-		this.destExchange = destExchange;
+	public void setDestinationExchange(String destExchange) {
+		this.destinationExchange = destExchange;
 	}
 
-	public String getDestQueue() {
-		return destQueue;
+	public String getDestinationQueue() {
+		return destinationQueue;
 	}
 
-	public void setDestQueue(String destQueue) {
-		this.destQueue = destQueue;
+	public void setDestinationQueue(String destQueue) {
+		this.destinationQueue = destQueue;
 	}
 
 	public long getReconnectDelay() {
@@ -132,8 +132,9 @@ public class ShovelDetails {
 
 	@Override
 	public String toString() {
-		return "ShovelDetails{" + "sourceURI=" + sourceURI + ", sourceExchange=" + sourceExchange + ", sourceQueue=" + sourceQueue + ", destURI=" + destURI
-				+ ", destExchange='" + destExchange + '\'' + ", destQueue='" + destQueue + '\'' + ", reconnectDelay='" + reconnectDelay + '\''
-				+ ", addForwardHeaders='" + addForwardHeaders + '\'' + ", publishProperties='" + publishProperties + '}';
+		return "ShovelDetails{" + "sourceURI=" + sourceURI + ", sourceExchange=" + sourceExchange + ", sourceQueue=" + sourceQueue + ", destinationURI="
+				+ destinationURI + ", destinationExchange='" + destinationExchange + '\'' + ", destinationQueue='" + destinationQueue + '\''
+				+ ", reconnectDelay='" + reconnectDelay + '\'' + ", addForwardHeaders='" + addForwardHeaders + '\'' + ", publishProperties='"
+				+ publishProperties + '}';
 	}
 }

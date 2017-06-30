@@ -16,21 +16,41 @@
 
 package com.rabbitmq.http.client.domain;
 
-//{"value":{"src-uri":  "amqp://",              "src-queue":  "my-queue",
-//    "dest-uri": "amqp://remote-server", "dest-queue": "another-queue"}}
+import com.fasterxml.jackson.annotation.JsonProperty;
+
+// {
+//     "value": {
+//         "src-uri": "",
+//         "src-exchange": "",
+//         "src-queue": "",
+//         "dest-uri": "",
+//         "dest-exchange": "",
+//         "dest-queue": "",
+//         "reconnect-delay": 0,
+//         "add-forward-headers": true,
+//         "publish-properties": {
+//         }
+//     },
+//     "vhost": "",
+//     "component": "shovel",
+//     "name": ""
+// }
 
 public class ShovelInfo {
 
 	private String name;
-
-	private ShovelDetails value;
+	@JsonProperty("vhost")
+	private String virtualHost;
+	private String component;
+	@JsonProperty("value")
+	private ShovelDetails details;
 
 	public ShovelInfo() {
 	}
 
-	public ShovelInfo(String name, ShovelDetails value) {
+	public ShovelInfo(String name, ShovelDetails details) {
 		this.name = name;
-		this.value = value;
+		this.details = details;
 	}
 
 	public String getName() {
@@ -41,16 +61,34 @@ public class ShovelInfo {
 		this.name = name;
 	}
 
-	public ShovelDetails getValue() {
-		return value;
+	public String getVirtualHost() {
+		return virtualHost;
 	}
 
-	public void setValue(ShovelDetails value) {
-		this.value = value;
+	public void setVirtualHost(String virtualHost) {
+		this.virtualHost = virtualHost;
+	}
+
+	public String getComponent() {
+		return component;
+	}
+
+	public void setComponent(String component) {
+		this.component = component;
+	}
+
+	public ShovelDetails getDetails() {
+		return details;
+	}
+
+	public void setDetails(ShovelDetails details) {
+		this.details = details;
 	}
 
 	@Override
 	public String toString() {
-		return "ShovelInfo{" + "name='" + name + '\'' + ", value=" + value + '}';
+		return "ShovelInfo{" + "name='" + name + "\', " + "virtualHost='" + virtualHost + "\', " + "component='" + component + '\'' + ", details=" + details
+				+ '}';
 	}
+
 }

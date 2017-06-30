@@ -710,8 +710,30 @@ public class Client {
    * @param info Shovel info. 
    */
   public void declareShovel(String vhost, ShovelInfo info) {
-	    final URI uri = uriWithPath("./parameters/shovel/" + encodePathSegment(vhost) + "/" + encodePathSegment(info.getName()));
-	    this.rt.put(uri, info);
+    final URI uri = uriWithPath("./parameters/shovel/" + encodePathSegment(vhost) + "/" + encodePathSegment(info.getName()));
+    this.rt.put(uri, info);
+  }
+
+  /**
+   * Returns virtual host shovels.
+   * 
+   * @return Shovels.
+   */
+  public List<ShovelInfo> getShovels() {
+    final URI uri = uriWithPath("./parameters/shovel/");
+    return Arrays.asList(this.rt.getForObject(uri, ShovelInfo[].class));
+  }
+
+  /**
+   * Returns virtual host shovels.
+   * 
+   * @param vhost Virtual host from where search shovels.
+   * @return Shovels.
+   */
+  public List<ShovelInfo> getShovels(String vhost) {
+    final URI uri = uriWithPath("./parameters/shovel/" + encodePathSegment(vhost));
+    final ShovelInfo[] result = this.getForObjectReturningNullOn404(uri, ShovelInfo[].class);
+    return asListOrNull(result);
   }
 
   /**

@@ -43,6 +43,8 @@ import com.rabbitmq.http.client.domain.PolicyInfo
 import com.rabbitmq.http.client.domain.QueueInfo
 import com.rabbitmq.http.client.domain.UserPermissions
 import com.rabbitmq.http.client.domain.VhostInfo
+import com.rabbitmq.http.client.domain.ShovelInfo
+import com.rabbitmq.http.client.domain.ShovelDetails
 
 class ClientSpec extends Specification {
 
@@ -1374,6 +1376,36 @@ class ClientSpec extends Specification {
 
     cleanup:
     client.deleteQueue("/","queue1")
+  }
+
+  def "GET /api/parameters/shovel"() {
+    given: "a basic topology"
+    ShovelDetails value = new ShovelDetails("amqp://localhost:5672/vh1", "amqp://localhost:5672/vh2", 30, true, null);
+    value.setSourceQueue("queue1");
+    value.setDestinationExchange("exchange1");
+    client.declareShovel("/", new ShovelInfo("shovel1", value))
+    when: "client requests the shovels"
+    List<ShovelInfo> shovels = client.getShovels()
+
+    then: "broker definitions are returned"
+    !shovels.isEmpty()
+    shovels.size() >= 1
+    ShovelInfo s = shovels.find { it.name.equals("shovel1") }
+    s != null
+    s.name.equals("shovel1")
+    s.virtualHost.equals("/")
+    s.details.sourceURI.equals("amqp://localhost:5672/vh1")
+    s.details.sourceExchange == null
+    s.details.sourceQueue.equals("queue1")
+    s.details.destinationURI.equals("amqp://localhost:5672/vh2")
+    s.details.destinationExchange.equals("exchange1")
+    s.details.destinationQueue == null
+    s.details.reconnectDelay == 30
+    s.details.addForwardHeaders
+    s.details.publishProperties == null
+
+    cleanup:
+    client.deleteShovel("/","shovel1")
   }
 
   protected static boolean awaitOn(CountDownLatch latch) {
