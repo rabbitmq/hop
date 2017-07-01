@@ -619,6 +619,21 @@ public class Client {
     this.rt.postForLocation(uri, body);
   }
 
+  public void unbindQueue(String vhost, String queue, String exchange, String routingKey) {
+    if(vhost == null || vhost.isEmpty()) {
+      throw new IllegalArgumentException("vhost cannot be null or blank");
+    }
+    if(queue == null || queue.isEmpty()) {
+      throw new IllegalArgumentException("queue cannot be null or blank");
+    }
+    if(exchange == null || exchange.isEmpty()) {
+      throw new IllegalArgumentException("exchange cannot be null or blank");
+    }
+    
+    this.deleteIgnoring404(uriWithPath("./bindings/" + encodePathSegment(vhost) + "/e/" + encodePathSegment(exchange) + 
+      "/q/" + encodePathSegment(queue) + '/' + encodePathSegment(routingKey)));
+  }
+
   public void bindExchange(String vhost, String destination, String source, String routingKey) {
     bindExchange(vhost, destination, source, routingKey, new HashMap<String, Object>());
   }
@@ -644,6 +659,21 @@ public class Client {
     this.rt.postForLocation(uri, body);
   }
 
+  public void unbindExchange(String vhost, String destination, String source, String routingKey) {
+    if(vhost == null || vhost.isEmpty()) {
+      throw new IllegalArgumentException("vhost cannot be null or blank");
+    }
+    if(destination == null || destination.isEmpty()) {
+      throw new IllegalArgumentException("destination cannot be null or blank");
+    }
+    if(source == null || source.isEmpty()) {
+      throw new IllegalArgumentException("source cannot be null or blank");
+    }
+	    
+    this.deleteIgnoring404(uriWithPath("./bindings/" + encodePathSegment(vhost) + "/e/" + encodePathSegment(source) + 
+      "/e/" + encodePathSegment(destination) + '/' + encodePathSegment(routingKey)));
+  }
+
   public ClusterId getClusterName() {
     return this.rt.getForObject(uriWithPath("./cluster-name"), ClusterId.class);
   }
@@ -667,6 +697,53 @@ public class Client {
   public Definitions getDefinitions() {
     final URI uri = uriWithPath("./definitions/");
     return this.rt.getForObject(uri, Definitions.class);
+  }
+  
+  //
+  // Shovel support
+  //
+
+  /**
+   * Declares a shovel.
+   * 
+   * @param vhost virtual host where to declare the shovel
+   * @param info Shovel info. 
+   */
+  public void declareShovel(String vhost, ShovelInfo info) {
+    final URI uri = uriWithPath("./parameters/shovel/" + encodePathSegment(vhost) + "/" + encodePathSegment(info.getName()));
+    this.rt.put(uri, info);
+  }
+
+  /**
+   * Returns virtual host shovels.
+   * 
+   * @return Shovels.
+   */
+  public List<ShovelInfo> getShovels() {
+    final URI uri = uriWithPath("./parameters/shovel/");
+    return Arrays.asList(this.rt.getForObject(uri, ShovelInfo[].class));
+  }
+
+  /**
+   * Returns virtual host shovels.
+   * 
+   * @param vhost Virtual host from where search shovels.
+   * @return Shovels.
+   */
+  public List<ShovelInfo> getShovels(String vhost) {
+    final URI uri = uriWithPath("./parameters/shovel/" + encodePathSegment(vhost));
+    final ShovelInfo[] result = this.getForObjectReturningNullOn404(uri, ShovelInfo[].class);
+    return asListOrNull(result);
+  }
+
+  /**
+   * Deletes the specified shovel from specified virtual host.
+   * 
+   * @param vhost virtual host from where to delete the shovel
+   * @param shovelname Shovel to be deleted.
+   */
+  public void deleteShovel(String vhost, String shovelname) {
+	    this.deleteIgnoring404(uriWithPath("./parameters/shovel/" + encodePathSegment(vhost) + "/" + encodePathSegment(shovelname)));
   }
 
 
