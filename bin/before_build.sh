@@ -18,7 +18,7 @@ $HOP_RABBITMQCTL eval 'supervisor2:terminate_child(rabbit_mgmt_sup_sup, rabbit_m
 $HOP_RABBITMQCTL eval 'supervisor2:terminate_child(rabbit_mgmt_agent_sup_sup, rabbit_mgmt_agent_sup), application:set_env(rabbitmq_management_agent, sample_retention_policies, [{global, [{605, 1}]}, {basic, [{605, 1}]}, {detailed, [{10, 1}]}]), rabbit_mgmt_agent_sup_sup:start_child().'
 
 # Enable shovel plugin
-$PLUGINS enable rabbitmq_shovel
-$PLUGINS enable rabbitmq_shovel_management
+$HOP_RABBITMQ_PLUGINS enable rabbitmq_shovel
+$HOP_RABBITMQ_PLUGINS enable rabbitmq_shovel_management
 
 true
