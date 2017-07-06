@@ -16,35 +16,17 @@
 
 package com.rabbitmq.http.client
 
-import com.rabbitmq.client.AuthenticationFailureException
-import com.rabbitmq.http.client.domain.Definitions
+import com.rabbitmq.client.*
+import com.rabbitmq.http.client.domain.*
 import org.apache.http.impl.client.HttpClientBuilder
+import org.springframework.http.HttpStatus
+import org.springframework.web.client.HttpClientErrorException
+import spock.lang.Ignore
 import spock.lang.IgnoreIf
 import spock.lang.Specification
 
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
-
-import org.springframework.http.HttpStatus
-import org.springframework.web.client.HttpClientErrorException
-
-import com.rabbitmq.client.Channel
-import com.rabbitmq.client.Connection
-import com.rabbitmq.client.ConnectionFactory
-import com.rabbitmq.client.ShutdownListener
-import com.rabbitmq.client.ShutdownSignalException
-import com.rabbitmq.http.client.domain.BindingInfo
-import com.rabbitmq.http.client.domain.ChannelInfo
-import com.rabbitmq.http.client.domain.ClusterId
-import com.rabbitmq.http.client.domain.ConnectionInfo
-import com.rabbitmq.http.client.domain.ExchangeInfo
-import com.rabbitmq.http.client.domain.NodeInfo
-import com.rabbitmq.http.client.domain.PolicyInfo
-import com.rabbitmq.http.client.domain.QueueInfo
-import com.rabbitmq.http.client.domain.UserPermissions
-import com.rabbitmq.http.client.domain.VhostInfo
-import com.rabbitmq.http.client.domain.ShovelInfo
-import com.rabbitmq.http.client.domain.ShovelDetails
 
 class ClientSpec extends Specification {
 
@@ -167,8 +149,8 @@ class ClientSpec extends Specification {
     final conn = openConnection()
 
     when: "client retrieves a list of connections"
-    awaitEventPropagation()
-    final res = client.getConnections()
+
+    final res = awaitEventPropagation({ client.getConnections() })
     final fst = res.first()
 
     then: "the list is returned"
@@ -184,8 +166,8 @@ class ClientSpec extends Specification {
     final conn = openConnection()
 
     when: "client retrieves connection info with the correct name"
-    awaitEventPropagation()
-    final xs = client.getConnections()
+
+    final xs = awaitEventPropagation({ client.getConnections() })
     final x = client.getConnection(xs.first().name)
 
     then: "the info is returned"
@@ -201,8 +183,8 @@ class ClientSpec extends Specification {
     final conn = openConnection(s)
 
     when: "client retrieves connection info with the correct name"
-    awaitEventPropagation()
-    final xs = client.getConnections()
+
+    final xs = awaitEventPropagation({ client.getConnections() })
     final x = client.getConnection(xs.first().name)
 
     then: "the info is returned"
@@ -226,8 +208,8 @@ class ClientSpec extends Specification {
     assert conn.isOpen()
 
     when: "client closes the connection"
-    awaitEventPropagation()
-    final xs = client.getConnections()
+
+    final xs = awaitEventPropagation({ client.getConnections() })
     xs.each({ client.closeConnection(it.name) })
 
     and: "some time passes"
@@ -255,8 +237,8 @@ class ClientSpec extends Specification {
     assert conn.isOpen()
 
     when: "client closes the connection"
-    awaitEventPropagation()
-    final xs = client.getConnections()
+
+    final xs = awaitEventPropagation({ client.getConnections() })
     xs.each({ client.closeConnection(it.name, "because reasons!") })
 
     and: "some time passes"
@@ -277,8 +259,9 @@ class ClientSpec extends Specification {
     final ch = conn.createChannel()
 
     when: "client lists channels"
-    awaitEventPropagation()
-    final chs = client.getChannels()
+
+    awaitEventPropagation({ client.getConnections() })
+    final chs = awaitEventPropagation({ client.getChannels() })
     final chi = chs.first()
 
     then: "the list is returned"
@@ -296,9 +279,10 @@ class ClientSpec extends Specification {
     final ch = conn.createChannel()
 
     when: "client lists channels on that connection"
-    awaitEventPropagation()
-    final cn = client.getConnections().first().name
-    final chs = client.getChannels(cn)
+
+    final cn = awaitEventPropagation({ client.getConnections() }).first().name
+
+    final chs = awaitEventPropagation({ client.getChannels(cn) })
     final chi = chs.first()
 
     then: "the list is returned"
@@ -316,8 +300,9 @@ class ClientSpec extends Specification {
     final ch = conn.createChannel()
 
     when: "client retrieves channel info"
-    awaitEventPropagation()
-    final chs = client.getChannels()
+
+    awaitEventPropagation({ client.getConnections() })
+    final chs = awaitEventPropagation({ client.getChannels() })
     final chi = client.getChannel(chs.first().name)
 
     then: "the info is returned"
@@ -1196,10 +1181,9 @@ class ClientSpec extends Specification {
     final p = ".*"
     d.put("ha-mode", "all")
     client.declarePolicy(v, s, new PolicyInfo(p, 0, null, d))
-    awaitEventPropagation()
 
     when: "client lists policies"
-    final xs = client.getPolicies()
+    final xs = awaitEventPropagation({ client.getPolicies() })
 
     then: "a list of policies is returned"
     final x = xs.first()
@@ -1217,10 +1201,9 @@ class ClientSpec extends Specification {
     final p = ".*"
     d.put("ha-mode", "all")
     client.declarePolicy(v, s, new PolicyInfo(p, 0, null, d))
-    awaitEventPropagation()
 
     when: "client lists policies"
-    final xs = client.getPolicies("/")
+    final xs = awaitEventPropagation({ client.getPolicies("/") })
 
     then: "a list of queues is returned"
     final x = xs.first()
@@ -1234,10 +1217,9 @@ class ClientSpec extends Specification {
     given: "vhost lolwut DOES not exist"
     final v = "lolwut"
     client.deleteVhost(v)
-    awaitEventPropagation()
 
     when: "client lists policies"
-    final xs = client.getPolicies(v)
+    final xs = awaitEventPropagation({ client.getPolicies(v) })
 
     then: "null is returned"
     xs == null
@@ -1378,6 +1360,7 @@ class ClientSpec extends Specification {
     client.deleteQueue("/","queue1")
   }
 
+  @Ignore
   def "GET /api/parameters/shovel"() {
     given: "a basic topology"
     ShovelDetails value = new ShovelDetails("amqp://localhost:5672/vh1", "amqp://localhost:5672/vh2", 30, true, null);
@@ -1518,8 +1501,22 @@ class ClientSpec extends Specification {
    * in particular starting with rabbitmq/rabbitmq-management#236,
    * so in some cases we need to wait before GET'ing e.g. a newly opened connection.
    */
-  protected static void awaitEventPropagation() {
-    // same number as used in rabbit-hole test suite. Works OK.
-    Thread.sleep(1000)
+  protected static Object awaitEventPropagation(Closure callback) {
+    if (callback) {
+      int n = 0
+      def result = callback()
+      while (result?.isEmpty() && n < 100) {
+        Thread.sleep(100)
+        result = callback()
+      }
+
+      assert n < 100
+      result
+    }
+    else {
+      Thread.sleep(1000)
+      null
+    }
   }
+
 }

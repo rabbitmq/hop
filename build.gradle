@@ -3,7 +3,7 @@ plugins {
   id 'eclipse'
   id 'idea'
   id 'jacoco'
-  id 'org.sonarqube' version '2.1'
+  id 'org.sonarqube' version '2.5'
 }
 
 description = 'Java client for the RabbitMQ HTTP API'
@@ -87,7 +87,7 @@ jacocoTestReport {
   reports {
     xml.enabled false
     csv.enabled false
-    html.destination "${buildDir}/reports/jacoco/html"
+    html.destination file("${buildDir}/reports/jacoco/html")
   }
 }
 
