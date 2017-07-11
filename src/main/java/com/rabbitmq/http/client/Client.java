@@ -81,12 +81,7 @@ import com.rabbitmq.http.client.domain.VhostInfo;
 
 public class Client {
   private static final HttpClientBuilderConfigurator NO_OP_HTTP_CLIENT_BUILDER_CONFIGURATOR =
-      new HttpClientBuilderConfigurator() {
-      @Override
-      public HttpClientBuilder configure(HttpClientBuilder builder) {
-        return builder;
-      }
-    };
+      builder -> builder;
 
   private RestTemplate rt;
   private URI rootUri;
@@ -159,9 +154,9 @@ public class Client {
    */
   private Client(URL url, String username, String password, SSLConnectionSocketFactory sslConnectionSocketFactory, SSLContext sslContext)
       throws MalformedURLException, URISyntaxException {
-    Assert.notNull(url);
-    Assert.notNull(username);
-    Assert.notNull(password);
+    Assert.notNull(url, "URL must not be null");
+    Assert.notNull(username, "username must not be null");
+    Assert.notNull(password, "password must not be null");
     this.rootUri = url.toURI();
 
     this.rt = new RestTemplate(getRequestFactory(url, username, password, sslConnectionSocketFactory, sslContext, NO_OP_HTTP_CLIENT_BUILDER_CONFIGURATOR));
@@ -217,10 +212,10 @@ public class Client {
   private Client(URL url, String username, String password, SSLConnectionSocketFactory sslConnectionSocketFactory,
                  SSLContext sslContext,
                  HttpClientBuilderConfigurator configurator) throws URISyntaxException, MalformedURLException {
-    Assert.notNull(url);
-    Assert.notNull(username);
-    Assert.notNull(password);
-    Assert.notNull(configurator);
+    Assert.notNull(url, "url must not be null");
+    Assert.notNull(username, "username must not be null");
+    Assert.notNull(password, "password must not be null");
+    Assert.notNull(configurator, "configurator must not be null");
     this.rootUri = url.toURI();
 
     HttpComponentsClientHttpRequestFactory rf = getRequestFactory(url, username, password,
@@ -826,7 +821,7 @@ public class Client {
       bldr.setSSLSocketFactory(sslConnectionSocketFactory);
     }
     if (sslContext != null) {
-      bldr.setSslcontext(sslContext);
+      bldr.setSSLContext(sslContext);
     }
 
     HttpClient httpClient;

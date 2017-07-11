@@ -14,17 +14,20 @@ group = 'com.rabbitmq'
 
 repositories {
   mavenCentral()
+  maven {
+    url 'https://repo.spring.io/libs-milestone'
+  }
 }
 
-sourceCompatibility = targetCompatibility = 1.6
+sourceCompatibility = targetCompatibility = 1.8
 
 ext {
-  amqpClientVersion='4.0.2'
-  commonsHttpClientVersion = '4.3.6'
-  groovyVersion = '2.4.8'
-  jacksonVersion = '2.8.4'
-  spockVersion = "1.0-groovy-2.4"
-  springWebVersion = '4.3.6.RELEASE'
+  amqpClientVersion='4.1.1'
+  commonsHttpClientVersion = '4.5.3'
+  groovyVersion = '2.4.12'
+  jacksonVersion = '2.9.0.pr3'
+  spockVersion = "1.1-groovy-2.4"
+  springWebVersion = '5.0.0.RC2'
 
   linkHomepage = 'https://github.com/rabbitmq/hop'
   linkCi       = 'https://build.spring.io/browse/RMQ'
@@ -36,6 +39,7 @@ ext {
 
 dependencies {
   compile "org.springframework:spring-web:$springWebVersion"
+  compile "org.springframework:spring-webflux:$springWebVersion"
   compile "org.apache.httpcomponents:httpclient:$commonsHttpClientVersion"
   compile "com.fasterxml.jackson.core:jackson-databind:$jacksonVersion"
 
