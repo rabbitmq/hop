@@ -62,6 +62,7 @@ import org.springframework.web.util.UriUtils;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.rabbitmq.http.client.domain.AlivenessTestResult;
 import com.rabbitmq.http.client.domain.BindingInfo;
 import com.rabbitmq.http.client.domain.ChannelInfo;
@@ -795,7 +796,8 @@ public class Client {
     List<HttpMessageConverter<?>> xs = new ArrayList<HttpMessageConverter<?>>();
     final Jackson2ObjectMapperBuilder bldr = Jackson2ObjectMapperBuilder
         .json()
-        .serializationInclusion(JsonInclude.Include.NON_NULL);
+        .serializationInclusion(JsonInclude.Include.NON_NULL)
+        .featuresToEnable(DeserializationFeature.ACCEPT_EMPTY_ARRAY_AS_NULL_OBJECT);
     xs.add(new MappingJackson2HttpMessageConverter(bldr.build()));
     return xs;
   }
