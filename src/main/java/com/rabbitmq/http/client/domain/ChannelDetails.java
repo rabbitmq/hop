@@ -68,4 +68,15 @@ public class ChannelDetails {
   public void setPeerPort(int peerPort) {
     this.peerPort = peerPort;
   }
+  
+  @Override
+  public String toString() {
+    return "ChannelDetails{" +
+        "connectionName='" + connectionName + '\'' +
+        ", name='" + name + '\'' +
+        ", number=" + number +
+        ", peerHost='" + peerHost + '\'' +
+        ", peerPort=" + peerPort +
+        '}';
+  }
 }

@@ -215,4 +215,12 @@ public class ChannelInfo {
   public void setMessageStats(MessageStats messageStats) {
     this.messageStats = messageStats;
   }
+  
+  public List<ConsumerDetails> getConsumerDetails() {
+      return consumerDetails;
+  }
+  
+  public void setConsumerDetails(List<ConsumerDetails> consumerDetails) {
+      this.consumerDetails = consumerDetails;
+    }
 }
