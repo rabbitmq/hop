@@ -1,5 +1,5 @@
 /*
- * Copyright 2015 the original author or authors.
+ * Copyright 2015-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,7 +21,6 @@ import com.rabbitmq.http.client.domain.*
 import org.apache.http.impl.client.HttpClientBuilder
 import org.springframework.http.HttpStatus
 import org.springframework.web.client.HttpClientErrorException
-import spock.lang.Ignore
 import spock.lang.IgnoreIf
 import spock.lang.Specification
 
@@ -1360,7 +1359,6 @@ class ClientSpec extends Specification {
     client.deleteQueue("/","queue1")
   }
 
-  @Ignore
   def "GET /api/parameters/shovel"() {
     given: "a basic topology"
     ShovelDetails value = new ShovelDetails("amqp://localhost:5672/vh1", "amqp://localhost:5672/vh2", 30, true, null);
