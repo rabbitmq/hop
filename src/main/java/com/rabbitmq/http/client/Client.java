@@ -45,7 +45,6 @@ import org.apache.http.impl.client.BasicCredentialsProvider;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.message.BasicHeader;
 import org.apache.http.protocol.HttpContext;
-
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
@@ -76,6 +75,7 @@ import com.rabbitmq.http.client.domain.OverviewResponse;
 import com.rabbitmq.http.client.domain.PolicyInfo;
 import com.rabbitmq.http.client.domain.QueueInfo;
 import com.rabbitmq.http.client.domain.ShovelInfo;
+import com.rabbitmq.http.client.domain.ShovelStatus;
 import com.rabbitmq.http.client.domain.UserInfo;
 import com.rabbitmq.http.client.domain.UserPermissions;
 import com.rabbitmq.http.client.domain.VhostInfo;
@@ -754,6 +754,28 @@ public class Client {
   public List<ShovelInfo> getShovels(String vhost) {
     final URI uri = uriWithPath("./parameters/shovel/" + encodePathSegment(vhost));
     final ShovelInfo[] result = this.getForObjectReturningNullOn404(uri, ShovelInfo[].class);
+    return asListOrNull(result);
+  }
+
+  /**
+   * Returns virtual host shovels.
+   * 
+   * @return Shovels.
+   */
+  public List<ShovelStatus> getShovelsStatus() {
+    final URI uri = uriWithPath("./shovels/");
+    return Arrays.asList(this.rt.getForObject(uri, ShovelStatus[].class));
+  }
+
+  /**
+   * Returns virtual host shovels.
+   * 
+   * @param vhost Virtual host from where search shovels.
+   * @return Shovels.
+   */
+  public List<ShovelStatus> getShovelsStatus(String vhost) {
+    final URI uri = uriWithPath("./shovels/" + encodePathSegment(vhost));
+    final ShovelStatus[] result = this.getForObjectReturningNullOn404(uri, ShovelStatus[].class);
     return asListOrNull(result);
   }
 

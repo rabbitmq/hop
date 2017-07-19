@@ -1389,6 +1389,31 @@ class ClientSpec extends Specification {
     client.deleteShovel("/","shovel1")
   }
 
+  def "GET /api/shovels"() {
+    given: "a basic topology"
+    ShovelDetails value = new ShovelDetails("amqp://localhost:5672/vh1", "amqp://localhost:5672/vh2", 30, true, null);
+    value.setSourceQueue("queue1");
+    value.setDestinationExchange("exchange1");
+    client.declareShovel("/", new ShovelInfo("shovel1", value))
+    when: "client requests the shovels status"
+    List<ShovelStatus> shovels = client.getShovelsStatus()
+
+    then: "shovels status are returned"
+    !shovels.isEmpty()
+    shovels.size() >= 1
+    ShovelStatus s = shovels.find { it.name.equals("shovel1") }
+    s != null
+    s.name.equals("shovel1")
+    s.virtualHost.equals("/")
+    s.type.equals("dynamic")
+    s.state.equals("starting")
+    s.sourceURI == null
+    s.destinationURI == null
+
+    cleanup:
+    client.deleteShovel("/","shovel1")
+  }
+
   protected static boolean awaitOn(CountDownLatch latch) {
     latch.await(5, TimeUnit.SECONDS)
   }
