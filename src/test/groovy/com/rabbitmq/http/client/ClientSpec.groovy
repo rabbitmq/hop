@@ -1297,7 +1297,7 @@ class ClientSpec extends Specification {
     then: "broker definitions are returned"
     !d.getQueues().isEmpty()
     d.getQueues().size() >= 3
-    QueueInfo q = d.getQueues().find { it.name.equals("queue1") }
+    QueueInfo q = d.getQueues().find { it.name.equals("queue1") && it.vhost.equals("/") }
     q != null
     q.vhost.equals("/")
     q.name.equals("queue1")
@@ -1366,7 +1366,7 @@ class ClientSpec extends Specification {
     value.setDestinationExchange("exchange1");
     client.declareShovel("/", new ShovelInfo("shovel1", value))
     when: "client requests the shovels"
-    List<ShovelInfo> shovels = client.getShovels()
+    final shovels = awaitEventPropagation { client.getShovels() }
 
     then: "broker definitions are returned"
     !shovels.isEmpty()
@@ -1396,7 +1396,7 @@ class ClientSpec extends Specification {
     value.setDestinationExchange("exchange1");
     client.declareShovel("/", new ShovelInfo("shovel1", value))
     when: "client requests the shovels status"
-    List<ShovelStatus> shovels = client.getShovelsStatus()
+    final shovels = awaitEventPropagation { client.getShovelsStatus() }
 
     then: "shovels status are returned"
     !shovels.isEmpty()
