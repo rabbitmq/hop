@@ -16,10 +16,17 @@
 
 package com.rabbitmq.http.client;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.rabbitmq.http.client.domain.ConnectionInfo;
 import com.rabbitmq.http.client.domain.NodeInfo;
 import com.rabbitmq.http.client.domain.OverviewResponse;
+import org.springframework.http.MediaType;
+import org.springframework.http.codec.json.Jackson2JsonDecoder;
+import org.springframework.http.codec.json.Jackson2JsonEncoder;
+import org.springframework.http.converter.json.Jackson2ObjectMapperBuilder;
+import org.springframework.web.reactive.function.client.ClientResponse;
 import org.springframework.web.reactive.function.client.ExchangeFilterFunctions;
+import org.springframework.web.reactive.function.client.ExchangeStrategies;
 import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -34,10 +41,25 @@ public class ReactiveClient {
     private final WebClient client;
 
     public ReactiveClient(String url, String username, String password) throws URISyntaxException {
+        ExchangeStrategies strategies = ExchangeStrategies
+            .builder()
+            .defaultCodecs(clientDefaultCodecsConfigurer -> {
+                final Jackson2ObjectMapperBuilder jacksonBuilder = Jackson2ObjectMapperBuilder
+                    .json()
+                    .serializationInclusion(JsonInclude.Include.NON_NULL);
+
+                clientDefaultCodecsConfigurer
+                    .jackson2Encoder(new Jackson2JsonEncoder(jacksonBuilder.build(), MediaType.APPLICATION_JSON));
+                clientDefaultCodecsConfigurer
+                    .jackson2Decoder(new Jackson2JsonDecoder(jacksonBuilder.build(), MediaType.APPLICATION_JSON));
+
+            }).build();
         this.client = WebClient.builder()
+            .exchangeStrategies(strategies)
             .baseUrl(url)
             .build()
             .filter(ExchangeFilterFunctions.basicAuthentication(username, password));
+
     }
 
     public Mono<OverviewResponse> getOverview() {
@@ -70,6 +92,29 @@ public class ReactiveClient {
             .uri("/connections")
             .retrieve()
             .bodyToFlux(ConnectionInfo.class);
+    }
+
+    public Mono<ConnectionInfo> getConnection(String name) {
+        return client
+            .get()
+            .uri("/connections/{name}", name)
+            .retrieve()
+            .bodyToMono(ConnectionInfo.class);
+    }
+
+    public Mono<ClientResponse> closeConnection(String name) {
+        return client
+            .delete()
+            .uri("/connections/{name}", name)
+            .exchange();
+    }
+
+    public Mono<ClientResponse> closeConnection(String name, String reason) {
+        return client
+            .delete()
+            .uri("/connections/{name}", name)
+            .header("X-Reason", reason)
+            .exchange();
     }
 
 }

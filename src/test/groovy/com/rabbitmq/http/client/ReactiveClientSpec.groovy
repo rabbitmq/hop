@@ -18,10 +18,15 @@ package com.rabbitmq.http.client
 
 import com.rabbitmq.client.Connection
 import com.rabbitmq.client.ConnectionFactory
+import com.rabbitmq.client.ShutdownListener
+import com.rabbitmq.client.ShutdownSignalException
 import com.rabbitmq.http.client.domain.ConnectionInfo
 import com.rabbitmq.http.client.domain.NodeInfo
 import org.springframework.core.codec.DecodingException
 import spock.lang.Specification
+
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.TimeUnit
 
 class ReactiveClientSpec extends Specification {
 
@@ -130,6 +135,95 @@ class ReactiveClientSpec extends Specification {
         conn.close()
     }
 
+    def "GET /api/connections/{name}"() {
+        given: "an open RabbitMQ client connection"
+        final conn = openConnection()
+
+        when: "client retrieves connection info with the correct name"
+
+        final xs = awaitEventPropagation({ client.getConnections() })
+        final x = client.getConnection(xs.blockFirst().name)
+
+        then: "the info is returned"
+        verifyConnectionInfo(x.block())
+
+        cleanup:
+        conn.close()
+    }
+
+    def "GET /api/connections/{name} with client-provided name"() {
+        given: "an open RabbitMQ client connection with client-provided name"
+        final s = "client-name"
+        final conn = openConnection(s)
+
+        when: "client retrieves connection info with the correct name"
+
+        final xs = awaitEventPropagation({ client.getConnections() })
+        final x = client.getConnection(xs.blockFirst().name)
+
+        then: "the info is returned"
+        verifyConnectionInfo(x.block())
+        x.block().clientProperties.connectionName == s
+
+        cleanup:
+        conn.close()
+    }
+
+    def "DELETE /api/connections/{name}"() {
+        given: "an open RabbitMQ client connection"
+        final latch = new CountDownLatch(1)
+        final conn = openConnection()
+        conn.addShutdownListener({ e -> latch.countDown() })
+
+        assert conn.isOpen()
+
+        when: "client closes the connection"
+
+        final xs = awaitEventPropagation({ client.getConnections() })
+        xs.flatMap({ connection -> client.closeConnection(connection.name) })
+          .subscribe()
+
+        and: "some time passes"
+        assert awaitOn(latch)
+
+        then: "the connection is closed"
+        !conn.isOpen()
+
+        cleanup:
+        if (conn.isOpen()) {
+            conn.close()
+        }
+    }
+
+    def "DELETE /api/connections/{name} with a user-provided reason"() {
+        given: "an open RabbitMQ client connection"
+        final latch = new CountDownLatch(1)
+        final conn = openConnection()
+        conn.addShutdownListener({ e -> latch.countDown() })
+        assert conn.isOpen()
+
+        when: "client closes the connection"
+
+        final xs = awaitEventPropagation({ client.getConnections() })
+        xs.flatMap({ connection -> client.closeConnection(connection.name, "because reasons!") })
+          .subscribe()
+
+        and: "some time passes"
+        assert awaitOn(latch)
+
+        then: "the connection is closed"
+        !conn.isOpen()
+
+        cleanup:
+        if (conn.isOpen()) {
+            conn.close()
+        }
+    }
+
+    protected static boolean awaitOn(CountDownLatch latch) {
+        latch.await(5, TimeUnit.SECONDS)
+    }
+
     protected static void verifyConnectionInfo(ConnectionInfo info) {
         info.port == ConnectionFactory.DEFAULT_AMQP_PORT
         !info.usesTLS
@@ -138,6 +232,10 @@ class ReactiveClientSpec extends Specification {
 
     protected Connection openConnection() {
         this.cf.newConnection()
+    }
+
+    protected Connection openConnection(String clientProvidedName) {
+        this.cf.newConnection(clientProvidedName)
     }
 
     protected static void verifyNode(NodeInfo node) {
@@ -163,7 +261,7 @@ class ReactiveClientSpec extends Specification {
                 Thread.sleep(100)
                 result = callback()
                 try {
-                    // looks like Spring's Jackson2JsonDecoder doesn't like empty JSON array
+                    // WebClient doesn't like empty JSON array, should be fixed in Spring 5.0.0.RC3
                     hasElements = result?.hasElements().block()
                 } catch(DecodingException e) {
 
