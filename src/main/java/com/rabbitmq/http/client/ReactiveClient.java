@@ -17,6 +17,7 @@
 package com.rabbitmq.http.client;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
+import com.rabbitmq.http.client.domain.ChannelInfo;
 import com.rabbitmq.http.client.domain.ConnectionInfo;
 import com.rabbitmq.http.client.domain.NodeInfo;
 import com.rabbitmq.http.client.domain.OverviewResponse;
@@ -43,22 +44,23 @@ public class ReactiveClient {
     public ReactiveClient(String url, String username, String password) throws URISyntaxException {
         ExchangeStrategies strategies = ExchangeStrategies
             .builder()
-            .defaultCodecs(clientDefaultCodecsConfigurer -> {
+            .codecs(clientDefaultCodecsConfigurer -> {
                 final Jackson2ObjectMapperBuilder jacksonBuilder = Jackson2ObjectMapperBuilder
                     .json()
                     .serializationInclusion(JsonInclude.Include.NON_NULL);
 
-                clientDefaultCodecsConfigurer
-                    .jackson2Encoder(new Jackson2JsonEncoder(jacksonBuilder.build(), MediaType.APPLICATION_JSON));
-                clientDefaultCodecsConfigurer
-                    .jackson2Decoder(new Jackson2JsonDecoder(jacksonBuilder.build(), MediaType.APPLICATION_JSON));
+                clientDefaultCodecsConfigurer.defaultCodecs()
+                    .jackson2JsonEncoder(new Jackson2JsonEncoder(jacksonBuilder.build(), MediaType.APPLICATION_JSON));
+
+                clientDefaultCodecsConfigurer.defaultCodecs()
+                    .jackson2JsonDecoder(new Jackson2JsonDecoder(jacksonBuilder.build(), MediaType.APPLICATION_JSON));
 
             }).build();
         this.client = WebClient.builder()
             .exchangeStrategies(strategies)
             .baseUrl(url)
-            .build()
-            .filter(ExchangeFilterFunctions.basicAuthentication(username, password));
+            .filter(ExchangeFilterFunctions.basicAuthentication(username, password))
+            .build();
 
     }
 
@@ -116,5 +118,22 @@ public class ReactiveClient {
             .header("X-Reason", reason)
             .exchange();
     }
+
+    public Flux<ChannelInfo> getChannels() {
+        return client
+            .get()
+            .uri("/channels")
+            .retrieve()
+            .bodyToFlux(ChannelInfo.class);
+    }
+
+    public Flux<ChannelInfo> getChannels(String connectionName) {
+        return client
+            .get()
+            .uri("/connections/{connectionName}/channels", connectionName)
+            .retrieve()
+            .bodyToFlux(ChannelInfo.class);
+    }
+
 
 }

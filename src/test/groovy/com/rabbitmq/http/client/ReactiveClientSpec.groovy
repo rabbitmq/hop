@@ -16,10 +16,12 @@
 
 package com.rabbitmq.http.client
 
+import com.rabbitmq.client.Channel
 import com.rabbitmq.client.Connection
 import com.rabbitmq.client.ConnectionFactory
 import com.rabbitmq.client.ShutdownListener
 import com.rabbitmq.client.ShutdownSignalException
+import com.rabbitmq.http.client.domain.ChannelInfo
 import com.rabbitmq.http.client.domain.ConnectionInfo
 import com.rabbitmq.http.client.domain.NodeInfo
 import org.springframework.core.codec.DecodingException
@@ -220,6 +222,47 @@ class ReactiveClientSpec extends Specification {
         }
     }
 
+    def "GET /api/channels"() {
+        given: "an open RabbitMQ client connection with 1 channel"
+        final conn = openConnection()
+        final ch = conn.createChannel()
+
+        when: "client lists channels"
+
+        awaitEventPropagation({ client.getConnections() })
+        final chs = awaitEventPropagation({ client.getChannels() })
+        final chi = chs.blockFirst()
+
+        then: "the list is returned"
+        verifyChannelInfo(chi, ch)
+
+        cleanup:
+        if (conn.isOpen()) {
+            conn.close()
+        }
+    }
+
+    def "GET /api/connections/{name}/channels/"() {
+        given: "an open RabbitMQ client connection with 1 channel"
+        final conn = openConnection()
+        final ch = conn.createChannel()
+
+        when: "client lists channels on that connection"
+
+        final cn = awaitEventPropagation({ client.getConnections() }).blockFirst().name
+
+        final chs = awaitEventPropagation({ client.getChannels(cn) })
+        final chi = chs.blockFirst()
+
+        then: "the list is returned"
+        verifyChannelInfo(chi, ch)
+
+        cleanup:
+        if (conn.isOpen()) {
+            conn.close()
+        }
+    }
+
     protected static boolean awaitOn(CountDownLatch latch) {
         latch.await(5, TimeUnit.SECONDS)
     }
@@ -228,6 +271,15 @@ class ReactiveClientSpec extends Specification {
         info.port == ConnectionFactory.DEFAULT_AMQP_PORT
         !info.usesTLS
         info.peerHost.equals(info.host)
+    }
+
+    protected static void verifyChannelInfo(ChannelInfo chi, Channel ch) {
+        chi.getConsumerCount() == 0
+        chi.number == ch.getChannelNumber()
+        chi.node.startsWith("rabbit@")
+        chi.state == "running"
+        !chi.usesPublisherConfirms()
+        !chi.transactional
     }
 
     protected Connection openConnection() {
@@ -260,12 +312,7 @@ class ReactiveClientSpec extends Specification {
             while (!hasElements && n < 100) {
                 Thread.sleep(100)
                 result = callback()
-                try {
-                    // WebClient doesn't like empty JSON array, should be fixed in Spring 5.0.0.RC3
-                    hasElements = result?.hasElements().block()
-                } catch(DecodingException e) {
-
-                }
+                hasElements = result?.hasElements().block()
                 n++
             }
             assert n < 100

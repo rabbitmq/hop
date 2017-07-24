@@ -4,6 +4,8 @@ plugins {
   id 'idea'
   id 'jacoco'
   id 'org.sonarqube' version '2.5'
+  id "io.spring.dependency-management" version "1.0.3.RELEASE"
+  id "java"
 }
 
 description = 'Java client for the RabbitMQ HTTP API'
@@ -19,18 +21,25 @@ repositories {
   }
 }
 
-sourceCompatibility = targetCompatibility = 1.8
+compileJava {
+  sourceCompatibility = 1.8
+  targetCompatibility = 1.8
+}
+
+compileTestJava {
+  sourceCompatibility = 1.8
+  targetCompatibility = 1.8
+}
 
 ext {
   amqpClientVersion='4.1.1'
   commonsHttpClientVersion = '4.5.3'
   groovyVersion = '2.4.12'
-  jacksonVersion = '2.9.0.pr3'
+  jacksonVersion = '2.9.0.pr4'
   spockVersion = "1.1-groovy-2.4"
-  springWebVersion = '5.0.0.RC2'
-  reactorIpcVersion = "0.6.2.RELEASE"
-  reactorNettyVersion = "0.6.4.RELEASE"
-  
+  reactorVersion = "Bismuth-M3"
+  springWebVersion = '5.0.0.RC3'
+
   linkHomepage = 'https://github.com/rabbitmq/hop'
   linkCi       = 'https://build.spring.io/browse/RMQ'
   linkIssue    = 'https://github.com/rabbitmq/hop/issues'
@@ -39,13 +48,23 @@ ext {
   linkScmDevConnection = 'git@github.com:rabbitmq/hop.git'
 }
 
+dependencyManagement {
+  imports {
+    mavenBom "io.projectreactor:reactor-bom:${reactorVersion}"
+  }
+  resolutionStrategy {
+    cacheChangingModulesFor 0, 'seconds'
+  }
+  applyMavenExclusions = false
+}
+
 dependencies {
   compile "org.springframework:spring-web:$springWebVersion"
   compile "org.springframework:spring-webflux:$springWebVersion"
   compile "org.apache.httpcomponents:httpclient:$commonsHttpClientVersion"
   compile "com.fasterxml.jackson.core:jackson-databind:$jacksonVersion"
-  compile "io.projectreactor.ipc:reactor-ipc:$reactorIpcVersion"
-  compile "io.projectreactor.ipc:reactor-netty:$reactorNettyVersion"
+  compile "io.projectreactor.ipc:reactor-ipc"
+  compile "io.projectreactor.ipc:reactor-netty"
 
   testCompile "org.codehaus.groovy:groovy-all:$groovyVersion"
   testCompile "org.spockframework:spock-core:$spockVersion"
