@@ -24,7 +24,10 @@ import com.rabbitmq.client.ShutdownSignalException
 import com.rabbitmq.http.client.domain.ChannelInfo
 import com.rabbitmq.http.client.domain.ConnectionInfo
 import com.rabbitmq.http.client.domain.NodeInfo
+import com.rabbitmq.http.client.domain.VhostInfo
 import org.springframework.core.codec.DecodingException
+import org.springframework.web.reactive.function.client.WebClientException
+import spock.lang.IgnoreIf
 import spock.lang.Specification
 
 import java.util.concurrent.CountDownLatch
@@ -263,6 +266,90 @@ class ReactiveClientSpec extends Specification {
         }
     }
 
+    def "GET /api/channels/{name}"() {
+        given: "an open RabbitMQ client connection with 1 channel"
+        final conn = openConnection()
+        final ch = conn.createChannel()
+
+        when: "client retrieves channel info"
+
+        awaitEventPropagation({ client.getConnections() })
+        final chs = awaitEventPropagation({ client.getChannels() }).blockFirst()
+        final chi = client.getChannel(chs.name).block()
+
+        then: "the info is returned"
+        verifyChannelInfo(chi, ch)
+
+        cleanup:
+        if (conn.isOpen()) {
+            conn.close()
+        }
+    }
+
+    def "GET /api/vhosts"() {
+        when: "client retrieves a list of vhosts"
+        final vhs = client.getVhosts()
+        final vhi = vhs.blockFirst()
+
+        then: "the info is returned"
+        verifyVhost(vhi)
+    }
+
+    def "GET /api/vhosts/{name}"() {
+        when: "client retrieves vhost info"
+        final vhi = client.getVhost("/").block()
+
+        then: "the info is returned"
+        verifyVhost(vhi)
+    }
+
+    @IgnoreIf({ os.windows })
+    def "PUT /api/vhosts/{name}"(String name) {
+        when:
+        "client creates a vhost named $name"
+        client.createVhost(name).block()
+
+        final vhi = client.getVhost(name).block()
+
+        then: "the vhost is created"
+        vhi.name == name
+
+        cleanup:
+        client.deleteVhost(name).block()
+
+        where:
+        name << [
+                "http-created",
+                "http-created2",
+                "http_created",
+                "http created",
+                "создан по хатэтэпэ",
+                "creado a través de HTTP",
+                "通过http",
+                "HTTP를 통해 생성",
+                "HTTPを介して作成",
+                "created over http?",
+                "created @ http API",
+                "erstellt über http",
+                "http पर बनाया",
+                "ถูกสร้างขึ้นผ่าน HTTP",
+                "±!@^&#*"
+        ]
+    }
+
+    def "DELETE /api/vhosts/{name} when vhost exists"() {
+        given: "a vhost named hop-test-to-be-deleted"
+        final s = "hop-test-to-be-deleted"
+        client.createVhost(s).block()
+
+        when: "the vhost is deleted"
+        client.deleteVhost(s).block()
+        client.getVhost(s).block()
+
+        then: "it no longer exists"
+        thrown(WebClientException.class)
+    }
+
     protected static boolean awaitOn(CountDownLatch latch) {
         latch.await(5, TimeUnit.SECONDS)
     }
@@ -280,6 +367,11 @@ class ReactiveClientSpec extends Specification {
         chi.state == "running"
         !chi.usesPublisherConfirms()
         !chi.transactional
+    }
+
+    protected static void verifyVhost(VhostInfo vhi) {
+        vhi.name == "/"
+        !vhi.tracing
     }
 
     protected Connection openConnection() {

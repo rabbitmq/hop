@@ -17,11 +17,9 @@
 package com.rabbitmq.http.client;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.rabbitmq.http.client.domain.ChannelInfo;
-import com.rabbitmq.http.client.domain.ConnectionInfo;
-import com.rabbitmq.http.client.domain.NodeInfo;
-import com.rabbitmq.http.client.domain.OverviewResponse;
+import com.rabbitmq.http.client.domain.*;
 import org.springframework.http.MediaType;
+import org.springframework.http.client.reactive.ReactorClientHttpConnector;
 import org.springframework.http.codec.json.Jackson2JsonDecoder;
 import org.springframework.http.codec.json.Jackson2JsonEncoder;
 import org.springframework.http.converter.json.Jackson2ObjectMapperBuilder;
@@ -57,6 +55,8 @@ public class ReactiveClient {
 
             }).build();
         this.client = WebClient.builder()
+            // FIXME see https://github.com/reactor/reactor-netty/issues/138
+            .clientConnector(new ReactorClientHttpConnector(builder -> builder.disablePool()))
             .exchangeStrategies(strategies)
             .baseUrl(url)
             .filter(ExchangeFilterFunctions.basicAuthentication(username, password))
@@ -135,5 +135,41 @@ public class ReactiveClient {
             .bodyToFlux(ChannelInfo.class);
     }
 
+    public Mono<ChannelInfo> getChannel(String name) {
+        return client
+            .get()
+            .uri("/channels/{name}", name)
+            .retrieve()
+            .bodyToMono(ChannelInfo.class);
+    }
 
+    public Flux<VhostInfo> getVhosts() {
+        return client
+            .get()
+            .uri("/vhosts")
+            .retrieve()
+            .bodyToFlux(VhostInfo.class);
+    }
+
+    public Mono<VhostInfo> getVhost(String name) {
+        return client
+            .get()
+            .uri("/vhosts/{name}", name)
+            .retrieve()
+            .bodyToMono(VhostInfo.class);
+    }
+
+    public Mono<ClientResponse> createVhost(String name) {
+        return client
+            .put()
+            .uri("/vhosts/{name}", name)
+            .exchange();
+    }
+
+    public Mono<ClientResponse> deleteVhost(String name) {
+        return client
+            .delete()
+            .uri("/vhosts/{name}", name)
+            .exchange();
+    }
 }
