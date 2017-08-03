@@ -16,16 +16,13 @@
 
 package com.rabbitmq.http.client
 
+import com.rabbitmq.client.AuthenticationFailureException
 import com.rabbitmq.client.Channel
 import com.rabbitmq.client.Connection
 import com.rabbitmq.client.ConnectionFactory
-import com.rabbitmq.client.ShutdownListener
-import com.rabbitmq.client.ShutdownSignalException
-import com.rabbitmq.http.client.domain.ChannelInfo
-import com.rabbitmq.http.client.domain.ConnectionInfo
-import com.rabbitmq.http.client.domain.NodeInfo
-import com.rabbitmq.http.client.domain.VhostInfo
-import org.springframework.core.codec.DecodingException
+import com.rabbitmq.http.client.domain.*
+import org.springframework.http.HttpStatus
+import org.springframework.web.client.HttpClientErrorException
 import org.springframework.web.reactive.function.client.WebClientException
 import spock.lang.IgnoreIf
 import spock.lang.Specification
@@ -350,6 +347,222 @@ class ReactiveClientSpec extends Specification {
         thrown(WebClientException.class)
     }
 
+    def "DELETE /api/vhosts/{name} when vhost DOES NOT exist"() {
+        given: "no vhost named hop-test-to-be-deleted"
+        final s = "hop-test-to-be-deleted"
+
+        when: "the vhost is deleted"
+        final response = client.deleteVhost(s).block()
+
+        then: "the response is 404"
+        response.statusCode().value() == 404
+    }
+
+    def "GET /api/vhosts/{name}/permissions when vhost exists"() {
+        when: "permissions for vhost / are listed"
+        final s = "/"
+        final xs = client.getPermissionsIn(s)
+
+        then: "they include permissions for the guest user"
+        UserPermissions x = xs.filter({perm -> perm.user.equals("guest")}).blockFirst()
+        x.read == ".*"
+    }
+
+    def "GET /api/vhosts/{name}/permissions when vhost DOES NOT exist"() {
+        when: "permissions for vhost trololowut are listed"
+        final s = "trololowut"
+        client.getPermissionsIn(s).blockFirst()
+
+        then: "flux throws an exception"
+        thrown(WebClientException.class)
+    }
+
+    def "GET /api/users"() {
+        when: "users are listed"
+        final xs = client.getUsers()
+        final version = client.getOverview().block().getRabbitMQVersion()
+
+        then: "a list of users is returned"
+        final x = xs.filter( {user -> user.name.equals("guest")} ).blockFirst()
+        x.name == "guest"
+        x.passwordHash != null
+        isVersion36orLater(version) ? x.hashingAlgorithm != null : x.hashingAlgorithm == null
+        x.tags.contains("administrator")
+    }
+
+    def "GET /api/users/{name} when user exists"() {
+        when: "user guest if fetched"
+        final x = client.getUser("guest").block()
+        final version = client.getOverview().block().getRabbitMQVersion()
+
+        then: "user info returned"
+        x.name == "guest"
+        x.passwordHash != null
+        isVersion36orLater(version) ? x.hashingAlgorithm != null : x.hashingAlgorithm == null
+        x.tags.contains("administrator")
+    }
+
+    def "GET /api/users/{name} when user DOES NOT exist"() {
+        when: "user lolwut if fetched"
+        client.getUser("lolwut").block()
+
+        then: "mono throws exception"
+        thrown(WebClientException.class)
+    }
+
+    def "PUT /api/users/{name} updates user tags"() {
+        given: "user alt-user"
+        final u = "alt-user"
+        client.deleteUser(u).subscribe( { r -> return } , { e -> return})
+        client.createUser(u, u.toCharArray(), Arrays.asList("original", "management")).block()
+        awaitEventPropagation()
+
+        when: "alt-user's tags are updated"
+        client.updateUser(u, u.toCharArray(), Arrays.asList("management", "updated")).block()
+        awaitEventPropagation()
+
+        and: "alt-user info is reloaded"
+        final x = client.getUser(u).block()
+
+        then: "alt-user has new tags"
+        x.tags.contains("updated")
+        !x.tags.contains("original")
+    }
+
+    def "DELETE /api/users/{name}"() {
+        given: "user alt-user"
+        final u = "alt-user"
+        client.deleteUser(u).subscribe( { r -> return } , { e -> return})
+        client.createUser(u, u.toCharArray(), Arrays.asList("original", "management")).block()
+        awaitEventPropagation()
+
+        when: "alt-user is deleted"
+        client.deleteUser(u).block()
+        awaitEventPropagation()
+
+        and: "alt-user info is reloaded"
+        client.getUser(u).block()
+
+        // FIXME check status code, should be available in the exception
+        then: "deleted user is gone"
+        thrown(WebClientException.class)
+    }
+
+    def "GET /api/users/{name}/permissions when user exists"() {
+        when: "permissions for user guest are listed"
+        final s = "guest"
+        final xs = client.getPermissionsOf(s)
+
+        then: "they include permissions for the / vhost"
+        UserPermissions x = xs.filter( { perm -> perm.user.equals("guest")}).blockFirst()
+        x.read == ".*"
+    }
+
+    def "GET /api/users/{name}/permissions when user DOES NOT exist"() {
+        when: "permissions for user trololowut are listed"
+        final s = "trololowut"
+        client.getPermissionsOf(s).blockFirst()
+
+        then: "mono throws exception"
+        thrown(WebClientException.class)
+    }
+
+    def "PUT /api/users/{name} with a blank password hash"() {
+        given: "user alt-user with a blank password hash"
+        final u = "alt-user"
+        // blank password hash means only authentication using alternative
+        // authentication mechanisms such as x509 certificates is possible. MK.
+        final h = ""
+        client.deleteUser(u).subscribe( { r -> return } , { e -> return})
+        client.createUserWithPasswordHash(u, h.toCharArray(), Arrays.asList("original", "management")).block()
+        client.updatePermissions("/", u, new UserPermissions(".*", ".*", ".*")).block()
+
+        when: "alt-user tries to connect with a blank password"
+        openConnection("alt-user", "alt-user")
+
+        then: "connection is refused"
+        // it would have a chance of being accepted if the x509 authentication mechanism was used. MK.
+        thrown AuthenticationFailureException
+
+        cleanup:
+        client.deleteUser(u).block()
+    }
+
+    def "GET /api/whoami"() {
+        when: "client retrieves active name authentication details"
+        final res = client.whoAmI().block()
+
+        then: "the details are returned"
+        res.name == DEFAULT_USERNAME
+        res.tags ==~ /administrator/
+    }
+
+    def "GET /api/permissions"() {
+        when: "all permissions are listed"
+        final s = "guest"
+        final xs = client.getPermissions()
+
+        then: "they include permissions for user guest in vhost /"
+        final UserPermissions x = xs
+                .filter( { perm -> perm.vhost.equals("/") && perm.user.equals(s)})
+                .blockFirst()
+        x.read == ".*"
+    }
+
+    def "GET /api/permissions/{vhost}/:user when both vhost and user exist"() {
+        when: "permissions of user guest in vhost / are listed"
+        final u = "guest"
+        final v = "/"
+        final UserPermissions x = client.getPermissions(v, u).block()
+
+        then: "a single permissions object is returned"
+        x.read == ".*"
+    }
+
+    def "GET /api/permissions/{vhost}/:user when vhost DOES NOT exist"() {
+        when: "permissions of user guest in vhost lolwut are listed"
+        final u = "guest"
+        final v = "lolwut"
+        client.getPermissions(v, u).block()
+
+        then: "mono throws exception"
+        thrown(WebClientException.class)
+    }
+
+    def "GET /api/permissions/{vhost}/:user when username DOES NOT exist"() {
+        when: "permissions of user lolwut in vhost / are listed"
+        final u = "lolwut"
+        final v = "/"
+        client.getPermissions(v, u).block()
+
+        then: "mono throws exception"
+        thrown(WebClientException.class)
+    }
+
+    def "PUT /api/permissions/{vhost}/:user when both user and vhost exist"() {
+        given: "vhost hop-vhost1 exists"
+        final v = "hop-vhost1"
+        client.createVhost(v).block()
+        and: "user hop-user1 exists"
+        final u = "hop-user1"
+        client.createUser(u, "test".toCharArray(), Arrays.asList("management", "http", "policymaker")).block()
+
+        when: "permissions of user guest in vhost / are updated"
+        client.updatePermissions(v, u, new UserPermissions("read", "write", "configure"))block()
+
+        and: "permissions are reloaded"
+        final UserPermissions x = client.getPermissions(v, u).block()
+
+        then: "a single permissions object is returned"
+        x.read == "read"
+        x.write == "write"
+        x.configure == "configure"
+
+        cleanup:
+        client.deleteVhost(v).block()
+        client.deleteUser(u).block()
+    }
+
     protected static boolean awaitOn(CountDownLatch latch) {
         latch.await(5, TimeUnit.SECONDS)
     }
@@ -382,6 +595,13 @@ class ReactiveClientSpec extends Specification {
         this.cf.newConnection(clientProvidedName)
     }
 
+    protected Connection openConnection(String username, String password) {
+        final cf = new ConnectionFactory()
+        cf.setUsername(username)
+        cf.setPassword(password)
+        cf.newConnection()
+    }
+
     protected static void verifyNode(NodeInfo node) {
         assert node != null
         assert node.name != null
@@ -389,6 +609,41 @@ class ReactiveClientSpec extends Specification {
         assert node.erlangProcessesUsed <= node.erlangProcessesTotal
         assert node.erlangRunQueueLength >= 0
         assert node.memoryUsed <= node.memoryLimit
+    }
+
+    boolean isVersion36orLater(String currentVersion) {
+        String v = currentVersion.replaceAll("\\+.*\$", "");
+        v == "0.0.0" ? true : compareVersions(v, "3.6.0") >= 0
+    }
+
+    /**
+     * http://stackoverflow.com/questions/6701948/efficient-way-to-compare-version-strings-in-java
+     *
+     */
+    Integer compareVersions(String str1, String str2) {
+        String[] vals1 = str1.split("\\.")
+        String[] vals2 = str2.split("\\.")
+        int i = 0
+        // set index to first non-equal ordinal or length of shortest version string
+        while (i < vals1.length && i < vals2.length && vals1[i] == vals2[i]) {
+            i++
+        }
+        // compare first non-equal ordinal number
+        if (i < vals1.length && i < vals2.length) {
+            if(vals1[i].indexOf('-') != -1) {
+                vals1[i] = vals1[i].substring(0,vals1[i].indexOf('-'))
+            }
+            if(vals2[i].indexOf('-') != -1) {
+                vals2[i] = vals2[i].substring(0,vals2[i].indexOf('-'))
+            }
+            int diff = Integer.valueOf(vals1[i]) <=> Integer.valueOf(vals2[i])
+            return Integer.signum(diff)
+        }
+        // the strings are equal or one string is a substring of the other
+        // e.g. "1.2.3" = "1.2.3" or "1.2.3" < "1.2.3.4"
+        else {
+            return Integer.signum(vals1.length - vals2.length)
+        }
     }
 
     /**

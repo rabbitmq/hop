@@ -31,6 +31,12 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.net.URISyntaxException;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import static org.springframework.util.StringUtils.collectionToCommaDelimitedString;
 
 /**
  *
@@ -70,6 +76,14 @@ public class ReactiveClient {
             .uri("/overview")
             .retrieve()
             .bodyToMono(OverviewResponse.class);
+    }
+
+    public Mono<CurrentUserDetails> whoAmI() {
+        return client
+            .get()
+            .uri("/whoami")
+            .retrieve()
+            .bodyToMono(CurrentUserDetails.class);
     }
 
     public Flux<NodeInfo> getNodes() {
@@ -172,4 +186,131 @@ public class ReactiveClient {
             .uri("/vhosts/{name}", name)
             .exchange();
     }
+
+    public Flux<UserPermissions> getPermissionsIn(String vhost) {
+        return client
+            .get()
+            .uri("/vhosts/{name}/permissions", vhost)
+            .retrieve()
+            .bodyToFlux(UserPermissions.class);
+    }
+
+    public Flux<UserPermissions> getPermissionsOf(String username) {
+        return client
+            .get()
+            .uri("/users/{username}/permissions", username)
+            .retrieve()
+            .bodyToFlux(UserPermissions.class);
+    }
+
+    public Flux<UserPermissions> getPermissions() {
+        return client
+            .get()
+            .uri("/permissions")
+            .retrieve()
+            .bodyToFlux(UserPermissions.class);
+    }
+
+    public Mono<UserPermissions> getPermissions(String vhost, String username) {
+        return client
+            .get()
+            .uri("/permissions/{vhost}/{username}", vhost, username)
+            .retrieve()
+            .bodyToMono(UserPermissions.class);
+    }
+
+    public Flux<UserInfo> getUsers() {
+        return client
+            .get()
+            .uri("/users")
+            .retrieve()
+            .bodyToFlux(UserInfo.class);
+    }
+
+    public Mono<UserInfo> getUser(String username) {
+        return client
+            .get()
+            .uri("/users/{username}", username)
+            .retrieve()
+            .bodyToMono(UserInfo.class);
+    }
+
+    public Mono<ClientResponse> deleteUser(String username) {
+        return client
+            .delete()
+            .uri("/users/{username}", username)
+            .exchange();
+    }
+
+    public Mono<ClientResponse> createUser(String username, char[] password, List<String> tags) {
+        if(username == null) {
+            throw new IllegalArgumentException("username cannot be null");
+        }
+        if(password == null) {
+            throw new IllegalArgumentException("password cannot be null or empty. If you need to create a user that "
+                + "will only authenticate using an x509 certificate, use createUserWithPasswordHash with a blank hash.");
+        }
+        Map<String, Object> body = new HashMap<String, Object>();
+        body.put("password", new String(password));
+        body.put("tags", collectionToCommaDelimitedString(tags));
+
+        return client
+            .put()
+            .uri("/users/{username}", username)
+            .syncBody(body)
+            .exchange();
+    }
+
+    public Mono<ClientResponse> createUserWithPasswordHash(String username, char[] passwordHash, List<String> tags) {
+        if(username == null) {
+            throw new IllegalArgumentException("username cannot be null");
+        }
+        // passwordless authentication is a thing. See
+        // https://github.com/rabbitmq/hop/issues/94 and https://www.rabbitmq.com/authentication.html. MK.
+        if(passwordHash == null) {
+            passwordHash = "".toCharArray();
+        }
+        Map<String, Object> body = new HashMap<String, Object>();
+        body.put("password_hash", String.valueOf(passwordHash));
+        body.put("tags", collectionToCommaDelimitedString(tags));
+
+        return client
+            .put()
+            .uri("/users/{username}", username)
+            .syncBody(body)
+            .exchange();
+    }
+
+    public Mono<ClientResponse> updateUser(String username, char[] password, List<String> tags) {
+        if(username == null) {
+            throw new IllegalArgumentException("username cannot be null");
+        }
+        Map<String, Object> body = new HashMap<String, Object>();
+        // only update password if provided
+        if(password != null) {
+            body.put("password", new String(password));
+        }
+        body.put("tags", collectionToCommaDelimitedString(tags));
+
+        return client
+            .put()
+            .uri("/users/{username}", username)
+            .syncBody(body)
+            .exchange();
+    }
+
+    public Mono<ClientResponse> updatePermissions(String vhost, String username, UserPermissions permissions) {
+        return client
+            .put()
+            .uri("/permissions/{vhost}/{username}", vhost, username)
+            .syncBody(permissions)
+            .exchange();
+    }
+
+    public static void main(String [] args) throws Exception {
+        ReactiveClient client = new ReactiveClient("http://localhost:15672/api", "guest", "guest");
+        client.createUser("dummy", "dummy".toCharArray(), Arrays.asList("original", "management")).block();
+
+    }
+
 }
