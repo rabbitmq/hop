@@ -1406,7 +1406,7 @@ class ClientSpec extends Specification {
     s.name.equals("shovel1")
     s.virtualHost.equals("/")
     s.type.equals("dynamic")
-    s.state.equals("starting")
+    s.state != null
     s.sourceURI == null
     s.destinationURI == null
 
