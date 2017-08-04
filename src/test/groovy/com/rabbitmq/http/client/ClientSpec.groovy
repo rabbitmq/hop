@@ -854,7 +854,7 @@ class ClientSpec extends Specification {
     final vhi = vhs.first()
 
     then: "the info is returned"
-    verifyVhost(vhi)
+    verifyVhost(vhi, client.getOverview().getRabbitMQVersion())
   }
 
   def "GET /api/vhosts/{name}"() {
@@ -862,7 +862,7 @@ class ClientSpec extends Specification {
     final vhi = client.getVhost("/")
 
     then: "the info is returned"
-    verifyVhost(vhi)
+    verifyVhost(vhi, client.getOverview().getRabbitMQVersion())
   }
 
   @IgnoreIf({ os.windows })
@@ -1433,9 +1433,10 @@ class ClientSpec extends Specification {
     !chi.transactional
   }
 
-  protected static void verifyVhost(VhostInfo vhi) {
+  protected static void verifyVhost(VhostInfo vhi, String version) {
     vhi.name == "/"
     !vhi.tracing
+    isVersion37orLater(version) ? vhi.clusterState != null : vhi.clusterState == null
   }
 
   protected Connection openConnection() {
@@ -1484,16 +1485,21 @@ class ClientSpec extends Specification {
     assert x.autoDelete != null
   }
 
-  boolean isVersion36orLater(String currentVersion) {
+  static boolean isVersion36orLater(String currentVersion) {
     String v = currentVersion.replaceAll("\\+.*\$", "");
     v == "0.0.0" ? true : compareVersions(v, "3.6.0") >= 0
+  }
+
+  static boolean isVersion37orLater(String currentVersion) {
+    String v = currentVersion.replaceAll("\\+.*\$", "");
+    v == "0.0.0" ? true : compareVersions(v, "3.7.0") >= 0
   }
 
   /**
    * http://stackoverflow.com/questions/6701948/efficient-way-to-compare-version-strings-in-java
    *
    */
-  Integer compareVersions(String str1, String str2) {
+  static Integer compareVersions(String str1, String str2) {
     String[] vals1 = str1.split("\\.")
     String[] vals2 = str2.split("\\.")
     int i = 0
