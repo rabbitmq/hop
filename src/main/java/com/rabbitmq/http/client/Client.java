@@ -45,7 +45,6 @@ import org.apache.http.impl.client.BasicCredentialsProvider;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.message.BasicHeader;
 import org.apache.http.protocol.HttpContext;
-
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
@@ -62,6 +61,7 @@ import org.springframework.web.util.UriUtils;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.rabbitmq.http.client.domain.AlivenessTestResult;
 import com.rabbitmq.http.client.domain.BindingInfo;
 import com.rabbitmq.http.client.domain.ChannelInfo;
@@ -75,6 +75,7 @@ import com.rabbitmq.http.client.domain.OverviewResponse;
 import com.rabbitmq.http.client.domain.PolicyInfo;
 import com.rabbitmq.http.client.domain.QueueInfo;
 import com.rabbitmq.http.client.domain.ShovelInfo;
+import com.rabbitmq.http.client.domain.ShovelStatus;
 import com.rabbitmq.http.client.domain.UserInfo;
 import com.rabbitmq.http.client.domain.UserPermissions;
 import com.rabbitmq.http.client.domain.VhostInfo;
@@ -752,6 +753,28 @@ public class Client {
   }
 
   /**
+   * Returns virtual host shovels.
+   * 
+   * @return Shovels.
+   */
+  public List<ShovelStatus> getShovelsStatus() {
+    final URI uri = uriWithPath("./shovels/");
+    return Arrays.asList(this.rt.getForObject(uri, ShovelStatus[].class));
+  }
+
+  /**
+   * Returns virtual host shovels.
+   * 
+   * @param vhost Virtual host from where search shovels.
+   * @return Shovels.
+   */
+  public List<ShovelStatus> getShovelsStatus(String vhost) {
+    final URI uri = uriWithPath("./shovels/" + encodePathSegment(vhost));
+    final ShovelStatus[] result = this.getForObjectReturningNullOn404(uri, ShovelStatus[].class);
+    return asListOrNull(result);
+  }
+
+  /**
    * Deletes the specified shovel from specified virtual host.
    * 
    * @param vhost virtual host from where to delete the shovel
@@ -790,7 +813,8 @@ public class Client {
     List<HttpMessageConverter<?>> xs = new ArrayList<HttpMessageConverter<?>>();
     final Jackson2ObjectMapperBuilder bldr = Jackson2ObjectMapperBuilder
         .json()
-        .serializationInclusion(JsonInclude.Include.NON_NULL);
+        .serializationInclusion(JsonInclude.Include.NON_NULL)
+        .featuresToEnable(DeserializationFeature.ACCEPT_EMPTY_ARRAY_AS_NULL_OBJECT);
     xs.add(new MappingJackson2HttpMessageConverter(bldr.build()));
     return xs;
   }

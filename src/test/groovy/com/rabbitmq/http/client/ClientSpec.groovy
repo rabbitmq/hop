@@ -1,5 +1,5 @@
 /*
- * Copyright 2015 the original author or authors.
+ * Copyright 2015-2017 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,7 +21,6 @@ import com.rabbitmq.http.client.domain.*
 import org.apache.http.impl.client.HttpClientBuilder
 import org.springframework.http.HttpStatus
 import org.springframework.web.client.HttpClientErrorException
-import spock.lang.Ignore
 import spock.lang.IgnoreIf
 import spock.lang.Specification
 
@@ -1298,7 +1297,7 @@ class ClientSpec extends Specification {
     then: "broker definitions are returned"
     !d.getQueues().isEmpty()
     d.getQueues().size() >= 3
-    QueueInfo q = d.getQueues().find { it.name.equals("queue1") }
+    QueueInfo q = d.getQueues().find { it.name.equals("queue1") && it.vhost.equals("/") }
     q != null
     q.vhost.equals("/")
     q.name.equals("queue1")
@@ -1360,7 +1359,6 @@ class ClientSpec extends Specification {
     client.deleteQueue("/","queue1")
   }
 
-  @Ignore
   def "GET /api/parameters/shovel"() {
     given: "a basic topology"
     ShovelDetails value = new ShovelDetails("amqp://localhost:5672/vh1", "amqp://localhost:5672/vh2", 30, true, null);
@@ -1368,7 +1366,7 @@ class ClientSpec extends Specification {
     value.setDestinationExchange("exchange1");
     client.declareShovel("/", new ShovelInfo("shovel1", value))
     when: "client requests the shovels"
-    List<ShovelInfo> shovels = client.getShovels()
+    final shovels = awaitEventPropagation { client.getShovels() }
 
     then: "broker definitions are returned"
     !shovels.isEmpty()
@@ -1386,6 +1384,31 @@ class ClientSpec extends Specification {
     s.details.reconnectDelay == 30
     s.details.addForwardHeaders
     s.details.publishProperties == null
+
+    cleanup:
+    client.deleteShovel("/","shovel1")
+  }
+
+  def "GET /api/shovels"() {
+    given: "a basic topology"
+    ShovelDetails value = new ShovelDetails("amqp://localhost:5672/vh1", "amqp://localhost:5672/vh2", 30, true, null);
+    value.setSourceQueue("queue1");
+    value.setDestinationExchange("exchange1");
+    client.declareShovel("/", new ShovelInfo("shovel1", value))
+    when: "client requests the shovels status"
+    final shovels = awaitEventPropagation { client.getShovelsStatus() }
+
+    then: "shovels status are returned"
+    !shovels.isEmpty()
+    shovels.size() >= 1
+    ShovelStatus s = shovels.find { it.name.equals("shovel1") }
+    s != null
+    s.name.equals("shovel1")
+    s.virtualHost.equals("/")
+    s.type.equals("dynamic")
+    s.state != null
+    s.sourceURI == null
+    s.destinationURI == null
 
     cleanup:
     client.deleteShovel("/","shovel1")
