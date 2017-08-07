@@ -548,7 +548,7 @@ class ReactiveClientSpec extends Specification {
         client.createUser(u, "test".toCharArray(), Arrays.asList("management", "http", "policymaker")).block()
 
         when: "permissions of user guest in vhost / are updated"
-        client.updatePermissions(v, u, new UserPermissions("read", "write", "configure"))block()
+        client.updatePermissions(v, u, new UserPermissions("read", "write", "configure")).block()
 
         and: "permissions are reloaded"
         final UserPermissions x = client.getPermissions(v, u).block()

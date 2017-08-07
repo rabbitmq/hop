@@ -18,20 +18,17 @@ package com.rabbitmq.http.client;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.rabbitmq.http.client.domain.*;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.client.reactive.ReactorClientHttpConnector;
 import org.springframework.http.codec.json.Jackson2JsonDecoder;
 import org.springframework.http.codec.json.Jackson2JsonEncoder;
 import org.springframework.http.converter.json.Jackson2ObjectMapperBuilder;
-import org.springframework.web.reactive.function.client.ClientResponse;
-import org.springframework.web.reactive.function.client.ExchangeFilterFunctions;
-import org.springframework.web.reactive.function.client.ExchangeStrategies;
-import org.springframework.web.reactive.function.client.WebClient;
+import org.springframework.web.reactive.function.client.*;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.net.URISyntaxException;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -66,6 +63,12 @@ public class ReactiveClient {
             .exchangeStrategies(strategies)
             .baseUrl(url)
             .filter(ExchangeFilterFunctions.basicAuthentication(username, password))
+            .filter(ExchangeFilterFunction.ofRequestProcessor(clientRequest -> {
+                ClientRequest request = ClientRequest.from(clientRequest)
+                    .header(HttpHeaders.CONTENT_TYPE, "application/json")
+                    .build();
+                return Mono.just(request);
+            }))
             .build();
 
     }
@@ -177,6 +180,7 @@ public class ReactiveClient {
         return client
             .put()
             .uri("/vhosts/{name}", name)
+            .contentLength(0)
             .exchange();
     }
 
@@ -305,12 +309,6 @@ public class ReactiveClient {
             .uri("/permissions/{vhost}/{username}", vhost, username)
             .syncBody(permissions)
             .exchange();
-    }
-
-    public static void main(String [] args) throws Exception {
-        ReactiveClient client = new ReactiveClient("http://localhost:15672/api", "guest", "guest");
-        client.createUser("dummy", "dummy".toCharArray(), Arrays.asList("original", "management")).block();
-
     }
 
 }

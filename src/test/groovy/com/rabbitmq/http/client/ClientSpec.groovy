@@ -44,6 +44,7 @@ class ClientSpec extends Specification {
 
   def setup() {
     client = newLocalhostNodeClient()
+
   }
 
   protected static Client newLocalhostNodeClient() {
@@ -61,7 +62,6 @@ class ClientSpec extends Specification {
     1000.times { ch.basicPublish("", "", null, null) }
 
     def res = client.getOverview()
-    println res.getRabbitMQVersion()
     def xts = res.getExchangeTypes().collect { it.getName() }
 
     then: "the response is converted successfully"
@@ -1141,7 +1141,12 @@ class ClientSpec extends Specification {
     e.getStatusCode() == HttpStatus.BAD_REQUEST
 
     cleanup:
-    client.deleteUser(u)
+    // looks like the persistent connection is no longer usable
+    // (after the previous exception)
+    // at least against RabbitMQ 3.4.x in combination with
+    // Apache HTTP client 4.5.3.
+    // So we re-create a new client to clean up the test
+    newLocalhostNodeClient().deleteUser(u)
   }
 
   def "DELETE /api/permissions/{vhost}/:user when both vhost and username exist"() {
