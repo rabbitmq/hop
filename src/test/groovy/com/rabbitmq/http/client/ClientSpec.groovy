@@ -1433,9 +1433,9 @@ class ClientSpec extends Specification {
     !chi.transactional
   }
 
-  protected static void verifyVhost(VhostInfo vhi, String version) {
-    vhi.name == "/"
-    !vhi.tracing
+  protected static boolean verifyVhost(VhostInfo vhi, String version) {
+    vhi.name == "/" &&
+    !vhi.tracing &&
     isVersion37orLater(version) ? vhi.clusterState != null : vhi.clusterState == null
   }
 

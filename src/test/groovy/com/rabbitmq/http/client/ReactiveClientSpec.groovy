@@ -291,7 +291,7 @@ class ReactiveClientSpec extends Specification {
         final vhi = vhs.blockFirst()
 
         then: "the info is returned"
-        verifyVhost(vhi)
+        verifyVhost(vhi, client.getOverview().block().getRabbitMQVersion())
     }
 
     def "GET /api/vhosts/{name}"() {
@@ -299,7 +299,7 @@ class ReactiveClientSpec extends Specification {
         final vhi = client.getVhost("/").block()
 
         then: "the info is returned"
-        verifyVhost(vhi)
+        verifyVhost(vhi, client.getOverview().block().getRabbitMQVersion())
     }
 
     @IgnoreIf({ os.windows })
@@ -854,9 +854,10 @@ class ReactiveClientSpec extends Specification {
         !chi.transactional
     }
 
-    protected static void verifyVhost(VhostInfo vhi) {
+    protected static void verifyVhost(VhostInfo vhi, String version) {
         vhi.name == "/"
         !vhi.tracing
+        isVersion37orLater(version) ? vhi.clusterState != null : vhi.clusterState == null
     }
 
     protected Connection openConnection() {
@@ -891,16 +892,21 @@ class ReactiveClientSpec extends Specification {
         assert x.applyTo != null
     }
 
-    boolean isVersion36orLater(String currentVersion) {
+    static boolean isVersion36orLater(String currentVersion) {
         String v = currentVersion.replaceAll("\\+.*\$", "");
         v == "0.0.0" ? true : compareVersions(v, "3.6.0") >= 0
+    }
+
+    static boolean isVersion37orLater(String currentVersion) {
+        String v = currentVersion.replaceAll("\\+.*\$", "");
+        v == "0.0.0" ? true : compareVersions(v, "3.7.0") >= 0
     }
 
     /**
      * http://stackoverflow.com/questions/6701948/efficient-way-to-compare-version-strings-in-java
      *
      */
-    Integer compareVersions(String str1, String str2) {
+    static Integer compareVersions(String str1, String str2) {
         String[] vals1 = str1.split("\\.")
         String[] vals2 = str2.split("\\.")
         int i = 0
