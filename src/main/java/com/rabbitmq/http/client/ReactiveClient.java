@@ -28,11 +28,13 @@ import org.springframework.web.reactive.function.client.*;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import static java.util.Collections.singletonMap;
 import static org.springframework.util.StringUtils.collectionToCommaDelimitedString;
 
 /**
@@ -79,6 +81,14 @@ public class ReactiveClient {
             .uri("/overview")
             .retrieve()
             .bodyToMono(OverviewResponse.class);
+    }
+
+    public Mono<AlivenessTestResult> alivenessTest(String vhost) {
+        return client
+            .get()
+            .uri("/aliveness-test/{vhost}", vhost)
+            .retrieve()
+            .bodyToMono(AlivenessTestResult.class);
     }
 
     public Mono<CurrentUserDetails> whoAmI() {
@@ -308,6 +318,167 @@ public class ReactiveClient {
             .put()
             .uri("/permissions/{vhost}/{username}", vhost, username)
             .syncBody(permissions)
+            .exchange();
+    }
+
+    public Mono<ClientResponse> clearPermissions(String vhost, String username) {
+        return client
+            .delete()
+            .uri("/permissions/{vhost}/{username}", vhost, username)
+            .exchange();
+    }
+
+    public Mono<ClientResponse> declarePolicy(String vhost, String name, PolicyInfo info) {
+        return client
+            .put()
+            .uri("/policies/{vhost}/{name}", vhost, name)
+            .syncBody(info)
+            .exchange();
+    }
+
+    public Flux<PolicyInfo> getPolicies() {
+        return client
+            .get()
+            .uri("/policies")
+            .retrieve()
+            .bodyToFlux(PolicyInfo.class);
+    }
+
+    public Flux<PolicyInfo> getPolicies(String vhost) {
+        return client
+            .get()
+            .uri("/policies/{vhost}", vhost)
+            .retrieve()
+            .bodyToFlux(PolicyInfo.class);
+    }
+
+    public Mono<ClientResponse> deletePolicy(String vhost, String name) {
+        return client
+            .delete()
+            .uri("/policies/{vhost}/{name}", vhost, name)
+            .exchange();
+    }
+
+    public Mono<ClusterId> getClusterName() {
+        return client
+            .get()
+            .uri("/cluster-name")
+            .retrieve()
+            .bodyToMono(ClusterId.class);
+    }
+
+    public Mono<ClientResponse> setClusterName(String name) {
+        if(name== null || name.isEmpty()) {
+            throw new IllegalArgumentException("name cannot be null or blank");
+        }
+        return client
+            .put()
+            .uri("/cluster-name")
+            .syncBody(singletonMap("name", name))
+            .exchange();
+    }
+
+    public Flux<Map> getExtensions() {
+        return client
+            .get()
+            .uri("/extensions")
+            .retrieve()
+            .bodyToFlux(Map.class);
+    }
+
+    public Mono<Definitions> getDefinitions() {
+        return client
+            .get()
+            .uri("/definitions")
+            .retrieve()
+            .bodyToMono(Definitions.class);
+    }
+
+    public Mono<ClientResponse> declareQueue(String vhost, String name, QueueInfo info) {
+        return client
+            .put()
+            .uri("/queues/{vhost}/{name}", vhost, name)
+            .syncBody(info)
+            .exchange();
+    }
+
+    public Mono<ClientResponse> deleteQueue(String vhost, String name) {
+        return client
+            .delete()
+            .uri("/queues/{vhost}/{name}", vhost, name)
+            .exchange();
+    }
+
+    public Mono<ClientResponse> declareExchange(String vhost, String name, ExchangeInfo info) {
+        return client
+            .put()
+            .uri("/exchanges/{vhost}/{name}", vhost, name)
+            .syncBody(info)
+            .exchange();
+    }
+
+    public Mono<ClientResponse> deleteExchange(String vhost, String name) {
+        return client
+            .delete()
+            .uri("/exchanges/{vhost}/{name}", vhost, name)
+            .exchange();
+    }
+
+    public Mono<ClientResponse> bindQueue(String vhost, String queue, String exchange, String routingKey) {
+        return bindQueue(vhost, queue, exchange, routingKey, new HashMap<>());
+    }
+
+    public Mono<ClientResponse> bindQueue(String vhost, String queue, String exchange, String routingKey, Map<String, Object> args) {
+        if(vhost == null || vhost.isEmpty()) {
+            throw new IllegalArgumentException("vhost cannot be null or blank");
+        }
+        if(queue == null || queue.isEmpty()) {
+            throw new IllegalArgumentException("queue cannot be null or blank");
+        }
+        if(exchange == null || exchange.isEmpty()) {
+            throw new IllegalArgumentException("exchange cannot be null or blank");
+        }
+        Map<String, Object> body = new HashMap<String, Object>();
+        if(!(args == null)) {
+            body.put("args", args);
+        }
+        body.put("routing_key", routingKey);
+
+        return client
+            .post()
+            .uri("/bindings/{vhost}/e/{exchange}/q/{queue}", vhost, exchange, queue)
+            .syncBody(body)
+            .exchange();
+    }
+
+    public Mono<ClientResponse> declareShovel(String vhost, ShovelInfo info) {
+        return client
+            .put()
+            .uri("/parameters/shovel/{vhost}/{name}", vhost, info.getName())
+            .syncBody(info)
+            .exchange();
+    }
+
+    public Flux<ShovelInfo> getShovels() {
+        return client
+            .get()
+            .uri("/parameters/shovel")
+            .retrieve()
+            .bodyToFlux(ShovelInfo.class);
+    }
+
+    public Flux<ShovelStatus> getShovelsStatus() {
+        return client
+            .get()
+            .uri("/shovels")
+            .retrieve()
+            .bodyToFlux(ShovelStatus.class);
+    }
+
+    public Mono<ClientResponse> deleteShovel(String vhost, String shovelName) {
+        return client
+            .delete()
+            .uri("/parameters/shovel/{vhost}/{name}", vhost, shovelName)
             .exchange();
     }
 

@@ -24,6 +24,7 @@ import com.rabbitmq.http.client.domain.*
 import org.springframework.http.HttpStatus
 import org.springframework.web.client.HttpClientErrorException
 import org.springframework.web.reactive.function.client.WebClientException
+import reactor.core.publisher.Flux
 import spock.lang.IgnoreIf
 import spock.lang.Specification
 
@@ -48,6 +49,7 @@ class ReactiveClientSpec extends Specification {
 
     def setup() {
         client = newLocalhostNodeClient()
+        client.getConnections().subscribe( { c -> client.closeConnection(c.name) })
     }
 
     protected static ReactiveClient newLocalhostNodeClient() {
@@ -563,6 +565,276 @@ class ReactiveClientSpec extends Specification {
         client.deleteUser(u).block()
     }
 
+    def "PUT /api/permissions/{vhost}/:user when vhost DOES NOT exist"() {
+        given: "vhost hop-vhost1 DOES NOT exist"
+        final v = "hop-vhost1"
+        client.deleteVhost(v).block()
+        and: "user hop-user1 exists"
+        final u = "hop-user1"
+        client.createUser(u, "test".toCharArray(), Arrays.asList("management", "http", "policymaker")).block()
+
+        when: "permissions of user guest in vhost / are updated"
+        final r = client.updatePermissions(v, u, new UserPermissions("read", "write", "configure")).block()
+
+        then: "HTTP status is 400 BAD REQUEST"
+        r.statusCode() == HttpStatus.BAD_REQUEST
+
+        cleanup:
+        client.deleteUser(u).block()
+    }
+
+    def "DELETE /api/permissions/{vhost}/:user when both vhost and username exist"() {
+        given: "vhost hop-vhost1 exists"
+        final v = "hop-vhost1"
+        client.createVhost(v).block()
+        and: "user hop-user1 exists"
+        final u = "hop-user1"
+        client.createUser(u, "test".toCharArray(), Arrays.asList("management", "http", "policymaker")).block()
+
+        and: "permissions of user guest in vhost / are set"
+        client.updatePermissions(v, u, new UserPermissions("read", "write", "configure")).block()
+        final UserPermissions x = client.getPermissions(v, u).block()
+        x.read == "read"
+
+        when: "permissions are cleared"
+        client.clearPermissions(v, u).block()
+
+        client.getPermissions(v, u).block()
+
+        then: "an exception is thrown on reload"
+        // FIXME check status
+        thrown(WebClientException.class)
+
+        cleanup:
+        client.deleteVhost(v).block()
+        client.deleteUser(u).block()
+    }
+
+    def "GET /api/parameters"() {
+        // TODO
+    }
+
+    def "GET /api/policies"() {
+        given: "at least one policy was declared"
+        final v = "/"
+        final s = "hop.test"
+        final d = new HashMap<String, Object>()
+        final p = ".*"
+        d.put("ha-mode", "all")
+        client.declarePolicy(v, s, new PolicyInfo(p, 0, null, d)).block()
+
+        when: "client lists policies"
+        final xs = awaitEventPropagation({ client.getPolicies() })
+
+        then: "a list of policies is returned"
+        final x = xs.blockFirst()
+        verifyPolicyInfo(x)
+
+        cleanup:
+        client.deletePolicy(v, s).block()
+    }
+
+    def "GET /api/policies/{vhost} when vhost DOES NOT exists"() {
+        given: "vhost lolwut DOES not exist"
+        final v = "lolwut"
+        client.deleteVhost(v).block()
+
+        when: "client lists policies"
+        awaitEventPropagation({ client.getPolicies(v) })
+
+        then: "exception is thrown"
+        // FIXME check status is 404
+        thrown(WebClientException.class)
+    }
+
+    def "GET /api/aliveness-test/{vhost}"() {
+        when: "client performs aliveness check for the / vhost"
+        final hasSucceeded = client.alivenessTest("/").block().isSuccessful()
+
+        then: "the check succeeds"
+        hasSucceeded
+    }
+
+    def "GET /api/cluster-name"() {
+        when: "client fetches cluster name"
+        final ClusterId s = client.getClusterName().block()
+
+        then: "cluster name is returned"
+        s.getName() != null
+    }
+
+    def "PUT /api/cluster-name"() {
+        given: "cluster name"
+        final String s = client.getClusterName().block().name
+
+        when: "cluster name is set to rabbit@warren"
+        client.setClusterName("rabbit@warren").block()
+
+        and: "cluster name is reloaded"
+        final String x = client.getClusterName().block().name
+
+        then: "the name is updated"
+        x.equals("rabbit@warren")
+
+        cleanup:
+        client.setClusterName(s).block()
+    }
+
+    def "GET /api/extensions"() {
+        given: "a node with the management plugin enabled"
+        when: "client requests a list of (plugin) extensions"
+        Flux<Map<String, Object>> xs = client.getExtensions()
+
+        then: "a list of extensions is returned"
+        xs.hasElements().block()
+    }
+
+    def "GET /api/definitions (version, vhosts, users, permissions)"() {
+        when: "client requests the definitions"
+        Definitions d = client.getDefinitions().block()
+
+        then: "broker definitions are returned"
+        d.getRabbitMQVersion() != null
+        !d.getRabbitMQVersion().trim().isEmpty()
+        !d.getVhosts().isEmpty()
+        !d.getVhosts().get(0).getName().isEmpty()
+        !d.getVhosts().isEmpty()
+        d.getVhosts().get(0).getName() != null
+        !d.getVhosts().get(0).getName().isEmpty()
+        !d.getUsers().isEmpty()
+        d.getUsers().get(0).getName() != null
+        !d.getUsers().get(0).getName().isEmpty()
+        !d.getPermissions().isEmpty()
+        d.getPermissions().get(0).getUser() != null
+        !d.getPermissions().get(0).getUser().isEmpty()
+    }
+
+    def "GET /api/definitions (queues)"() {
+        given: "a basic topology"
+        client.declareQueue("/","queue1",new QueueInfo(false,false,false)).block()
+        client.declareQueue("/","queue2",new QueueInfo(false,false,false)).block()
+        client.declareQueue("/","queue3",new QueueInfo(false,false,false)).block()
+        when: "client requests the definitions"
+        Definitions d = client.getDefinitions().block()
+
+        then: "broker definitions are returned"
+        !d.getQueues().isEmpty()
+        d.getQueues().size() >= 3
+        QueueInfo q = d.getQueues().find { it.name.equals("queue1") && it.vhost.equals("/") }
+        q != null
+        q.vhost.equals("/")
+        q.name.equals("queue1")
+        !q.durable
+        !q.exclusive
+        !q.autoDelete
+
+        cleanup:
+        client.deleteQueue("/","queue1").block()
+        client.deleteQueue("/","queue2").block()
+        client.deleteQueue("/","queue3").block()
+    }
+
+    def "GET /api/definitions (exchanges)"() {
+        given: "a basic topology"
+        client.declareExchange("/", "exchange1", new ExchangeInfo("fanout", false, false)).block()
+        client.declareExchange("/", "exchange2", new ExchangeInfo("direct", false, false)).block()
+        client.declareExchange("/", "exchange3", new ExchangeInfo("topic", false, false)).block()
+        when: "client requests the definitions"
+        Definitions d = client.getDefinitions().block()
+
+        then: "broker definitions are returned"
+        !d.getExchanges().isEmpty()
+        d.getExchanges().size() >= 3
+        ExchangeInfo e = d.getExchanges().find { it.name.equals("exchange1") }
+        e != null
+        e.vhost.equals("/")
+        e.name.equals("exchange1")
+        !e.durable
+        !e.internal
+        !e.autoDelete
+
+        cleanup:
+        client.deleteExchange("/","exchange1").block()
+        client.deleteExchange("/","exchange2").block()
+        client.deleteExchange("/","exchange3").block()
+    }
+
+    def "GET /api/definitions (bindings)"() {
+        given: "a basic topology"
+        client.declareQueue("/", "queue1", new QueueInfo(false, false, false)).block()
+        client.bindQueue("/", "queue1", "amq.fanout", "").block()
+        when: "client requests the definitions"
+        Definitions d = client.getDefinitions().block()
+
+        then: "broker definitions are returned"
+        !d.getBindings().isEmpty()
+        d.getBindings().size() >= 1
+        BindingInfo b = d.getBindings().find {
+            it.source.equals("amq.fanout") && it.destination.equals("queue1") && it.destinationType.equals("queue")
+        }
+        b != null
+        b.vhost.equals("/")
+        b.source.equals("amq.fanout")
+        b.destination.equals("queue1")
+        b.destinationType.equals("queue")
+
+        cleanup:
+        client.deleteQueue("/","queue1").block()
+    }
+
+    def "GET /api/parameters/shovel"() {
+        given: "a basic topology"
+        ShovelDetails value = new ShovelDetails("amqp://localhost:5672/vh1", "amqp://localhost:5672/vh2", 30, true, null);
+        value.setSourceQueue("queue1");
+        value.setDestinationExchange("exchange1");
+        client.declareShovel("/", new ShovelInfo("shovel1", value)).block()
+        when: "client requests the shovels"
+        final shovels = awaitEventPropagation { client.getShovels() }
+
+        then: "broker definitions are returned"
+        shovels.hasElements().block()
+        ShovelInfo s = shovels.filter( { s -> s.name.equals("shovel1") } ).blockFirst()
+        s != null
+        s.name.equals("shovel1")
+        s.virtualHost.equals("/")
+        s.details.sourceURI.equals("amqp://localhost:5672/vh1")
+        s.details.sourceExchange == null
+        s.details.sourceQueue.equals("queue1")
+        s.details.destinationURI.equals("amqp://localhost:5672/vh2")
+        s.details.destinationExchange.equals("exchange1")
+        s.details.destinationQueue == null
+        s.details.reconnectDelay == 30
+        s.details.addForwardHeaders
+        s.details.publishProperties == null
+
+        cleanup:
+        client.deleteShovel("/","shovel1").block()
+    }
+
+    def "GET /api/shovels"() {
+        given: "a basic topology"
+        ShovelDetails value = new ShovelDetails("amqp://localhost:5672/vh1", "amqp://localhost:5672/vh2", 30, true, null);
+        value.setSourceQueue("queue1");
+        value.setDestinationExchange("exchange1");
+        client.declareShovel("/", new ShovelInfo("shovel1", value)).block()
+        when: "client requests the shovels status"
+        final shovels = awaitEventPropagation { client.getShovelsStatus() }
+
+        then: "shovels status are returned"
+        shovels.hasElements().block()
+        ShovelStatus s = shovels.filter( { s -> s.name.equals("shovel1") } ).blockFirst()
+        s != null
+        s.name.equals("shovel1")
+        s.virtualHost.equals("/")
+        s.type.equals("dynamic")
+        s.state != null
+        s.sourceURI == null
+        s.destinationURI == null
+
+        cleanup:
+        client.deleteShovel("/","shovel1").block()
+    }
+
     protected static boolean awaitOn(CountDownLatch latch) {
         latch.await(5, TimeUnit.SECONDS)
     }
@@ -609,6 +881,14 @@ class ReactiveClientSpec extends Specification {
         assert node.erlangProcessesUsed <= node.erlangProcessesTotal
         assert node.erlangRunQueueLength >= 0
         assert node.memoryUsed <= node.memoryLimit
+    }
+
+    protected static void verifyPolicyInfo(PolicyInfo x) {
+        assert x.name != null
+        assert x.vhost != null
+        assert x.pattern != null
+        assert x.definition != null
+        assert x.applyTo != null
     }
 
     boolean isVersion36orLater(String currentVersion) {
