@@ -1419,24 +1419,24 @@ class ClientSpec extends Specification {
   }
 
   protected static void verifyConnectionInfo(ConnectionInfo info) {
-    info.port == ConnectionFactory.DEFAULT_AMQP_PORT
-    !info.usesTLS
-    info.peerHost.equals(info.host)
+    assert info.port == ConnectionFactory.DEFAULT_AMQP_PORT
+    assert !info.usesTLS
+    assert info.peerHost.equals(info.host)
   }
 
   protected static void verifyChannelInfo(ChannelInfo chi, Channel ch) {
-    chi.getConsumerCount() == 0
-    chi.number == ch.getChannelNumber()
-    chi.node.startsWith("rabbit@")
-    chi.state == "running"
-    !chi.usesPublisherConfirms()
-    !chi.transactional
+    assert chi.getConsumerCount() == 0
+    assert chi.number == ch.getChannelNumber()
+    assert chi.node.startsWith("rabbit@")
+    assert chi.state == "running"
+    assert !chi.usesPublisherConfirms()
+    assert !chi.transactional
   }
 
   protected static void verifyVhost(VhostInfo vhi, String version) {
-    vhi.name == "/"
-    !vhi.tracing
-    isVersion37orLater(version) ? vhi.clusterState != null : vhi.clusterState == null
+    assert vhi.name == "/"
+    assert !vhi.tracing
+    assert isVersion37orLater(version) ? vhi.clusterState != null : vhi.clusterState == null
   }
 
   protected Connection openConnection() {
