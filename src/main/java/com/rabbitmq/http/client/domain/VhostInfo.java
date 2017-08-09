@@ -18,10 +18,14 @@ package com.rabbitmq.http.client.domain;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import java.util.Map;
+
 @SuppressWarnings("unused")
 public class VhostInfo {
   private String name;
   private boolean tracing;
+  @JsonProperty("cluster_state")
+  private Map<String, String> clusterState;
   @JsonProperty("message_stats")
   private MessageStats messageStats;
   private long messages;
@@ -50,6 +54,7 @@ public class VhostInfo {
     return "VhostInfo{" +
         "name='" + name + '\'' +
         ", tracing=" + tracing +
+        ", clusterState=" + clusterState +
         ", messageStats=" + messageStats +
         ", messages=" + messages +
         ", messagesDetails=" + messagesDetails +
@@ -78,6 +83,14 @@ public class VhostInfo {
 
   public void setTracing(boolean tracing) {
     this.tracing = tracing;
+  }
+
+  public Map<String, String> getClusterState() {
+    return clusterState;
+  }
+
+  public void setClusterState(Map<String, String> clusterState) {
+    this.clusterState = clusterState;
   }
 
   public MessageStats getMessageStats() {
