@@ -28,7 +28,6 @@ import org.springframework.web.reactive.function.client.*;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
-import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.HashMap;
 import java.util.List;
@@ -233,6 +232,30 @@ public class ReactiveClient {
             .bodyToMono(UserPermissions.class);
     }
 
+    public Flux<ExchangeInfo> getExchanges() {
+        return client
+            .get()
+            .uri("/exchanges")
+            .retrieve()
+            .bodyToFlux(ExchangeInfo.class);
+    }
+
+    public Flux<ExchangeInfo> getExchanges(String vhost) {
+        return client
+            .get()
+            .uri("/exchanges/{vhost}", vhost)
+            .retrieve()
+            .bodyToFlux(ExchangeInfo.class);
+    }
+
+    public Flux<ExchangeInfo> getExchange(String vhost, String name) {
+        return client
+            .get()
+            .uri("/exchanges/{vhost}/{name}", vhost, name)
+            .retrieve()
+            .bodyToFlux(ExchangeInfo.class);
+    }
+
     public Flux<UserInfo> getUsers() {
         return client
             .get()
@@ -359,6 +382,64 @@ public class ReactiveClient {
             .exchange();
     }
 
+    public Flux<BindingInfo> getBindings() {
+        return client
+            .get()
+            .uri("/bindings")
+            .retrieve()
+            .bodyToFlux(BindingInfo.class);
+    }
+
+    public Flux<BindingInfo> getBindings(String vhost) {
+        return client
+            .get()
+            .uri("/bindings/{vhost}", vhost)
+            .retrieve()
+            .bodyToFlux(BindingInfo.class);
+    }
+
+    public Flux<BindingInfo> getExchangeBindingsBySource(String vhost, String exchange) {
+        final String x = exchange.equals("") ? "amq.default" : exchange;
+        return client
+            .get()
+            .uri("/exchanges/{vhost}/{exchange}/bindings/source", vhost, x)
+            .retrieve()
+            .bodyToFlux(BindingInfo.class);
+    }
+
+    public Flux<BindingInfo> getExchangeBindingsByDestination(String vhost, String exchange) {
+        final String x = exchange.equals("") ? "amq.default" : exchange;
+        return client
+            .get()
+            .uri("/exchanges/{vhost}/{exchange}/bindings/destination", vhost, x)
+            .retrieve()
+            .bodyToFlux(BindingInfo.class);
+    }
+
+    public Flux<BindingInfo> getQueueBindings(String vhost, String queue) {
+        return client
+            .get()
+            .uri("/queues/{vhost}/{queue}/bindings", vhost, queue)
+            .retrieve()
+            .bodyToFlux(BindingInfo.class);
+    }
+
+    public Flux<BindingInfo> getQueueBindingsBetween(String vhost, String exchange, String queue) {
+        return client
+            .get()
+            .uri("/bindings/{vhost}/e/{exchange}/q/{queue}", vhost, exchange, queue)
+            .retrieve()
+            .bodyToFlux(BindingInfo.class);
+    }
+
+    public Flux<BindingInfo> getExchangeBindingsBetween(String vhost, String source, String destination) {
+        return client
+            .get()
+            .uri("/bindings/{vhost}/e/{source}/e/{destination}", vhost, source, destination)
+            .retrieve()
+            .bodyToFlux(BindingInfo.class);
+    }
+
     public Mono<ClusterId> getClusterName() {
         return client
             .get()
@@ -378,6 +459,7 @@ public class ReactiveClient {
             .exchange();
     }
 
+    @SuppressWarnings({"unchecked","rawtypes"})
     public Flux<Map> getExtensions() {
         return client
             .get()
@@ -399,6 +481,13 @@ public class ReactiveClient {
             .put()
             .uri("/queues/{vhost}/{name}", vhost, name)
             .syncBody(info)
+            .exchange();
+    }
+
+    public Mono<ClientResponse> purgeQueue(String vhost, String name) {
+        return client
+            .delete()
+            .uri("/queues/{vhost}/{name}/contents", vhost, name)
             .exchange();
     }
 
@@ -424,6 +513,30 @@ public class ReactiveClient {
             .exchange();
     }
 
+    public Flux<QueueInfo> getQueues() {
+        return client
+            .get()
+            .uri("/queues")
+            .retrieve()
+            .bodyToFlux(QueueInfo.class);
+    }
+
+    public Flux<QueueInfo> getQueues(String vhost) {
+        return client
+            .get()
+            .uri("/queues/{vhost}", vhost)
+            .retrieve()
+            .bodyToFlux(QueueInfo.class);
+    }
+
+    public Mono<QueueInfo> getQueue(String vhost, String name) {
+        return client
+            .get()
+            .uri("/queues/{vhost}/{name}", vhost, name)
+            .retrieve()
+            .bodyToMono(QueueInfo.class);
+    }
+
     public Mono<ClientResponse> bindQueue(String vhost, String queue, String exchange, String routingKey) {
         return bindQueue(vhost, queue, exchange, routingKey, new HashMap<>());
     }
@@ -447,6 +560,33 @@ public class ReactiveClient {
         return client
             .post()
             .uri("/bindings/{vhost}/e/{exchange}/q/{queue}", vhost, exchange, queue)
+            .syncBody(body)
+            .exchange();
+    }
+
+    public Mono<ClientResponse> bindExchange(String vhost, String destination, String source, String routingKey) {
+        return bindExchange(vhost, destination, source, routingKey, new HashMap<>());
+    }
+
+    public Mono<ClientResponse> bindExchange(String vhost, String destination, String source, String routingKey, Map<String, Object> args) {
+        if (vhost == null || vhost.isEmpty()) {
+            throw new IllegalArgumentException("vhost cannot be null or blank");
+        }
+        if (destination == null || destination.isEmpty()) {
+            throw new IllegalArgumentException("destination cannot be null or blank");
+        }
+        if (source == null || source.isEmpty()) {
+            throw new IllegalArgumentException("source cannot be null or blank");
+        }
+        Map<String, Object> body = new HashMap<String, Object>();
+        if (!(args == null)) {
+            body.put("args", args);
+        }
+        body.put("routing_key", routingKey);
+
+        return client
+            .post()
+            .uri("/bindings/{vhost}/e/{source}/e/{destination}", vhost, source, destination)
             .syncBody(body)
             .exchange();
     }

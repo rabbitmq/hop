@@ -22,7 +22,7 @@ import com.rabbitmq.client.Connection
 import com.rabbitmq.client.ConnectionFactory
 import com.rabbitmq.http.client.domain.*
 import org.springframework.http.HttpStatus
-import org.springframework.web.client.HttpClientErrorException
+import org.springframework.web.reactive.function.client.ClientResponse
 import org.springframework.web.reactive.function.client.WebClientException
 import reactor.core.publisher.Flux
 import spock.lang.IgnoreIf
@@ -283,6 +283,130 @@ class ReactiveClientSpec extends Specification {
         if (conn.isOpen()) {
             conn.close()
         }
+    }
+
+    def "GET /api/exchanges"() {
+        when: "client retrieves the list of exchanges across all vhosts"
+        final xs = client.getExchanges()
+        final x = xs.blockFirst()
+
+        then: "the list is returned"
+        verifyExchangeInfo(x)
+    }
+
+    def "GET /api/exchanges/{vhost} when vhost exists"() {
+        when: "client retrieves the list of exchanges in a particular vhost"
+        final xs = client.getExchanges("/")
+
+        then: "the list is returned"
+        final x = xs.filter( { e -> e.name == "amq.fanout" } )
+        verifyExchangeInfo(x.blockFirst())
+    }
+
+    def "GET /api/exchanges/{vhost} when vhost DOES NOT exist"() {
+        given: "vhost lolwut does not exist"
+        final v = "lolwut"
+        client.deleteVhost(v).block()
+
+        when: "client retrieves the list of exchanges in that vhost"
+        client.getExchanges(v).blockFirst()
+
+        then: "exception is thrown"
+        // FIXME check status code
+        thrown(WebClientException.class)
+    }
+
+    def "GET /api/exchanges/{vhost}/{name} when both vhost and exchange exist"() {
+        when: "client retrieves exchange amq.fanout in vhost /"
+        final xs = client.getExchange("/", "amq.fanout")
+
+        then: "exchange info is returned"
+        final x = xs.filter( { e -> e.name == "amq.fanout" && e.vhost == "/" })
+        verifyExchangeInfo(x.blockFirst())
+    }
+
+    def "PUT /api/exchanges/{vhost}/{name} when vhost exists"() {
+        given: "fanout exchange hop.test in vhost /"
+        final v = "/"
+        final s = "hop.test"
+        client.declareExchange(v, s, new ExchangeInfo("fanout", false, false)).block()
+
+        when: "client lists exchanges in vhost /"
+        final xs = client.getExchanges(v)
+
+        then: "hop.test is listed"
+        final x = xs.filter( { e -> e.name == s } )
+        verifyExchangeInfo(x.blockFirst())
+
+        cleanup:
+        client.deleteExchange(v, s).block()
+    }
+
+    def "DELETE /api/exchanges/{vhost}/{name}"() {
+        given: "fanout exchange hop.test in vhost /"
+        final v = "/"
+        final s = "hop.test"
+        client.declareExchange(v, s, new ExchangeInfo("fanout", false, false)).block()
+
+        final xs = client.getExchanges(v)
+        final x = xs.filter( { e -> e.name == s } )
+        verifyExchangeInfo(x.blockFirst())
+
+        when: "client deletes exchange hop.test in vhost /"
+        client.deleteExchange(v, s).block()
+
+        and: "exchange list in / is reloaded"
+        xs = client.getExchanges(v)
+
+        then: "hop.test no longer exists"
+        !xs.filter( { e -> e.name == s } ).hasElements().block()
+    }
+
+    def "POST /api/exchanges/{vhost}/{name}/publish"() {
+        // TODO
+    }
+
+    def "GET /api/exchanges/{vhost}/{name}/bindings/source"() {
+        given: "a queue named hop.queue1"
+        final conn = openConnection()
+        final ch = conn.createChannel()
+        final q = "hop.queue1"
+        ch.queueDeclare(q, false, false, false, null)
+
+        when: "client lists bindings of default exchange"
+        final xs = client.getExchangeBindingsBySource("/", "")
+
+        then: "there is an automatic binding for hop.queue1"
+        final x = xs.filter( { b -> b.source == "" && b.destinationType == "queue" && b.destination == q } )
+        x.hasElements().block()
+
+        cleanup:
+        ch.queueDelete(q)
+        conn.close()
+    }
+
+    def "GET /api/exchanges/{vhost}/{name}/bindings/destination"() {
+        given: "an exchange named hop.exchange1 which is bound to amq.fanout"
+        final conn = openConnection()
+        final ch = conn.createChannel()
+        final src = "amq.fanout"
+        final dest = "hop.exchange1"
+        ch.exchangeDeclare(dest, "fanout")
+        ch.exchangeBind(dest, src, "")
+
+        when: "client lists bindings of amq.fanout"
+        final xs = client.getExchangeBindingsByDestination("/", dest)
+
+        then: "there is a binding for hop.exchange1"
+        final x = xs.filter( { b -> b.source == src &&
+                b.destinationType == "exchange" &&
+                b.destination == dest
+        } )
+        x.hasElements().block()
+
+        cleanup:
+        ch.exchangeDelete(dest)
+        conn.close()
     }
 
     def "GET /api/vhosts"() {
@@ -634,6 +758,26 @@ class ReactiveClientSpec extends Specification {
         client.deletePolicy(v, s).block()
     }
 
+    def "GET /api/policies/{vhost} when vhost exists"() {
+        given: "at least one policy was declared in vhost /"
+        final v = "/"
+        final s = "hop.test"
+        final d = new HashMap<String, Object>()
+        final p = ".*"
+        d.put("ha-mode", "all")
+        client.declarePolicy(v, s, new PolicyInfo(p, 0, null, d)).block()
+
+        when: "client lists policies"
+        final xs = awaitEventPropagation({ client.getPolicies("/") })
+
+        then: "a list of queues is returned"
+        final x = xs.blockFirst()
+        verifyPolicyInfo(x)
+
+        cleanup:
+        client.deletePolicy(v, s).block()
+    }
+
     def "GET /api/policies/{vhost} when vhost DOES NOT exists"() {
         given: "vhost lolwut DOES not exist"
         final v = "lolwut"
@@ -707,6 +851,420 @@ class ReactiveClientSpec extends Specification {
         !d.getPermissions().isEmpty()
         d.getPermissions().get(0).getUser() != null
         !d.getPermissions().get(0).getUser().isEmpty()
+    }
+
+    def "GET /api/queues"() {
+        given: "at least one queue was declared"
+        final Connection conn = cf.newConnection()
+        final Channel ch = conn.createChannel()
+        final String q = ch.queueDeclare().queue
+
+        when: "client lists queues"
+        final xs = client.getQueues()
+
+        then: "a list of queues is returned"
+        final x = xs.blockFirst()
+        verifyQueueInfo(x)
+
+        cleanup:
+        ch.queueDelete(q)
+        conn.close()
+    }
+
+    def "GET /api/queues/{vhost} when vhost exists"() {
+        given: "at least one queue was declared in vhost /"
+        final Connection conn = cf.newConnection()
+        final Channel ch = conn.createChannel()
+        final String q = ch.queueDeclare().queue
+
+        when: "client lists queues"
+        final xs = client.getQueues("/")
+
+        then: "a list of queues is returned"
+        final x = xs.blockFirst()
+        verifyQueueInfo(x)
+
+        cleanup:
+        ch.queueDelete(q)
+        conn.close()
+    }
+
+    def "GET /api/queues/{vhost} when vhost DOES NOT exist"() {
+        given: "vhost lolwut DOES not exist"
+        final v = "lolwut"
+        client.deleteVhost(v).block()
+
+        when: "client lists queues"
+        client.getQueues(v).blockFirst()
+
+        then: "exception is thrown"
+        // FIXME check status code is 404
+        thrown(WebClientException.class)
+    }
+
+    def "GET /api/queues/{vhost}/{name} when both vhost and queue exist"() {
+        given: "a queue was declared in vhost /"
+        final Connection conn = cf.newConnection()
+        final Channel ch = conn.createChannel()
+        final String q = ch.queueDeclare().queue
+
+        when: "client fetches info of the queue"
+        final x = client.getQueue("/", q).block()
+
+        then: "the info is returned"
+        x.vhost == "/"
+        x.name == q
+        verifyQueueInfo(x)
+
+        cleanup:
+        ch.queueDelete(q)
+        conn.close()
+    }
+
+    def "GET /api/queues/{vhost}/{name} with an exclusive queue"() {
+        given: "an exclusive queue named hop.q1.exclusive"
+        final Connection conn = cf.newConnection()
+        final Channel ch = conn.createChannel()
+        String s = "hop.q1.exclusive"
+        ch.queueDelete(s)
+        final String q = ch.queueDeclare(s, false, true, false, null).queue
+
+        when: "client fetches info of the queue"
+        final x = client.getQueue("/", q).block()
+
+        then: "the queue is exclusive according to the response"
+        x.exclusive
+
+        cleanup:
+        ch.queueDelete(q)
+        conn.close()
+    }
+
+    def "GET /api/queues/{vhost}/{name} when queue DOES NOT exist"() {
+        given: "queue lolwut does not exist in vhost /"
+        final Connection conn = cf.newConnection()
+        final Channel ch = conn.createChannel()
+        final String q = "lolwut"
+        ch.queueDelete(q)
+
+        when: "client fetches info of the queue"
+        final x = client.getQueue("/", q).block()
+
+        then: "exception is thrown"
+        // FIXME check status code is 404
+        thrown(WebClientException.class)
+
+        cleanup:
+        ch.queueDelete(q)
+        conn.close()
+    }
+
+    def "PUT /api/queues/{vhost}/{name} when vhost exists"() {
+        given: "vhost /"
+        final v = "/"
+
+        when: "client declares a queue hop.test"
+        final s = "hop.test"
+        client.declareQueue(v, s, new QueueInfo(false, false, false)).block()
+
+        and: "client lists queues in vhost /"
+        Flux<QueueInfo> xs = client.getQueues(v)
+
+        then: "hop.test is listed"
+        QueueInfo x = xs.filter( { q -> q.name.equals(s) } ).blockFirst()
+        x != null
+        x.vhost.equals(v)
+        x.name.equals(s)
+        !x.durable
+        !x.exclusive
+        !x.autoDelete
+
+        cleanup:
+        client.deleteQueue(v, s).block()
+    }
+
+    def "PUT /api/policies/{vhost}/{name}"() {
+        given: "vhost / and definition"
+        final v = "/"
+        final d = new HashMap<String, Object>()
+        d.put("ha-mode", "all")
+
+        when: "client declares a policy hop.test"
+        final s = "hop.test"
+        client.declarePolicy(v, s, new PolicyInfo(".*", 1, null, d)).block()
+
+        and: "client lists policies in vhost /"
+        Flux<PolicyInfo> ps = client.getPolicies(v)
+
+        then: "hop.test is listed"
+        PolicyInfo p = ps.filter( { p -> p.name.equals(s) } ).blockFirst()
+        p != null
+        p.vhost.equals(v)
+        p.name.equals(s)
+        p.priority.equals(1)
+        p.applyTo.equals("all")
+        p.definition.equals(d)
+
+        cleanup:
+        client.deletePolicy(v, s).block()
+    }
+
+    def "PUT /api/queues/{vhost}/{name} when vhost DOES NOT exist"() {
+        given: "vhost lolwut which does not exist"
+        final v = "lolwut"
+        client.deleteVhost(v).block()
+
+        when: "client declares a queue hop.test"
+        final s = "hop.test"
+        ClientResponse r = client.declareQueue(v, s, new QueueInfo(false, false, false)).block()
+
+        then: "status code is 404"
+        r.statusCode() == HttpStatus.NOT_FOUND
+    }
+
+    def "DELETE /api/queues/{vhost}/{name}"() {
+        final String s = UUID.randomUUID().toString()
+        given: "queue ${s} in vhost /"
+        final v = "/"
+        client.declareQueue(v, s, new QueueInfo(false, false, false)).block()
+
+        Flux<QueueInfo> xs = client.getQueues(v)
+        QueueInfo x = xs.filter( { q -> q.name.equals(s) } ).blockFirst()
+        x != null
+        verifyQueueInfo(x)
+
+        when: "client deletes queue ${s} in vhost /"
+        client.deleteQueue(v, s).block()
+
+        and: "queue list in / is reloaded"
+        xs = client.getQueues(v)
+
+        then: "${s} no longer exists"
+        !xs.filter( { q -> q.name.equals(s) } ).hasElements().block()
+    }
+
+    def "GET /api/bindings"() {
+        given: "3 queues bound to amq.fanout"
+        final Connection conn = cf.newConnection()
+        final Channel ch = conn.createChannel()
+        final String x  = 'amq.fanout'
+        final String q1 = ch.queueDeclare().queue
+        final String q2 = ch.queueDeclare().queue
+        final String q3 = ch.queueDeclare().queue
+        ch.queueBind(q1, x, "")
+        ch.queueBind(q2, x, "")
+        ch.queueBind(q3, x, "")
+
+        when: "all queue bindings are listed"
+        final Flux<BindingInfo> xs = client.getBindings()
+
+        then: "amq.fanout bindings are listed"
+        xs.filter( { b -> b.destinationType.equals("queue") && b.source.equals(x) } )
+                .toStream().count() >= 3
+
+        cleanup:
+        ch.queueDelete(q1)
+        ch.queueDelete(q2)
+        ch.queueDelete(q3)
+        conn.close()
+    }
+
+    def "GET /api/bindings/{vhost}"() {
+        given: "2 queues bound to amq.topic in vhost /"
+        final Connection conn = cf.newConnection()
+        final Channel ch = conn.createChannel()
+        final String x  = 'amq.topic'
+        final String q1 = ch.queueDeclare().queue
+        final String q2 = ch.queueDeclare().queue
+        ch.queueBind(q1, x, "hop.*")
+        ch.queueBind(q2, x, "api.test.#")
+
+        when: "all queue bindings are listed"
+        final Flux<BindingInfo> xs = client.getBindings("/")
+
+        then: "amq.fanout bindings are listed"
+        xs.filter( { b -> b.destinationType.equals("queue") && b.source.equals(x) } )
+                .count().block() >= 2
+
+        cleanup:
+        ch.queueDelete(q1)
+        ch.queueDelete(q2)
+        conn.close()
+    }
+
+    def "GET /api/bindings/{vhost} example 2"() {
+        given: "queues hop.test bound to amq.topic in vhost /"
+        final Connection conn = cf.newConnection()
+        final Channel ch = conn.createChannel()
+        final String x  = 'amq.topic'
+        final String q  = "hop.test"
+        ch.queueDeclare(q, false, false, false, null)
+        ch.queueBind(q, x, "hop.*")
+
+        when: "all queue bindings are listed"
+        final Flux<BindingInfo> xs = client.getBindings("/")
+
+        then: "the amq.fanout binding is listed"
+        xs.filter( { b -> b.destinationType.equals("queue") &&
+                             b.source.equals(x) &&
+                             b.destination.equals(q) } ).count().block() == 1
+
+        cleanup:
+        ch.queueDelete(q)
+        conn.close()
+    }
+
+    def "GET /api/queues/{vhost}/{name}/bindings"() {
+        given: "queues hop.test bound to amq.topic in vhost /"
+        final Connection conn = cf.newConnection()
+        final Channel ch = conn.createChannel()
+        final String x  = 'amq.topic'
+        final String q  = "hop.test"
+        ch.queueDeclare(q, false, false, false, null)
+        ch.queueBind(q, x, "hop.*")
+
+        when: "all queue bindings are listed"
+        final Flux<BindingInfo> xs = client.getQueueBindings("/", q)
+
+        then: "the amq.fanout binding is listed"
+        xs.filter( { b-> b.destinationType.equals("queue") &&
+                         b.source.equals(x) &&
+                         b.destination.equals(q) } ).count().block() == 1
+
+        cleanup:
+        ch.queueDelete(q)
+        conn.close()
+    }
+
+    def "GET /api/bindings/{vhost}/e/:exchange/q/:queue"() {
+        given: "queues hop.test bound to amq.topic in vhost /"
+        final Connection conn = cf.newConnection()
+        final Channel ch = conn.createChannel()
+        final String x  = 'amq.topic'
+        final String q  = "hop.test"
+        ch.queueDeclare(q, false, false, false, null)
+        ch.queueBind(q, x, "hop.*")
+
+        when: "bindings between hop.test and amq.topic are listed"
+        final Flux<BindingInfo> xs = client.getQueueBindingsBetween("/", x, q)
+
+        then: "the amq.fanout binding is listed"
+        final b = xs.blockFirst()
+        xs.count().block() == 1
+        b.source.equals(x)
+        b.destination.equals(q)
+        b.destinationType.equals("queue")
+
+        cleanup:
+        ch.queueDelete(q)
+        conn.close()
+    }
+
+    def "GET /api/bindings/{vhost}/e/:source/e/:destination"() {
+        given: "fanout exchange hop.test bound to amq.fanout in vhost /"
+        final Connection conn = cf.newConnection()
+        final Channel ch = conn.createChannel()
+        final String s  = 'amq.fanout'
+        final String d  = "hop.test"
+        ch.exchangeDeclare(d, "fanout", false)
+        ch.exchangeBind(d, s, "")
+
+        when: "bindings between hop.test and amq.topic are listed"
+        final Flux<BindingInfo> xs = client.getExchangeBindingsBetween("/", s, d)
+
+        then: "the amq.topic binding is listed"
+        final b = xs.blockFirst()
+        xs.count().block() == 1
+        b.source.equals(s)
+        b.destination.equals(d)
+        b.destinationType.equals("exchange")
+
+        cleanup:
+        ch.exchangeDelete(d)
+        conn.close()
+    }
+
+    def "POST /api/bindings/{vhost}/e/:source/e/:destination"() {
+        given: "fanout hop.test bound to amq.fanout in vhost /"
+        final v = "/"
+        final String s  = 'amq.fanout'
+        final String d  = "hop.test"
+        client.deleteExchange(v, d).block()
+        client.declareExchange(v, d, new ExchangeInfo("fanout", false, false)).block()
+        client.bindExchange(v, d, s, "").block()
+
+        when: "bindings between hop.test and amq.fanout are listed"
+        final Flux<BindingInfo> xs = client.getExchangeBindingsBetween(v, s, d)
+
+        then: "the amq.fanout binding is listed"
+        final b = xs.blockFirst()
+        xs.count().block() == 1
+        b.source.equals(s)
+        b.destination.equals(d)
+        b.destinationType.equals("exchange")
+
+        cleanup:
+        client.deleteExchange(v, d).block()
+    }
+
+    def "POST /api/bindings/{vhost}/e/:exchange/q/:queue"() {
+        given: "queues hop.test bound to amq.topic in vhost /"
+        final v = "/"
+        final String x  = 'amq.topic'
+        final String q  = "hop.test"
+        client.declareQueue(v, q, new QueueInfo(false, false, false)).block()
+        client.bindQueue(v, q, x, "").block()
+
+        when: "bindings between hop.test and amq.topic are listed"
+        final Flux<BindingInfo> xs = client.getQueueBindingsBetween(v, x, q)
+
+        then: "the amq.fanout binding is listed"
+        final b = xs.blockFirst()
+        xs.count().block() == 1
+        b.source.equals(x)
+        b.destination.equals(q)
+        b.destinationType.equals("queue")
+
+        cleanup:
+        client.deleteQueue(v, q).block()
+    }
+
+    def "GET /api/bindings/{vhost}/e/:exchange/q/:queue/props"() {
+        // TODO
+    }
+
+    def "DELETE /api/bindings/{vhost}/e/:exchange/q/:queue/props"() {
+        // TODO
+    }
+
+    def "DELETE /api/queues/{vhost}/{name}/contents"() {
+        given: "queue hop.test with 10 messages"
+        final Connection conn = cf.newConnection()
+        final Channel ch = conn.createChannel()
+        final q = "hop.test"
+        ch.queueDelete(q)
+        ch.queueDeclare(q, false, false, false, null)
+        ch.queueBind(q, "amq.fanout", "")
+        ch.confirmSelect()
+        100.times { ch.basicPublish("amq.fanout", "", null, "msg".getBytes()) }
+        assert ch.waitForConfirms()
+        final qi1 = ch.queueDeclarePassive(q)
+        qi1.messageCount == 100
+
+        when: "client purges the queue"
+        client.purgeQueue("/", q).block()
+
+        then: "the queue becomes empty"
+        final qi2 = ch.queueDeclarePassive(q)
+        qi2.messageCount == 0
+
+        cleanup:
+        ch.queueDelete(q)
+        conn.close()
+    }
+
+    def "POST /api/queues/{vhost}/{name}/get"() {
+        // TODO
     }
 
     def "GET /api/definitions (queues)"() {
@@ -884,12 +1442,26 @@ class ReactiveClientSpec extends Specification {
         assert node.memoryUsed <= node.memoryLimit
     }
 
+    protected static void verifyExchangeInfo(ExchangeInfo x) {
+        assert x.type != null
+        assert x.durable != null
+        assert x.name != null
+        assert x.autoDelete != null
+    }
+
     protected static void verifyPolicyInfo(PolicyInfo x) {
         assert x.name != null
         assert x.vhost != null
         assert x.pattern != null
         assert x.definition != null
         assert x.applyTo != null
+    }
+
+    protected static void verifyQueueInfo(QueueInfo x) {
+        assert x.name != null
+        assert x.durable != null
+        assert x.exclusive != null
+        assert x.autoDelete != null
     }
 
     static boolean isVersion36orLater(String currentVersion) {
