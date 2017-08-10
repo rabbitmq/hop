@@ -1,6 +1,8 @@
 # Hop, Java Client for the RabbitMQ HTTP API
 
-Hop is a Java client for the [RabbitMQ HTTP API](https://raw.githack.com/rabbitmq/rabbitmq-management/rabbitmq_v3_5_0/priv/www/api/index.html).
+[![Travis CI](https://travis-ci.org/rabbitmq/hop.svg?branch=1.3.x-stable)](https://travis-ci.org/rabbitmq/hop)
+
+Hop is a Java client for the [RabbitMQ HTTP API](https://raw.githack.com/rabbitmq/rabbitmq-management/rabbitmq_v3_6_10/priv/www/api/index.html).
 
 
 ## Polyglot
@@ -21,21 +23,13 @@ This section will be updated as the project matures.
 
 ## Maven Artifacts
 
+[![Maven Central](https://maven-badges.herokuapp.com/maven-central/com.rabbitmq/http-client/badge.svg)](https://maven-badges.herokuapp.com/maven-central/com.rabbitmq/http-client)
+
 Project artifacts are available from Maven Central and [repo.spring.io](http://repo.spring.io).
 
 ### Maven
 
-If you use Maven, add the following repository
-definition to your `pom.xml`:
-
-``` xml
-<repository>
-  <id>spring-releases</id>
-  <url>https://repo.spring.io/release</url>
-</repository>
-```
-
-The most recent release is
+Add the following to your `pom.xml`:
 
 ``` xml
 <dependency>
@@ -48,16 +42,6 @@ The most recent release is
 ### Gradle
 
 Add the following to your `build.gradle`:
-
-``` groovy
-repositories {
-    maven {
-        url "https://repo.spring.io/release"
-    }
-}
-```
-
-Current (unpublished) snapshot release is
 
 ``` groovy
 compile "com.rabbitmq:http-client:1.2.0.RELEASE"
