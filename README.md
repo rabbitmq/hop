@@ -1,6 +1,6 @@
 # Hop, Java Client for the RabbitMQ HTTP API
 
-[![Travis CI](https://travis-ci.org/rabbitmq/hop.svg?branch=1.3.x-stable)](https://travis-ci.org/rabbitmq/hop)
+[![Travis CI](https://travis-ci.org/rabbitmq/hop.svg?branch=master)](https://travis-ci.org/rabbitmq/hop)
 
 Hop is a Java client for the [RabbitMQ HTTP API](https://raw.githack.com/rabbitmq/rabbitmq-management/rabbitmq_v3_6_10/priv/www/api/index.html).
 
