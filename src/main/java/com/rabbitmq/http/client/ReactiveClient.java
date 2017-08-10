@@ -18,20 +18,28 @@ package com.rabbitmq.http.client;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.rabbitmq.http.client.domain.*;
+import io.netty.handler.ssl.ClientAuth;
+import io.netty.handler.ssl.JdkSslContext;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.client.reactive.ReactorClientHttpConnector;
 import org.springframework.http.codec.json.Jackson2JsonDecoder;
 import org.springframework.http.codec.json.Jackson2JsonEncoder;
 import org.springframework.http.converter.json.Jackson2ObjectMapperBuilder;
+import org.springframework.util.StringUtils;
 import org.springframework.web.reactive.function.client.*;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
+import javax.net.ssl.SSLContext;
+import java.net.MalformedURLException;
+import java.net.URI;
 import java.net.URISyntaxException;
+import java.net.URL;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Consumer;
 
 import static java.util.Collections.singletonMap;
 import static org.springframework.util.StringUtils.collectionToCommaDelimitedString;
@@ -43,7 +51,36 @@ public class ReactiveClient {
 
     private final WebClient client;
 
-    public ReactiveClient(String url, String username, String password) throws URISyntaxException {
+    public ReactiveClient(String url) throws MalformedURLException {
+        this(url, c -> {}, null);
+    }
+
+    public ReactiveClient(String url, Consumer<WebClient.Builder> configurator) throws MalformedURLException {
+        this(url, configurator, null);
+    }
+
+    public ReactiveClient(String url, Consumer<WebClient.Builder> configurator, SSLContext sslContext) throws MalformedURLException {
+        this(urlWithoutCredentials(url),
+            StringUtils.split(new URL(url).getUserInfo(),":")[0],
+            StringUtils.split(new URL(url).getUserInfo(),":")[1],
+            configurator,
+            sslContext);
+    }
+
+    private static String urlWithoutCredentials(String url) throws MalformedURLException {
+        URL url1 = new URL(url);
+        return StringUtils.replace(url, url1.getUserInfo() + "@", "");
+    }
+
+    public ReactiveClient(String url, String username, String password) {
+        this(url, username, password, builder -> {}, null);
+    }
+
+    public ReactiveClient(String url, String username, String password, Consumer<WebClient.Builder> configurator) {
+        this(url, username, password, configurator, null);
+    }
+
+    public ReactiveClient(String url, String username, String password, Consumer<WebClient.Builder> configurator, SSLContext sslContext) {
         ExchangeStrategies strategies = ExchangeStrategies
             .builder()
             .codecs(clientDefaultCodecsConfigurer -> {
@@ -58,9 +95,14 @@ public class ReactiveClient {
                     .jackson2JsonDecoder(new Jackson2JsonDecoder(jacksonBuilder.build(), MediaType.APPLICATION_JSON));
 
             }).build();
-        this.client = WebClient.builder()
-            // FIXME see https://github.com/reactor/reactor-netty/issues/138
-            .clientConnector(new ReactorClientHttpConnector(builder -> builder.disablePool()))
+        WebClient.Builder builder = WebClient.builder()
+            .clientConnector(new ReactorClientHttpConnector(clientBuilder -> {
+                if (sslContext != null) {
+                    clientBuilder.sslContext(new JdkSslContext(sslContext, true, ClientAuth.NONE));
+                }
+                // FIXME see https://github.com/reactor/reactor-netty/issues/138
+                clientBuilder.disablePool();
+            }))
             .exchangeStrategies(strategies)
             .baseUrl(url)
             .filter(ExchangeFilterFunctions.basicAuthentication(username, password))
@@ -69,9 +111,9 @@ public class ReactiveClient {
                     .header(HttpHeaders.CONTENT_TYPE, "application/json")
                     .build();
                 return Mono.just(request);
-            }))
-            .build();
-
+            }));
+        configurator.accept(builder);
+        this.client = builder.build();
     }
 
     public Mono<OverviewResponse> getOverview() {

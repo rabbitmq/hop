@@ -53,7 +53,9 @@ class ReactiveClientSpec extends Specification {
     }
 
     protected static ReactiveClient newLocalhostNodeClient() {
-        new ReactiveClient("http://127.0.0.1:15672/api/", DEFAULT_USERNAME, DEFAULT_PASSWORD)
+        new ReactiveClient(
+                String.format("http://%s:%s@127.0.0.1:15672/api", DEFAULT_USERNAME, DEFAULT_PASSWORD)
+        )
     }
 
     def "GET /api/overview"() {
