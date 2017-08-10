@@ -16,10 +16,10 @@ repositories {
   mavenCentral()
 }
 
-sourceCompatibility = targetCompatibility = 1.6
+sourceCompatibility = targetCompatibility = 1.8
 
 ext {
-  amqpClientVersion='4.0.2'
+  amqpClientVersion='4.2.0'
   commonsHttpClientVersion = '4.3.6'
   groovyVersion = '2.4.8'
   jacksonVersion = '2.8.4'
