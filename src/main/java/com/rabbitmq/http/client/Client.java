@@ -55,6 +55,7 @@ import org.springframework.http.converter.json.MappingJackson2HttpMessageConvert
 import org.springframework.util.Assert;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
+import org.springframework.util.StringUtils;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriUtils;
@@ -202,7 +203,10 @@ public class Client {
    * @throws URISyntaxException for a badly formed URL.
    */
   public Client(String url) throws MalformedURLException, URISyntaxException {
-    this(url, null, null);
+    this(urlWithoutCredentials(url),
+         StringUtils.split(new URL(url).getUserInfo(),":")[0],
+         StringUtils.split(new URL(url).getUserInfo(),":")[1]
+    );
   }
 
   /**
@@ -937,5 +941,10 @@ public class Client {
       }
     }
     return sb.toString();
+  }
+
+  private static String urlWithoutCredentials(String url) throws MalformedURLException {
+    URL url1 = new URL(url);
+    return StringUtils.replace(url, url1.getUserInfo() + "@", "");
   }
 }

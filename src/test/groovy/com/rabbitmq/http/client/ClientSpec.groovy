@@ -132,6 +132,19 @@ class ClientSpec extends Specification {
     verifyNode(node)
   }
 
+  def "GET /api/nodes with credentials in the URL"() {
+    when: "credentials are provided in the URL"
+    final client = new Client("http://guest:guest@127.0.0.1:15672/api/")
+
+    and: "retrieves a list of cluster nodes"
+    final res = client.getNodes()
+    final node = res.first()
+
+    then: "client connects successfully and the list is returned"
+    res.size() >= 1
+    verifyNode(node)
+  }
+
   def "GET /api/nodes/{name}"() {
     when: "client retrieves a list of cluster nodes"
     final res = client.getNodes()
