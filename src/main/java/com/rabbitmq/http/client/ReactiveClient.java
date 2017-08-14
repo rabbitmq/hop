@@ -33,8 +33,6 @@ import reactor.core.publisher.Mono;
 
 import javax.net.ssl.SSLContext;
 import java.net.MalformedURLException;
-import java.net.URI;
-import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.HashMap;
 import java.util.List;
@@ -67,11 +65,6 @@ public class ReactiveClient {
             sslContext);
     }
 
-    private static String urlWithoutCredentials(String url) throws MalformedURLException {
-        URL url1 = new URL(url);
-        return StringUtils.replace(url, url1.getUserInfo() + "@", "");
-    }
-
     public ReactiveClient(String url, String username, String password) {
         this(url, username, password, builder -> {}, null);
     }
@@ -81,6 +74,10 @@ public class ReactiveClient {
     }
 
     public ReactiveClient(String url, String username, String password, Consumer<WebClient.Builder> configurator, SSLContext sslContext) {
+        this.client = buildWebClient(url, username, password, configurator, sslContext);
+    }
+
+    protected WebClient buildWebClient(String url, String username, String password, Consumer<WebClient.Builder> configurator, SSLContext sslContext) {
         ExchangeStrategies strategies = ExchangeStrategies
             .builder()
             .codecs(clientDefaultCodecsConfigurer -> {
@@ -112,8 +109,15 @@ public class ReactiveClient {
                     .build();
                 return Mono.just(request);
             }));
-        configurator.accept(builder);
-        this.client = builder.build();
+        if (configurator != null) {
+            configurator.accept(builder);
+        }
+        return builder.build();
+    }
+
+    private static String urlWithoutCredentials(String url) throws MalformedURLException {
+        URL url1 = new URL(url);
+        return StringUtils.replace(url, url1.getUserInfo() + "@", "");
     }
 
     public Mono<OverviewResponse> getOverview() {
