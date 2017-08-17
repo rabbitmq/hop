@@ -38,7 +38,7 @@ ext {
   jacksonVersion = '2.9.0.pr4'
   spockVersion = "1.1-groovy-2.4"
   reactorVersion = "Bismuth-M3"
-  springWebVersion = '5.0.0.RC3'
+  springVersion = '5.0.0.RC3'
 
   linkHomepage = 'https://github.com/rabbitmq/hop'
   linkCi       = 'https://build.spring.io/browse/RMQ'
@@ -59,11 +59,10 @@ dependencyManagement {
 }
 
 dependencies {
-  compile "org.springframework:spring-web:$springWebVersion"
-  compile "org.springframework:spring-webflux:$springWebVersion"
+  compile "org.springframework:spring-web:$springVersion"
+  compile "org.springframework:spring-webflux:$springVersion"
   compile "org.apache.httpcomponents:httpclient:$commonsHttpClientVersion"
   compile "com.fasterxml.jackson.core:jackson-databind:$jacksonVersion"
-  compile "io.projectreactor.ipc:reactor-ipc"
   compile "io.projectreactor.ipc:reactor-netty"
 
   testCompile "org.codehaus.groovy:groovy-all:$groovyVersion"
@@ -84,7 +83,6 @@ test {
   // suppress all console output during testing unless running `gradle -i`
   logging.captureStandardOutput(LogLevel.INFO)
   maxHeapSize = "1024m"
-  forkEvery = 1
   jacoco {
     append = false
     destinationFile = file("$buildDir/jacoco.exec")

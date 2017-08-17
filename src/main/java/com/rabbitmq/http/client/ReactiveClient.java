@@ -17,7 +17,23 @@
 package com.rabbitmq.http.client;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.rabbitmq.http.client.domain.*;
+import com.rabbitmq.http.client.domain.AlivenessTestResult;
+import com.rabbitmq.http.client.domain.BindingInfo;
+import com.rabbitmq.http.client.domain.ChannelInfo;
+import com.rabbitmq.http.client.domain.ClusterId;
+import com.rabbitmq.http.client.domain.ConnectionInfo;
+import com.rabbitmq.http.client.domain.CurrentUserDetails;
+import com.rabbitmq.http.client.domain.Definitions;
+import com.rabbitmq.http.client.domain.ExchangeInfo;
+import com.rabbitmq.http.client.domain.NodeInfo;
+import com.rabbitmq.http.client.domain.OverviewResponse;
+import com.rabbitmq.http.client.domain.PolicyInfo;
+import com.rabbitmq.http.client.domain.QueueInfo;
+import com.rabbitmq.http.client.domain.ShovelInfo;
+import com.rabbitmq.http.client.domain.ShovelStatus;
+import com.rabbitmq.http.client.domain.UserInfo;
+import com.rabbitmq.http.client.domain.UserPermissions;
+import com.rabbitmq.http.client.domain.VhostInfo;
 import io.netty.handler.ssl.ClientAuth;
 import io.netty.handler.ssl.JdkSslContext;
 import org.springframework.http.HttpHeaders;
@@ -27,20 +43,23 @@ import org.springframework.http.codec.json.Jackson2JsonDecoder;
 import org.springframework.http.codec.json.Jackson2JsonEncoder;
 import org.springframework.http.converter.json.Jackson2ObjectMapperBuilder;
 import org.springframework.util.StringUtils;
-import org.springframework.web.reactive.function.client.*;
+import org.springframework.web.reactive.function.client.ClientRequest;
+import org.springframework.web.reactive.function.client.ClientResponse;
+import org.springframework.web.reactive.function.client.ExchangeFilterFunction;
+import org.springframework.web.reactive.function.client.ExchangeFilterFunctions;
+import org.springframework.web.reactive.function.client.ExchangeStrategies;
+import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import javax.net.ssl.SSLContext;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
-
-import static java.util.Collections.singletonMap;
-import static org.springframework.util.StringUtils.collectionToCommaDelimitedString;
 
 /**
  *
@@ -335,7 +354,7 @@ public class ReactiveClient {
         }
         Map<String, Object> body = new HashMap<String, Object>();
         body.put("password", new String(password));
-        body.put("tags", collectionToCommaDelimitedString(tags));
+        body.put("tags", StringUtils.collectionToCommaDelimitedString(tags));
 
         return client
             .put()
@@ -355,7 +374,7 @@ public class ReactiveClient {
         }
         Map<String, Object> body = new HashMap<String, Object>();
         body.put("password_hash", String.valueOf(passwordHash));
-        body.put("tags", collectionToCommaDelimitedString(tags));
+        body.put("tags", StringUtils.collectionToCommaDelimitedString(tags));
 
         return client
             .put()
@@ -373,7 +392,7 @@ public class ReactiveClient {
         if(password != null) {
             body.put("password", new String(password));
         }
-        body.put("tags", collectionToCommaDelimitedString(tags));
+        body.put("tags", StringUtils.collectionToCommaDelimitedString(tags));
 
         return client
             .put()
@@ -501,7 +520,7 @@ public class ReactiveClient {
         return client
             .put()
             .uri("/cluster-name")
-            .syncBody(singletonMap("name", name))
+            .syncBody(Collections.singletonMap("name", name))
             .exchange();
     }
 

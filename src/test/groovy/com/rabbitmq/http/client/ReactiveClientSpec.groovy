@@ -20,7 +20,24 @@ import com.rabbitmq.client.AuthenticationFailureException
 import com.rabbitmq.client.Channel
 import com.rabbitmq.client.Connection
 import com.rabbitmq.client.ConnectionFactory
-import com.rabbitmq.http.client.domain.*
+import com.rabbitmq.http.client.domain.AlivenessTestResult;
+import com.rabbitmq.http.client.domain.BindingInfo;
+import com.rabbitmq.http.client.domain.ChannelInfo;
+import com.rabbitmq.http.client.domain.ClusterId;
+import com.rabbitmq.http.client.domain.ConnectionInfo;
+import com.rabbitmq.http.client.domain.CurrentUserDetails;
+import com.rabbitmq.http.client.domain.Definitions;
+import com.rabbitmq.http.client.domain.ExchangeInfo;
+import com.rabbitmq.http.client.domain.NodeInfo;
+import com.rabbitmq.http.client.domain.OverviewResponse;
+import com.rabbitmq.http.client.domain.PolicyInfo;
+import com.rabbitmq.http.client.domain.QueueInfo
+import com.rabbitmq.http.client.domain.ShovelDetails;
+import com.rabbitmq.http.client.domain.ShovelInfo;
+import com.rabbitmq.http.client.domain.ShovelStatus;
+import com.rabbitmq.http.client.domain.UserInfo;
+import com.rabbitmq.http.client.domain.UserPermissions;
+import com.rabbitmq.http.client.domain.VhostInfo;
 import org.springframework.http.HttpStatus
 import org.springframework.web.reactive.function.client.ClientResponse
 import org.springframework.web.reactive.function.client.WebClientException
@@ -49,7 +66,7 @@ class ReactiveClientSpec extends Specification {
 
     def setup() {
         client = newLocalhostNodeClient()
-        client.getConnections().subscribe( { c -> client.closeConnection(c.name) })
+        client.getConnections().toStream().forEach({ c -> client.closeConnection(c.name).block() })
     }
 
     protected static ReactiveClient newLocalhostNodeClient() {
@@ -165,7 +182,10 @@ class ReactiveClientSpec extends Specification {
         when: "client retrieves connection info with the correct name"
 
         final xs = awaitEventPropagation({ client.getConnections() })
-        final x = client.getConnection(xs.blockFirst().name)
+
+        final x = client.getConnection(
+                xs.filter( { c -> c.clientProperties.connectionName == s } )
+                  .blockFirst().name)
 
         then: "the info is returned"
         verifyConnectionInfo(x.block())
@@ -178,7 +198,9 @@ class ReactiveClientSpec extends Specification {
     def "DELETE /api/connections/{name}"() {
         given: "an open RabbitMQ client connection"
         final latch = new CountDownLatch(1)
-        final conn = openConnection()
+        final s = "client-name"
+        final conn = openConnection(s)
+
         conn.addShutdownListener({ e -> latch.countDown() })
 
         assert conn.isOpen()
@@ -186,8 +208,10 @@ class ReactiveClientSpec extends Specification {
         when: "client closes the connection"
 
         final xs = awaitEventPropagation({ client.getConnections() })
-        xs.flatMap({ connection -> client.closeConnection(connection.name) })
-          .subscribe()
+        final x = client.getConnection(
+                xs.filter( { c -> c.clientProperties.connectionName == s } )
+                        .blockFirst().name)
+        client.closeConnection(x.block().name).block()
 
         and: "some time passes"
         assert awaitOn(latch)
@@ -492,7 +516,7 @@ class ReactiveClientSpec extends Specification {
         final xs = client.getPermissionsIn(s)
 
         then: "they include permissions for the guest user"
-        UserPermissions x = xs.filter({perm -> perm.user.equals("guest")}).blockFirst()
+        UserPermissions x = xs.filter({ perm -> perm.user.equals("guest")}).blockFirst()
         x.read == ".*"
     }
 
