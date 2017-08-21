@@ -4,6 +4,8 @@ plugins {
   id 'idea'
   id 'jacoco'
   id 'org.sonarqube' version '2.5'
+  id "io.spring.dependency-management" version "1.0.3.RELEASE"
+  id "java"
 }
 
 description = 'Java client for the RabbitMQ HTTP API'
@@ -14,17 +16,29 @@ group = 'com.rabbitmq'
 
 repositories {
   mavenCentral()
+  maven {
+    url 'https://repo.spring.io/libs-milestone'
+  }
 }
 
-sourceCompatibility = targetCompatibility = 1.8
+compileJava {
+  sourceCompatibility = 1.8
+  targetCompatibility = 1.8
+}
+
+compileTestJava {
+  sourceCompatibility = 1.8
+  targetCompatibility = 1.8
+}
 
 ext {
   amqpClientVersion='4.2.0'
-  commonsHttpClientVersion = '4.3.6'
-  groovyVersion = '2.4.8'
-  jacksonVersion = '2.8.4'
-  spockVersion = "1.0-groovy-2.4"
-  springWebVersion = '4.3.6.RELEASE'
+  commonsHttpClientVersion = '4.5.3'
+  groovyVersion = '2.4.12'
+  jacksonVersion = '2.9.0.pr4'
+  spockVersion = "1.1-groovy-2.4"
+  reactorVersion = "Bismuth-M3"
+  springVersion = '5.0.0.RC3'
 
   linkHomepage = 'https://github.com/rabbitmq/hop'
   linkCi       = 'https://build.spring.io/browse/RMQ'
@@ -34,10 +48,22 @@ ext {
   linkScmDevConnection = 'git@github.com:rabbitmq/hop.git'
 }
 
+dependencyManagement {
+  imports {
+    mavenBom "io.projectreactor:reactor-bom:${reactorVersion}"
+  }
+  resolutionStrategy {
+    cacheChangingModulesFor 0, 'seconds'
+  }
+  applyMavenExclusions = false
+}
+
 dependencies {
-  compile "org.springframework:spring-web:$springWebVersion"
+  compile "org.springframework:spring-web:$springVersion"
+  compile "org.springframework:spring-webflux:$springVersion"
   compile "org.apache.httpcomponents:httpclient:$commonsHttpClientVersion"
   compile "com.fasterxml.jackson.core:jackson-databind:$jacksonVersion"
+  compile "io.projectreactor.ipc:reactor-netty"
 
   testCompile "org.codehaus.groovy:groovy-all:$groovyVersion"
   testCompile "org.spockframework:spock-core:$spockVersion"
