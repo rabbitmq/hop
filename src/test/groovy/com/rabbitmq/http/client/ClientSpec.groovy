@@ -61,6 +61,7 @@ class ClientSpec extends Specification {
     1000.times { ch.basicPublish("", "", null, null) }
 
     def res = client.getOverview()
+    println res
     def xts = res.getExchangeTypes().collect { it.getName() }
 
     then: "the response is converted successfully"
