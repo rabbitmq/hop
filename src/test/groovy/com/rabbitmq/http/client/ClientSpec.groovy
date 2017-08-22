@@ -44,6 +44,7 @@ class ClientSpec extends Specification {
 
   def setup() {
     client = newLocalhostNodeClient()
+    client.getConnections().forEach({ c -> client.closeConnection(c.name) })
   }
 
   protected static Client newLocalhostNodeClient() {
@@ -61,7 +62,6 @@ class ClientSpec extends Specification {
     1000.times { ch.basicPublish("", "", null, null) }
 
     def res = client.getOverview()
-    println res
     def xts = res.getExchangeTypes().collect { it.getName() }
 
     then: "the response is converted successfully"
