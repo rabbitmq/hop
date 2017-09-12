@@ -20,27 +20,10 @@ import com.rabbitmq.client.AuthenticationFailureException
 import com.rabbitmq.client.Channel
 import com.rabbitmq.client.Connection
 import com.rabbitmq.client.ConnectionFactory
-import com.rabbitmq.http.client.domain.AlivenessTestResult;
-import com.rabbitmq.http.client.domain.BindingInfo;
-import com.rabbitmq.http.client.domain.ChannelInfo;
-import com.rabbitmq.http.client.domain.ClusterId;
-import com.rabbitmq.http.client.domain.ConnectionInfo;
-import com.rabbitmq.http.client.domain.CurrentUserDetails;
-import com.rabbitmq.http.client.domain.Definitions;
-import com.rabbitmq.http.client.domain.ExchangeInfo;
-import com.rabbitmq.http.client.domain.NodeInfo;
-import com.rabbitmq.http.client.domain.OverviewResponse;
-import com.rabbitmq.http.client.domain.PolicyInfo;
-import com.rabbitmq.http.client.domain.QueueInfo
-import com.rabbitmq.http.client.domain.ShovelDetails;
-import com.rabbitmq.http.client.domain.ShovelInfo;
-import com.rabbitmq.http.client.domain.ShovelStatus;
-import com.rabbitmq.http.client.domain.UserInfo;
-import com.rabbitmq.http.client.domain.UserPermissions;
-import com.rabbitmq.http.client.domain.VhostInfo;
+import com.rabbitmq.http.client.domain.*
 import org.springframework.http.HttpStatus
 import org.springframework.web.reactive.function.client.ClientResponse
-import org.springframework.web.reactive.function.client.WebClientException
+import org.springframework.web.reactive.function.client.WebClientResponseException
 import reactor.core.publisher.Flux
 import spock.lang.IgnoreIf
 import spock.lang.Specification
@@ -338,8 +321,8 @@ class ReactiveClientSpec extends Specification {
         client.getExchanges(v).blockFirst()
 
         then: "exception is thrown"
-        // FIXME check status code
-        thrown(WebClientException.class)
+        def exception = thrown(WebClientResponseException.class)
+        exception.statusCode == HttpStatus.NOT_FOUND
     }
 
     def "GET /api/exchanges/{vhost}/{name} when both vhost and exchange exist"() {
@@ -496,7 +479,8 @@ class ReactiveClientSpec extends Specification {
         client.getVhost(s).block()
 
         then: "it no longer exists"
-        thrown(WebClientException.class)
+        def exception = thrown(WebClientResponseException.class)
+        exception.statusCode == HttpStatus.NOT_FOUND
     }
 
     def "DELETE /api/vhosts/{name} when vhost DOES NOT exist"() {
@@ -526,7 +510,8 @@ class ReactiveClientSpec extends Specification {
         client.getPermissionsIn(s).blockFirst()
 
         then: "flux throws an exception"
-        thrown(WebClientException.class)
+        def exception = thrown(WebClientResponseException.class)
+        exception.statusCode == HttpStatus.NOT_FOUND
     }
 
     def "GET /api/users"() {
@@ -559,7 +544,8 @@ class ReactiveClientSpec extends Specification {
         client.getUser("lolwut").block()
 
         then: "mono throws exception"
-        thrown(WebClientException.class)
+        def exception = thrown(WebClientResponseException.class)
+        exception.statusCode == HttpStatus.NOT_FOUND
     }
 
     def "PUT /api/users/{name} updates user tags"() {
@@ -595,9 +581,9 @@ class ReactiveClientSpec extends Specification {
         and: "alt-user info is reloaded"
         client.getUser(u).block()
 
-        // FIXME check status code, should be available in the exception
         then: "deleted user is gone"
-        thrown(WebClientException.class)
+        def exception = thrown(WebClientResponseException.class)
+        exception.statusCode == HttpStatus.NOT_FOUND
     }
 
     def "GET /api/users/{name}/permissions when user exists"() {
@@ -616,7 +602,8 @@ class ReactiveClientSpec extends Specification {
         client.getPermissionsOf(s).blockFirst()
 
         then: "mono throws exception"
-        thrown(WebClientException.class)
+        def exception = thrown(WebClientResponseException.class)
+        exception.statusCode == HttpStatus.NOT_FOUND
     }
 
     def "PUT /api/users/{name} with a blank password hash"() {
@@ -678,7 +665,8 @@ class ReactiveClientSpec extends Specification {
         client.getPermissions(v, u).block()
 
         then: "mono throws exception"
-        thrown(WebClientException.class)
+        def exception = thrown(WebClientResponseException.class)
+        exception.statusCode == HttpStatus.NOT_FOUND
     }
 
     def "GET /api/permissions/{vhost}/:user when username DOES NOT exist"() {
@@ -688,7 +676,8 @@ class ReactiveClientSpec extends Specification {
         client.getPermissions(v, u).block()
 
         then: "mono throws exception"
-        thrown(WebClientException.class)
+        def exception = thrown(WebClientResponseException.class)
+        exception.statusCode == HttpStatus.NOT_FOUND
     }
 
     def "PUT /api/permissions/{vhost}/:user when both user and vhost exist"() {
@@ -752,8 +741,8 @@ class ReactiveClientSpec extends Specification {
         client.getPermissions(v, u).block()
 
         then: "an exception is thrown on reload"
-        // FIXME check status
-        thrown(WebClientException.class)
+        def exception = thrown(WebClientResponseException.class)
+        exception.statusCode == HttpStatus.NOT_FOUND
 
         cleanup:
         client.deleteVhost(v).block()
@@ -813,8 +802,8 @@ class ReactiveClientSpec extends Specification {
         awaitEventPropagation({ client.getPolicies(v) })
 
         then: "exception is thrown"
-        // FIXME check status is 404
-        thrown(WebClientException.class)
+        def exception = thrown(WebClientResponseException.class)
+        exception.statusCode == HttpStatus.NOT_FOUND
     }
 
     def "GET /api/aliveness-test/{vhost}"() {
@@ -924,8 +913,8 @@ class ReactiveClientSpec extends Specification {
         client.getQueues(v).blockFirst()
 
         then: "exception is thrown"
-        // FIXME check status code is 404
-        thrown(WebClientException.class)
+        def exception = thrown(WebClientResponseException.class)
+        exception.statusCode == HttpStatus.NOT_FOUND
     }
 
     def "GET /api/queues/{vhost}/{name} when both vhost and queue exist"() {
@@ -977,8 +966,8 @@ class ReactiveClientSpec extends Specification {
         final x = client.getQueue("/", q).block()
 
         then: "exception is thrown"
-        // FIXME check status code is 404
-        thrown(WebClientException.class)
+        def exception = thrown(WebClientResponseException.class)
+        exception.statusCode == HttpStatus.NOT_FOUND
 
         cleanup:
         ch.queueDelete(q)

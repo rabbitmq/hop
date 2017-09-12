@@ -116,8 +116,6 @@ public class ReactiveClient {
                 if (sslContext != null) {
                     clientBuilder.sslContext(new JdkSslContext(sslContext, true, ClientAuth.NONE));
                 }
-                // FIXME see https://github.com/reactor/reactor-netty/issues/138
-                clientBuilder.disablePool();
             }))
             .exchangeStrategies(strategies)
             .baseUrl(url)
