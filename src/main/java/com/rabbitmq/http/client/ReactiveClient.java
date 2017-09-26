@@ -116,9 +116,6 @@ public class ReactiveClient {
                 if (sslContext != null) {
                     clientBuilder.sslContext(new JdkSslContext(sslContext, true, ClientAuth.NONE));
                 }
-                // FIXME
-                // see https://jira.spring.io/browse/SPR-15972
-                clientBuilder.disablePool();
             }))
             .exchangeStrategies(strategies)
             .baseUrl(url)
