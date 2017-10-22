@@ -844,7 +844,6 @@ public class Client {
     // configure HttpClientBuilder essentials
     final HttpClientBuilder bldr = HttpClientBuilder.create().
         setDefaultCredentialsProvider(getCredentialsProvider(url, theUser, thePassword));
-    bldr.setDefaultHeaders(Arrays.asList(new BasicHeader(HttpHeaders.CONTENT_TYPE, "application/json")));
     if (sslConnectionSocketFactory != null) {
       bldr.setSSLSocketFactory(sslConnectionSocketFactory);
     }
