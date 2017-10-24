@@ -44,6 +44,7 @@ class ClientSpec extends Specification {
 
   def setup() {
     client = newLocalhostNodeClient()
+    client.getConnections().each { client.closeConnection(it.getName())}
   }
 
   protected static Client newLocalhostNodeClient() {
@@ -1547,12 +1548,12 @@ class ClientSpec extends Specification {
     if (callback) {
       int n = 0
       def result = callback()
-      while (result?.isEmpty() && n < 100) {
+      while (result?.isEmpty() && n < 1000) {
         Thread.sleep(100)
+        n =+ 100
         result = callback()
       }
-
-      assert n < 100
+      assert n < 1000
       result
     }
     else {
