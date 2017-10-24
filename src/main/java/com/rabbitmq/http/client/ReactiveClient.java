@@ -36,7 +36,6 @@ import com.rabbitmq.http.client.domain.UserPermissions;
 import com.rabbitmq.http.client.domain.VhostInfo;
 import io.netty.handler.ssl.ClientAuth;
 import io.netty.handler.ssl.JdkSslContext;
-import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
 import org.springframework.http.client.reactive.ReactorClientHttpConnector;
 import org.springframework.http.codec.json.Jackson2JsonDecoder;
@@ -122,7 +121,6 @@ public class ReactiveClient {
             .filter(ExchangeFilterFunctions.basicAuthentication(username, password))
             .filter(ExchangeFilterFunction.ofRequestProcessor(clientRequest -> {
                 ClientRequest request = ClientRequest.from(clientRequest)
-                    .header(HttpHeaders.CONTENT_TYPE, "application/json")
                     .build();
                 return Mono.just(request);
             }));
