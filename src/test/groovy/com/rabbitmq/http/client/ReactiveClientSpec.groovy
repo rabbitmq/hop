@@ -1529,13 +1529,13 @@ class ReactiveClientSpec extends Specification {
             int n = 0
             def result = callback()
             def hasElements = false
-            while (!hasElements && n < 100) {
+            while (!hasElements && n < 1000) {
                 Thread.sleep(100)
+                n =+ 100
                 result = callback()
                 hasElements = result?.hasElements().block()
-                n++
             }
-            assert n < 100
+            assert n < 1000
             result
         }
         else {
