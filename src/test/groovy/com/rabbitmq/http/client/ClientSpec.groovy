@@ -1548,12 +1548,12 @@ class ClientSpec extends Specification {
     if (callback) {
       int n = 0
       def result = callback()
-      while (result?.isEmpty() && n < 1000) {
+      while (result?.isEmpty() && n < 10000) {
         Thread.sleep(100)
         n =+ 100
         result = callback()
       }
-      assert n < 1000
+      assert n < 10000
       result
     }
     else {
