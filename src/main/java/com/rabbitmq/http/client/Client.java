@@ -159,9 +159,9 @@ public class Client {
    */
   private Client(URL url, String username, String password, SSLConnectionSocketFactory sslConnectionSocketFactory, SSLContext sslContext)
       throws MalformedURLException, URISyntaxException {
-    Assert.notNull(url);
-    Assert.notNull(username);
-    Assert.notNull(password);
+    Assert.notNull(url, "URL is required; it must not be null");
+    Assert.notNull(username, "username is required; it must not be null");
+    Assert.notNull(password, "password is required; it must not be null");
     this.rootUri = url.toURI();
 
     this.rt = new RestTemplate(getRequestFactory(url, username, password, sslConnectionSocketFactory, sslContext, NO_OP_HTTP_CLIENT_BUILDER_CONFIGURATOR));
@@ -220,10 +220,10 @@ public class Client {
   private Client(URL url, String username, String password, SSLConnectionSocketFactory sslConnectionSocketFactory,
                  SSLContext sslContext,
                  HttpClientBuilderConfigurator configurator) throws URISyntaxException, MalformedURLException {
-    Assert.notNull(url);
-    Assert.notNull(username);
-    Assert.notNull(password);
-    Assert.notNull(configurator);
+    Assert.notNull(url, "URL is required; it must not be null");
+    Assert.notNull(username, "username is required; it must not be null");
+    Assert.notNull(password, "password is required; it must not be null");
+    Assert.notNull(configurator, "configurator is required; it must not be null");
     this.rootUri = url.toURI();
 
     HttpComponentsClientHttpRequestFactory rf = getRequestFactory(url, username, password,
