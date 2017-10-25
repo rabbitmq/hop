@@ -851,7 +851,7 @@ public class Client {
       bldr.setSSLSocketFactory(sslConnectionSocketFactory);
     }
     if (sslContext != null) {
-      bldr.setSslcontext(sslContext);
+      bldr.setSSLContext(sslContext);
     }
 
     HttpClient httpClient;
