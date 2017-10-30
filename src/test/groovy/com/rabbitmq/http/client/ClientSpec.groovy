@@ -45,6 +45,8 @@ class ClientSpec extends Specification {
   def setup() {
     client = newLocalhostNodeClient()
     client.getConnections().each { client.closeConnection(it.getName())}
+    awaitAllConnectionsClosed(client)
+    client.getConnections().each { println(it.getName())}
   }
 
   protected static Client newLocalhostNodeClient() {
@@ -192,12 +194,16 @@ class ClientSpec extends Specification {
 
   def "GET /api/connections/{name} with client-provided name"() {
     given: "an open RabbitMQ client connection with client-provided name"
-    final s = "client-name"
+    final s = UUID.randomUUID().toString()
     final conn = openConnection(s)
 
     when: "client retrieves connection info with the correct name"
 
-    final xs = awaitEventPropagation({ client.getConnections() })
+    def xs = awaitEventPropagation({ client.getConnections() })
+    // applying filter as some previous connections can still show up the management API
+    xs = xs.findAll({
+      it.clientProperties.connectionName.equals(s)
+    })
     final x = client.getConnection(xs.first().name)
 
     then: "the info is returned"
@@ -268,13 +274,22 @@ class ClientSpec extends Specification {
 
   def "GET /api/channels"() {
     given: "an open RabbitMQ client connection with 1 channel"
-    final conn = openConnection()
+    final s = UUID.randomUUID().toString()
+    final conn = openConnection(s)
     final ch = conn.createChannel()
 
     when: "client lists channels"
 
-    awaitEventPropagation({ client.getConnections() })
-    final chs = awaitEventPropagation({ client.getChannels() })
+    def xs = awaitEventPropagation({ client.getConnections() })
+    // applying filter as some previous connections can still show up the management API
+    xs = xs.findAll({
+      it.clientProperties.connectionName.equals(s)
+    })
+    def cn = xs.first().name
+    def chs = awaitEventPropagation({ client.getChannels() })
+    // channel name starts with the connection name
+    // e.g. 127.0.0.1:42590 -> 127.0.0.1:5672 (1)
+    chs = chs.findAll({ it.name.startsWith(cn) })
     final chi = chs.first()
 
     then: "the list is returned"
@@ -288,12 +303,18 @@ class ClientSpec extends Specification {
 
   def "GET /api/connections/{name}/channels/"() {
     given: "an open RabbitMQ client connection with 1 channel"
-    final conn = openConnection()
+    final s = UUID.randomUUID().toString()
+    final conn = openConnection(s)
     final ch = conn.createChannel()
 
     when: "client lists channels on that connection"
 
-    final cn = awaitEventPropagation({ client.getConnections() }).first().name
+    def xs = awaitEventPropagation({ client.getConnections() })
+    // applying filter as some previous connections can still show up the management API
+    xs = xs.findAll({
+      it.clientProperties.connectionName.equals(s)
+    })
+    def cn = xs.first().name
 
     final chs = awaitEventPropagation({ client.getChannels(cn) })
     final chi = chs.first()
@@ -309,13 +330,19 @@ class ClientSpec extends Specification {
 
   def "GET /api/channels/{name}"() {
     given: "an open RabbitMQ client connection with 1 channel"
-    final conn = openConnection()
+    final s = UUID.randomUUID().toString()
+    final conn = openConnection(s)
     final ch = conn.createChannel()
 
     when: "client retrieves channel info"
 
-    awaitEventPropagation({ client.getConnections() })
-    final chs = awaitEventPropagation({ client.getChannels() })
+    def xs = awaitEventPropagation({ client.getConnections() })
+    // applying filter as some previous connections can still show up the management API
+    xs = xs.findAll({
+      it.clientProperties.connectionName.equals(s)
+    })
+    def cn = xs.first().name
+    final chs = awaitEventPropagation({ client.getChannels(cn) })
     final chi = client.getChannel(chs.first().name)
 
     then: "the info is returned"
@@ -1429,7 +1456,7 @@ class ClientSpec extends Specification {
   }
 
   protected static boolean awaitOn(CountDownLatch latch) {
-    latch.await(5, TimeUnit.SECONDS)
+    latch.await(10, TimeUnit.SECONDS)
   }
 
   protected static void verifyConnectionInfo(ConnectionInfo info) {
@@ -1550,7 +1577,7 @@ class ClientSpec extends Specification {
       def result = callback()
       while (result?.isEmpty() && n < 10000) {
         Thread.sleep(100)
-        n =+ 100
+        n += 100
         result = callback()
       }
       assert n < 10000
@@ -1560,6 +1587,17 @@ class ClientSpec extends Specification {
       Thread.sleep(1000)
       null
     }
+  }
+
+  protected static Object awaitAllConnectionsClosed(client) {
+      int n = 0
+      def result = client.getConnections()
+      while (result?.size() > 0 && n < 10000) {
+        Thread.sleep(100)
+        n += 100
+        result = client.getConnections()
+      }
+      result
   }
 
 }
