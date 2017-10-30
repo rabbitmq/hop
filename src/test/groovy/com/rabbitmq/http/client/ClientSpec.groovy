@@ -194,12 +194,16 @@ class ClientSpec extends Specification {
 
   def "GET /api/connections/{name} with client-provided name"() {
     given: "an open RabbitMQ client connection with client-provided name"
-    final s = "client-name"
+    final s = UUID.randomUUID().toString()
     final conn = openConnection(s)
 
     when: "client retrieves connection info with the correct name"
 
-    final xs = awaitEventPropagation({ client.getConnections() })
+    def xs = awaitEventPropagation({ client.getConnections() })
+    // applying filter as some previous connections can still show up the management API
+    xs = xs.findAll({
+      it.clientProperties.connectionName.equals(s)
+    })
     final x = client.getConnection(xs.first().name)
 
     then: "the info is returned"
@@ -290,12 +294,18 @@ class ClientSpec extends Specification {
 
   def "GET /api/connections/{name}/channels/"() {
     given: "an open RabbitMQ client connection with 1 channel"
-    final conn = openConnection()
+    final s = UUID.randomUUID().toString()
+    final conn = openConnection(s)
     final ch = conn.createChannel()
 
     when: "client lists channels on that connection"
 
-    final cn = awaitEventPropagation({ client.getConnections() }).first().name
+    def xs = awaitEventPropagation({ client.getConnections() })
+    // applying filter as some previous connections can still show up the management API
+    xs = xs.findAll({
+      it.clientProperties.connectionName.equals(s)
+    })
+    def cn = xs.first().name
 
     final chs = awaitEventPropagation({ client.getChannels(cn) })
     final chi = chs.first()
@@ -1552,7 +1562,7 @@ class ClientSpec extends Specification {
       def result = callback()
       while (result?.isEmpty() && n < 10000) {
         Thread.sleep(100)
-        n =+ 100
+        n += 100
         result = callback()
       }
       assert n < 10000
@@ -1569,10 +1579,9 @@ class ClientSpec extends Specification {
       def result = client.getConnections()
       while (result?.size() > 0 && n < 10000) {
         Thread.sleep(100)
-        n =+ 100
+        n += 100
         result = client.getConnections()
       }
-      assert n < 10000
       result
   }
 
