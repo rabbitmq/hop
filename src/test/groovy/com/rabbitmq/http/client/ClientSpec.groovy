@@ -1469,7 +1469,8 @@ class ClientSpec extends Specification {
     assert chi.getConsumerCount() == 0
     assert chi.number == ch.getChannelNumber()
     assert chi.node.startsWith("rabbit@")
-    assert chi.state != null
+    assert chi.state == "running" ||
+              chi.state == null // HTTP API may not be refreshed yet
     assert !chi.usesPublisherConfirms()
     assert !chi.transactional
   }
