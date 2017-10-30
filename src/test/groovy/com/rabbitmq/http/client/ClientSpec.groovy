@@ -217,7 +217,8 @@ class ClientSpec extends Specification {
   def "DELETE /api/connections/{name}"() {
     given: "an open RabbitMQ client connection"
     final latch = new CountDownLatch(1)
-    final conn = openConnection()
+    final s = UUID.randomUUID().toString()
+    final conn = openConnection(s)
     conn.addShutdownListener(new ShutdownListener() {
       @Override
       void shutdownCompleted(ShutdownSignalException e) {
@@ -228,7 +229,11 @@ class ClientSpec extends Specification {
 
     when: "client closes the connection"
 
-    final xs = awaitEventPropagation({ client.getConnections() })
+    def xs = awaitEventPropagation({ client.getConnections() })
+    // applying filter as some previous connections can still show up the management API
+    xs = xs.findAll({
+      it.clientProperties.connectionName.equals(s)
+    })
     xs.each({ client.closeConnection(it.name) })
 
     and: "some time passes"
@@ -246,7 +251,8 @@ class ClientSpec extends Specification {
   def "DELETE /api/connections/{name} with a user-provided reason"() {
     given: "an open RabbitMQ client connection"
     final latch = new CountDownLatch(1)
-    final conn = openConnection()
+    final s = UUID.randomUUID().toString()
+    final conn = openConnection(s)
     conn.addShutdownListener(new ShutdownListener() {
       @Override
       void shutdownCompleted(ShutdownSignalException e) {
@@ -257,7 +263,11 @@ class ClientSpec extends Specification {
 
     when: "client closes the connection"
 
-    final xs = awaitEventPropagation({ client.getConnections() })
+    def xs = awaitEventPropagation({ client.getConnections() })
+    // applying filter as some previous connections can still show up the management API
+    xs = xs.findAll({
+      it.clientProperties.connectionName.equals(s)
+    })
     xs.each({ client.closeConnection(it.name, "because reasons!") })
 
     and: "some time passes"
