@@ -212,15 +212,18 @@ class ReactiveClientSpec extends Specification {
     def "DELETE /api/connections/{name} with a user-provided reason"() {
         given: "an open RabbitMQ client connection"
         final latch = new CountDownLatch(1)
-        final conn = openConnection()
+        final s = "client-name"
+        final conn = openConnection(s)
         conn.addShutdownListener({ e -> latch.countDown() })
         assert conn.isOpen()
 
         when: "client closes the connection"
 
         final xs = awaitEventPropagation({ client.getConnections() })
-        xs.flatMap({ connection -> client.closeConnection(connection.name, "because reasons!") })
-          .subscribe()
+        final x = client.getConnection(
+                xs.filter( { c -> c.clientProperties.connectionName == s } )
+                        .blockFirst().name)
+        client.closeConnection(x.block().name, "because reasons!").block()
 
         and: "some time passes"
         assert awaitOn(latch)
