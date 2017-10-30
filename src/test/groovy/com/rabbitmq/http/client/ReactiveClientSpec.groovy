@@ -1409,7 +1409,7 @@ class ReactiveClientSpec extends Specification {
     }
 
     protected static boolean awaitOn(CountDownLatch latch) {
-        latch.await(5, TimeUnit.SECONDS)
+        latch.await(10, TimeUnit.SECONDS)
     }
 
     protected static void verifyConnectionInfo(ConnectionInfo info) {
@@ -1531,7 +1531,7 @@ class ReactiveClientSpec extends Specification {
             def hasElements = false
             while (!hasElements && n < 10000) {
                 Thread.sleep(100)
-                n =+ 100
+                n += 100
                 result = callback()
                 hasElements = result?.hasElements().block()
             }
