@@ -30,6 +30,7 @@ import spock.lang.Specification
 
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
+import java.util.stream.Collectors
 
 class ReactiveClientSpec extends Specification {
 
@@ -255,12 +256,17 @@ class ReactiveClientSpec extends Specification {
 
     def "GET /api/connections/{name}/channels/"() {
         given: "an open RabbitMQ client connection with 1 channel"
-        final conn = openConnection()
+        final s = UUID.randomUUID().toString()
+        final conn = openConnection(s)
         final ch = conn.createChannel()
 
         when: "client lists channels on that connection"
-
-        final cn = awaitEventPropagation({ client.getConnections() }).blockFirst().name
+        def xs = awaitEventPropagation({ client.getConnections() })
+        // applying filter as some previous connections can still show up the management API
+        xs = xs.toStream().collect(Collectors.toList()).findAll({
+            it.clientProperties.connectionName.equals(s)
+        })
+        def cn = xs.first().name
 
         final chs = awaitEventPropagation({ client.getChannels(cn) })
         final chi = chs.blockFirst()
@@ -276,13 +282,20 @@ class ReactiveClientSpec extends Specification {
 
     def "GET /api/channels/{name}"() {
         given: "an open RabbitMQ client connection with 1 channel"
-        final conn = openConnection()
+        final s = UUID.randomUUID().toString()
+        final conn = openConnection(s)
         final ch = conn.createChannel()
 
         when: "client retrieves channel info"
 
-        awaitEventPropagation({ client.getConnections() })
-        final chs = awaitEventPropagation({ client.getChannels() }).blockFirst()
+        def xs = awaitEventPropagation({ client.getConnections() })
+        // applying filter as some previous connections can still show up the management API
+        xs = xs.toStream().collect(Collectors.toList()).findAll({
+            it.clientProperties.connectionName.equals(s)
+        })
+        def cn = xs.first().name
+        final chs = awaitEventPropagation({ client.getChannels(cn) }).blockFirst()
+
         final chi = client.getChannel(chs.name).block()
 
         then: "the info is returned"
