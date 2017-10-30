@@ -274,13 +274,22 @@ class ClientSpec extends Specification {
 
   def "GET /api/channels"() {
     given: "an open RabbitMQ client connection with 1 channel"
-    final conn = openConnection()
+    final s = UUID.randomUUID().toString()
+    final conn = openConnection(s)
     final ch = conn.createChannel()
 
     when: "client lists channels"
 
-    awaitEventPropagation({ client.getConnections() })
-    final chs = awaitEventPropagation({ client.getChannels() })
+    def xs = awaitEventPropagation({ client.getConnections() })
+    // applying filter as some previous connections can still show up the management API
+    xs = xs.findAll({
+      it.clientProperties.connectionName.equals(s)
+    })
+    def cn = xs.first().name
+    def chs = awaitEventPropagation({ client.getChannels() })
+    // channel name starts with the connection name
+    // e.g. 127.0.0.1:42590 -> 127.0.0.1:5672 (1)
+    chs = chs.findAll({ it.name.startsWith(cn) })
     final chi = chs.first()
 
     then: "the list is returned"
@@ -321,13 +330,19 @@ class ClientSpec extends Specification {
 
   def "GET /api/channels/{name}"() {
     given: "an open RabbitMQ client connection with 1 channel"
-    final conn = openConnection()
+    final s = UUID.randomUUID().toString()
+    final conn = openConnection(s)
     final ch = conn.createChannel()
 
     when: "client retrieves channel info"
 
-    awaitEventPropagation({ client.getConnections() })
-    final chs = awaitEventPropagation({ client.getChannels() })
+    def xs = awaitEventPropagation({ client.getConnections() })
+    // applying filter as some previous connections can still show up the management API
+    xs = xs.findAll({
+      it.clientProperties.connectionName.equals(s)
+    })
+    def cn = xs.first().name
+    final chs = awaitEventPropagation({ client.getChannels(cn) })
     final chi = client.getChannel(chs.first().name)
 
     then: "the info is returned"
