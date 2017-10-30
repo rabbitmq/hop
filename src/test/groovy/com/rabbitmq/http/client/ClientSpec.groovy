@@ -45,6 +45,8 @@ class ClientSpec extends Specification {
   def setup() {
     client = newLocalhostNodeClient()
     client.getConnections().each { client.closeConnection(it.getName())}
+    awaitAllConnectionsClosed(client)
+    client.getConnections().each { println(it.getName())}
   }
 
   protected static Client newLocalhostNodeClient() {
@@ -1429,7 +1431,7 @@ class ClientSpec extends Specification {
   }
 
   protected static boolean awaitOn(CountDownLatch latch) {
-    latch.await(5, TimeUnit.SECONDS)
+    latch.await(10, TimeUnit.SECONDS)
   }
 
   protected static void verifyConnectionInfo(ConnectionInfo info) {
@@ -1560,6 +1562,18 @@ class ClientSpec extends Specification {
       Thread.sleep(1000)
       null
     }
+  }
+
+  protected static Object awaitAllConnectionsClosed(client) {
+      int n = 0
+      def result = client.getConnections()
+      while (result?.size() > 0 && n < 10000) {
+        Thread.sleep(100)
+        n =+ 100
+        result = client.getConnections()
+      }
+      assert n < 10000
+      result
   }
 
 }
