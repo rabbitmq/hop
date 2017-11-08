@@ -193,3 +193,10 @@ task dist(dependsOn: assemble) {
   group = 'Distribution'
   description = 'Builds -dist, -docs and distribution archives.'
 }
+
+jar {
+  manifest {
+    attributes("Automatic-Module-Name": "com.rabbitmq.http.client",
+            "Implementation-Version": version)
+  }
+}
