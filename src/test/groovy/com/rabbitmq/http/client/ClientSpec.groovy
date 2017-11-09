@@ -442,9 +442,9 @@ class ClientSpec extends Specification {
     xs.find { (it.name == s) } == null
   }
 
-  def "POST /api/exchanges/{vhost}/{name}/publish"() {
+//  def "POST /api/exchanges/{vhost}/{name}/publish"() {
     // TODO
-  }
+//  }
 
   def "GET /api/exchanges/{vhost}/{name}/bindings/source"() {
     given: "a queue named hop.queue1"
