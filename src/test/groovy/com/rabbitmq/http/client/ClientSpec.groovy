@@ -861,13 +861,13 @@ class ClientSpec extends Specification {
     client.deleteQueue(v, q)
   }
 
-  def "GET /api/bindings/{vhost}/e/:exchange/q/:queue/props"() {
+//  def "GET /api/bindings/{vhost}/e/:exchange/q/:queue/props"() {
     // TODO
-  }
+//  }
 
-  def "DELETE /api/bindings/{vhost}/e/:exchange/q/:queue/props"() {
+//  def "DELETE /api/bindings/{vhost}/e/:exchange/q/:queue/props"() {
     // TODO
-  }
+//  }
 
   def "DELETE /api/queues/{vhost}/{name}/contents"() {
     given: "queue hop.test with 10 messages"
@@ -895,9 +895,9 @@ class ClientSpec extends Specification {
     conn.close()
   }
 
-  def "POST /api/queues/{vhost}/{name}/get"() {
+//  def "POST /api/queues/{vhost}/{name}/get"() {
     // TODO
-  }
+//  }
 
   def "GET /api/vhosts"() {
     when: "client retrieves a list of vhosts"
@@ -1219,9 +1219,9 @@ class ClientSpec extends Specification {
     client.deleteUser(u)
   }
 
-  def "GET /api/parameters"() {
+//  def "GET /api/parameters"() {
     // TODO
-  }
+//  }
 
   def "GET /api/policies"() {
     given: "at least one policy was declared"
