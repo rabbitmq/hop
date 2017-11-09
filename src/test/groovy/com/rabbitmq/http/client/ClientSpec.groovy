@@ -18,7 +18,6 @@ package com.rabbitmq.http.client
 
 import com.rabbitmq.client.*
 import com.rabbitmq.http.client.domain.*
-import org.apache.http.impl.client.HttpClientBuilder
 import org.springframework.http.HttpStatus
 import org.springframework.web.client.HttpClientErrorException
 import spock.lang.IgnoreIf
@@ -114,17 +113,10 @@ class ClientSpec extends Specification {
 
   def "GET /api/nodes with a user-provided HTTP builder configurator"() {
     when: "a user-provided HTTP builder configurator is set"
-    final cfg = new HttpClientBuilderConfigurator() {
-      @Override
-      HttpClientBuilder configure(HttpClientBuilder builder) {
-        // this number has no particular meaning
-        // but it should be enough connections for this test suite
-        // and then some. MK.
-        builder.setMaxConnTotal(8192)
-        return builder
-      }
-    }
-    final client = newLocalhostNodeClient(cfg)
+    // this number has no particular meaning
+    // but it should be enough connections for this test suite
+    // and then some. MK.
+    final client = newLocalhostNodeClient({ builder -> builder.setMaxConnTotal(8192) })
 
     and: "client retrieves a list of cluster nodes"
     final res = client.getNodes()
@@ -219,12 +211,7 @@ class ClientSpec extends Specification {
     final latch = new CountDownLatch(1)
     final s = UUID.randomUUID().toString()
     final conn = openConnection(s)
-    conn.addShutdownListener(new ShutdownListener() {
-      @Override
-      void shutdownCompleted(ShutdownSignalException e) {
-        latch.countDown()
-      }
-    })
+    conn.addShutdownListener({ e -> latch.countDown()})
     assert conn.isOpen()
 
     when: "client closes the connection"
@@ -253,12 +240,7 @@ class ClientSpec extends Specification {
     final latch = new CountDownLatch(1)
     final s = UUID.randomUUID().toString()
     final conn = openConnection(s)
-    conn.addShutdownListener(new ShutdownListener() {
-      @Override
-      void shutdownCompleted(ShutdownSignalException e) {
-        latch.countDown()
-      }
-    })
+    conn.addShutdownListener({e -> latch.countDown()})
     assert conn.isOpen()
 
     when: "client closes the connection"
