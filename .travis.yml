@@ -5,7 +5,9 @@ language: java
 jdk: oraclejdk8
 
 notifications:
-  email: michael@rabbitmq.com
+  email:
+    - michael@rabbitmq.com
+    - acogoluegnes@pivotal.io
 services:
   - rabbitmq
 branches:
