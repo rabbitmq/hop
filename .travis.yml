@@ -16,7 +16,7 @@ addons:
       - sourceline: deb https://dl.bintray.com/rabbitmq/debian trusty main
         key_url: https://dl.bintray.com/rabbitmq/Keys/rabbitmq-release-signing-key.asc
     packages:
-      - esl-erlang=1:20.2
+      - esl-erlang=1:20.2.2
 # because of https://github.com/travis-ci/travis-ci/issues/8906
 before_install:
   - sudo mv /opt/jdk_switcher/jdk_switcher.sh /tmp
