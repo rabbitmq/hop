@@ -1047,10 +1047,18 @@ class ReactiveClientSpec extends Specification {
 
         when: "client declares a queue hop.test"
         final s = "hop.test"
-        ClientResponse r = client.declareQueue(v, s, new QueueInfo(false, false, false)).block()
+        // throws an exception for RabbitMQ 3.7.4+
+        // because of the way Cowboy 2.2.2 handles chunked transfer-encoding
+        boolean received404OrException = false
+        try {
+            ClientResponse r = client.declareQueue(v, s, new QueueInfo(false, false, false)).block()
+            received404OrException = r.statusCode() == HttpStatus.NOT_FOUND
+        } catch (RuntimeException e) {
+            received404OrException = true
+        }
 
-        then: "status code is 404"
-        r.statusCode() == HttpStatus.NOT_FOUND
+        then: "status code is 404 or exception is thrown"
+        received404OrException
     }
 
     def "DELETE /api/queues/{vhost}/{name}"() {
