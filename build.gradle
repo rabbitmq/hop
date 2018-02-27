@@ -70,6 +70,12 @@ dependencies {
   testCompile "com.rabbitmq:amqp-client:$amqpClientVersion"
 }
 
+test {
+ beforeTest { descriptor ->
+    logger.lifecycle("Running test \"${descriptor}\"")
+ }
+}
+
 eclipse.project.natures += 'org.springframework.ide.eclipse.core.springnature'
 
 jacoco {
