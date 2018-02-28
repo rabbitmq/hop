@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 the original author or authors.
+ * Copyright 2017-2018 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,7 @@ import org.springframework.http.HttpStatus
 import org.springframework.web.reactive.function.client.ClientResponse
 import org.springframework.web.reactive.function.client.WebClientResponseException
 import reactor.core.publisher.Flux
+import reactor.core.publisher.Mono
 import spock.lang.IgnoreIf
 import spock.lang.Specification
 
@@ -1049,16 +1050,14 @@ class ReactiveClientSpec extends Specification {
         final s = "hop.test"
         // throws an exception for RabbitMQ 3.7.4+
         // because of the way Cowboy 2.2.2 handles chunked transfer-encoding
-        boolean received404OrException = false
-        try {
-            ClientResponse r = client.declareQueue(v, s, new QueueInfo(false, false, false)).block()
-            received404OrException = r.statusCode() == HttpStatus.NOT_FOUND
-        } catch (RuntimeException e) {
-            received404OrException = true
-        }
+        // so we handle both 404 and the error
+        def status = client.declareQueue(v, s, new QueueInfo(false, false, false))
+            .flatMap({ r -> Mono.just(r.statusCode().value()) })
+            .onErrorReturn({ t -> "Connection closed prematurely".equals(t.getMessage())}, 500)
+            .block()
 
         then: "status code is 404 or exception is thrown"
-        received404OrException
+        status == 404 || status == 500
     }
 
     def "DELETE /api/queues/{vhost}/{name}"() {
