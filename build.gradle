@@ -73,7 +73,7 @@ dependencies {
 eclipse.project.natures += 'org.springframework.ide.eclipse.core.springnature'
 
 jacoco {
-  toolVersion = "0.7.9"
+  toolVersion = "0.8.0"
 }
 
 // enable all compiler warnings; individual projects may customize further
