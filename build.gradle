@@ -70,12 +70,6 @@ dependencies {
   testCompile "com.rabbitmq:amqp-client:$amqpClientVersion"
 }
 
-test {
- beforeTest { descriptor ->
-    logger.lifecycle("Running test \"${descriptor}\"")
- }
-}
-
 eclipse.project.natures += 'org.springframework.ide.eclipse.core.springnature'
 
 jacoco {
@@ -86,6 +80,10 @@ jacoco {
 [compileJava, compileTestJava, compileTestGroovy]*.options*.compilerArgs = ['-Xlint:all,-options']
 
 test {
+  beforeTest { descriptor ->
+    logger.lifecycle("Running test \"${descriptor}\"")
+  }
+
   // suppress all console output during testing unless running `gradle -i`
   logging.captureStandardOutput(LogLevel.INFO)
   maxHeapSize = "1024m"
