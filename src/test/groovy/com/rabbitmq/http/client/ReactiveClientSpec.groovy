@@ -730,10 +730,16 @@ class ReactiveClientSpec extends Specification {
         client.createUser(u, "test".toCharArray(), Arrays.asList("management", "http", "policymaker")).block()
 
         when: "permissions of user guest in vhost / are updated"
-        final r = client.updatePermissions(v, u, new UserPermissions("read", "write", "configure")).block()
+        // throws an exception for RabbitMQ 3.7.4+
+        // because of the way Cowboy 2.2.2 handles chunked transfer-encoding
+        // so we handle both 404 and the error
+        def status = client.updatePermissions(v, u, new UserPermissions("read", "write", "configure"))
+                .flatMap({ r -> Mono.just(r.statusCode().value()) })
+                .onErrorReturn({ t -> "Connection closed prematurely".equals(t.getMessage())}, 500)
+                .block()
 
-        then: "HTTP status is 400 BAD REQUEST"
-        r.statusCode() == HttpStatus.BAD_REQUEST
+        then: "HTTP status is 400 BAD REQUEST or exception is thrown"
+        status == 400 || status == 500
 
         cleanup:
         client.deleteUser(u).block()
