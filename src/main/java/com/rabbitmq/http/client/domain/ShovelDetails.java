@@ -44,6 +44,9 @@ public class ShovelDetails {
 	@JsonProperty("add-forward-headers")
 	private boolean addForwardHeaders;
 
+	@JsonProperty("ack-mode")
+	private String ackMode;
+
 	@JsonProperty("publish-properties")
 	private Map<String, Object> publishProperties;
 
@@ -122,6 +125,14 @@ public class ShovelDetails {
 		this.addForwardHeaders = addForwardHeaders;
 	}
 
+	public String getAckMode() {
+		return ackMode;
+	}
+
+	public void setAckMode(String ackMode) {
+		this.ackMode = ackMode;
+	}
+
 	public Map<String, Object> getPublishProperties() {
 		return publishProperties;
 	}
@@ -134,7 +145,7 @@ public class ShovelDetails {
 	public String toString() {
 		return "ShovelDetails{" + "sourceURI=" + sourceURI + ", sourceExchange=" + sourceExchange + ", sourceQueue=" + sourceQueue + ", destinationURI="
 				+ destinationURI + ", destinationExchange='" + destinationExchange + '\'' + ", destinationQueue='" + destinationQueue + '\''
-				+ ", reconnectDelay='" + reconnectDelay + '\'' + ", addForwardHeaders='" + addForwardHeaders + '\'' + ", publishProperties='"
-				+ publishProperties + '}';
+				+ ", reconnectDelay='" + reconnectDelay + '\'' + ", addForwardHeaders='" + addForwardHeaders + '\'' + ", ackMode='" + ackMode + '\''
+				+ ", publishProperties='" + publishProperties + '}';
 	}
 }
