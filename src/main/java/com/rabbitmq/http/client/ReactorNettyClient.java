@@ -36,6 +36,7 @@ import reactor.ipc.netty.http.client.HttpClient;
 import reactor.ipc.netty.http.client.HttpClientRequest;
 import reactor.ipc.netty.http.client.HttpClientResponse;
 
+import java.lang.reflect.Array;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
 import java.util.function.Function;
@@ -47,7 +48,7 @@ public class ReactorNettyClient {
 
     private static final int MAX_PAYLOAD_SIZE = 100 * 1024 * 1024;
 
-    private final UriComponentsBuilder uriBuilder = UriComponentsBuilder.fromHttpUrl("http://localhost:15672/api");
+    private final Mono<String> root = Mono.just("http://localhost:15672/api");
 
     private final ObjectMapper objectMapper = new ObjectMapper();
 
@@ -61,6 +62,7 @@ public class ReactorNettyClient {
         objectMapper.disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
         objectMapper.disable(MapperFeature.DEFAULT_VIEW_INCLUSION);
 
+        UriComponentsBuilder uriBuilder = UriComponentsBuilder.fromHttpUrl(root.block());
         client = HttpClient.create(options -> options.host(uriBuilder.build().getHost()).port(uriBuilder.build().getPort()));
 
         String credentials = "guest" + ":" + "guest";
@@ -70,59 +72,63 @@ public class ReactorNettyClient {
         authorizationHeader = "Basic " + encodedCredentials;
     }
 
-    static Function<Mono<HttpClientRequest>, Publisher<Void>> encode(ObjectMapper objectMapper, Object requestPayload) {
-        return outbound -> outbound
-            .flatMapMany(request -> {
-                try {
-                    byte[] bytes = objectMapper.writeValueAsBytes(requestPayload);
-
-                    return request
-                        .header(HttpHeaderNames.CONTENT_TYPE, HttpHeaderValues.APPLICATION_JSON)
-                        .header(HttpHeaderNames.CONTENT_LENGTH, String.valueOf(bytes.length))
-                        .sendByteArray(Mono.just(bytes));
-                } catch (JsonProcessingException e) {
-                    throw Exceptions.propagate(e);
-                }
-            });
-    }
-
     public Mono<OverviewResponse> getOverview() {
-        return client.get(uriBuilder.cloneBuilder().pathSegment("overview").toUriString(), request -> request
-            .addHeader(HttpHeaderNames.AUTHORIZATION, authorizationHeader)
-            .send()).transform(decode(OverviewResponse.class));
+        return doGetMono(builder -> builder.pathSegment("overview"), OverviewResponse.class);
     }
 
     public Flux<NodeInfo> getNodes() {
-        return client.get(uriBuilder.cloneBuilder().pathSegment("nodes").toUriString(), request -> request
-            .addHeader(HttpHeaderNames.AUTHORIZATION, authorizationHeader)
-            .send()).transform(decode(NodeInfo[].class)).flatMapMany(nodes -> Flux.fromArray(nodes));
+        return doGetFlux(builder -> builder.pathSegment("nodes"), NodeInfo.class);
     }
 
     public Mono<HttpClientResponse> declarePolicy(String vhost, String name, PolicyInfo info) {
-        return client.put(uriBuilder.cloneBuilder()
-            .pathSegment("policies", "{vhost}", "{name}")
-            .build(vhost, name).toASCIIString(), request -> {
-            request.addHeader(HttpHeaderNames.AUTHORIZATION, authorizationHeader)
-                .chunkedTransfer(false)
-                .failOnClientError(false)
-                .failOnServerError(false);
+        return doPost(builder -> builder.pathSegment("policies", vhost, name), info);
+    }
 
-            return Mono.just(request).transform(encode(objectMapper, info));
-        });
+    private HttpClientRequest disableChunkTransfer(HttpClientRequest request) {
+        return request.chunkedTransfer(false);
     }
 
     public Flux<PolicyInfo> getPolicies() {
-        return client.get(uriBuilder.cloneBuilder().pathSegment("policies").toUriString(), request -> request
-            .addHeader(HttpHeaderNames.AUTHORIZATION, authorizationHeader)
-            .send()).transform(decode(PolicyInfo[].class)).flatMapMany(nodes -> Flux.fromArray(nodes));
+        return doGetFlux(builder -> builder.pathSegment("policies"), PolicyInfo.class);
     }
 
     public Mono<HttpClientResponse> deletePolicy(String vhost, String name) {
-        return client.delete(uriBuilder.cloneBuilder()
-            .pathSegment("policies", "{vhost}", "{name}")
-            .build(vhost, name).toASCIIString(), request -> request
-            .addHeader(HttpHeaderNames.AUTHORIZATION, authorizationHeader)
-            .send());
+        return doDelete(builder -> builder.pathSegment("policies", vhost, name));
+    }
+
+    private <T> Mono<T> doGetMono(Function<UriComponentsBuilder, UriComponentsBuilder> uriTransformer, Class<T> type) {
+        return client.get(uri(uriTransformer), request -> Mono.just(request)
+            .map(this::addAuthentication)
+            .flatMap(pRequest -> pRequest.send())).transform(decode(type));
+    }
+
+    private <T> Flux<T> doGetFlux(Function<UriComponentsBuilder, UriComponentsBuilder> uriTransformer, Class<T> type) {
+        return (Flux<T>) doGetMono(uriTransformer, Array.newInstance(type, 0).getClass()).flatMapMany(items -> Flux.fromArray((Object[]) items));
+    }
+
+    private Mono<HttpClientResponse> doPost(Function<UriComponentsBuilder, UriComponentsBuilder> uriTransformer, Object body) {
+        return client.put(uri(uriTransformer), request -> Mono.just(request)
+            .map(this::addAuthentication)
+            .map(this::disableChunkTransfer)
+            .transform(encode(body)));
+    }
+
+    private Mono<HttpClientResponse> doDelete(Function<UriComponentsBuilder, UriComponentsBuilder> uriTransformer) {
+        return client.delete(uri(uriTransformer), request -> Mono.just(request)
+            .map(this::addAuthentication)
+            .flatMap(HttpClientRequest::send)
+        );
+    }
+
+    private HttpClientRequest addAuthentication(HttpClientRequest request) {
+        return request.addHeader(HttpHeaderNames.AUTHORIZATION, authorizationHeader);
+    }
+
+    private String uri(Function<UriComponentsBuilder, UriComponentsBuilder> transformer) {
+        return root.map(UriComponentsBuilder::fromHttpUrl)
+            .map(transformer)
+            .map(builder -> builder.build().encode())
+            .block().toUriString();
     }
 
     private <T> Function<Mono<HttpClientResponse>, Flux<T>> decode(Class<T> type) {
@@ -137,5 +143,21 @@ public class ReactorNettyClient {
                     }
                 })
             );
+    }
+
+    private Function<Mono<HttpClientRequest>, Publisher<Void>> encode(Object requestPayload) {
+        return outbound -> outbound
+            .flatMapMany(request -> {
+                try {
+                    byte[] bytes = objectMapper.writeValueAsBytes(requestPayload);
+
+                    return request
+                        .header(HttpHeaderNames.CONTENT_TYPE, HttpHeaderValues.APPLICATION_JSON)
+                        .header(HttpHeaderNames.CONTENT_LENGTH, String.valueOf(bytes.length))
+                        .sendByteArray(Mono.just(bytes));
+                } catch (JsonProcessingException e) {
+                    throw Exceptions.propagate(e);
+                }
+            });
     }
 }
