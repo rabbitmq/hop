@@ -39,6 +39,7 @@ ext {
   spockVersion = "1.1-groovy-2.4"
   reactorVersion = "Bismuth-SR9"
   springVersion = '5.0.6.RELEASE'
+  reactorNettyVersion = '0.7.7.RELEASE'
 
   linkHomepage = 'https://github.com/rabbitmq/hop'
   linkCi       = 'https://build.spring.io/browse/RMQ'
@@ -63,7 +64,7 @@ dependencies {
   compile "org.springframework:spring-webflux:$springVersion"
   compile "org.apache.httpcomponents:httpclient:$commonsHttpClientVersion"
   compile "com.fasterxml.jackson.core:jackson-databind:$jacksonVersion"
-  compile "io.projectreactor.ipc:reactor-netty"
+  compile "io.projectreactor.ipc:reactor-netty:$reactorNettyVersion"
 
   testCompile "org.codehaus.groovy:groovy-all:$groovyVersion"
   testCompile "org.spockframework:spock-core:$spockVersion"
