@@ -57,19 +57,24 @@ public class ReactorNettyClient {
     private final String authorizationHeader;
 
     public ReactorNettyClient() {
+        // FIXME make Jackson ObjectMapper configurable
         objectMapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
         objectMapper.enable(DeserializationFeature.ACCEPT_EMPTY_ARRAY_AS_NULL_OBJECT);
         objectMapper.disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
         objectMapper.disable(MapperFeature.DEFAULT_VIEW_INCLUSION);
 
+        // FIXME make URL configurable
         UriComponentsBuilder uriBuilder = UriComponentsBuilder.fromHttpUrl(root.block());
         client = HttpClient.create(options -> options.host(uriBuilder.build().getHost()).port(uriBuilder.build().getPort()));
 
+        // FIXME make Authentication header value configurable (default being Basic)
         String credentials = "guest" + ":" + "guest";
         byte[] credentialsAsBytes = credentials.getBytes(StandardCharsets.ISO_8859_1);
         byte[] encodedBytes = Base64.getEncoder().encode(credentialsAsBytes);
         String encodedCredentials = new String(encodedBytes, StandardCharsets.ISO_8859_1);
         authorizationHeader = "Basic " + encodedCredentials;
+
+        // FIXME make SSLContext configurable when using TLS
     }
 
     public Mono<OverviewResponse> getOverview() {
@@ -125,6 +130,8 @@ public class ReactorNettyClient {
     }
 
     private String uri(Function<UriComponentsBuilder, UriComponentsBuilder> transformer) {
+        // FIXME encode URL without Spring dependencies
+        // the encoding should be simple enough to not depend on Spring just for this
         return root.map(UriComponentsBuilder::fromHttpUrl)
             .map(transformer)
             .map(builder -> builder.build().encode())
