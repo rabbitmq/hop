@@ -39,7 +39,7 @@ class ReactorNettyClientSpec extends Specification {
     }
 
     protected static ReactorNettyClient newLocalhostNodeClient() {
-        new ReactorNettyClient()
+        new ReactorNettyClient("http://guest:guest@localhost:15672/api")
     }
 
     def "GET /api/overview"() {
