@@ -59,7 +59,7 @@ public class ReactorNettyClient {
 
     private final HttpClient client;
 
-    private final String authorizationHeader;
+    private final Mono<String> token;
 
     public ReactorNettyClient(String url) {
         this(urlWithoutCredentials(url),
@@ -80,11 +80,7 @@ public class ReactorNettyClient {
         client = HttpClient.create(options -> options.host(uri.getHost()).port(uri.getPort()));
 
         // FIXME make Authentication header value configurable (default being Basic)
-        String credentials = username + ":" + password;
-        byte[] credentialsAsBytes = credentials.getBytes(StandardCharsets.ISO_8859_1);
-        byte[] encodedBytes = Base64.getEncoder().encode(credentialsAsBytes);
-        String encodedCredentials = new String(encodedBytes, StandardCharsets.ISO_8859_1);
-        authorizationHeader = "Basic " + encodedCredentials;
+        this.token = createBasicAuthenticationToken(username, password);
 
         // FIXME make SSLContext configurable when using TLS
     }
@@ -92,6 +88,16 @@ public class ReactorNettyClient {
     private static String urlWithoutCredentials(String url) {
         URI url1 = URI.create(url);
         return StringUtils.replace(url, url1.getUserInfo() + "@", "");
+    }
+
+    protected Mono<String> createBasicAuthenticationToken(String username, String password) {
+        return Mono.fromSupplier(() -> {
+            String credentials = username + ":" + password;
+            byte[] credentialsAsBytes = credentials.getBytes(StandardCharsets.ISO_8859_1);
+            byte[] encodedBytes = Base64.getEncoder().encode(credentialsAsBytes);
+            String encodedCredentials = new String(encodedBytes, StandardCharsets.ISO_8859_1);
+            return "Basic " + encodedCredentials;
+        }).cache();
     }
 
     public Mono<OverviewResponse> getOverview() {
@@ -120,7 +126,7 @@ public class ReactorNettyClient {
 
     private <T> Mono<T> doGetMono(Class<T> type, String... pathSegments) {
         return client.get(uri(pathSegments), request -> Mono.just(request)
-            .map(this::addAuthentication)
+            .transform(this::addAuthorization)
             .flatMap(pRequest -> pRequest.send())).transform(decode(type));
     }
 
@@ -130,20 +136,22 @@ public class ReactorNettyClient {
 
     private Mono<HttpClientResponse> doPost(Object body, String... pathSegments) {
         return client.put(uri(pathSegments), request -> Mono.just(request)
-            .map(this::addAuthentication)
+            .transform(this::addAuthorization)
             .map(this::disableChunkTransfer)
             .transform(encode(body)));
     }
 
     private Mono<HttpClientResponse> doDelete(String... pathSegments) {
         return client.delete(uri(pathSegments), request -> Mono.just(request)
-            .map(this::addAuthentication)
+            .transform(this::addAuthorization)
             .flatMap(HttpClientRequest::send)
         );
     }
 
-    private HttpClientRequest addAuthentication(HttpClientRequest request) {
-        return request.addHeader(HttpHeaderNames.AUTHORIZATION, authorizationHeader);
+    private Mono<HttpClientRequest> addAuthorization(Mono<HttpClientRequest> request) {
+        return Mono
+            .zip(request, token)
+            .map(tuple -> tuple.getT1().addHeader(HttpHeaderNames.AUTHORIZATION, tuple.getT2()));
     }
 
     private String uri(String... pathSegments) {
