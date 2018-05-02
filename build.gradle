@@ -19,12 +19,12 @@ repositories {
 sourceCompatibility = targetCompatibility = 1.6
 
 ext {
-  amqpClientVersion='4.3.0'
-  commonsHttpClientVersion = '4.5.3'
-  groovyVersion = '2.4.12'
-  jacksonVersion = '2.9.2'
+  amqpClientVersion='4.6.0'
+  commonsHttpClientVersion = '4.5.5'
+  groovyVersion = '2.4.15'
+  jacksonVersion = '2.9.5'
   spockVersion = "1.1-groovy-2.4"
-  springWebVersion = '4.3.12.RELEASE'
+  springWebVersion = '4.3.16.RELEASE'
 
   linkHomepage = 'https://github.com/rabbitmq/hop'
   linkCi       = 'https://build.spring.io/browse/RMQ'
