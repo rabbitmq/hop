@@ -18,9 +18,13 @@ package com.rabbitmq.http.client
 
 import com.rabbitmq.client.Connection
 import com.rabbitmq.client.ConnectionFactory
+import com.rabbitmq.http.client.domain.ConnectionInfo
 import com.rabbitmq.http.client.domain.NodeInfo
 import com.rabbitmq.http.client.domain.PolicyInfo
 import spock.lang.Specification
+
+import java.util.concurrent.CountDownLatch
+import java.util.concurrent.TimeUnit
 
 class ReactorNettyClientSpec extends Specification {
 
@@ -36,6 +40,7 @@ class ReactorNettyClientSpec extends Specification {
 
     def setup() {
         client = newLocalhostNodeClient()
+        client.getConnections().toStream().forEach({ c -> client.closeConnection(c.name).block() })
     }
 
     protected static ReactorNettyClient newLocalhostNodeClient() {
@@ -97,6 +102,17 @@ class ReactorNettyClientSpec extends Specification {
         verifyNode(node)
     }
 
+    def "GET /api/nodes/{name}"() {
+        when: "client retrieves a list of cluster nodes"
+        final res = client.getNodes()
+        final name = res.blockFirst().name
+        final node = client.getNode(name).block()
+
+        then: "the list is returned"
+        res.count().block() >= 1
+        verifyNode(node)
+    }
+
     def "GET /api/policies"() {
         given: "at least one policy was declared"
         final v = "/"
@@ -117,8 +133,124 @@ class ReactorNettyClientSpec extends Specification {
         client.deletePolicy(v, s).block()
     }
 
+    def "GET /api/connections"() {
+        given: "an open RabbitMQ client connection"
+        final conn = openConnection()
+
+        when: "client retrieves a list of connections"
+
+        final res = awaitEventPropagation({ client.getConnections() })
+        final fst = res.blockFirst()
+
+        then: "the list is returned"
+        res.count().block() >= 1
+        verifyConnectionInfo(fst)
+
+        cleanup:
+        conn.close()
+    }
+
+    def "GET /api/connections/{name}"() {
+        given: "an open RabbitMQ client connection"
+        final conn = openConnection()
+
+        when: "client retrieves connection info with the correct name"
+
+        final xs = awaitEventPropagation({ client.getConnections() })
+        final x = client.getConnection(xs.blockFirst().name)
+
+        then: "the info is returned"
+        verifyConnectionInfo(x.block())
+
+        cleanup:
+        conn.close()
+    }
+
+    def "GET /api/connections/{name} with client-provided name"() {
+        given: "an open RabbitMQ client connection with client-provided name"
+        final s = "client-name"
+        final conn = openConnection(s)
+
+        when: "client retrieves connection info with the correct name"
+
+        final xs = awaitEventPropagation({ client.getConnections() })
+
+        final x = client.getConnection(
+                xs.filter( { c -> c.clientProperties.connectionName == s } )
+                        .blockFirst().name)
+
+        then: "the info is returned"
+        verifyConnectionInfo(x.block())
+        x.block().clientProperties.connectionName == s
+
+        cleanup:
+        conn.close()
+    }
+
+    def "DELETE /api/connections/{name}"() {
+        given: "an open RabbitMQ client connection"
+        final latch = new CountDownLatch(1)
+        final s = "client-name"
+        final conn = openConnection(s)
+
+        conn.addShutdownListener({ e -> latch.countDown() })
+
+        assert conn.isOpen()
+
+        when: "client closes the connection"
+
+        final xs = awaitEventPropagation({ client.getConnections() })
+        final x = client.getConnection(
+                xs.filter( { c -> c.clientProperties.connectionName == s } )
+                        .blockFirst().name)
+        client.closeConnection(x.block().name).block()
+
+        and: "some time passes"
+        assert awaitOn(latch)
+
+        then: "the connection is closed"
+        !conn.isOpen()
+
+        cleanup:
+        if (conn.isOpen()) {
+            conn.close()
+        }
+    }
+
+    def "DELETE /api/connections/{name} with a user-provided reason"() {
+        given: "an open RabbitMQ client connection"
+        final latch = new CountDownLatch(1)
+        final s = "client-name"
+        final conn = openConnection(s)
+        conn.addShutdownListener({ e -> latch.countDown() })
+        assert conn.isOpen()
+
+        when: "client closes the connection"
+
+        final xs = awaitEventPropagation({ client.getConnections() })
+        final x = client.getConnection(
+                xs.filter( { c -> c.clientProperties.connectionName == s } )
+                        .blockFirst().name)
+        client.closeConnection(x.block().name, "because reasons!").block()
+
+        and: "some time passes"
+        assert awaitOn(latch)
+
+        then: "the connection is closed"
+        !conn.isOpen()
+
+        cleanup:
+        if (conn.isOpen()) {
+            conn.close()
+        }
+    }
+
     protected Connection openConnection() {
         this.cf.newConnection()
+    }
+
+    protected Connection openConnection(String clientProvidedName) {
+        this.cf.newConnection(clientProvidedName)
     }
 
     protected static void verifyNode(NodeInfo node) {
@@ -136,6 +268,12 @@ class ReactorNettyClientSpec extends Specification {
         assert x.pattern != null
         assert x.definition != null
         assert x.applyTo != null
+    }
+
+    protected static void verifyConnectionInfo(ConnectionInfo info) {
+        assert info.port == ConnectionFactory.DEFAULT_AMQP_PORT
+        assert !info.usesTLS
+        assert info.peerHost.equals(info.host)
     }
 
     /**
@@ -160,6 +298,10 @@ class ReactorNettyClientSpec extends Specification {
             Thread.sleep(1000)
             null
         }
+    }
+
+    protected static boolean awaitOn(CountDownLatch latch) {
+        latch.await(10, TimeUnit.SECONDS)
     }
 
 }

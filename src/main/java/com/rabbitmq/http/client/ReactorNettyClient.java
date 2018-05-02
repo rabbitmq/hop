@@ -21,6 +21,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.MapperFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.rabbitmq.http.client.domain.ConnectionInfo;
 import com.rabbitmq.http.client.domain.NodeInfo;
 import com.rabbitmq.http.client.domain.OverviewResponse;
 import com.rabbitmq.http.client.domain.PolicyInfo;
@@ -28,7 +29,6 @@ import io.netty.handler.codec.http.HttpHeaderNames;
 import io.netty.handler.codec.http.HttpHeaderValues;
 import io.netty.handler.codec.json.JsonObjectDecoder;
 import org.reactivestreams.Publisher;
-import org.springframework.util.StringUtils;
 import reactor.core.Exceptions;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -36,13 +36,14 @@ import reactor.ipc.netty.http.client.HttpClient;
 import reactor.ipc.netty.http.client.HttpClientRequest;
 import reactor.ipc.netty.http.client.HttpClientResponse;
 
-import java.io.UnsupportedEncodingException;
 import java.lang.reflect.Array;
 import java.net.URI;
-import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
+import java.util.LinkedHashMap;
+import java.util.Map;
 import java.util.function.Function;
+import java.util.function.UnaryOperator;
 
 /**
  *
@@ -63,8 +64,8 @@ public class ReactorNettyClient {
 
     public ReactorNettyClient(String url) {
         this(urlWithoutCredentials(url),
-            StringUtils.split(URI.create(url).getUserInfo(), ":")[0],
-            StringUtils.split(URI.create(url).getUserInfo(), ":")[1]);
+            URI.create(url).getUserInfo().split(":")[0],
+            URI.create(url).getUserInfo().split(":")[1]);
     }
 
     public ReactorNettyClient(String url, String username, String password) {
@@ -75,7 +76,6 @@ public class ReactorNettyClient {
         objectMapper.disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
         objectMapper.disable(MapperFeature.DEFAULT_VIEW_INCLUSION);
 
-        // FIXME make URL configurable
         URI uri = URI.create(url);
         client = HttpClient.create(options -> options.host(uri.getHost()).port(uri.getPort()));
 
@@ -87,7 +87,15 @@ public class ReactorNettyClient {
 
     private static String urlWithoutCredentials(String url) {
         URI url1 = URI.create(url);
-        return StringUtils.replace(url, url1.getUserInfo() + "@", "");
+        return url.replace(url1.getUserInfo() + "@", "");
+    }
+
+    private static HttpResponse toHttpResponse(HttpClientResponse response) {
+        Map<String, String> headers = new LinkedHashMap<>();
+        for (Map.Entry<String, String> headerEntry : response.responseHeaders().entries()) {
+            headers.put(headerEntry.getKey(), headerEntry.getValue());
+        }
+        return new HttpResponse(response.status().code(), response.status().reasonPhrase(), headers);
     }
 
     protected Mono<String> createBasicAuthenticationToken(String username, String password) {
@@ -108,7 +116,27 @@ public class ReactorNettyClient {
         return doGetFlux(NodeInfo.class, "nodes");
     }
 
-    public Mono<HttpClientResponse> declarePolicy(String vhost, String name, PolicyInfo info) {
+    public Mono<NodeInfo> getNode(String name) {
+        return doGetMono(NodeInfo.class, "nodes", name);
+    }
+
+    public Flux<ConnectionInfo> getConnections() {
+        return doGetFlux(ConnectionInfo.class, "connections");
+    }
+
+    public Mono<ConnectionInfo> getConnection(String name) {
+        return doGetMono(ConnectionInfo.class, "connections", name);
+    }
+
+    public Mono<HttpResponse> closeConnection(String name) {
+        return doDelete("connections", name);
+    }
+
+    public Mono<HttpResponse> closeConnection(String name, String reason) {
+        return doDelete(request -> request.header("X-Reason", reason), "connections", name);
+    }
+
+    public Mono<HttpResponse> declarePolicy(String vhost, String name, PolicyInfo info) {
         return doPost(info, "policies", vhost, name);
     }
 
@@ -120,7 +148,7 @@ public class ReactorNettyClient {
         return doGetFlux(PolicyInfo.class, "policies");
     }
 
-    public Mono<HttpClientResponse> deletePolicy(String vhost, String name) {
+    public Mono<HttpResponse> deletePolicy(String vhost, String name) {
         return doDelete("policies", vhost, name);
     }
 
@@ -134,37 +162,38 @@ public class ReactorNettyClient {
         return (Flux<T>) doGetMono(Array.newInstance(type, 0).getClass(), pathSegments).flatMapMany(items -> Flux.fromArray((Object[]) items));
     }
 
-    private Mono<HttpClientResponse> doPost(Object body, String... pathSegments) {
+    private Mono<HttpResponse> doPost(Object body, String... pathSegments) {
         return client.put(uri(pathSegments), request -> Mono.just(request)
             .transform(this::addAuthorization)
             .map(this::disableChunkTransfer)
-            .transform(encode(body)));
+            .transform(encode(body)))
+            .map(ReactorNettyClient::toHttpResponse);
     }
 
-    private Mono<HttpClientResponse> doDelete(String... pathSegments) {
+    private Mono<HttpResponse> doDelete(UnaryOperator<HttpClientRequest> operator, String... pathSegments) {
         return client.delete(uri(pathSegments), request -> Mono.just(request)
             .transform(this::addAuthorization)
+            .map(operator)
             .flatMap(HttpClientRequest::send)
-        );
+        ).map(ReactorNettyClient::toHttpResponse);
+    }
+
+    private Mono<HttpResponse> doDelete(String... pathSegments) {
+        return doDelete(request -> request, pathSegments);
     }
 
     private Mono<HttpClientRequest> addAuthorization(Mono<HttpClientRequest> request) {
         return Mono
-            .zip(request, token)
-            .map(tuple -> tuple.getT1().addHeader(HttpHeaderNames.AUTHORIZATION, tuple.getT2()));
+            .zip(request, this.token)
+            .map(tuple -> tuple.getT1().header(HttpHeaderNames.AUTHORIZATION, tuple.getT2()));
     }
 
     private String uri(String... pathSegments) {
         StringBuilder builder = new StringBuilder();
         if (pathSegments != null && pathSegments.length > 0) {
             for (String pathSegment : pathSegments) {
-                try {
-                    builder.append("/");
-                    builder.append(URLEncoder.encode(pathSegment, ENCODING_CHARSET));
-                } catch (UnsupportedEncodingException e) {
-                    // FIXME exception handling
-                    throw new RuntimeException(e);
-                }
+                builder.append("/");
+                builder.append(Utils.encode(pathSegment));
             }
         }
         return rootUrl + builder.toString();
