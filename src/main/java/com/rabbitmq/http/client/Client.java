@@ -803,12 +803,7 @@ public class Client {
   }
 
   private String encodePathSegment(final String pathSegment) {
-    try {
-      return UriUtils.encodePathSegment(pathSegment, "UTF-8");
-    } catch (UnsupportedEncodingException e) {
-      // the best we can do without messing up all caller signatures :/ MK.
-      return pathSegment;
-    }
+    return UriUtils.encodePathSegment(pathSegment, "UTF-8");
   }
 
   private List<HttpMessageConverter<?>> getMessageConverters() {
