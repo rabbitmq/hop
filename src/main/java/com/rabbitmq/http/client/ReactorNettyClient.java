@@ -21,10 +21,16 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.MapperFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.rabbitmq.http.client.domain.ChannelInfo;
 import com.rabbitmq.http.client.domain.ConnectionInfo;
+import com.rabbitmq.http.client.domain.CurrentUserDetails;
+import com.rabbitmq.http.client.domain.ExchangeInfo;
 import com.rabbitmq.http.client.domain.NodeInfo;
 import com.rabbitmq.http.client.domain.OverviewResponse;
 import com.rabbitmq.http.client.domain.PolicyInfo;
+import com.rabbitmq.http.client.domain.UserInfo;
+import com.rabbitmq.http.client.domain.UserPermissions;
+import com.rabbitmq.http.client.domain.VhostInfo;
 import io.netty.handler.codec.http.HttpHeaderNames;
 import io.netty.handler.codec.http.HttpHeaderValues;
 import io.netty.handler.codec.json.JsonObjectDecoder;
@@ -40,7 +46,9 @@ import java.lang.reflect.Array;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
 import java.util.function.UnaryOperator;
@@ -51,8 +59,6 @@ import java.util.function.UnaryOperator;
 public class ReactorNettyClient {
 
     private static final int MAX_PAYLOAD_SIZE = 100 * 1024 * 1024;
-
-    private static final String ENCODING_CHARSET = "UTF-8";
 
     private final String rootUrl;
 
@@ -98,6 +104,16 @@ public class ReactorNettyClient {
         return new HttpResponse(response.status().code(), response.status().reasonPhrase(), headers);
     }
 
+    private static HttpClientRequest disableChunkTransfer(HttpClientRequest request) {
+        return request.chunkedTransfer(false);
+    }
+
+    private static HttpClientRequest disableFailOnError(HttpClientRequest request) {
+        return request
+            .failOnClientError(false)
+            .failOnServerError(false);
+    }
+
     protected Mono<String> createBasicAuthenticationToken(String username, String password) {
         return Mono.fromSupplier(() -> {
             String credentials = username + ":" + password;
@@ -117,7 +133,7 @@ public class ReactorNettyClient {
     }
 
     public Mono<NodeInfo> getNode(String name) {
-        return doGetMono(NodeInfo.class, "nodes", name);
+        return doGetMono(NodeInfo.class, "nodes", enc(name));
     }
 
     public Flux<ConnectionInfo> getConnections() {
@@ -125,23 +141,19 @@ public class ReactorNettyClient {
     }
 
     public Mono<ConnectionInfo> getConnection(String name) {
-        return doGetMono(ConnectionInfo.class, "connections", name);
+        return doGetMono(ConnectionInfo.class, "connections", enc(name));
     }
 
     public Mono<HttpResponse> closeConnection(String name) {
-        return doDelete("connections", name);
+        return doDelete("connections", enc(name));
     }
 
     public Mono<HttpResponse> closeConnection(String name, String reason) {
-        return doDelete(request -> request.header("X-Reason", reason), "connections", name);
+        return doDelete(request -> request.header("X-Reason", reason), "connections", enc(name));
     }
 
     public Mono<HttpResponse> declarePolicy(String vhost, String name, PolicyInfo info) {
-        return doPost(info, "policies", vhost, name);
-    }
-
-    private HttpClientRequest disableChunkTransfer(HttpClientRequest request) {
-        return request.chunkedTransfer(false);
+        return doPut(info, "policies", enc(vhost), enc(name));
     }
 
     public Flux<PolicyInfo> getPolicies() {
@@ -149,30 +161,175 @@ public class ReactorNettyClient {
     }
 
     public Mono<HttpResponse> deletePolicy(String vhost, String name) {
-        return doDelete("policies", vhost, name);
+        return doDelete("policies", enc(vhost), enc(name));
+    }
+
+    public Flux<ChannelInfo> getChannels() {
+        return doGetFlux(ChannelInfo.class, "channels");
+    }
+
+    public Flux<ChannelInfo> getChannels(String connectionName) {
+        return doGetFlux(ChannelInfo.class, "connections", enc(connectionName), "channels");
+    }
+
+    public Mono<ChannelInfo> getChannel(String name) {
+        return doGetMono(ChannelInfo.class, "channels", enc(name));
+    }
+
+    public Flux<VhostInfo> getVhosts() {
+        return doGetFlux(VhostInfo.class, "vhosts");
+    }
+
+    public Mono<VhostInfo> getVhost(String name) {
+        return doGetMono(VhostInfo.class, "vhosts", enc(name));
+    }
+
+    public Mono<HttpResponse> createVhost(String name) {
+        return doPut("vhosts", enc(name));
+    }
+
+    public Mono<HttpResponse> deleteVhost(String name) {
+        return doDelete("vhosts", enc(name));
+    }
+
+    public Flux<UserPermissions> getPermissionsIn(String vhost) {
+        return doGetFlux(UserPermissions.class, "vhosts", enc(vhost), "permissions");
+    }
+
+    public Mono<HttpResponse> updatePermissions(String vhost, String username, UserPermissions permissions) {
+        return doPut(permissions, "permissions", enc(vhost), enc(username));
+    }
+
+    public Flux<UserInfo> getUsers() {
+        return doGetFlux(UserInfo.class, "users");
+    }
+
+    public Mono<UserInfo> getUser(String username) {
+        return doGetMono(UserInfo.class, "users", enc(username));
+    }
+
+    public Mono<HttpResponse> deleteUser(String username) {
+        return doDelete("users", enc(username));
+    }
+
+    public Mono<HttpResponse> createUser(String username, char[] password, List<String> tags) {
+        if (username == null) {
+            throw new IllegalArgumentException("username cannot be null");
+        }
+        if (password == null) {
+            throw new IllegalArgumentException("password cannot be null or empty. If you need to create a user that "
+                + "will only authenticate using an x509 certificate, use createUserWithPasswordHash with a blank hash.");
+        }
+        Map<String, Object> body = new HashMap<String, Object>();
+        body.put("password", new String(password));
+        if (tags == null || tags.isEmpty()) {
+            body.put("tags", "");
+        } else {
+            body.put("tags", String.join(",", tags));
+        }
+        return doPut(body, "users", enc(username));
+    }
+
+    public Mono<HttpResponse> updateUser(String username, char[] password, List<String> tags) {
+        if (username == null) {
+            throw new IllegalArgumentException("username cannot be null");
+        }
+        Map<String, Object> body = new HashMap<String, Object>();
+        // only update password if provided
+        if (password != null) {
+            body.put("password", new String(password));
+        }
+        if (tags == null || tags.isEmpty()) {
+            body.put("tags", "");
+        } else {
+            body.put("tags", String.join(",", tags));
+        }
+
+        return doPut(body, "users", enc(username));
+    }
+
+    public Flux<UserPermissions> getPermissionsOf(String username) {
+        return doGetFlux(UserPermissions.class, "users", enc(username), "permissions");
+    }
+
+    public Mono<HttpResponse> createUserWithPasswordHash(String username, char[] passwordHash, List<String> tags) {
+        if (username == null) {
+            throw new IllegalArgumentException("username cannot be null");
+        }
+        // passwordless authentication is a thing. See
+        // https://github.com/rabbitmq/hop/issues/94 and https://www.rabbitmq.com/authentication.html. MK.
+        if (passwordHash == null) {
+            passwordHash = "".toCharArray();
+        }
+        Map<String, Object> body = new HashMap<String, Object>();
+        body.put("password_hash", String.valueOf(passwordHash));
+        if (tags == null || tags.isEmpty()) {
+            body.put("tags", "");
+        } else {
+            body.put("tags", String.join(",", tags));
+        }
+
+        return doPut(body, "users", enc(username));
+    }
+
+    public Mono<CurrentUserDetails> whoAmI() {
+        return doGetMono(CurrentUserDetails.class, "whoami");
+    }
+
+    public Flux<UserPermissions> getPermissions() {
+        return doGetFlux(UserPermissions.class, "permissions");
+    }
+
+    public Mono<UserPermissions> getPermissions(String vhost, String username) {
+        return doGetMono(UserPermissions.class, "permissions", enc(vhost), enc(username));
+    }
+
+    public Mono<HttpResponse> clearPermissions(String vhost, String username) {
+        return doDelete("permissions", enc(vhost), enc(username));
+    }
+
+    public Flux<ExchangeInfo> getExchanges() {
+        return doGetFlux(ExchangeInfo.class, "exchanges");
+    }
+
+    public Flux<ExchangeInfo> getExchanges(String vhost) {
+        return doGetFlux(ExchangeInfo.class, "exchanges", enc(vhost));
     }
 
     private <T> Mono<T> doGetMono(Class<T> type, String... pathSegments) {
         return client.get(uri(pathSegments), request -> Mono.just(request)
             .transform(this::addAuthorization)
-            .flatMap(pRequest -> pRequest.send())).transform(decode(type));
+            .flatMap(pRequest -> pRequest.send()))
+            .onErrorMap(this::handleError)
+            .transform(decode(type));
     }
 
     private <T> Flux<T> doGetFlux(Class<T> type, String... pathSegments) {
         return (Flux<T>) doGetMono(Array.newInstance(type, 0).getClass(), pathSegments).flatMapMany(items -> Flux.fromArray((Object[]) items));
     }
 
-    private Mono<HttpResponse> doPost(Object body, String... pathSegments) {
+    private Mono<HttpResponse> doPut(Object body, String... pathSegments) {
         return client.put(uri(pathSegments), request -> Mono.just(request)
             .transform(this::addAuthorization)
-            .map(this::disableChunkTransfer)
+            .map(ReactorNettyClient::disableChunkTransfer)
+            .map(ReactorNettyClient::disableFailOnError)
             .transform(encode(body)))
+            .map(ReactorNettyClient::toHttpResponse);
+    }
+
+    private Mono<HttpResponse> doPut(String... pathSegments) {
+        return client.put(uri(pathSegments), request -> Mono.just(request)
+            .transform(this::addAuthorization)
+            .map(ReactorNettyClient::disableChunkTransfer)
+            .map(ReactorNettyClient::disableFailOnError)
+            .flatMap(request2 -> request2.send()))
             .map(ReactorNettyClient::toHttpResponse);
     }
 
     private Mono<HttpResponse> doDelete(UnaryOperator<HttpClientRequest> operator, String... pathSegments) {
         return client.delete(uri(pathSegments), request -> Mono.just(request)
             .transform(this::addAuthorization)
+            .map(ReactorNettyClient::disableFailOnError)
             .map(operator)
             .flatMap(HttpClientRequest::send)
         ).map(ReactorNettyClient::toHttpResponse);
@@ -189,14 +346,11 @@ public class ReactorNettyClient {
     }
 
     private String uri(String... pathSegments) {
-        StringBuilder builder = new StringBuilder();
-        if (pathSegments != null && pathSegments.length > 0) {
-            for (String pathSegment : pathSegments) {
-                builder.append("/");
-                builder.append(Utils.encode(pathSegment));
-            }
-        }
-        return rootUrl + builder.toString();
+        return rootUrl + "/" + String.join("/", pathSegments);
+    }
+
+    private String enc(String pathSegment) {
+        return Utils.encode(pathSegment);
     }
 
     private <T> Function<Mono<HttpClientResponse>, Flux<T>> decode(Class<T> type) {
@@ -227,5 +381,13 @@ public class ReactorNettyClient {
                     throw Exceptions.propagate(e);
                 }
             });
+    }
+
+    // FIXME make this configurable
+    private <T extends Throwable> T handleError(T cause) {
+        if (cause instanceof reactor.ipc.netty.http.client.HttpClientException) {
+            return (T) new HttpClientException((reactor.ipc.netty.http.client.HttpClientException) cause);
+        }
+        return (T) new HttpException(cause);
     }
 }
