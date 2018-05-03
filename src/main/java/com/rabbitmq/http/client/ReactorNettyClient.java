@@ -333,6 +333,10 @@ public class ReactorNettyClient {
         return doGetFlux(ExchangeInfo.class, "exchanges", enc(vhost));
     }
 
+    public Mono<ExchangeInfo> getExchange(String vhost, String name) {
+        return doGetMono(ExchangeInfo.class, "exchanges", enc(vhost), enc(name));
+    }
+
     public Mono<HttpResponse> declareExchange(String vhost, String name, ExchangeInfo info) {
         return doPut(info, "exchanges", enc(vhost), enc(name));
     }
