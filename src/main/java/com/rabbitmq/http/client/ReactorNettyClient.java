@@ -21,13 +21,20 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.MapperFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.rabbitmq.http.client.domain.AlivenessTestResult;
+import com.rabbitmq.http.client.domain.BindingInfo;
 import com.rabbitmq.http.client.domain.ChannelInfo;
+import com.rabbitmq.http.client.domain.ClusterId;
 import com.rabbitmq.http.client.domain.ConnectionInfo;
 import com.rabbitmq.http.client.domain.CurrentUserDetails;
+import com.rabbitmq.http.client.domain.Definitions;
 import com.rabbitmq.http.client.domain.ExchangeInfo;
 import com.rabbitmq.http.client.domain.NodeInfo;
 import com.rabbitmq.http.client.domain.OverviewResponse;
 import com.rabbitmq.http.client.domain.PolicyInfo;
+import com.rabbitmq.http.client.domain.QueueInfo;
+import com.rabbitmq.http.client.domain.ShovelInfo;
+import com.rabbitmq.http.client.domain.ShovelStatus;
 import com.rabbitmq.http.client.domain.UserInfo;
 import com.rabbitmq.http.client.domain.UserPermissions;
 import com.rabbitmq.http.client.domain.VhostInfo;
@@ -46,6 +53,7 @@ import java.lang.reflect.Array;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -158,6 +166,10 @@ public class ReactorNettyClient {
 
     public Flux<PolicyInfo> getPolicies() {
         return doGetFlux(PolicyInfo.class, "policies");
+    }
+
+    public Flux<PolicyInfo> getPolicies(String vhost) {
+        return doGetFlux(PolicyInfo.class, "policies", enc(vhost));
     }
 
     public Mono<HttpResponse> deletePolicy(String vhost, String name) {
@@ -296,16 +308,174 @@ public class ReactorNettyClient {
         return doGetFlux(ExchangeInfo.class, "exchanges", enc(vhost));
     }
 
+    public Mono<HttpResponse> declareExchange(String vhost, String name, ExchangeInfo info) {
+        return doPut(info, "exchanges", enc(vhost), enc(name));
+    }
+
+    public Mono<HttpResponse> deleteExchange(String vhost, String name) {
+        return doDelete("exchanges", enc(vhost), enc(name));
+    }
+
+    public Mono<AlivenessTestResult> alivenessTest(String vhost) {
+        return doGetMono(AlivenessTestResult.class, "aliveness-test", enc(vhost));
+    }
+
+    public Mono<ClusterId> getClusterName() {
+        return doGetMono(ClusterId.class, "cluster-name");
+    }
+
+    public Mono<HttpResponse> setClusterName(String name) {
+        if(name== null || name.isEmpty()) {
+            throw new IllegalArgumentException("name cannot be null or blank");
+        }
+        return doPut(Collections.singletonMap("name", name),"cluster-name");
+    }
+
+    @SuppressWarnings({"unchecked","rawtypes"})
+    public Flux<Map> getExtensions() {
+        return doGetFlux(Map.class, "extensions");
+    }
+
+    public Mono<Definitions> getDefinitions() {
+        return doGetMono(Definitions.class, "definitions");
+    }
+
+    public Flux<QueueInfo> getQueues() {
+        return doGetFlux(QueueInfo.class, "queues");
+    }
+
+    public Flux<QueueInfo> getQueues(String vhost) {
+        return doGetFlux(QueueInfo.class, "queues", enc(vhost));
+    }
+
+    public Mono<QueueInfo> getQueue(String vhost, String name) {
+        return doGetMono(QueueInfo.class, "queues", enc(vhost), enc(name));
+    }
+
+    public Mono<HttpResponse> declareQueue(String vhost, String name, QueueInfo info) {
+        return doPut(info,"queues", enc(vhost), enc(name));
+    }
+
+    public Mono<HttpResponse> purgeQueue(String vhost, String name) {
+        return doDelete("queues", enc(vhost), enc(name), "contents");
+    }
+
+    public Mono<HttpResponse> deleteQueue(String vhost, String name) {
+        return doDelete("queues", enc(vhost), enc(name));
+    }
+
+    public Flux<BindingInfo> getBindings() {
+        return doGetFlux(BindingInfo.class, "bindings");
+    }
+
+    public Flux<BindingInfo> getBindings(String vhost) {
+        return doGetFlux(BindingInfo.class, "bindings", enc(vhost));
+    }
+
+    public Flux<BindingInfo> getExchangeBindingsBySource(String vhost, String exchange) {
+        final String x = exchange.equals("") ? "amq.default" : exchange;
+        return doGetFlux(BindingInfo.class, "exchanges", enc(vhost), enc(x), "bindings", "source");
+    }
+
+    public Flux<BindingInfo> getExchangeBindingsByDestination(String vhost, String exchange) {
+        final String x = exchange.equals("") ? "amq.default" : exchange;
+        return doGetFlux(BindingInfo.class, "exchanges", enc(vhost), enc(x), "bindings", "destination");
+    }
+
+    public Flux<BindingInfo> getQueueBindings(String vhost, String queue) {
+        return doGetFlux(BindingInfo.class, "queues", enc(vhost), enc(queue), "bindings");
+    }
+
+    public Flux<BindingInfo> getQueueBindingsBetween(String vhost, String exchange, String queue) {
+        return doGetFlux(BindingInfo.class, "bindings", enc(vhost), "e", enc(exchange), "q", enc(queue));
+    }
+
+    public Flux<BindingInfo> getExchangeBindingsBetween(String vhost, String source, String destination) {
+        return doGetFlux(BindingInfo.class, "bindings", enc(vhost), "e", enc(source), "e", enc(destination));
+    }
+
+    public Mono<HttpResponse> bindExchange(String vhost, String destination, String source, String routingKey) {
+        return bindExchange(vhost, destination, source, routingKey, new HashMap<>());
+    }
+
+    public Mono<HttpResponse> bindExchange(String vhost, String destination, String source, String routingKey, Map<String, Object> args) {
+        if (vhost == null || vhost.isEmpty()) {
+            throw new IllegalArgumentException("vhost cannot be null or blank");
+        }
+        if (destination == null || destination.isEmpty()) {
+            throw new IllegalArgumentException("destination cannot be null or blank");
+        }
+        if (source == null || source.isEmpty()) {
+            throw new IllegalArgumentException("source cannot be null or blank");
+        }
+        Map<String, Object> body = new HashMap<String, Object>();
+        if (!(args == null)) {
+            body.put("args", args);
+        }
+        body.put("routing_key", routingKey);
+
+        return doPost(body, "bindings", enc(vhost), "e", enc(source), "e", enc(destination));
+    }
+
+    public Mono<HttpResponse> bindQueue(String vhost, String queue, String exchange, String routingKey) {
+        return bindQueue(vhost, queue, exchange, routingKey, new HashMap<>());
+    }
+
+    public Mono<HttpResponse> bindQueue(String vhost, String queue, String exchange, String routingKey, Map<String, Object> args) {
+        if(vhost == null || vhost.isEmpty()) {
+            throw new IllegalArgumentException("vhost cannot be null or blank");
+        }
+        if(queue == null || queue.isEmpty()) {
+            throw new IllegalArgumentException("queue cannot be null or blank");
+        }
+        if(exchange == null || exchange.isEmpty()) {
+            throw new IllegalArgumentException("exchange cannot be null or blank");
+        }
+        Map<String, Object> body = new HashMap<String, Object>();
+        if(!(args == null)) {
+            body.put("args", args);
+        }
+        body.put("routing_key", routingKey);
+
+        return doPost(body, "bindings", enc(vhost), "e", enc(exchange), "q", enc(queue));
+    }
+
+    public Mono<HttpResponse> declareShovel(String vhost, ShovelInfo info) {
+        return doPut(info,"parameters", "shovel", enc(vhost), enc(info.getName()));
+    }
+
+    public Flux<ShovelInfo> getShovels() {
+        return doGetFlux(ShovelInfo.class, "parameters", "shovel");
+    }
+
+    public Flux<ShovelStatus> getShovelsStatus() {
+        return doGetFlux(ShovelStatus.class, "shovels");
+    }
+
+    public Mono<HttpResponse> deleteShovel(String vhost, String shovelName) {
+        return doDelete("parameters", "shovel", enc(vhost), enc(shovelName));
+    }
+
     private <T> Mono<T> doGetMono(Class<T> type, String... pathSegments) {
         return client.get(uri(pathSegments), request -> Mono.just(request)
             .transform(this::addAuthorization)
-            .flatMap(pRequest -> pRequest.send()))
+            .flatMap(HttpClientRequest::send))
             .onErrorMap(this::handleError)
             .transform(decode(type));
     }
 
+    @SuppressWarnings("unchecked")
     private <T> Flux<T> doGetFlux(Class<T> type, String... pathSegments) {
         return (Flux<T>) doGetMono(Array.newInstance(type, 0).getClass(), pathSegments).flatMapMany(items -> Flux.fromArray((Object[]) items));
+    }
+
+    private Mono<HttpResponse> doPost(Object body, String... pathSegments) {
+        return client.post(uri(pathSegments), request -> Mono.just(request)
+            .transform(this::addAuthorization)
+            .map(ReactorNettyClient::disableChunkTransfer)
+            .map(ReactorNettyClient::disableFailOnError)
+            .transform(encode(body)))
+            .map(ReactorNettyClient::toHttpResponse);
     }
 
     private Mono<HttpResponse> doPut(Object body, String... pathSegments) {
@@ -322,7 +492,7 @@ public class ReactorNettyClient {
             .transform(this::addAuthorization)
             .map(ReactorNettyClient::disableChunkTransfer)
             .map(ReactorNettyClient::disableFailOnError)
-            .flatMap(request2 -> request2.send()))
+            .flatMap(HttpClientRequest::send))
             .map(ReactorNettyClient::toHttpResponse);
     }
 
@@ -384,6 +554,7 @@ public class ReactorNettyClient {
     }
 
     // FIXME make this configurable
+    @SuppressWarnings("unchecked")
     private <T extends Throwable> T handleError(T cause) {
         if (cause instanceof reactor.ipc.netty.http.client.HttpClientException) {
             return (T) new HttpClientException((reactor.ipc.netty.http.client.HttpClientException) cause);

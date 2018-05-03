@@ -21,6 +21,8 @@ package com.rabbitmq.http.client;
  */
 public class HttpClientException extends HttpException {
 
+    static final long serialVersionUID = 1;
+
     public HttpClientException(reactor.ipc.netty.http.client.HttpClientException cause) {
         super(cause);
     }
