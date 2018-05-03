@@ -58,11 +58,32 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.UnaryOperator;
 
 /**
- *
+ * Reactive client based on Reactor Netty.
+ * Use the {@link ReactorNettyClientOptions} constructors for
+ * advanced settings, e.g. TLS, authentication other than HTTP basic, etc.
+ * The default settings for this class are the following:
+ * <ul>
+ *     <li>{@link HttpClient}: created with target host and port. Other typical
+ *     settings are accessible with the {@link HttpClient#create(Consumer)}: connection pooling,
+ *     {@link javax.net.ssl.SSLContext} for TLS.
+ *     </li>
+ *     <li>
+ *         {@link ObjectMapper: <code>DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES<code> and
+ *         <code>MapperFeature.DEFAULT_VIEW_INCLUSION</code> are disabled.
+ *     </li>
+ *     <li><code>Mono<String> token</code>: basic HTTP authentication used for the
+ *     <code>authorization</code> header.
+ *     </li>
+ *     <li><code>Function<? super Throwable, ? extends Throwable> errorHandler</code>:
+ *     {@link reactor.ipc.netty.http.client.HttpClientException} are wrapped into
+ *     {@link HttpClientException}, other exceptions are wrapped into {@link HttpException}.
+ *     </li>
+ * </ul>
  */
 public class ReactorNettyClient {
 
