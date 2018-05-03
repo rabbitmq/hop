@@ -21,6 +21,8 @@ package com.rabbitmq.http.client;
  */
 public class HttpException extends RuntimeException {
 
+    static final long serialVersionUID = 1;
+
     public HttpException(Throwable cause) {
         super(cause);
     }
