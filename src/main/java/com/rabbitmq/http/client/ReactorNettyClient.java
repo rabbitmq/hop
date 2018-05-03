@@ -580,8 +580,7 @@ public class ReactorNettyClient {
                     try {
                         return objectMapper.readValue(payload, type);
                     } catch (Throwable t) {
-                        // FIXME exception handling
-                        throw new RuntimeException(t);
+                        throw Exceptions.propagate(t);
                     }
                 })
             );
