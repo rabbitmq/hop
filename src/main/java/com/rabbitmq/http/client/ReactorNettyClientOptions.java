@@ -24,7 +24,10 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 
 /**
- *
+ * Options for {@link ReactorNettyClient}.
+ * An instance of this class can be passed in to {@link ReactorNettyClient}
+ * constructor for settings like Jackson JSON object mapper, authentication,
+ * TLS, error handling.
  */
 public class ReactorNettyClientOptions {
 
