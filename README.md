@@ -35,7 +35,7 @@ Add the following to your `pom.xml`:
 <dependency>
   <groupId>com.rabbitmq</groupId>
   <artifactId>http-client</artifactId>
-  <version>2.0.1.RELEASE</version>
+  <version>2.0.2.RELEASE</version>
 </dependency>
 ```
 
@@ -44,7 +44,7 @@ Add the following to your `pom.xml`:
 Add the following to your `build.gradle`:
 
 ``` groovy
-compile "com.rabbitmq:http-client:2.0.1.RELEASE"
+compile "com.rabbitmq:http-client:2.0.2.RELEASE"
 ```
 
 
