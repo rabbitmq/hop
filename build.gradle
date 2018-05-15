@@ -39,6 +39,7 @@ ext {
   spockVersion = "1.1-groovy-2.4"
   reactorVersion = "Bismuth-SR9"
   springVersion = '5.0.6.RELEASE'
+  reactorNettyVersion = '0.7.7.RELEASE'
 
   linkHomepage = 'https://github.com/rabbitmq/hop'
   linkCi       = 'https://build.spring.io/browse/RMQ'
@@ -46,6 +47,12 @@ ext {
   linkScmUrl           = 'https://github.com/rabbitmq/hop'
   linkScmConnection    = 'https://github.com/rabbitmq/hop.git'
   linkScmDevConnection = 'git@github.com:rabbitmq/hop.git'
+
+  javadocLinks = ["http://docs.oracle.com/javase/7/docs/api/",
+                  "http://docs.oracle.com/javaee/6/api/",
+                  "http://www.reactive-streams.org/reactive-streams-1.0.2-javadoc/",
+                  "http://projectreactor.io/docs/core/release/api/",
+                  "https://fasterxml.github.io/jackson-databind/javadoc/2.9/"] as String[]
 }
 
 dependencyManagement {
@@ -63,7 +70,7 @@ dependencies {
   compile "org.springframework:spring-webflux:$springVersion"
   compile "org.apache.httpcomponents:httpclient:$commonsHttpClientVersion"
   compile "com.fasterxml.jackson.core:jackson-databind:$jacksonVersion"
-  compile "io.projectreactor.ipc:reactor-netty"
+  compile "io.projectreactor.ipc:reactor-netty:$reactorNettyVersion"
 
   testCompile "org.codehaus.groovy:groovy-all:$groovyVersion"
   testCompile "org.spockframework:spock-core:$spockVersion"
