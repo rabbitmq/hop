@@ -157,7 +157,12 @@ public class Client {
     Assert.notNull(url, "URL is required; it must not be null");
     Assert.notNull(username, "username is required; it must not be null");
     Assert.notNull(password, "password is required; it must not be null");
-    this.rootUri = url.toURI();
+    if (url.toString().endsWith("/")) {
+      this.rootUri = url.toURI();
+    } else {
+      this.rootUri = new URL(url.toString() + "/").toURI();
+    }
+
 
     this.rt = new RestTemplate(getRequestFactory(url, username, password, sslConnectionSocketFactory, sslContext, NO_OP_HTTP_CLIENT_BUILDER_CONFIGURATOR));
     this.rt.setMessageConverters(getMessageConverters());

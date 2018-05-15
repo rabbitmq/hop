@@ -114,7 +114,11 @@ public class ReactorNettyClient {
     }
 
     public ReactorNettyClient(String url, String username, String password, ReactorNettyClientOptions options) {
-        rootUrl = url;
+        if (url.endsWith("/")) {
+            rootUrl = url.substring(0, url.lastIndexOf("/"));
+        } else {
+            rootUrl = url;
+        }
         objectMapper = options.objectMapper() == null ? createDefaultObjectMapper() : options.objectMapper().get();
 
         URI uri = URI.create(url);
