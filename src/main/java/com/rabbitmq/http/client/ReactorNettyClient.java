@@ -73,7 +73,7 @@ import java.util.function.UnaryOperator;
  *     {@link javax.net.ssl.SSLContext} for TLS.
  *     </li>
  *     <li>
- *         {@link ObjectMapper: <code>DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES<code> and
+ *         {@link ObjectMapper: <code>DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES</code> and
  *         <code>MapperFeature.DEFAULT_VIEW_INCLUSION</code> are disabled.
  *     </li>
  *     <li><code>Mono<String> token</code>: basic HTTP authentication used for the
