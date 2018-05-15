@@ -67,6 +67,7 @@ import java.util.function.Consumer;
  *
  * @deprecated Use {@link ReactorNettyClient} instead.
  */
+@Deprecated
 public class ReactiveClient {
 
     private final WebClient client;
