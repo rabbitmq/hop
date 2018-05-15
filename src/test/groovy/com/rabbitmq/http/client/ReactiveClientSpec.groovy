@@ -22,7 +22,6 @@ import com.rabbitmq.client.Connection
 import com.rabbitmq.client.ConnectionFactory
 import com.rabbitmq.http.client.domain.*
 import org.springframework.http.HttpStatus
-import org.springframework.web.reactive.function.client.ClientResponse
 import org.springframework.web.reactive.function.client.WebClientResponseException
 import reactor.core.publisher.Flux
 import reactor.core.publisher.Mono
@@ -33,6 +32,7 @@ import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 import java.util.stream.Collectors
 
+@SuppressWarnings("deprecation")
 class ReactiveClientSpec extends Specification {
 
     protected static final String DEFAULT_USERNAME = "guest"

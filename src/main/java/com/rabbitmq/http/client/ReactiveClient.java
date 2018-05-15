@@ -61,7 +61,11 @@ import java.util.Map;
 import java.util.function.Consumer;
 
 /**
+ * Reactive HTTP client based on Spring {@link WebClient}.
  *
+ * This class is deprecated and will be removed in 3.0.
+ *
+ * @deprecated Use {@link ReactorNettyClient} instead.
  */
 public class ReactiveClient {
 
