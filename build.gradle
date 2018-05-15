@@ -37,7 +37,7 @@ ext {
   groovyVersion = '2.4.15'
   jacksonVersion = '2.9.5'
   spockVersion = "1.1-groovy-2.4"
-  reactorVersion = "Bismuth-SR9"
+  reactorVersion = "3.1.7.RELEASE"
   springVersion = '5.0.6.RELEASE'
   reactorNettyVersion = '0.7.7.RELEASE'
 
@@ -56,9 +56,6 @@ ext {
 }
 
 dependencyManagement {
-  imports {
-    mavenBom "io.projectreactor:reactor-bom:${reactorVersion}"
-  }
   resolutionStrategy {
     cacheChangingModulesFor 0, 'seconds'
   }
@@ -66,11 +63,12 @@ dependencyManagement {
 }
 
 dependencies {
-  compile "org.springframework:spring-web:$springVersion"
-  compile "org.springframework:spring-webflux:$springVersion"
-  compile "org.apache.httpcomponents:httpclient:$commonsHttpClientVersion"
+  compile ("org.springframework:spring-web:$springVersion", optional)
+  compile ("org.springframework:spring-webflux:$springVersion", optional)
+  compile ("org.apache.httpcomponents:httpclient:$commonsHttpClientVersion", optional)
   compile "com.fasterxml.jackson.core:jackson-databind:$jacksonVersion"
-  compile "io.projectreactor.ipc:reactor-netty:$reactorNettyVersion"
+  compile ("io.projectreactor:reactor-core:$reactorVersion", optional)
+  compile ("io.projectreactor.ipc:reactor-netty:$reactorNettyVersion", optional)
 
   testCompile "org.codehaus.groovy:groovy-all:$groovyVersion"
   testCompile "org.spockframework:spock-core:$spockVersion"
