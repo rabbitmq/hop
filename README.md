@@ -2,7 +2,7 @@
 
 [![Travis CI](https://travis-ci.org/rabbitmq/hop.svg?branch=master)](https://travis-ci.org/rabbitmq/hop)
 
-Hop is a Java client for the [RabbitMQ HTTP API](https://raw.githack.com/rabbitmq/rabbitmq-management/rabbitmq_v3_6_10/priv/www/api/index.html).
+Hop is a Java client for the [RabbitMQ HTTP API](https://raw.githack.com/rabbitmq/rabbitmq-management/v3.7.5/priv/www/api/index.html).
 
 
 ## Polyglot
@@ -12,6 +12,11 @@ and Kotlin.
 
 N.B. that Clojure already includes an HTTP API client as part of [Langohr](http://clojurerabbitmq.info),
 and you should use Langohr instead.
+
+## Reactive
+
+As of HOP 2.1.0, a new reactive, non-blocking IO client based on [Reactor Netty](http://projectreactor.io/) is available. Note
+the original blocking IO client remains available.
 
 ## Project Maturity
 
@@ -23,11 +28,13 @@ This section will be updated as the project matures.
 
 ## Maven Artifacts
 
+### Stable
+
 [![Maven Central](https://maven-badges.herokuapp.com/maven-central/com.rabbitmq/http-client/badge.svg)](https://maven-badges.herokuapp.com/maven-central/com.rabbitmq/http-client)
 
 Project artifacts are available from Maven Central and [repo.spring.io](http://repo.spring.io).
 
-### Maven
+#### Maven
 
 Add the following to your `pom.xml`:
 
@@ -39,7 +46,7 @@ Add the following to your `pom.xml`:
 </dependency>
 ```
 
-### Gradle
+#### Gradle
 
 Add the following to your `build.gradle`:
 
@@ -47,6 +54,89 @@ Add the following to your `build.gradle`:
 compile "com.rabbitmq:http-client:2.0.2.RELEASE"
 ```
 
+### Development
+
+Milestones and release candidates of the next stable version are available
+from [Spring IO milestone repository](https://repo.spring.io/libs-milestone-local).
+
+#### Maven
+
+Add the milestone repository to your POM file:
+
+```xml
+<repositories>
+  <repository>
+    <snapshots>
+      <enabled>false</enabled>
+    </snapshots>
+    <id>spring-milestone</id>
+    <name>spring-milestone</name>
+    <url>https://repo.spring.io/libs-milestone-local</url>
+  </repository>
+</repositories>
+```
+
+If you want to use the **blocking IO client**, add the following dependencies:
+
+```xml
+<dependency>
+  <groupId>com.rabbitmq</groupId>
+  <artifactId>http-client</artifactId>
+  <version>2.1.0.RC1</version>
+</dependency>
+<dependency>
+    <groupId>org.springframework</groupId>
+    <artifactId>spring-web</artifactId>
+    <version>5.0.6.RELEASE</version>
+</dependency>
+<dependency>
+    <groupId>org.apache.httpcomponents</groupId>
+    <artifactId>httpclient</artifactId>
+    <version>4.5.5</version>
+</dependency>
+```
+
+If you want to use the **reactive, non-blocking IO client**, add the following dependencies:
+
+```xml
+<dependency>
+  <groupId>com.rabbitmq</groupId>
+  <artifactId>http-client</artifactId>
+  <version>2.1.0.RC1</version>
+</dependency>
+<dependency>
+  <groupId>io.projectreactor.ipc</groupId>
+  <artifactId>reactor-netty</artifactId>
+  <version>0.7.7.RELEASE</version>
+</dependency>
+```
+
+#### Gradle
+
+Add the milestone repository to your build file:
+
+```groovy
+repositories {
+    maven {
+        url  "https://repo.spring.io/libs-milestone-local"
+    }
+}
+```
+
+If you want to use the **blocking IO client**, add the following dependencies:
+
+```groovy
+compile "com.rabbitmq:http-client:2.1.0.RC1"
+compile "org.springframework:spring-web:5.0.6.RELEASE"
+compile "org.apache.httpcomponents:httpclient:4.5.5"
+```
+
+If you want to use the **reactive, non-blocking IO client**, add the following dependencies:
+
+```groovy
+compile "com.rabbitmq:http-client:2.1.0.RC1"
+compile "io.projectreactor.ipc:reactor-netty:0.7.7.RELEASE"
+```
 
 ## Usage Guide
 
