@@ -85,14 +85,14 @@ If you want to use the **blocking IO client**, add the following dependencies:
   <version>2.1.0.RC1</version>
 </dependency>
 <dependency>
-    <groupId>org.springframework</groupId>
-    <artifactId>spring-web</artifactId>
-    <version>5.0.6.RELEASE</version>
+  <groupId>org.springframework</groupId>
+  <artifactId>spring-web</artifactId>
+  <version>5.0.6.RELEASE</version>
 </dependency>
 <dependency>
-    <groupId>org.apache.httpcomponents</groupId>
-    <artifactId>httpclient</artifactId>
-    <version>4.5.5</version>
+  <groupId>org.apache.httpcomponents</groupId>
+  <artifactId>httpclient</artifactId>
+  <version>4.5.5</version>
 </dependency>
 ```
 
