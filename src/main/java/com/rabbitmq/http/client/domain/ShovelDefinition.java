@@ -25,11 +25,15 @@ public class ShovelDefinition {
 
 	@JsonProperty("src-exchange")
 	private String sourceExchange;
+	@JsonProperty("src-exchange-key")
+	private String sourceExchangeKey;
 	@JsonProperty("src-queue")
 	private String sourceQueue;
 
 	@JsonProperty("dest-exchange")
 	private String destinationExchange;
+	@JsonProperty("dest-exchange-key")
+	private String destinationExchangeKey;
 	@JsonProperty("dest-queue")
 	private String destinationQueue;
 
@@ -42,6 +46,14 @@ public class ShovelDefinition {
 
 	public void setSourceExchange(String sourceExchange) {
 		this.sourceExchange = sourceExchange;
+	}
+
+	public String getSourceExchangeKey() {
+		return sourceExchangeKey;
+	}
+
+	public void setSourceExchangeKey(String sourceExchangeKey) {
+		this.sourceExchangeKey = sourceExchangeKey;
 	}
 
 	public String getSourceQueue() {
@@ -60,6 +72,14 @@ public class ShovelDefinition {
 		this.destinationExchange = destExchange;
 	}
 
+	public String getDestinationExchangeKey() {
+		return destinationExchangeKey;
+	}
+
+	public void setDestinationExchangeKey(String destExchangeKey) {
+		this.destinationExchangeKey = destExchangeKey;
+	}
+
 	public String getDestinationQueue() {
 		return destinationQueue;
 	}
@@ -70,7 +90,8 @@ public class ShovelDefinition {
 
 	@Override
 	public String toString() {
-		return "ShovelDetails{" + "sourceExchange=" + sourceExchange + ", sourceQueue=" + sourceQueue + ", destinationExchange='" + destinationExchange + '\''
+		return "ShovelDetails{" + "sourceExchange=" + sourceExchange + "sourceExchangeKey=" + sourceExchangeKey + ", sourceQueue=" + sourceQueue 
+				+ ", destinationExchange='" + destinationExchange + ", destinationExchangeKey='" + destinationExchangeKey + '\''
 				+ ", destinationQueue='" + destinationQueue + '}';
 	}
 }

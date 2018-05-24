@@ -29,6 +29,8 @@ public class ShovelDetails {
 	private String sourceURI;
 	@JsonProperty("src-exchange")
 	private String sourceExchange;
+	@JsonProperty("src-exchange-key")
+	private String sourceExchangeKey;
 	@JsonProperty("src-queue")
 	private String sourceQueue;
 
@@ -36,6 +38,8 @@ public class ShovelDetails {
 	private String destinationURI;
 	@JsonProperty("dest-exchange")
 	private String destinationExchange;
+	@JsonProperty("dest-exchange-key")
+	private String destinationExchangeKey;
 	@JsonProperty("dest-queue")
 	private String destinationQueue;
 
@@ -77,6 +81,14 @@ public class ShovelDetails {
 		this.sourceExchange = sourceExchange;
 	}
 
+	public String getSourceExchangeKey() {
+		return sourceExchangeKey;
+	}
+
+	public void setSourceExchangeKey(String sourceExchangeKey) {
+		this.sourceExchangeKey = sourceExchangeKey;
+	}
+
 	public String getSourceQueue() {
 		return sourceQueue;
 	}
@@ -100,6 +112,15 @@ public class ShovelDetails {
 	public void setDestinationExchange(String destExchange) {
 		this.destinationExchange = destExchange;
 	}
+
+	public String getDestinationExchangeKey() {
+		return destinationExchangeKey;
+	}
+
+	public void setDestinationExchangeKey(String destExchangeKey) {
+		this.destinationExchangeKey = destExchangeKey;
+	}
+
 
 	public String getDestinationQueue() {
 		return destinationQueue;
@@ -143,8 +164,9 @@ public class ShovelDetails {
 
 	@Override
 	public String toString() {
-		return "ShovelDetails{" + "sourceURI=" + sourceURI + ", sourceExchange=" + sourceExchange + ", sourceQueue=" + sourceQueue + ", destinationURI="
-				+ destinationURI + ", destinationExchange='" + destinationExchange + '\'' + ", destinationQueue='" + destinationQueue + '\''
+		return "ShovelDetails{" + "sourceURI=" + sourceURI + ", sourceExchange=" + sourceExchange + "sourceExchangeKey=" + sourceExchangeKey 
+				+ ", sourceQueue=" + sourceQueue + ", destinationURI=" + destinationURI + ", destinationExchange='" + destinationExchange 
+				+ ", destinationExchangeKey='" + destinationExchangeKey + '\''  + ", destinationQueue='" + destinationQueue + '\'' 
 				+ ", reconnectDelay='" + reconnectDelay + '\'' + ", addForwardHeaders='" + addForwardHeaders + '\'' + ", ackMode='" + ackMode + '\''
 				+ ", publishProperties='" + publishProperties + '}';
 	}
