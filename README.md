@@ -147,7 +147,7 @@ using a single class, `Client`, which needs an API endpoint and
 a pair of credentials to be instantiated:
 
 ``` java
-import com.rabbitmq.http.Client;
+import com.rabbitmq.http.client.Client;
 
 Client c = new Client("http://127.0.0.1:15672/api/", "guest", "guest");
 ```
