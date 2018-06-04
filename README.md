@@ -36,53 +36,13 @@ Project artifacts are available from Maven Central and [repo.spring.io](http://r
 
 #### Maven
 
-Add the following to your `pom.xml`:
-
-``` xml
-<dependency>
-  <groupId>com.rabbitmq</groupId>
-  <artifactId>http-client</artifactId>
-  <version>2.0.2.RELEASE</version>
-</dependency>
-```
-
-#### Gradle
-
-Add the following to your `build.gradle`:
-
-``` groovy
-compile "com.rabbitmq:http-client:2.0.2.RELEASE"
-```
-
-### Development
-
-Milestones and release candidates of the next stable version are available
-from [Spring IO milestone repository](https://repo.spring.io/libs-milestone-local).
-
-#### Maven
-
-Add the milestone repository to your POM file:
-
-```xml
-<repositories>
-  <repository>
-    <snapshots>
-      <enabled>false</enabled>
-    </snapshots>
-    <id>spring-milestone</id>
-    <name>spring-milestone</name>
-    <url>https://repo.spring.io/libs-milestone-local</url>
-  </repository>
-</repositories>
-```
-
 If you want to use the **blocking IO client**, add the following dependencies:
 
 ```xml
 <dependency>
   <groupId>com.rabbitmq</groupId>
   <artifactId>http-client</artifactId>
-  <version>2.1.0.RC1</version>
+  <version>2.1.0.RELEASE</version>
 </dependency>
 <dependency>
   <groupId>org.springframework</groupId>
@@ -102,7 +62,7 @@ If you want to use the **reactive, non-blocking IO client**, add the following d
 <dependency>
   <groupId>com.rabbitmq</groupId>
   <artifactId>http-client</artifactId>
-  <version>2.1.0.RC1</version>
+  <version>2.1.0.RELEASE</version>
 </dependency>
 <dependency>
   <groupId>io.projectreactor.ipc</groupId>
@@ -113,20 +73,10 @@ If you want to use the **reactive, non-blocking IO client**, add the following d
 
 #### Gradle
 
-Add the milestone repository to your build file:
-
-```groovy
-repositories {
-    maven {
-        url  "https://repo.spring.io/libs-milestone-local"
-    }
-}
-```
-
 If you want to use the **blocking IO client**, add the following dependencies:
 
 ```groovy
-compile "com.rabbitmq:http-client:2.1.0.RC1"
+compile "com.rabbitmq:http-client:2.1.0.RELEASE"
 compile "org.springframework:spring-web:5.0.6.RELEASE"
 compile "org.apache.httpcomponents:httpclient:4.5.5"
 ```
@@ -134,7 +84,7 @@ compile "org.apache.httpcomponents:httpclient:4.5.5"
 If you want to use the **reactive, non-blocking IO client**, add the following dependencies:
 
 ```groovy
-compile "com.rabbitmq:http-client:2.1.0.RC1"
+compile "com.rabbitmq:http-client:2.1.0.RELEASE"
 compile "io.projectreactor.ipc:reactor-netty:0.7.7.RELEASE"
 ```
 
