@@ -121,7 +121,7 @@ public class QueueInfo {
   @JsonProperty("messages")
   private long totalMessages;
   @JsonProperty("message_stats")
-  private RateDetails messageStats;
+  private MessageStats messageStats;
   @JsonProperty("messages_persistent")
   private long totalPersistentMessages;
   @JsonProperty("messages_ram")
@@ -326,11 +326,11 @@ public class QueueInfo {
     this.totalMessages = totalMessages;
   }
 
-  public RateDetails getMessageStats() {
+  public MessageStats getMessageStats() {
     return messageStats;
   }
 
-  public void setMessageStats(RateDetails messageStats) {
+  public void setMessageStats(MessageStats messageStats) {
     this.messageStats = messageStats;
   }
 
