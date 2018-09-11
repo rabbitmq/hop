@@ -32,14 +32,14 @@ compileTestJava {
 }
 
 ext {
-  amqpClientVersion='5.2.0'
-  commonsHttpClientVersion = '4.5.5'
+  amqpClientVersion='5.4.1'
+  commonsHttpClientVersion = '4.5.6'
   groovyVersion = '2.4.15'
-  jacksonVersion = '2.9.5'
+  jacksonVersion = '2.9.6'
   spockVersion = "1.1-groovy-2.4"
-  reactorVersion = "3.1.7.RELEASE"
-  springVersion = '5.0.6.RELEASE'
-  reactorNettyVersion = '0.7.7.RELEASE'
+  reactorVersion = "3.1.9.RELEASE"
+  springVersion = '5.0.9.RELEASE'
+  reactorNettyVersion = '0.7.9.RELEASE'
 
   linkHomepage = 'https://github.com/rabbitmq/hop'
   linkCi       = 'https://build.spring.io/browse/RMQ'
