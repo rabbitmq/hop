@@ -64,7 +64,6 @@ dependencyManagement {
 
 dependencies {
   compile ("org.springframework:spring-web:$springVersion", optional)
-  compile ("org.springframework:spring-webflux:$springVersion", optional)
   compile ("org.apache.httpcomponents:httpclient:$commonsHttpClientVersion", optional)
   compile "com.fasterxml.jackson.core:jackson-databind:$jacksonVersion"
   compile ("io.projectreactor:reactor-core:$reactorVersion", optional)
