@@ -525,24 +525,6 @@ public class ReactorNettyClient {
             }
         };
     }
-    //    protected <T> BiFunction<? super HttpClientResponse, ? super ByteBufFlux, ? extends Mono<T>> decode(Class<T> type) {
-    //        return (response, byteBufFlux) -> {
-    //            if (response.status().code() == 404) {
-    //                return byteBufFlux.aggregate().asByteArray().map(bytes -> {
-    //                    try {
-    //                        return objectMapper.readValue(bytes, type);
-    //                    } catch (IOException e) {
-    //                        throw Exceptions.propagate(e);
-    //                    }
-    //                });
-    //            } else {
-    //
-    //                Mono<T> empty = Mono.empty();
-    //                System.out.println("return empty " + empty);
-    //                return empty;
-    //            }
-    //        };
-    //    }
 
     @SuppressWarnings("unchecked")
     private <T> Flux<T> doGetFlux(Class<T> type, String... pathSegments) {
