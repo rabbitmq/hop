@@ -40,7 +40,7 @@ public class ReactorNettyClientOptions {
 
     private Mono<String> token;
 
-    private BiConsumer<? super HttpRequest, ? super HttpResponse> onResponseCallback;
+    private BiConsumer<? super HttpEndpoint, ? super HttpResponse> onResponseCallback;
 
     public Supplier<ObjectMapper> objectMapper() {
         return objectMapper;
@@ -61,12 +61,12 @@ public class ReactorNettyClientOptions {
     }
 
     public ReactorNettyClientOptions onResponseCallback(
-        BiConsumer<? super HttpRequest, ? super HttpResponse> onResponseCallback) {
+        BiConsumer<? super HttpEndpoint, ? super HttpResponse> onResponseCallback) {
         this.onResponseCallback = onResponseCallback;
         return this;
     }
 
-    public BiConsumer<? super HttpRequest, ? super HttpResponse> onResponseCallback() {
+    public BiConsumer<? super HttpEndpoint, ? super HttpResponse> onResponseCallback() {
         return onResponseCallback;
     }
 

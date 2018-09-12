@@ -21,13 +21,13 @@ package com.rabbitmq.http.client;
  *
  * @since 3.0.0
  */
-public class HttpRequest {
+public class HttpEndpoint {
 
     private final String uri;
 
     private final String method;
 
-    public HttpRequest(String uri, String method) {
+    public HttpEndpoint(String uri, String method) {
         this.uri = uri;
         this.method = method;
     }

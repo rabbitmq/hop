@@ -136,7 +136,7 @@ public class ReactorNettyClient {
             };
         } else {
             this.onResponseCallback = (response, connection) ->
-                options.onResponseCallback().accept(new HttpRequest(response.uri(), response.method().name()), toHttpResponse(response));
+                options.onResponseCallback().accept(new HttpEndpoint(response.uri(), response.method().name()), toHttpResponse(response));
         }
     }
 
