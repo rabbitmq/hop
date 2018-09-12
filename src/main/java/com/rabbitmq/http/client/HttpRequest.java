@@ -17,28 +17,26 @@
 package com.rabbitmq.http.client;
 
 /**
- * Java exception for 4xx HTTP responses.
+ * Representation of an HTTP request.
  *
- * @since 2.1.0
+ * @since 3.0.0
  */
-public class HttpClientException extends HttpException {
+public class HttpRequest {
 
-    static final long serialVersionUID = 1;
+    private final String uri;
 
-    private final int status;
-    private final String reason;
+    private final String method;
 
-    public HttpClientException(int status, String reason) {
-        super(reason);
-        this.status = status;
-        this.reason = reason;
+    public HttpRequest(String uri, String method) {
+        this.uri = uri;
+        this.method = method;
     }
 
-    public int status() {
-        return status;
+    public String uri() {
+        return uri;
     }
 
-    public String reason() {
-        return reason;
+    public String method() {
+        return method;
     }
 }

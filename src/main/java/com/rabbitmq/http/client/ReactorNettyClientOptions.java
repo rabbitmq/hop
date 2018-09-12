@@ -18,9 +18,9 @@ package com.rabbitmq.http.client;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import reactor.core.publisher.Mono;
-import reactor.ipc.netty.http.client.HttpClient;
+import reactor.netty.http.client.HttpClient;
 
-import java.util.function.Function;
+import java.util.function.BiConsumer;
 import java.util.function.Supplier;
 
 /**
@@ -28,6 +28,9 @@ import java.util.function.Supplier;
  * An instance of this class can be passed in to {@link ReactorNettyClient}
  * constructor for settings like Jackson JSON object mapper, authentication,
  * TLS, error handling.
+ *
+ * @see ReactorNettyClient
+ * @since 2.1.0
  */
 public class ReactorNettyClientOptions {
 
@@ -37,7 +40,7 @@ public class ReactorNettyClientOptions {
 
     private Mono<String> token;
 
-    private Function<? super Throwable, ? extends Throwable> errorHandler;
+    private BiConsumer<? super HttpRequest, ? super HttpResponse> onResponseCallback;
 
     public Supplier<ObjectMapper> objectMapper() {
         return objectMapper;
@@ -57,13 +60,14 @@ public class ReactorNettyClientOptions {
         return this;
     }
 
-    public Function<? super Throwable, ? extends Throwable> errorHandler() {
-        return errorHandler;
+    public ReactorNettyClientOptions onResponseCallback(
+        BiConsumer<? super HttpRequest, ? super HttpResponse> onResponseCallback) {
+        this.onResponseCallback = onResponseCallback;
+        return this;
     }
 
-    public ReactorNettyClientOptions errorHandler(Function<? super Throwable, ? extends Throwable> errorHandler) {
-        this.errorHandler = errorHandler;
-        return this;
+    public BiConsumer<? super HttpRequest, ? super HttpResponse> onResponseCallback() {
+        return onResponseCallback;
     }
 
     public Supplier<HttpClient> client() {
