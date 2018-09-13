@@ -38,8 +38,9 @@ import com.rabbitmq.http.client.domain.UserInfo;
 import com.rabbitmq.http.client.domain.UserPermissions;
 import com.rabbitmq.http.client.domain.VhostInfo;
 import io.netty.buffer.ByteBuf;
+import io.netty.buffer.ByteBufAllocator;
 import io.netty.buffer.ByteBufOutputStream;
-import io.netty.buffer.Unpooled;
+import io.netty.buffer.PooledByteBufAllocator;
 import io.netty.handler.codec.http.HttpHeaderNames;
 import io.netty.handler.codec.http.HttpHeaderValues;
 import io.netty.handler.codec.http.HttpHeaders;
@@ -47,7 +48,7 @@ import io.netty.handler.codec.http.HttpMethod;
 import reactor.core.Exceptions;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
-import reactor.netty.ByteBufMono;
+import reactor.netty.ByteBufFlux;
 import reactor.netty.Connection;
 import reactor.netty.http.client.HttpClient;
 import reactor.netty.http.client.HttpClientRequest;
@@ -67,6 +68,7 @@ import java.util.Map;
 import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
+import java.util.function.Supplier;
 import java.util.function.UnaryOperator;
 
 /**
@@ -101,6 +103,7 @@ public class ReactorNettyClient {
     private final HttpClient client;
     private final Mono<String> token;
     private final BiConsumer<? super HttpClientResponse, ? super Connection> onResponseCallback;
+    private final Supplier<ByteBuf> byteBufSupplier;
 
     public ReactorNettyClient(String url, ReactorNettyClientOptions options) {
         this(urlWithoutCredentials(url),
@@ -138,6 +141,9 @@ public class ReactorNettyClient {
             this.onResponseCallback = (response, connection) ->
                 options.onResponseCallback().accept(new HttpEndpoint(response.uri(), response.method().name()), toHttpResponse(response));
         }
+
+        ByteBufAllocator byteBufAllocator = new PooledByteBufAllocator();
+        this.byteBufSupplier = () -> byteBufAllocator.buffer();
     }
 
     private static String urlWithoutCredentials(String url) {
@@ -503,19 +509,19 @@ public class ReactorNettyClient {
     }
 
     private <T> Mono<T> doGetMono(Class<T> type, String... pathSegments) {
-        return client.headers(authorizedHeader())
+        return Mono.from(client.headers(authorizedHeader())
             .doOnResponse(onResponseCallback)
             .get()
             .uri(uri(pathSegments))
-            .responseSingle(decode(type));
+            .response(decode(type)));
     }
 
-    protected <T> BiFunction<? super HttpClientResponse, ? super ByteBufMono, ? extends Mono<T>> decode(Class<T> type) {
+    protected <T> BiFunction<? super HttpClientResponse, ? super ByteBufFlux, ? extends Mono<T>> decode(Class<T> type) {
         return (response, byteBufFlux) -> {
             if (response.status().code() == 404) {
                 return Mono.empty();
             } else {
-                return byteBufFlux.asByteArray().map(bytes -> {
+                return byteBufFlux.aggregate().asByteArray().map(bytes -> {
                     try {
                         return objectMapper.readValue(bytes, type);
                     } catch (IOException e) {
@@ -562,8 +568,7 @@ public class ReactorNettyClient {
 
     private Mono<ByteBuf> bodyPublisher(Object body) {
         return Mono.fromCallable(() -> {
-            // FIXME is the ByteBuf released by Reactor?
-            ByteBuf byteBuf = Unpooled.buffer();
+            ByteBuf byteBuf = this.byteBufSupplier.get();
             ByteBufOutputStream byteBufOutputStream = new ByteBufOutputStream(byteBuf);
             objectMapper.writeValue((OutputStream) byteBufOutputStream, body);
             return byteBuf;

@@ -17,7 +17,7 @@
 package com.rabbitmq.http.client;
 
 /**
- * Representation of an HTTP request.
+ * Representation of an HTTP endpoint.
  *
  * @since 3.0.0
  */
