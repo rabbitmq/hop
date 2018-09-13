@@ -1074,7 +1074,7 @@ class ClientSpec extends Specification {
     x.read == ".*"
   }
 
-  def "GET /api/users/{name}/permissions when users DOES NOT exist"() {
+  def "GET /api/users/{name}/permissions when user DOES NOT exist"() {
     when: "permissions for user trololowut are listed"
     final s = "trololowut"
     final xs = client.getPermissionsOf(s)
@@ -1094,7 +1094,7 @@ class ClientSpec extends Specification {
     x.read == ".*"
   }
 
-  def "GET /api/users/{name}/topic-permissions when users DOES NOT exist"() {
+  def "GET /api/users/{name}/topic-permissions when user DOES NOT exist"() {
     when: "topic permissions for user trololowut are listed"
     final s = "trololowut"
     final xs = client.getTopicPermissionsOf(s)
