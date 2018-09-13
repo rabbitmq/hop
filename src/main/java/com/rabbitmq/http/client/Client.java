@@ -16,7 +16,6 @@
 
 package com.rabbitmq.http.client;
 
-import java.io.UnsupportedEncodingException;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -30,6 +29,7 @@ import java.util.Map;
 
 import javax.net.ssl.SSLContext;
 
+import com.rabbitmq.http.client.domain.TopicPermissions;
 import org.apache.http.HttpHost;
 import org.apache.http.auth.AuthScope;
 import org.apache.http.auth.UsernamePasswordCredentials;
@@ -402,6 +402,29 @@ public class Client {
     return this.getForObjectReturningNullOn404(uri, UserPermissions.class);
   }
 
+  public List<TopicPermissions> getTopicPermissionsIn(String vhost) {
+    final URI uri = uriWithPath("./vhosts/" + encodePathSegment(vhost) + "/topic-permissions");
+    TopicPermissions[] result = this.getForObjectReturningNullOn404(uri, TopicPermissions[].class);
+    return asListOrNull(result);
+  }
+
+  public List<TopicPermissions> getTopicPermissionsOf(String username) {
+    final URI uri = uriWithPath("./users/" + encodePathSegment(username) + "/topic-permissions");
+    TopicPermissions[] result = this.getForObjectReturningNullOn404(uri, TopicPermissions[].class);
+    return asListOrNull(result);
+  }
+
+  public List<TopicPermissions> getTopicPermissions() {
+    final URI uri = uriWithPath("./topic-permissions");
+    TopicPermissions[] result = this.getForObjectReturningNullOn404(uri, TopicPermissions[].class);
+    return asListOrNull(result);
+  }
+
+  public List<TopicPermissions> getTopicPermissions(String vhost, String username) {
+    final URI uri = uriWithPath("./topic-permissions/" + encodePathSegment(vhost) + "/" + encodePathSegment(username));
+    return asListOrNull(this.getForObjectReturningNullOn404(uri, TopicPermissions[].class));
+  }
+
   public List<ExchangeInfo> getExchanges() {
     final URI uri = uriWithPath("./exchanges/");
     return Arrays.asList(this.rt.getForObject(uri, ExchangeInfo[].class));
@@ -534,6 +557,16 @@ public class Client {
 
   public void clearPermissions(String vhost, String username) {
     final URI uri = uriWithPath("./permissions/" + encodePathSegment(vhost) + "/" + encodePathSegment(username));
+    deleteIgnoring404(uri);
+  }
+
+  public void updateTopicPermissions(String vhost, String username, TopicPermissions permissions) {
+    final URI uri = uriWithPath("./topic-permissions/" + encodePathSegment(vhost) + "/" + encodePathSegment(username));
+    this.rt.put(uri, permissions);
+  }
+
+  public void clearTopicPermissions(String vhost, String username) {
+    final URI uri = uriWithPath("./topic-permissions/" + encodePathSegment(vhost) + "/" + encodePathSegment(username));
     deleteIgnoring404(uri);
   }
 

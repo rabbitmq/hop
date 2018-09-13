@@ -35,6 +35,7 @@ import com.rabbitmq.http.client.domain.PolicyInfo;
 import com.rabbitmq.http.client.domain.QueueInfo;
 import com.rabbitmq.http.client.domain.ShovelInfo;
 import com.rabbitmq.http.client.domain.ShovelStatus;
+import com.rabbitmq.http.client.domain.TopicPermissions;
 import com.rabbitmq.http.client.domain.UserInfo;
 import com.rabbitmq.http.client.domain.UserPermissions;
 import com.rabbitmq.http.client.domain.VhostInfo;
@@ -262,6 +263,14 @@ public class ReactorNettyClient {
         return doPut(permissions, "permissions", enc(vhost), enc(username));
     }
 
+    public Flux<TopicPermissions> getTopicPermissionsIn(String vhost) {
+        return doGetFlux(TopicPermissions.class, "vhosts", enc(vhost), "topic-permissions");
+    }
+
+    public Mono<HttpResponse> updateTopicPermissions(String vhost, String username, TopicPermissions permissions) {
+        return doPut(permissions, "topic-permissions", enc(vhost), enc(username));
+    }
+
     public Flux<UserInfo> getUsers() {
         return doGetFlux(UserInfo.class, "users");
     }
@@ -314,6 +323,10 @@ public class ReactorNettyClient {
         return doGetFlux(UserPermissions.class, "users", enc(username), "permissions");
     }
 
+    public Flux<TopicPermissions> getTopicPermissionsOf(String username) {
+        return doGetFlux(TopicPermissions.class, "users", enc(username), "topic-permissions");
+    }
+
     public Mono<HttpResponse> createUserWithPasswordHash(String username, char[] passwordHash, List<String> tags) {
         if (username == null) {
             throw new IllegalArgumentException("username cannot be null");
@@ -348,6 +361,18 @@ public class ReactorNettyClient {
 
     public Mono<HttpResponse> clearPermissions(String vhost, String username) {
         return doDelete("permissions", enc(vhost), enc(username));
+    }
+
+    public Flux<TopicPermissions> getTopicPermissions() {
+        return doGetFlux(TopicPermissions.class, "topic-permissions");
+    }
+
+    public Flux<TopicPermissions> getTopicPermissions(String vhost, String username) {
+        return doGetFlux(TopicPermissions.class, "topic-permissions", enc(vhost), enc(username));
+    }
+
+    public Mono<HttpResponse> clearTopicPermissions(String vhost, String username) {
+        return doDelete("topic-permissions", enc(vhost), enc(username));
     }
 
     public Flux<ExchangeInfo> getExchanges() {
