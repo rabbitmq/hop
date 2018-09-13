@@ -33,6 +33,9 @@ public class Definitions {
 
     private List<UserPermissions> permissions = new ArrayList<UserPermissions>();
 
+    @JsonProperty("topic_permissions")
+    private List<TopicPermissions> topicPermissions = new ArrayList<>();
+
     private List<QueueInfo> queues = new ArrayList<QueueInfo>();
 
     private List<ExchangeInfo> exchanges = new ArrayList<ExchangeInfo>();
@@ -93,5 +96,13 @@ public class Definitions {
 
     public void setBindings(List<BindingInfo> bindings) {
         this.bindings = bindings;
+    }
+
+    public void setTopicPermissions(List<TopicPermissions> topicPermissions) {
+        this.topicPermissions = topicPermissions;
+    }
+
+    public List<TopicPermissions> getTopicPermissions() {
+        return topicPermissions;
     }
 }

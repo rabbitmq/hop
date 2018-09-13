@@ -32,6 +32,7 @@ import com.rabbitmq.http.client.domain.QueueInfo
 import com.rabbitmq.http.client.domain.ShovelDetails
 import com.rabbitmq.http.client.domain.ShovelInfo
 import com.rabbitmq.http.client.domain.ShovelStatus
+import com.rabbitmq.http.client.domain.TopicPermissions
 import com.rabbitmq.http.client.domain.UserPermissions
 import com.rabbitmq.http.client.domain.VhostInfo
 import reactor.core.publisher.Flux
@@ -417,6 +418,27 @@ class ReactorNettyClientSpec extends Specification {
         exception.status() == 404
     }
 
+    def "GET /api/vhosts/{name}/topic-permissions when vhost exists"() {
+        when: "topic permissions for vhost / are listed"
+        final s = "/"
+        final xs = client.getTopicPermissionsIn(s)
+
+        then: "they include topic permissions for the guest user"
+        TopicPermissions x = xs.filter({ perm -> perm.user.equals("guest")}).blockFirst()
+        x.exchange == "amq.topic"
+        x.read == ".*"
+    }
+
+    def "GET /api/vhosts/{name}/topic-permissions when vhost DOES NOT exist"() {
+        when: "permissions for vhost trololowut are listed"
+        final s = "trololowut"
+        client.getTopicPermissionsIn(s).blockFirst()
+
+        then: "flux throws an exception"
+        def exception = thrown(HttpClientException.class)
+        exception.status() == 404
+    }
+
     def "GET /api/users"() {
         when: "users are listed"
         final xs = client.getUsers()
@@ -494,7 +516,7 @@ class ReactorNettyClientSpec extends Specification {
         final s = "guest"
         final xs = client.getPermissionsOf(s)
 
-        then: "they include permissions for the / vhost"
+        then: "they include permissions for the guest user"
         UserPermissions x = xs.filter( { perm -> perm.user.equals("guest")}).blockFirst()
         x.read == ".*"
     }
@@ -503,6 +525,27 @@ class ReactorNettyClientSpec extends Specification {
         when: "permissions for user trololowut are listed"
         final s = "trololowut"
         client.getPermissionsOf(s).blockFirst()
+
+        then: "mono throws exception"
+        def exception = thrown(HttpClientException.class)
+        exception.status() == 404
+    }
+
+    def "GET /api/users/{name}/topic-permissions when user exists"() {
+        when: "topic permissions for user guest are listed"
+        final s = "guest"
+        final xs = client.getTopicPermissionsOf(s)
+
+        then: "they include topic permissions for the guest user"
+        TopicPermissions x = xs.filter( { perm -> perm.user.equals("guest")}).blockFirst()
+        x.exchange == "amq.topic"
+        x.read == ".*"
+    }
+
+    def "GET /api/users/{name}/topic-permissions when user DOES NOT exist"() {
+        when: "permissions for user trololowut are listed"
+        final s = "trololowut"
+        client.getTopicPermissionsOf(s).blockFirst()
 
         then: "mono throws exception"
         def exception = thrown(HttpClientException.class)
@@ -567,6 +610,33 @@ class ReactorNettyClientSpec extends Specification {
         final UserPermissions x = client.getPermissions(v, u).block()
 
         then: "a single permissions object is returned"
+        x.read == ".*"
+    }
+
+    def "GET /api/topic-permissions"() {
+        when: "all topic permissions are listed"
+        final s = "guest"
+        final xs = client.getTopicPermissions()
+
+        then: "they include topic permissions for user guest in vhost /"
+        final TopicPermissions x = xs
+                .filter( { perm -> perm.vhost.equals("/") && perm.user.equals(s)})
+                .blockFirst()
+        x.exchange == "amq.topic"
+        x.read == ".*"
+    }
+
+    def "GET /api/topic-permissions/{vhost}/:user when both vhost and user exist"() {
+        when: "topic permissions of user guest in vhost / are listed"
+        final u = "guest"
+        final v = "/"
+        final xs = client.getTopicPermissions(v, u)
+
+        then: "a list of permissions objects is returned"
+        final TopicPermissions x = xs
+                .filter( { perm -> perm.vhost.equals(v) && perm.user.equals(u)})
+                .blockFirst()
+        x.exchange == "amq.topic"
         x.read == ".*"
     }
 
@@ -639,7 +709,7 @@ class ReactorNettyClientSpec extends Specification {
         // so we handle both 404 and the error
         def status = client.updatePermissions(v, u, new UserPermissions("read", "write", "configure"))
                 .flatMap({ r -> Mono.just(r.status) })
-                .onErrorReturn({ t -> "Connection closed prematurely".equals(t.getMessage())}, 500)
+                .onErrorReturn({ t -> "Connection closed prematurely".equals(t.getMessage()) }, 500)
                 .block()
 
         then: "HTTP status is 400 BAD REQUEST or exception is thrown"
@@ -666,6 +736,104 @@ class ReactorNettyClientSpec extends Specification {
         client.clearPermissions(v, u).block()
 
         client.getPermissions(v, u).block()
+
+        then: "an exception is thrown on reload"
+        def exception = thrown(HttpClientException.class)
+        exception.status() == 404
+
+        cleanup:
+        client.deleteVhost(v).block()
+        client.deleteUser(u).block()
+    }
+
+    def "GET /api/topic-permissions/{vhost}/:user when vhost DOES NOT exist"() {
+        when: "topic permissions of user guest in vhost lolwut are listed"
+        final u = "guest"
+        final v = "lolwut"
+        client.getTopicPermissions(v, u).blockFirst()
+
+        then: "mono throws exception"
+        def exception = thrown(HttpClientException.class)
+        exception.status() == 404
+    }
+
+    def "GET /api/topic-permissions/{vhost}/:user when username DOES NOT exist"() {
+        when: "topic permissions of user lolwut in vhost / are listed"
+        final u = "lolwut"
+        final v = "/"
+        client.getTopicPermissions(v, u).blockFirst()
+
+        then: "mono throws exception"
+        def exception = thrown(HttpClientException.class)
+        exception.status() == 404
+    }
+
+    def "PUT /api/topic-permissions/{vhost}/:user when both user and vhost exist"() {
+        given: "vhost hop-vhost1 exists"
+        final v = "hop-vhost1"
+        client.createVhost(v).block()
+        and: "user hop-user1 exists"
+        final u = "hop-user1"
+        client.createUser(u, "test".toCharArray(), Arrays.asList("management", "http", "policymaker")).block()
+
+        when: "topic permissions of user guest in vhost / are updated"
+        client.updateTopicPermissions(v, u, new TopicPermissions("amq.topic", "read", "write")).block()
+
+        and: "permissions are reloaded"
+        final TopicPermissions x = client.getTopicPermissions(v, u).blockFirst()
+
+        then: "a list with a single topic permissions object is returned"
+        x.exchange == "amq.topic"
+        x.read == "read"
+        x.write == "write"
+
+        cleanup:
+        client.deleteVhost(v).block()
+        client.deleteUser(u).block()
+    }
+
+    def "PUT /api/topic-permissions/{vhost}/:user when vhost DOES NOT exist"() {
+        given: "vhost hop-vhost1 DOES NOT exist"
+        final v = "hop-vhost1"
+        client.deleteVhost(v).block()
+        and: "user hop-user1 exists"
+        final u = "hop-user1"
+        client.createUser(u, "test".toCharArray(), Arrays.asList("management", "http", "policymaker")).block()
+
+        when: "permissions of user guest in vhost / are updated"
+        // throws an exception for RabbitMQ 3.7.4+
+        // because of the way Cowboy 2.2.2 handles chunked transfer-encoding
+        // so we handle both 404 and the error
+        def status = client.updateTopicPermissions(v, u, new TopicPermissions("amq.topic", "read", "write"))
+                .flatMap({ r -> Mono.just(r.status) })
+                .onErrorReturn({ t -> "Connection closed prematurely".equals(t.getMessage()) }, 500)
+                .block()
+
+        then: "HTTP status is 400 BAD REQUEST or exception is thrown"
+        status == 400 || status == 500
+
+        cleanup:
+        client.deleteUser(u).block()
+    }
+
+    def "DELETE /api/topic-permissions/{vhost}/:user when both vhost and username exist"() {
+        given: "vhost hop-vhost1 exists"
+        final v = "hop-vhost1"
+        client.createVhost(v).block()
+        and: "user hop-user1 exists"
+        final u = "hop-user1"
+        client.createUser(u, "test".toCharArray(), Arrays.asList("management", "http", "policymaker")).block()
+
+        and: "permissions of user guest in vhost / are set"
+        client.updateTopicPermissions(v, u, new TopicPermissions("amq.topic", "read", "write")).block()
+        final TopicPermissions x = client.getTopicPermissions(v, u).blockFirst()
+        x.exchange == "amq.topic"
+        x.read == "read"
+
+        when: "permissions are cleared"
+        client.clearTopicPermissions(v, u).block()
+
+        client.getTopicPermissions(v, u).blockFirst()
 
         then: "an exception is thrown on reload"
         def exception = thrown(HttpClientException.class)
@@ -793,6 +961,8 @@ class ReactorNettyClientSpec extends Specification {
         !d.getPermissions().isEmpty()
         d.getPermissions().get(0).getUser() != null
         !d.getPermissions().get(0).getUser().isEmpty()
+        d.getTopicPermissions().get(0).getUser() != null
+        !d.getTopicPermissions().get(0).getUser().isEmpty()
     }
 
     def "GET /api/queues"() {
@@ -963,7 +1133,7 @@ class ReactorNettyClientSpec extends Specification {
         // so we handle both 404 and the error
         def status = client.declareQueue(v, s, new QueueInfo(false, false, false))
                 .flatMap({ r -> Mono.just(r.status) })
-                .onErrorReturn({ t -> "Connection closed prematurely".equals(t.getMessage())}, 500)
+                .onErrorReturn({ t -> "Connection closed prematurely".equals(t.getMessage()) }, 500)
                 .block()
 
         then: "status code is 404 or exception is thrown"

@@ -12,6 +12,7 @@ sleep 3
 $HOP_RABBITMQCTL add_vhost /
 $HOP_RABBITMQCTL add_user guest guest
 $HOP_RABBITMQCTL set_permissions -p / guest ".*" ".*" ".*"
+$HOP_RABBITMQCTL set_topic_permissions -p / guest amq.topic ".*" ".*"
 
 $HOP_RABBITMQCTL add_vhost vh1
 $HOP_RABBITMQCTL set_permissions -p vh1 guest ".*" ".*" ".*"

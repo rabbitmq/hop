@@ -974,6 +974,26 @@ class ClientSpec extends Specification {
     xs == null
   }
 
+  def "GET /api/vhosts/{name}/topic-permissions when vhost exists"() {
+    when: "topic-permissions for vhost / are listed"
+    final s = "/"
+    final xs = client.getTopicPermissionsIn(s)
+
+    then: "they include topic permissions for the guest user"
+    TopicPermissions x = xs.find { it.user.equals("guest") }
+    x.exchange == "amq.topic"
+    x.read == ".*"
+  }
+
+  def "GET /api/vhosts/{name}/topic-permissions when vhost DOES NOT exist"() {
+    when: "topic permissions for vhost trololowut are listed"
+    final s = "trololowut"
+    final xs = client.getTopicPermissionsIn(s)
+
+    then: "method returns null"
+    xs == null
+  }
+
   def "GET /api/users"() {
     when: "users are listed"
     final xs = client.getUsers()
@@ -1063,6 +1083,26 @@ class ClientSpec extends Specification {
     xs == null
   }
 
+  def "GET /api/users/{name}/topic-permissions when user exists"() {
+    when: "topic permissions for user guest are listed"
+    final s = "guest"
+    final xs = client.getTopicPermissionsOf(s)
+
+    then: "they include topic permissions for the / vhost"
+    TopicPermissions x = xs.find { it.vhost.equals("/") }
+    x.exchange == "amq.topic"
+    x.read == ".*"
+  }
+
+  def "GET /api/users/{name}/topic-permissions when users DOES NOT exist"() {
+    when: "topic permissions for user trololowut are listed"
+    final s = "trololowut"
+    final xs = client.getTopicPermissionsOf(s)
+
+    then: "method returns null"
+    xs == null
+  }
+
   def "PUT /api/users/{name} with a blank password hash"() {
     given: "user alt-user with a blank password hash"
     final u = "alt-user"
@@ -1124,7 +1164,7 @@ class ClientSpec extends Specification {
   }
 
   def "GET /api/permissions/{vhost}/:user when username DOES NOT exist"() {
-    when: "permissions of user lolwut in vhost / are listed"
+    when: "permissions of user lolwut in vhost / are lispermted"
     final u = "lolwut"
     final v = "/"
     final UserPermissions x = client.getPermissions(v, u)
@@ -1195,6 +1235,118 @@ class ClientSpec extends Specification {
     then: "no permissions are returned on reload"
     final UserPermissions y = client.getPermissions(v, u)
     y == null
+
+    cleanup:
+    client.deleteVhost(v)
+    client.deleteUser(u)
+  }
+
+  def "GET /api/topic-permissions"() {
+    when: "all topic permissions are listed"
+    final s = "guest"
+    final xs = client.getTopicPermissions()
+
+    then: "they include topic permissions for user guest in vhost /"
+    final TopicPermissions x = xs.find { it.vhost.equals("/") && it.user.equals(s) }
+    x.exchange == "amq.topic"
+    x.read == ".*"
+  }
+
+  def "GET /api/topic-permissions/{vhost}/:user when both vhost and user exist"() {
+    when: "topic permissions of user guest in vhost / are listed"
+    final u = "guest"
+    final v = "/"
+    final xs = client.getTopicPermissions(v, u)
+
+    then: "a list of topic permissions objects is returned"
+    final TopicPermissions x = xs.find { it.vhost.equals(v) && it.user.equals(u) }
+    x.exchange == "amq.topic"
+    x.read == ".*"
+  }
+
+  def "GET /api/topic-permissions/{vhost}/:user when vhost DOES NOT exist"() {
+    when: "topic permissions of user guest in vhost lolwut are listed"
+    final u = "guest"
+    final v = "lolwut"
+    final xs = client.getTopicPermissions(v, u)
+
+    then: "null is returned"
+    xs == null
+  }
+
+  def "GET /api/topic-permissions/{vhost}/:user when username DOES NOT exist"() {
+    when: "topic permissions of user lolwut in vhost / are listed"
+    final u = "lolwut"
+    final v = "/"
+    final xs = client.getTopicPermissions(v, u)
+
+    then: "null is returned"
+    xs == null
+  }
+
+  def "PUT /api/topic-permissions/{vhost}/:user when both user and vhost exist"() {
+    given: "vhost hop-vhost1 exists"
+    final v = "hop-vhost1"
+    client.createVhost(v)
+    and: "user hop-user1 exists"
+    final u = "hop-user1"
+    client.createUser(u, "test".toCharArray(), Arrays.asList("management", "http", "policymaker"))
+
+    when: "topic permissions of user guest in vhost / are updated"
+    client.updateTopicPermissions(v, u, new TopicPermissions("amq.topic", "read", "write"))
+
+    and: "topic permissions are reloaded"
+    final xs = client.getTopicPermissions(v, u)
+
+    then: "a list with a single topiic permissions object is returned"
+    xs.size() == 1
+    xs.get(0).exchange == "amq.topic"
+    xs.get(0).read == "read"
+    xs.get(0).write == "write"
+
+    cleanup:
+    client.deleteVhost(v)
+    client.deleteUser(u)
+  }
+
+  def "PUT /api/topic-permissions/{vhost}/:user when vhost DOES NOT exist"() {
+    given: "vhost hop-vhost1 DOES NOT exist"
+    final v = "hop-vhost1"
+    client.deleteVhost(v)
+    and: "user hop-user1 exists"
+    final u = "hop-user1"
+    client.createUser(u, "test".toCharArray(), Arrays.asList("management", "http", "policymaker"))
+
+    when: "topic permissions of user guest in vhost / are updated"
+    client.updateTopicPermissions(v, u, new TopicPermissions("amq.topic", "read", "write"))
+
+    then: "an exception is thrown"
+    final e = thrown(HttpClientErrorException)
+    e.getStatusCode() == HttpStatus.BAD_REQUEST
+
+    cleanup:
+    client.deleteUser(u)
+  }
+
+  def "DELETE /api/topic-permissions/{vhost}/:user when both vhost and username exist"() {
+    given: "vhost hop-vhost1 exists"
+    final v = "hop-vhost1"
+    client.createVhost(v)
+    and: "user hop-user1 exists"
+    final u = "hop-user1"
+    client.createUser(u, "test".toCharArray(), Arrays.asList("management", "http", "policymaker"))
+
+    and: "topic permissions of user guest in vhost / are set"
+    client.updateTopicPermissions(v, u, new TopicPermissions("amq.topic", "read", "write"))
+    final xs = client.getTopicPermissions(v, u)
+    xs.size() == 1
+
+    when: "topic permissions are cleared"
+    client.clearTopicPermissions(v, u)
+
+    then: "no topic permissions are returned on reload"
+    final ys = client.getTopicPermissions(v, u)
+    ys == null
 
     cleanup:
     client.deleteVhost(v)
@@ -1299,7 +1451,7 @@ class ClientSpec extends Specification {
     !xs.isEmpty()
   }
 
-  def "GET /api/definitions (version, vhosts, users, permissions)"() {
+  def "GET /api/definitions (version, vhosts, users, permissions, topic permissions)"() {
     when: "client requests the definitions"
     Definitions d = client.getDefinitions()
 
@@ -1317,6 +1469,8 @@ class ClientSpec extends Specification {
     !d.getPermissions().isEmpty()
     d.getPermissions().get(0).getUser() != null
     !d.getPermissions().get(0).getUser().isEmpty()
+    d.getTopicPermissions().get(0).getUser() != null
+    !d.getTopicPermissions().get(0).getUser().isEmpty()
   }
 
   def "GET /api/definitions (queues)"() {
