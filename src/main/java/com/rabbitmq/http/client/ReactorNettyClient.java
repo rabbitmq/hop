@@ -45,6 +45,7 @@ import io.netty.handler.codec.http.HttpHeaderNames;
 import io.netty.handler.codec.http.HttpHeaderValues;
 import io.netty.handler.codec.http.HttpHeaders;
 import io.netty.handler.codec.http.HttpMethod;
+import org.reactivestreams.Publisher;
 import reactor.core.Exceptions;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -509,27 +510,30 @@ public class ReactorNettyClient {
     }
 
     private <T> Mono<T> doGetMono(Class<T> type, String... pathSegments) {
-        return Mono.from(client.headers(authorizedHeader())
+        return Mono.from(client
+            .headers(authorizedHeader())
             .doOnResponse(onResponseCallback)
             .get()
             .uri(uri(pathSegments))
             .response(decode(type)));
     }
 
-    protected <T> BiFunction<? super HttpClientResponse, ? super ByteBufFlux, ? extends Mono<T>> decode(Class<T> type) {
+    protected <T> BiFunction<? super HttpClientResponse, ? super ByteBufFlux, Publisher<T>> decode(Class<T> type) {
         return (response, byteBufFlux) -> {
             if (response.status().code() == 404) {
                 return Mono.empty();
             } else {
-                return byteBufFlux.aggregate().asByteArray().map(bytes -> {
-                    try {
-                        return objectMapper.readValue(bytes, type);
-                    } catch (IOException e) {
-                        throw Exceptions.propagate(e);
-                    }
-                });
+                return byteBufFlux.aggregate().asByteArray().map(bytes -> deserialize(bytes, type));
             }
         };
+    }
+
+    private <T> T deserialize(byte[] bytes, Class<T> type) {
+        try {
+            return objectMapper.readValue(bytes, type);
+        } catch (IOException e) {
+            throw Exceptions.propagate(e);
+        }
     }
 
     @SuppressWarnings("unchecked")
