@@ -57,6 +57,7 @@ import reactor.netty.http.client.HttpClientRequest;
 import reactor.netty.http.client.HttpClientResponse;
 
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.OutputStream;
 import java.lang.reflect.Array;
 import java.net.URI;
@@ -548,14 +549,16 @@ public class ReactorNettyClient {
             if (response.status().code() == 404) {
                 return Mono.empty();
             } else {
-                return byteBufFlux.aggregate().asByteArray().map(bytes -> deserialize(bytes, type));
+                return byteBufFlux.aggregate().asInputStream().map(bytes -> deserialize(bytes, type));
             }
         };
     }
 
-    private <T> T deserialize(byte[] bytes, Class<T> type) {
+    private <T> T deserialize(InputStream inputStream, Class<T> type) {
         try {
-            return objectMapper.readValue(bytes, type);
+            T value = objectMapper.readValue(inputStream, type);
+            inputStream.close();
+            return value;
         } catch (IOException e) {
             throw Exceptions.propagate(e);
         }
