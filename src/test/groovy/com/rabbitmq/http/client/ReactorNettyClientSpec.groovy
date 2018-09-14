@@ -583,7 +583,10 @@ class ReactorNettyClientSpec extends Specification {
         final h = ""
         client.deleteUser(u).subscribe( { r -> return } , { e -> return})
         client.createUserWithPasswordHash(u, h.toCharArray(), Arrays.asList("original", "management")).block()
-        client.updatePermissions("/", u, new UserPermissions(".*", ".*", ".*")).block()
+        client.updatePermissions("/", u, new UserPermissions(".*", ".*", ".*"))
+                .flatMap({ r -> Mono.just(r.status) })
+                .onErrorReturn({ t -> "Connection closed prematurely".equals(t.getMessage()) }, 500)
+                .block()
 
         when: "alt-user tries to connect with a blank password"
         openConnection("alt-user", "alt-user")
