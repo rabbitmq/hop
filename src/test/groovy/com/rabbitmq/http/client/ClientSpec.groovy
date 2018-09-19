@@ -33,6 +33,9 @@ class ClientSpec extends Specification {
   protected static final String DEFAULT_PASSWORD = "guest"
 
   protected Client client
+
+  String brokerVersion
+
   private final ConnectionFactory cf = initializeConnectionFactory()
 
   protected static ConnectionFactory initializeConnectionFactory() {
@@ -46,6 +49,7 @@ class ClientSpec extends Specification {
     client.getConnections().each { client.closeConnection(it.getName())}
     awaitAllConnectionsClosed(client)
     client.getConnections().each { println(it.getName())}
+    brokerVersion = client.getOverview().getRabbitMQVersion()
   }
 
   protected static Client newLocalhostNodeClient() {
@@ -975,6 +979,7 @@ class ClientSpec extends Specification {
   }
 
   def "GET /api/vhosts/{name}/topic-permissions when vhost exists"() {
+    if (!isVersion37orLater()) return
     when: "topic-permissions for vhost / are listed"
     final s = "/"
     final xs = client.getTopicPermissionsIn(s)
@@ -986,6 +991,7 @@ class ClientSpec extends Specification {
   }
 
   def "GET /api/vhosts/{name}/topic-permissions when vhost DOES NOT exist"() {
+    if (!isVersion37orLater()) return
     when: "topic permissions for vhost trololowut are listed"
     final s = "trololowut"
     final xs = client.getTopicPermissionsIn(s)
@@ -1084,6 +1090,7 @@ class ClientSpec extends Specification {
   }
 
   def "GET /api/users/{name}/topic-permissions when user exists"() {
+    if (!isVersion37orLater()) return
     when: "topic permissions for user guest are listed"
     final s = "guest"
     final xs = client.getTopicPermissionsOf(s)
@@ -1095,6 +1102,7 @@ class ClientSpec extends Specification {
   }
 
   def "GET /api/users/{name}/topic-permissions when user DOES NOT exist"() {
+    if (!isVersion37orLater()) return
     when: "topic permissions for user trololowut are listed"
     final s = "trololowut"
     final xs = client.getTopicPermissionsOf(s)
@@ -1242,6 +1250,7 @@ class ClientSpec extends Specification {
   }
 
   def "GET /api/topic-permissions"() {
+    if (!isVersion37orLater()) return
     when: "all topic permissions are listed"
     final s = "guest"
     final xs = client.getTopicPermissions()
@@ -1253,6 +1262,7 @@ class ClientSpec extends Specification {
   }
 
   def "GET /api/topic-permissions/{vhost}/:user when both vhost and user exist"() {
+    if (!isVersion37orLater()) return
     when: "topic permissions of user guest in vhost / are listed"
     final u = "guest"
     final v = "/"
@@ -1265,6 +1275,7 @@ class ClientSpec extends Specification {
   }
 
   def "GET /api/topic-permissions/{vhost}/:user when vhost DOES NOT exist"() {
+    if (!isVersion37orLater()) return
     when: "topic permissions of user guest in vhost lolwut are listed"
     final u = "guest"
     final v = "lolwut"
@@ -1275,6 +1286,7 @@ class ClientSpec extends Specification {
   }
 
   def "GET /api/topic-permissions/{vhost}/:user when username DOES NOT exist"() {
+    if (!isVersion37orLater()) return
     when: "topic permissions of user lolwut in vhost / are listed"
     final u = "lolwut"
     final v = "/"
@@ -1291,6 +1303,8 @@ class ClientSpec extends Specification {
     and: "user hop-user1 exists"
     final u = "hop-user1"
     client.createUser(u, "test".toCharArray(), Arrays.asList("management", "http", "policymaker"))
+
+    if (!isVersion37orLater()) return
 
     when: "topic permissions of user guest in vhost / are updated"
     client.updateTopicPermissions(v, u, new TopicPermissions("amq.topic", "read", "write"))
@@ -1317,6 +1331,8 @@ class ClientSpec extends Specification {
     final u = "hop-user1"
     client.createUser(u, "test".toCharArray(), Arrays.asList("management", "http", "policymaker"))
 
+    if (!isVersion37orLater()) return
+
     when: "topic permissions of user guest in vhost / are updated"
     client.updateTopicPermissions(v, u, new TopicPermissions("amq.topic", "read", "write"))
 
@@ -1335,6 +1351,8 @@ class ClientSpec extends Specification {
     and: "user hop-user1 exists"
     final u = "hop-user1"
     client.createUser(u, "test".toCharArray(), Arrays.asList("management", "http", "policymaker"))
+
+    if (!isVersion37orLater()) return
 
     and: "topic permissions of user guest in vhost / are set"
     client.updateTopicPermissions(v, u, new TopicPermissions("amq.topic", "read", "write"))
@@ -1469,8 +1487,10 @@ class ClientSpec extends Specification {
     !d.getPermissions().isEmpty()
     d.getPermissions().get(0).getUser() != null
     !d.getPermissions().get(0).getUser().isEmpty()
-    d.getTopicPermissions().get(0).getUser() != null
-    !d.getTopicPermissions().get(0).getUser().isEmpty()
+    if (isVersion37orLater()) {
+      d.getTopicPermissions().get(0).getUser() != null
+      !d.getTopicPermissions().get(0).getUser().isEmpty()
+    }
   }
 
   def "GET /api/definitions (queues)"() {
@@ -1681,6 +1701,10 @@ class ClientSpec extends Specification {
   static boolean isVersion37orLater(String currentVersion) {
     String v = currentVersion.replaceAll("\\+.*\$", "");
     v == "0.0.0" ? true : compareVersions(v, "3.7.0") >= 0
+  }
+
+  boolean isVersion37orLater() {
+    return isVersion37orLater(brokerVersion)
   }
 
   /**
