@@ -679,7 +679,7 @@ class ReactorNettyClientSpec extends Specification {
         when: "permissions of user guest in vhost lolwut are listed"
         final u = "guest"
         final v = "lolwut"
-        client.getPermissions(v, u).hasElement()
+        client.getPermissions(v, u).block()
 
         then: "mono throws exception"
         def exception = thrown(HttpClientException.class)
