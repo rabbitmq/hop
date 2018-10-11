@@ -407,7 +407,7 @@ class ReactorNettyClientSpec extends Specification {
 
         then: "the result is empty and the response handling code has been called"
         vhost.hasElement().block() == false
-        called.get() == true
+        waitAtMostUntilTrue(5, { called.get()})
     }
 
     def "DELETE /api/vhosts/{name} when vhost DOES NOT exist"() {
@@ -679,7 +679,7 @@ class ReactorNettyClientSpec extends Specification {
         when: "permissions of user guest in vhost lolwut are listed"
         final u = "guest"
         final v = "lolwut"
-        client.getPermissions(v, u).block()
+        client.getPermissions(v, u).hasElement()
 
         then: "mono throws exception"
         def exception = thrown(HttpClientException.class)
@@ -1731,6 +1731,22 @@ class ReactorNettyClientSpec extends Specification {
             Thread.sleep(1000)
             null
         }
+    }
+
+    protected static boolean waitAtMostUntilTrue(int timeoutInSeconds, Closure<Boolean> callback) {
+        if (callback()) {
+            return true
+        }
+        int timeout = timeoutInSeconds * 1000
+        int waited = 0
+        while (waited <= timeout) {
+            Thread.sleep(100)
+            waited += 100
+            if (callback()) {
+                return true
+            }
+        }
+        false
     }
 
     protected static boolean awaitOn(CountDownLatch latch) {

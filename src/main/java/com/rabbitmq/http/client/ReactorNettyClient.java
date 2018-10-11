@@ -71,6 +71,7 @@ import java.util.Map;
 import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.function.UnaryOperator;
 
@@ -144,7 +145,6 @@ public class ReactorNettyClient {
             this.onResponseCallback = (response, connection) ->
                 options.onResponseCallback().accept(new HttpEndpoint(response.uri(), response.method().name()), toHttpResponse(response));
         }
-
         ByteBufAllocator byteBufAllocator = new PooledByteBufAllocator();
         this.byteBufSupplier = () -> byteBufAllocator.buffer();
     }
@@ -537,7 +537,7 @@ public class ReactorNettyClient {
 
     private <T> Mono<T> doGetMono(Class<T> type, String... pathSegments) {
         return Mono.from(client
-            .headers(authorizedHeader())
+            .headersWhen(authorizedHeader())
             .doOnResponse(onResponseCallback)
             .get()
             .uri(uri(pathSegments))
@@ -569,17 +569,15 @@ public class ReactorNettyClient {
         return (Flux<T>) doGetMono(Array.newInstance(type, 0).getClass(), pathSegments).flatMapMany(items -> Flux.fromArray((Object[]) items));
     }
 
-    protected Consumer<HttpHeaders> authorizedHeader() {
-        return headers -> {
-            // FIXME try to get the token as late as possible?
-            headers.set(HttpHeaderNames.AUTHORIZATION, token.block());
-        };
+    protected Function<? super HttpHeaders, Mono<? extends HttpHeaders>> authorizedHeader() {
+        return headers -> token.map(t -> headers.set(HttpHeaderNames.AUTHORIZATION, t));
     }
 
     private Mono<HttpResponse> doPost(Object body, String... pathSegments) {
-        return client.headers(JSON_HEADER.andThen(authorizedHeader()))
-            .noChunkedTransfer()
-            .doOnResponse(onResponseCallback)
+        return client.headersWhen(authorizedHeader())
+            .headers(JSON_HEADER)
+            .chunkedTransfer(false)
+            .doAfterResponse(onResponseCallback)
             .post()
             .uri(uri(pathSegments))
             .send(bodyPublisher(body))
@@ -588,8 +586,8 @@ public class ReactorNettyClient {
     }
 
     private Mono<HttpResponse> doPut(Object body, String... pathSegments) {
-        return client.headers(JSON_HEADER.andThen(authorizedHeader()))
-            .noChunkedTransfer()
+        return client.headersWhen(authorizedHeader())
+            .chunkedTransfer(false)
             .doOnResponse(onResponseCallback)
             .put()
             .uri(uri(pathSegments))
@@ -608,8 +606,9 @@ public class ReactorNettyClient {
     }
 
     private Mono<HttpResponse> doPut(String... pathSegments) {
-        return client.headers(authorizedHeader())
-            .noChunkedTransfer()
+        return client.headersWhen(authorizedHeader())
+            .headers(JSON_HEADER)
+            .chunkedTransfer(false)
             .doOnResponse(onResponseCallback)
             .put()
             .uri(uri(pathSegments))
@@ -617,7 +616,7 @@ public class ReactorNettyClient {
     }
 
     private Mono<HttpResponse> doDelete(UnaryOperator<HttpClientRequest> operator, String... pathSegments) {
-        return client.headers(authorizedHeader())
+        return client.headersWhen(authorizedHeader())
             .doOnRequest((request, connection) -> operator.apply(request))
             .doOnResponse(onResponseCallback)
             .delete()
