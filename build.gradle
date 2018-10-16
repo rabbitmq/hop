@@ -37,9 +37,9 @@ ext {
   groovyVersion = '2.4.15'
   jacksonVersion = '2.9.6'
   spockVersion = "1.1-groovy-2.4"
-  reactorVersion = "3.2.0.RELEASE"
+  reactorVersion = "3.2.1.RELEASE"
   springVersion = '5.0.9.RELEASE'
-  reactorNettyVersion = '0.8.0.RELEASE'
+  reactorNettyVersion = '0.8.1.RELEASE'
 
   linkHomepage = 'https://github.com/rabbitmq/hop'
   linkCi       = 'https://build.spring.io/browse/RMQ'

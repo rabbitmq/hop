@@ -681,6 +681,7 @@ class ReactorNettyClientSpec extends Specification {
         final v = "lolwut"
         client.getPermissions(v, u).block()
 
+
         then: "mono throws exception"
         def exception = thrown(HttpClientException.class)
         exception.status() == 404
