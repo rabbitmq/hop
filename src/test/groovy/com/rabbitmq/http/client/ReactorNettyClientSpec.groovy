@@ -632,7 +632,6 @@ class ReactorNettyClientSpec extends Specification {
                 .blockFirst()
         x.exchange == "amq.topic"
         x.read == ".*"
-        println "passe"
     }
 
     def "GET /api/topic-permissions/{vhost}/:user when both vhost and user exist"() {
