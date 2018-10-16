@@ -53,6 +53,8 @@ class ReactorNettyClientSpec extends Specification {
 
     protected ReactorNettyClient client
 
+    String brokerVersion
+
     private final ConnectionFactory cf = initializeConnectionFactory()
 
     protected static ConnectionFactory initializeConnectionFactory() {
@@ -64,6 +66,7 @@ class ReactorNettyClientSpec extends Specification {
     def setup() {
         client = newLocalhostNodeClient()
         client.getConnections().toStream().forEach({ c -> client.closeConnection(c.name).block() })
+        brokerVersion = client.getOverview().block().getRabbitMQVersion()
     }
 
     protected static ReactorNettyClient newLocalhostNodeClient() {
@@ -442,6 +445,7 @@ class ReactorNettyClientSpec extends Specification {
     }
 
     def "GET /api/vhosts/{name}/topic-permissions when vhost exists"() {
+        if (!isVersion37orLater()) return
         when: "topic permissions for vhost / are listed"
         final s = "/"
         final xs = client.getTopicPermissionsIn(s)
@@ -453,6 +457,7 @@ class ReactorNettyClientSpec extends Specification {
     }
 
     def "GET /api/vhosts/{name}/topic-permissions when vhost DOES NOT exist"() {
+        if (!isVersion37orLater()) return
         when: "permissions for vhost trololowut are listed"
         final s = "trololowut"
         client.getTopicPermissionsIn(s).blockFirst()
@@ -555,6 +560,7 @@ class ReactorNettyClientSpec extends Specification {
     }
 
     def "GET /api/users/{name}/topic-permissions when user exists"() {
+        if (!isVersion37orLater()) return
         when: "topic permissions for user guest are listed"
         final s = "guest"
         final xs = client.getTopicPermissionsOf(s)
@@ -566,6 +572,7 @@ class ReactorNettyClientSpec extends Specification {
     }
 
     def "GET /api/users/{name}/topic-permissions when user DOES NOT exist"() {
+        if (!isVersion37orLater()) return
         when: "permissions for user trololowut are listed"
         final s = "trololowut"
         client.getTopicPermissionsOf(s).blockFirst()
@@ -640,6 +647,7 @@ class ReactorNettyClientSpec extends Specification {
     }
 
     def "GET /api/topic-permissions"() {
+        if (!isVersion37orLater()) return
         when: "all topic permissions are listed"
         final s = "guest"
         final xs = client.getTopicPermissions()
@@ -653,6 +661,7 @@ class ReactorNettyClientSpec extends Specification {
     }
 
     def "GET /api/topic-permissions/{vhost}/:user when both vhost and user exist"() {
+        if (!isVersion37orLater()) return
         when: "topic permissions of user guest in vhost / are listed"
         final u = "guest"
         final v = "/"
@@ -774,6 +783,7 @@ class ReactorNettyClientSpec extends Specification {
     }
 
     def "GET /api/topic-permissions/{vhost}/:user when vhost DOES NOT exist"() {
+        if (!isVersion37orLater()) return
         when: "topic permissions of user guest in vhost lolwut are listed"
         final u = "guest"
         final v = "lolwut"
@@ -785,6 +795,7 @@ class ReactorNettyClientSpec extends Specification {
     }
 
     def "GET /api/topic-permissions/{vhost}/:user when username DOES NOT exist"() {
+        if (!isVersion37orLater()) return
         when: "topic permissions of user lolwut in vhost / are listed"
         final u = "lolwut"
         final v = "/"
@@ -802,6 +813,8 @@ class ReactorNettyClientSpec extends Specification {
         and: "user hop-user1 exists"
         final u = "hop-user1"
         client.createUser(u, "test".toCharArray(), Arrays.asList("management", "http", "policymaker")).block()
+
+        if (!isVersion37orLater()) return
 
         when: "topic permissions of user guest in vhost / are updated"
         client.updateTopicPermissions(v, u, new TopicPermissions("amq.topic", "read", "write")).block()
@@ -827,6 +840,8 @@ class ReactorNettyClientSpec extends Specification {
         final u = "hop-user1"
         client.createUser(u, "test".toCharArray(), Arrays.asList("management", "http", "policymaker")).block()
 
+        if (!isVersion37orLater()) return
+
         when: "permissions of user guest in vhost / are updated"
         // throws an exception for RabbitMQ 3.7.4+
         // because of the way Cowboy 2.2.2 handles chunked transfer-encoding
@@ -850,6 +865,8 @@ class ReactorNettyClientSpec extends Specification {
         and: "user hop-user1 exists"
         final u = "hop-user1"
         client.createUser(u, "test".toCharArray(), Arrays.asList("management", "http", "policymaker")).block()
+
+        if (!isVersion37orLater()) return
 
         and: "permissions of user guest in vhost / are set"
         client.updateTopicPermissions(v, u, new TopicPermissions("amq.topic", "read", "write")).block()
@@ -970,7 +987,7 @@ class ReactorNettyClientSpec extends Specification {
         xs.hasElements().block()
     }
 
-    def "GET /api/definitions (version, vhosts, users, permissions)"() {
+    def "GET /api/definitions (version, vhosts, users, permissions, topic permissions)"() {
         when: "client requests the definitions"
         Definitions d = client.getDefinitions().block()
 
@@ -988,8 +1005,10 @@ class ReactorNettyClientSpec extends Specification {
         !d.getPermissions().isEmpty()
         d.getPermissions().get(0).getUser() != null
         !d.getPermissions().get(0).getUser().isEmpty()
-        d.getTopicPermissions().get(0).getUser() != null
-        !d.getTopicPermissions().get(0).getUser().isEmpty()
+        if (isVersion37orLater()) {
+            d.getTopicPermissions().get(0).getUser() != null
+            !d.getTopicPermissions().get(0).getUser().isEmpty()
+        }
     }
 
     def "GET /api/queues"() {
@@ -1762,6 +1781,10 @@ class ReactorNettyClientSpec extends Specification {
     static boolean isVersion37orLater(String currentVersion) {
         String v = currentVersion.replaceAll("\\+.*\$", "");
         v == "0.0.0" ? true : compareVersions(v, "3.7.0") >= 0
+    }
+
+    boolean isVersion37orLater() {
+        return isVersion37orLater(brokerVersion)
     }
 
     /**

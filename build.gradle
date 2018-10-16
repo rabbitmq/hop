@@ -35,11 +35,11 @@ ext {
   amqpClientVersion='5.4.3'
   commonsHttpClientVersion = '4.5.6'
   groovyVersion = '2.4.15'
-  jacksonVersion = '2.9.6'
+  jacksonVersion = '2.9.7'
   spockVersion = "1.1-groovy-2.4"
   reactorVersion = "3.2.1.RELEASE"
-  springVersion = '5.0.9.RELEASE'
   reactorNettyVersion = '0.8.1.RELEASE'
+  springVersion = '5.1.1.RELEASE'
 
   linkHomepage = 'https://github.com/rabbitmq/hop'
   linkCi       = 'https://build.spring.io/browse/RMQ'
