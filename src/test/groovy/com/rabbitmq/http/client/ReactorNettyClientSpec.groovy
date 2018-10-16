@@ -42,6 +42,7 @@ import spock.lang.Specification
 
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicBoolean
 import java.util.stream.Collectors
 
 class ReactorNettyClientSpec extends Specification {
@@ -69,8 +70,12 @@ class ReactorNettyClientSpec extends Specification {
     }
 
     protected static ReactorNettyClient newLocalhostNodeClient() {
+        newLocalhostNodeClient(new ReactorNettyClientOptions())
+    }
+
+    protected static ReactorNettyClient newLocalhostNodeClient(ReactorNettyClientOptions options) {
         new ReactorNettyClient(
-                String.format("http://%s:%s@127.0.0.1:15672/api", DEFAULT_USERNAME, DEFAULT_PASSWORD)
+                String.format("http://%s:%s@127.0.0.1:15672/api", DEFAULT_USERNAME, DEFAULT_PASSWORD), options
         )
     }
 
@@ -390,6 +395,24 @@ class ReactorNettyClientSpec extends Specification {
         exception.status() == 404
     }
 
+    def "GET /api/vhosts/{name} when vhost exists and response callback is custom"() {
+        given: "a vhost with a random name and custom response callback"
+        final s = UUID.randomUUID().toString()
+        final called = new AtomicBoolean(false)
+        final options = new ReactorNettyClientOptions()
+                .onResponseCallback({ request, response ->
+            called.getAndSet(true)
+        })
+        final c = newLocalhostNodeClient(options)
+
+        when: "the client tries to retrieve the vhost infos"
+        def vhost = c.getVhost(s)
+
+        then: "the result is empty and the response handling code has been called"
+        vhost.hasElement().block() == false
+        waitAtMostUntilTrue(5, { called.get()})
+    }
+
     def "DELETE /api/vhosts/{name} when vhost DOES NOT exist"() {
         given: "no vhost named hop-test-to-be-deleted"
         final s = "hop-test-to-be-deleted"
@@ -567,7 +590,10 @@ class ReactorNettyClientSpec extends Specification {
         final h = ""
         client.deleteUser(u).subscribe( { r -> return } , { e -> return})
         client.createUserWithPasswordHash(u, h.toCharArray(), Arrays.asList("original", "management")).block()
-        client.updatePermissions("/", u, new UserPermissions(".*", ".*", ".*")).block()
+        client.updatePermissions("/", u, new UserPermissions(".*", ".*", ".*"))
+                .flatMap({ r -> Mono.just(r.status) })
+                .onErrorReturn({ t -> "Connection closed prematurely".equals(t.getMessage()) }, 500)
+                .block()
 
         when: "alt-user tries to connect with a blank password"
         openConnection("alt-user", "alt-user")
@@ -663,6 +689,7 @@ class ReactorNettyClientSpec extends Specification {
         final u = "guest"
         final v = "lolwut"
         client.getPermissions(v, u).block()
+
 
         then: "mono throws exception"
         def exception = thrown(HttpClientException.class)
@@ -1713,8 +1740,10 @@ class ReactorNettyClientSpec extends Specification {
             while (!hasElements && n < 10000) {
                 Thread.sleep(100)
                 n += 100
-                result = callback()
-                hasElements = result?.hasElements().block()
+                // we cache the result to avoid additional requests
+                // when the flux content is accessed later on
+                result = callback().cache()
+                hasElements = result.hasElements().block()
             }
             assert n < 10000
             result
@@ -1722,6 +1751,22 @@ class ReactorNettyClientSpec extends Specification {
             Thread.sleep(1000)
             null
         }
+    }
+
+    protected static boolean waitAtMostUntilTrue(int timeoutInSeconds, Closure<Boolean> callback) {
+        if (callback()) {
+            return true
+        }
+        int timeout = timeoutInSeconds * 1000
+        int waited = 0
+        while (waited <= timeout) {
+            Thread.sleep(100)
+            waited += 100
+            if (callback()) {
+                return true
+            }
+        }
+        false
     }
 
     protected static boolean awaitOn(CountDownLatch latch) {

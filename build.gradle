@@ -37,9 +37,9 @@ ext {
   groovyVersion = '2.4.15'
   jacksonVersion = '2.9.7'
   spockVersion = "1.1-groovy-2.4"
-  reactorVersion = "3.1.9.RELEASE"
+  reactorVersion = "3.2.1.RELEASE"
+  reactorNettyVersion = '0.8.1.RELEASE'
   springVersion = '5.1.1.RELEASE'
-  reactorNettyVersion = '0.7.9.RELEASE'
 
   linkHomepage = 'https://github.com/rabbitmq/hop'
   linkCi       = 'https://build.spring.io/browse/RMQ'
@@ -67,7 +67,7 @@ dependencies {
   compile ("org.apache.httpcomponents:httpclient:$commonsHttpClientVersion", optional)
   compile "com.fasterxml.jackson.core:jackson-databind:$jacksonVersion"
   compile ("io.projectreactor:reactor-core:$reactorVersion", optional)
-  compile ("io.projectreactor.ipc:reactor-netty:$reactorNettyVersion", optional)
+  compile ("io.projectreactor.netty:reactor-netty:$reactorNettyVersion", optional)
 
   testCompile "org.codehaus.groovy:groovy-all:$groovyVersion"
   testCompile "org.spockframework:spock-core:$spockVersion"

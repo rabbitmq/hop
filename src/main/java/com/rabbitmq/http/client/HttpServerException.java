@@ -16,46 +16,29 @@
 
 package com.rabbitmq.http.client;
 
-import java.util.Collections;
-import java.util.Map;
-
 /**
- * Representation of an HTTP response.
+ * Java exception for 5xx HTTP responses.
  *
- * @since 2.1.0
+ * @since 3.0.0
  */
-public class HttpResponse {
+public class HttpServerException extends HttpException {
+
+    static final long serialVersionUID = 1;
 
     private final int status;
-
     private final String reason;
 
-    private final Map<String, String> headers;
-
-    public HttpResponse(int status, String reason, Map<String, String> headers) {
+    public HttpServerException(int status, String reason) {
+        super(reason);
         this.status = status;
         this.reason = reason;
-        this.headers = Collections.unmodifiableMap(headers);
     }
 
-    public int getStatus() {
+    public int status() {
         return status;
     }
 
-    public String getReason() {
+    public String reason() {
         return reason;
-    }
-
-    public Map<String, String> getHeaders() {
-        return headers;
-    }
-
-    @Override
-    public String toString() {
-        return "HttpResponse{" +
-            "status=" + status +
-            ", reason='" + reason + '\'' +
-            ", headers=" + headers +
-            '}';
     }
 }

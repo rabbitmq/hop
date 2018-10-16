@@ -17,7 +17,6 @@
 package com.rabbitmq.http.client;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.MapperFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -39,17 +38,26 @@ import com.rabbitmq.http.client.domain.TopicPermissions;
 import com.rabbitmq.http.client.domain.UserInfo;
 import com.rabbitmq.http.client.domain.UserPermissions;
 import com.rabbitmq.http.client.domain.VhostInfo;
+import io.netty.buffer.ByteBuf;
+import io.netty.buffer.ByteBufAllocator;
+import io.netty.buffer.ByteBufOutputStream;
+import io.netty.buffer.PooledByteBufAllocator;
 import io.netty.handler.codec.http.HttpHeaderNames;
 import io.netty.handler.codec.http.HttpHeaderValues;
-import io.netty.handler.codec.json.JsonObjectDecoder;
+import io.netty.handler.codec.http.HttpHeaders;
+import io.netty.handler.codec.http.HttpMethod;
 import org.reactivestreams.Publisher;
 import reactor.core.Exceptions;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
-import reactor.ipc.netty.http.client.HttpClient;
-import reactor.ipc.netty.http.client.HttpClientRequest;
-import reactor.ipc.netty.http.client.HttpClientResponse;
+import reactor.netty.ByteBufFlux;
+import reactor.netty.http.client.HttpClient;
+import reactor.netty.http.client.HttpClientRequest;
+import reactor.netty.http.client.HttpClientResponse;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.lang.reflect.Array;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
@@ -59,8 +67,10 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.function.Supplier;
 import java.util.function.UnaryOperator;
 
 /**
@@ -69,36 +79,33 @@ import java.util.function.UnaryOperator;
  * advanced settings, e.g. TLS, authentication other than HTTP basic, etc.
  * The default settings for this class are the following:
  * <ul>
- *     <li>{@link HttpClient}: created with target host and port. Other typical
- *     settings are accessible with the {@link HttpClient#create(Consumer)}: connection pooling,
- *     {@link javax.net.ssl.SSLContext} for TLS.
- *     </li>
- *     <li>
- *         {@link ObjectMapper}: <code>DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES</code> and
- *         <code>MapperFeature.DEFAULT_VIEW_INCLUSION</code> are disabled.
- *     </li>
- *     <li><code>Mono&lt;String&gt; token</code>: basic HTTP authentication used for the
- *     <code>authorization</code> header.
- *     </li>
- *     <li><code>Function&lt;? super Throwable, ? extends Throwable&gt; errorHandler</code>:
- *     {@link reactor.ipc.netty.http.client.HttpClientException} are wrapped into
- *     {@link HttpClientException}, other exceptions are wrapped into {@link HttpException}.
- *     </li>
+ * <li>{@link HttpClient}: created with the {@link HttpClient#baseUrl(String)}.
+ * </li>
+ * <li>
+ * {@link ObjectMapper}: <code>DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES</code> and
+ * <code>MapperFeature.DEFAULT_VIEW_INCLUSION</code> are disabled.
+ * </li>
+ * <li><code>Mono&lt;String&gt; token</code>: basic HTTP authentication used for the
+ * <code>authorization</code> header.
+ * </li>
+ * <li><code>BiConsumer&lt;? super HttpRequest, ? super HttpResponse&gt; responseCallback</code>:
+ * 4xx and 5xx responses on GET requests throw {@link HttpClientException} and {@link HttpServerException}
+ * respectively.
+ * </li>
  * </ul>
+ *
+ * @see ReactorNettyClientOptions
+ * @since 2.1.0
  */
 public class ReactorNettyClient {
 
-    private static final int MAX_PAYLOAD_SIZE = 100 * 1024 * 1024;
-
-    private final String rootUrl;
-
+    private static final Consumer<HttpHeaders> JSON_HEADER = headers ->
+        headers.set(HttpHeaderNames.CONTENT_TYPE, HttpHeaderValues.APPLICATION_JSON);
     private final ObjectMapper objectMapper;
-
     private final HttpClient client;
-
     private final Mono<String> token;
-
-    private final Function<? super Throwable, ? extends Throwable> errorHandler;
+    private final Supplier<ByteBuf> byteBufSupplier;
+    private final Consumer<HttpClientResponse> responseCallback;
 
     public ReactorNettyClient(String url, ReactorNettyClientOptions options) {
         this(urlWithoutCredentials(url),
@@ -115,20 +122,29 @@ public class ReactorNettyClient {
     }
 
     public ReactorNettyClient(String url, String username, String password, ReactorNettyClientOptions options) {
-        if (url.endsWith("/")) {
-            rootUrl = url.substring(0, url.lastIndexOf("/"));
-        } else {
-            rootUrl = url;
-        }
         objectMapper = options.objectMapper() == null ? createDefaultObjectMapper() : options.objectMapper().get();
 
-        URI uri = URI.create(url);
         client = options.client() == null ?
-            HttpClient.create(httpOptions -> httpOptions.host(uri.getHost()).port(uri.getPort())) : options.client().get();
+            HttpClient.create().baseUrl(url) : options.client().get();
 
         this.token = options.token() == null ? createBasicAuthenticationToken(username, password) : options.token();
 
-        this.errorHandler = options.errorHandler() == null ? ReactorNettyClient::handleError : options.errorHandler();
+        if (options.onResponseCallback() == null) {
+            this.responseCallback = response -> {
+                if (response.method() == HttpMethod.GET) {
+                    if (response.status().code() >= 500) {
+                        throw new HttpServerException(response.status().code(), response.status().reasonPhrase());
+                    } else if (response.status().code() >= 400) {
+                        throw new HttpClientException(response.status().code(), response.status().reasonPhrase());
+                    }
+                }
+            };
+        } else {
+            this.responseCallback = response ->
+                options.onResponseCallback().accept(new HttpEndpoint(response.uri(), response.method().name()), toHttpResponse(response));
+        }
+        ByteBufAllocator byteBufAllocator = new PooledByteBufAllocator();
+        this.byteBufSupplier = () -> byteBufAllocator.buffer();
     }
 
     private static String urlWithoutCredentials(String url) {
@@ -142,16 +158,6 @@ public class ReactorNettyClient {
             headers.put(headerEntry.getKey(), headerEntry.getValue());
         }
         return new HttpResponse(response.status().code(), response.status().reasonPhrase(), headers);
-    }
-
-    private static HttpClientRequest disableChunkTransfer(HttpClientRequest request) {
-        return request.chunkedTransfer(false);
-    }
-
-    private static HttpClientRequest disableFailOnError(HttpClientRequest request) {
-        return request
-            .failOnClientError(false)
-            .failOnServerError(false);
     }
 
     public static ObjectMapper createDefaultObjectMapper() {
@@ -173,14 +179,6 @@ public class ReactorNettyClient {
         byte[] encodedBytes = Base64.getEncoder().encode(credentialsAsBytes);
         String encodedCredentials = new String(encodedBytes, StandardCharsets.ISO_8859_1);
         return "Basic " + encodedCredentials;
-    }
-
-    @SuppressWarnings("unchecked")
-    public static <T extends Throwable> T handleError(T cause) {
-        if (cause instanceof reactor.ipc.netty.http.client.HttpClientException) {
-            return (T) new HttpClientException((reactor.ipc.netty.http.client.HttpClientException) cause);
-        }
-        return (T) new HttpException(cause);
     }
 
     public Mono<OverviewResponse> getOverview() {
@@ -536,11 +534,32 @@ public class ReactorNettyClient {
     }
 
     private <T> Mono<T> doGetMono(Class<T> type, String... pathSegments) {
-        return client.get(uri(pathSegments), request -> Mono.just(request)
-            .transform(this::addAuthorization)
-            .flatMap(HttpClientRequest::send))
-            .onErrorMap(this.errorHandler)
-            .transform(decode(type));
+        return Mono.from(client
+            .headersWhen(authorizedHeader())
+            .get()
+            .uri(uri(pathSegments))
+            .response(decode(type)));
+    }
+
+    protected <T> BiFunction<? super HttpClientResponse, ? super ByteBufFlux, Publisher<T>> decode(Class<T> type) {
+        return (response, byteBufFlux) -> {
+            this.responseCallback.accept(response);
+            if (response.status().code() == 404) {
+                return Mono.empty();
+            } else {
+                return byteBufFlux.aggregate().asInputStream().map(bytes -> deserialize(bytes, type));
+            }
+        };
+    }
+
+    private <T> T deserialize(InputStream inputStream, Class<T> type) {
+        try {
+            T value = objectMapper.readValue(inputStream, type);
+            inputStream.close();
+            return value;
+        } catch (IOException e) {
+            throw Exceptions.propagate(e);
+        }
     }
 
     @SuppressWarnings("unchecked")
@@ -548,86 +567,76 @@ public class ReactorNettyClient {
         return (Flux<T>) doGetMono(Array.newInstance(type, 0).getClass(), pathSegments).flatMapMany(items -> Flux.fromArray((Object[]) items));
     }
 
+    protected Function<? super HttpHeaders, Mono<? extends HttpHeaders>> authorizedHeader() {
+        return headers -> token.map(t -> headers.set(HttpHeaderNames.AUTHORIZATION, t));
+    }
+
     private Mono<HttpResponse> doPost(Object body, String... pathSegments) {
-        return client.post(uri(pathSegments), request -> Mono.just(request)
-            .transform(this::addAuthorization)
-            .map(ReactorNettyClient::disableChunkTransfer)
-            .map(ReactorNettyClient::disableFailOnError)
-            .transform(encode(body)))
+        return client.headersWhen(authorizedHeader())
+            .headers(JSON_HEADER)
+            .chunkedTransfer(false)
+            .post()
+            .uri(uri(pathSegments))
+            .send(bodyPublisher(body))
+            .response()
+            .doOnNext(applyResponseCallback())
             .map(ReactorNettyClient::toHttpResponse);
+    }
+
+    protected Consumer<HttpClientResponse> applyResponseCallback() {
+        return response -> this.responseCallback.accept(response);
     }
 
     private Mono<HttpResponse> doPut(Object body, String... pathSegments) {
-        return client.put(uri(pathSegments), request -> Mono.just(request)
-            .transform(this::addAuthorization)
-            .map(ReactorNettyClient::disableChunkTransfer)
-            .map(ReactorNettyClient::disableFailOnError)
-            .transform(encode(body)))
+        return client.headersWhen(authorizedHeader())
+            .chunkedTransfer(false)
+            .put()
+            .uri(uri(pathSegments))
+            .send(bodyPublisher(body))
+            .response()
+            .doOnNext(applyResponseCallback())
             .map(ReactorNettyClient::toHttpResponse);
     }
 
+    private Mono<ByteBuf> bodyPublisher(Object body) {
+        return Mono.fromCallable(() -> {
+            ByteBuf byteBuf = this.byteBufSupplier.get();
+            ByteBufOutputStream byteBufOutputStream = new ByteBufOutputStream(byteBuf);
+            objectMapper.writeValue((OutputStream) byteBufOutputStream, body);
+            return byteBuf;
+        });
+    }
+
     private Mono<HttpResponse> doPut(String... pathSegments) {
-        return client.put(uri(pathSegments), request -> Mono.just(request)
-            .transform(this::addAuthorization)
-            .map(ReactorNettyClient::disableChunkTransfer)
-            .map(ReactorNettyClient::disableFailOnError)
-            .flatMap(HttpClientRequest::send))
+        return client.headersWhen(authorizedHeader())
+            .headers(JSON_HEADER)
+            .chunkedTransfer(false)
+            .put()
+            .uri(uri(pathSegments))
+            .response()
+            .doOnNext(applyResponseCallback())
             .map(ReactorNettyClient::toHttpResponse);
     }
 
     private Mono<HttpResponse> doDelete(UnaryOperator<HttpClientRequest> operator, String... pathSegments) {
-        return client.delete(uri(pathSegments), request -> Mono.just(request)
-            .transform(this::addAuthorization)
-            .map(ReactorNettyClient::disableFailOnError)
-            .map(operator)
-            .flatMap(HttpClientRequest::send)
-        ).map(ReactorNettyClient::toHttpResponse);
+        return client.headersWhen(authorizedHeader())
+            .doOnRequest((request, connection) -> operator.apply(request))
+            .delete()
+            .uri(uri(pathSegments))
+            .response()
+            .doOnNext(applyResponseCallback())
+            .map(ReactorNettyClient::toHttpResponse);
     }
 
     private Mono<HttpResponse> doDelete(String... pathSegments) {
         return doDelete(request -> request, pathSegments);
     }
 
-    private Mono<HttpClientRequest> addAuthorization(Mono<HttpClientRequest> request) {
-        return Mono
-            .zip(request, this.token)
-            .map(tuple -> tuple.getT1().header(HttpHeaderNames.AUTHORIZATION, tuple.getT2()));
-    }
-
     private String uri(String... pathSegments) {
-        return rootUrl + "/" + String.join("/", pathSegments);
+        return "/" + String.join("/", pathSegments);
     }
 
     private String enc(String pathSegment) {
         return Utils.encode(pathSegment);
-    }
-
-    private <T> Function<Mono<HttpClientResponse>, Flux<T>> decode(Class<T> type) {
-        return inbound ->
-            inbound.flatMapMany(response -> response.addHandler(new JsonObjectDecoder(MAX_PAYLOAD_SIZE)).receive().asByteArray()
-                .map(payload -> {
-                    try {
-                        return objectMapper.readValue(payload, type);
-                    } catch (Throwable t) {
-                        throw Exceptions.propagate(t);
-                    }
-                })
-            );
-    }
-
-    private Function<Mono<HttpClientRequest>, Publisher<Void>> encode(Object requestPayload) {
-        return outbound -> outbound
-            .flatMapMany(request -> {
-                try {
-                    byte[] bytes = objectMapper.writeValueAsBytes(requestPayload);
-
-                    return request
-                        .header(HttpHeaderNames.CONTENT_TYPE, HttpHeaderValues.APPLICATION_JSON)
-                        .header(HttpHeaderNames.CONTENT_LENGTH, String.valueOf(bytes.length))
-                        .sendByteArray(Mono.just(bytes));
-                } catch (JsonProcessingException e) {
-                    throw Exceptions.propagate(e);
-                }
-            });
     }
 }

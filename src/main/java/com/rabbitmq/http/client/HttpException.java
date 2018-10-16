@@ -17,7 +17,7 @@
 package com.rabbitmq.http.client;
 
 /**
- *
+ * Base exception.
  */
 public class HttpException extends RuntimeException {
 
@@ -25,5 +25,9 @@ public class HttpException extends RuntimeException {
 
     public HttpException(Throwable cause) {
         super(cause);
+    }
+
+    public HttpException(String message) {
+        super(message);
     }
 }
