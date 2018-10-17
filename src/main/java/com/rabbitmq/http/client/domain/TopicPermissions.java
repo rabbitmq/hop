@@ -3,7 +3,7 @@ package com.rabbitmq.http.client.domain;
 /**
  * Represents topic permissions of a user in a vhost for a given topic exchange.
  *
- * @since 2.2.0
+ * @since 3.0.0
  */
 public class TopicPermissions {
 
