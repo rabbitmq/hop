@@ -1533,20 +1533,37 @@ class ReactorNettyClientSpec extends Specification {
         client.deleteShovel("/","shovel1").block()
     }
 
+    def "PUT /api/parameters/shovel with an empty publish properties map"() {
+        given: "a Shovel with empty publish properties"
+        ShovelDetails value = new ShovelDetails("amqp://localhost:5672/vh1", "amqp://localhost:5672/vh2", 30, true, [:]);
+        value.setSourceQueue("queue1");
+        value.setDestinationExchange("exchange1");
+
+        when: "client tries to declare a Shovel"
+        client.declareShovel("/", new ShovelInfo("shovel10", value)).block()
+
+        then: "an illegal argument exception is thrown"
+        thrown(IllegalArgumentException)
+
+        cleanup:
+        client.deleteShovel("/","shovel1").block()
+    }
+
     def "GET /api/shovels"() {
         given: "a basic topology"
         ShovelDetails value = new ShovelDetails("amqp://localhost:5672/vh1", "amqp://localhost:5672/vh2", 30, true, null);
         value.setSourceQueue("queue1");
         value.setDestinationExchange("exchange1");
-        client.declareShovel("/", new ShovelInfo("shovel1", value)).block()
+        final shovelName = "shovel2"
+        client.declareShovel("/", new ShovelInfo(shovelName, value)).block()
         when: "client requests the shovels status"
         final shovels = awaitEventPropagation { client.getShovelsStatus() }
 
         then: "shovels status are returned"
         shovels.hasElements().block()
-        ShovelStatus s = shovels.filter( { s -> s.name.equals("shovel1") } ).blockFirst()
+        ShovelStatus s = shovels.filter( { s -> s.name.equals(shovelName) } ).blockFirst()
         s != null
-        s.name.equals("shovel1")
+        s.name.equals(shovelName)
         s.virtualHost.equals("/")
         s.type.equals("dynamic")
         s.state != null
@@ -1554,7 +1571,7 @@ class ReactorNettyClientSpec extends Specification {
         s.destinationURI == null
 
         cleanup:
-        client.deleteShovel("/","shovel1").block()
+        client.deleteShovel("/", shovelName).block()
     }
 
     def "DELETE /api/exchanges/{vhost}/{name}"() {

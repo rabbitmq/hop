@@ -1596,21 +1596,39 @@ class ClientSpec extends Specification {
     client.deleteShovel("/","shovel1")
   }
 
+  def "PUT /api/parameters/shovel with an empty publish properties map"() {
+    given: "a Shovel with empty publish properties"
+    ShovelDetails value = new ShovelDetails("amqp://localhost:5672/vh1", "amqp://localhost:5672/vh2", 30, true, [:]);
+    value.setSourceQueue("queue1");
+    value.setDestinationExchange("exchange1");
+
+    when: "client tries to declare a Shovel"
+    client.declareShovel("/", new ShovelInfo("shovel10", value))
+
+    then: "an illegal argument exception is thrown"
+    thrown(IllegalArgumentException)
+
+    cleanup:
+    client.deleteShovel("/","shovel1")
+  }
+
   def "GET /api/shovels"() {
     given: "a basic topology"
     ShovelDetails value = new ShovelDetails("amqp://localhost:5672/vh1", "amqp://localhost:5672/vh2", 30, true, null);
     value.setSourceQueue("queue1");
     value.setDestinationExchange("exchange1");
-    client.declareShovel("/", new ShovelInfo("shovel1", value))
+    final shovelName = "shovel2"
+    client.declareShovel("/", new ShovelInfo(shovelName, value))
+
     when: "client requests the shovels status"
     final shovels = awaitEventPropagation { client.getShovelsStatus() }
 
     then: "shovels status are returned"
     !shovels.isEmpty()
     shovels.size() >= 1
-    ShovelStatus s = shovels.find { it.name.equals("shovel1") }
+    ShovelStatus s = shovels.find { it.name.equals(shovelName) }
     s != null
-    s.name.equals("shovel1")
+    s.name.equals(shovelName)
     s.virtualHost.equals("/")
     s.type.equals("dynamic")
     s.state != null
@@ -1618,7 +1636,7 @@ class ClientSpec extends Specification {
     s.destinationURI == null
 
     cleanup:
-    client.deleteShovel("/","shovel1")
+    client.deleteShovel("/", shovelName)
   }
 
   protected static boolean awaitOn(CountDownLatch latch) {
