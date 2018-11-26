@@ -518,6 +518,10 @@ public class ReactorNettyClient {
     }
 
     public Mono<HttpResponse> declareShovel(String vhost, ShovelInfo info) {
+        Map<String, Object> props = info.getDetails().getPublishProperties();
+        if(props != null && props.isEmpty()) {
+            throw new IllegalArgumentException("Shovel publish properties must be a non-empty map or null");
+        }
         return doPut(info, "parameters", "shovel", enc(vhost), enc(info.getName()));
     }
 

@@ -766,6 +766,10 @@ public class Client {
    * @param info Shovel info. 
    */
   public void declareShovel(String vhost, ShovelInfo info) {
+    Map<String, Object> props = info.getDetails().getPublishProperties();
+    if(props != null && props.isEmpty()) {
+      throw new IllegalArgumentException("Shovel publish properties must be a non-empty map or null");
+    }
     final URI uri = uriWithPath("./parameters/shovel/" + encodePathSegment(vhost) + "/" + encodePathSegment(info.getName()));
     this.rt.put(uri, info);
   }
