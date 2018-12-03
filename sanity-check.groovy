@@ -10,7 +10,7 @@ import org.slf4j.LoggerFactory
 try {
     Client c = new Client("http://127.0.0.1:15672/api/", "guest", "guest");
     c.getOverview()
-    LoggerFactory.getLogger("rabbitmq").info("Test succeeded")
+    LoggerFactory.getLogger("rabbitmq").info("Test succeeded with Hop {}", Client.getPackage().getImplementationVersion())
     System.exit 0
 } catch (Exception e) {
     LoggerFactory.getLogger("rabbitmq").info("Test failed", e)
