@@ -745,7 +745,7 @@ class ReactorNettyClientSpec extends Specification {
         // so we handle both 404 and the error
         def status = client.updatePermissions(v, u, new UserPermissions("read", "write", "configure"))
                 .flatMap({ r -> Mono.just(r.status) })
-                .onErrorReturn({ t -> "Connection closed prematurely".equals(t.getMessage()) }, 500)
+                .onErrorReturn({ t -> "Connection prematurely closed BEFORE response".equals(t.getMessage()) }, 500)
                 .block()
 
         then: "HTTP status is 400 BAD REQUEST or exception is thrown"
@@ -848,7 +848,8 @@ class ReactorNettyClientSpec extends Specification {
         // so we handle both 404 and the error
         def status = client.updateTopicPermissions(v, u, new TopicPermissions("amq.topic", "read", "write"))
                 .flatMap({ r -> Mono.just(r.status) })
-                .onErrorReturn({ t -> "Connection closed prematurely".equals(t.getMessage()) }, 500)
+
+                .onErrorReturn({ t -> "Connection prematurely closed BEFORE response".equals(t.getMessage()) }, 500)
                 .block()
 
         then: "HTTP status is 400 BAD REQUEST or exception is thrown"
@@ -1179,7 +1180,7 @@ class ReactorNettyClientSpec extends Specification {
         // so we handle both 404 and the error
         def status = client.declareQueue(v, s, new QueueInfo(false, false, false))
                 .flatMap({ r -> Mono.just(r.status) })
-                .onErrorReturn({ t -> "Connection closed prematurely".equals(t.getMessage()) }, 500)
+                .onErrorReturn({ t -> "Connection prematurely closed BEFORE response".equals(t.getMessage()) }, 500)
                 .block()
 
         then: "status code is 404 or exception is thrown"
