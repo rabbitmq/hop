@@ -52,7 +52,6 @@ import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.netty.ByteBufFlux;
 import reactor.netty.http.client.HttpClient;
-import reactor.netty.http.client.HttpClientRequest;
 import reactor.netty.http.client.HttpClientResponse;
 
 import java.io.IOException;
@@ -206,7 +205,7 @@ public class ReactorNettyClient {
     }
 
     public Mono<HttpResponse> closeConnection(String name, String reason) {
-        return doDelete(request -> request.header("X-Reason", reason), "connections", enc(name));
+        return doDelete(headers -> headers.set("X-Reason", reason), "connections", enc(name));
     }
 
     public Mono<HttpResponse> declarePolicy(String vhost, String name, PolicyInfo info) {
@@ -622,9 +621,9 @@ public class ReactorNettyClient {
             .map(ReactorNettyClient::toHttpResponse);
     }
 
-    private Mono<HttpResponse> doDelete(UnaryOperator<HttpClientRequest> operator, String... pathSegments) {
+    private Mono<HttpResponse> doDelete(Consumer<? super HttpHeaders> headerBuilder, String... pathSegments) {
         return client.headersWhen(authorizedHeader())
-            .doOnRequest((request, connection) -> operator.apply(request))
+            .headers(headerBuilder)
             .delete()
             .uri(uri(pathSegments))
             .response()
@@ -633,7 +632,7 @@ public class ReactorNettyClient {
     }
 
     private Mono<HttpResponse> doDelete(String... pathSegments) {
-        return doDelete(request -> request, pathSegments);
+        return doDelete(headers -> { }, pathSegments);
     }
 
     private String uri(String... pathSegments) {

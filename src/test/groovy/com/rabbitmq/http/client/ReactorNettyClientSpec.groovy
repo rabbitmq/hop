@@ -43,6 +43,7 @@ import spock.lang.Specification
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
+import java.util.concurrent.atomic.AtomicReference
 import java.util.stream.Collectors
 
 class ReactorNettyClientSpec extends Specification {
@@ -234,7 +235,11 @@ class ReactorNettyClientSpec extends Specification {
         final latch = new CountDownLatch(1)
         final s = "client-name"
         final conn = openConnection(s)
-        conn.addShutdownListener({ e -> latch.countDown() })
+        final closingMessage = new AtomicReference<String>();
+        conn.addShutdownListener({ e ->
+            closingMessage.set(e.getMessage())
+            latch.countDown()
+        })
         assert conn.isOpen()
 
         when: "client closes the connection"
@@ -243,13 +248,15 @@ class ReactorNettyClientSpec extends Specification {
         final x = client.getConnection(
                 xs.filter( { c -> c.clientProperties.connectionName == s } )
                         .blockFirst().name)
-        client.closeConnection(x.block().name, "because reasons!").block()
+        final reason = "because reasons!"
+        client.closeConnection(x.block().name, reason).block()
 
         and: "some time passes"
         assert awaitOn(latch)
 
-        then: "the connection is closed"
+        then: "the connection is closed and the reason has been propagated to the connected client"
         !conn.isOpen()
+        closingMessage.get().contains(reason)
 
         cleanup:
         if (conn.isOpen()) {
