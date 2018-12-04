@@ -92,7 +92,6 @@ test {
   logging.captureStandardOutput(LogLevel.INFO)
   maxHeapSize = "1024m"
   jacoco {
-    append = false
     destinationFile = file("$buildDir/jacoco.exec")
   }
 }
