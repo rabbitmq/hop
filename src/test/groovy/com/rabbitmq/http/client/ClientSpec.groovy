@@ -18,8 +18,15 @@ package com.rabbitmq.http.client
 
 import com.rabbitmq.client.*
 import com.rabbitmq.http.client.domain.*
+import groovy.json.JsonSlurper
+import org.springframework.http.HttpMethod
 import org.springframework.http.HttpStatus
+import org.springframework.http.client.ClientHttpRequest
 import org.springframework.web.client.HttpClientErrorException
+import org.springframework.web.client.RequestCallback
+import org.springframework.web.client.ResponseExtractor
+import org.springframework.web.client.RestClientException
+import org.springframework.web.client.RestTemplate
 import spock.lang.IgnoreIf
 import spock.lang.Specification
 
@@ -1566,11 +1573,56 @@ class ClientSpec extends Specification {
     client.deleteQueue("/","queue1")
   }
 
+  def "Test ShovelDetails.sourcePrefetchCount not set"() {
+    given: "mock RestTemplate"
+    def rtOriginalRef = client.rt
+    client.rt = new MockRestTemplate()
+
+    and: "a basic topology with null sourcePrefetchCount"
+    ShovelDetails details = new ShovelDetails("amqp://", "amqp://", 30, true, null);
+    details.setSourceQueue("queue1");
+    details.setDestinationExchange("exchange1");
+
+    when: "client declares the shovels"
+    client.declareShovel("/", new ShovelInfo("shovel1", details))
+
+    then: "the json will not include src-prefetch-count"
+    def body = new JsonSlurper().parseText(client.rt.requestCaptor.body.toString())
+    body.value['src-prefetch-count'] == null
+
+    cleanup:
+    client.rt = rtOriginalRef
+  }
+
+  def "Test ShovelDetails.destinationAddTimestampHeader not set"() {
+    given: "mock RestTemplate"
+    def rtOriginalRef = client.rt
+    client.rt = new MockRestTemplate()
+
+    and: "a basic topology with null destinationAddTimestampHeader"
+    ShovelDetails details = new ShovelDetails("amqp://", "amqp://", 30, true, null);
+    details.setSourceQueue("queue1");
+    details.setDestinationExchange("exchange1");
+
+    when: "client declares the shovels"
+    client.declareShovel("/", new ShovelInfo("shovel1", details))
+
+    then: "the json will not include dest-add-timestamp-header"
+    def body = new JsonSlurper().parseText(client.rt.requestCaptor.body.toString())
+    body.value['dest-add-timestamp-header'] == null
+
+    cleanup:
+    client.rt = rtOriginalRef
+  }
+
   def "GET /api/parameters/shovel"() {
     given: "a basic topology"
     ShovelDetails value = new ShovelDetails("amqp://localhost:5672/vh1", "amqp://localhost:5672/vh2", 30, true, null);
     value.setSourceQueue("queue1");
     value.setDestinationExchange("exchange1");
+    value.setSourcePrefetchCount(50L)
+    value.setSourceDeleteAfter("never")
+    value.setDestinationAddTimestampHeader(true)
     client.declareShovel("/", new ShovelInfo("shovel1", value))
     when: "client requests the shovels"
     final shovels = awaitEventPropagation { client.getShovels() }
@@ -1591,6 +1643,9 @@ class ClientSpec extends Specification {
     s.details.reconnectDelay == 30
     s.details.addForwardHeaders
     s.details.publishProperties == null
+    s.details.sourcePrefetchCount == 50L
+    s.details.sourceDeleteAfter == "never"
+    s.details.destinationAddTimestampHeader
 
     cleanup:
     client.deleteShovel("/","shovel1")
@@ -1787,6 +1842,21 @@ class ClientSpec extends Specification {
         result = client.getConnections()
       }
       result
+  }
+
+  static class MockRestTemplate extends RestTemplate {
+    ClientHttpRequest requestCaptor
+
+    @Override
+    protected <T> T doExecute(URI url, HttpMethod method, RequestCallback requestCallback,
+                              ResponseExtractor<T> responseExtractor) throws RestClientException {
+      ClientHttpRequest request = createRequest(url, method)
+      if (requestCallback != null) {
+        requestCallback.doWithRequest(request);
+      }
+      requestCaptor = request
+      return null
+    }
   }
 
 }

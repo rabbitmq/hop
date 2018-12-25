@@ -33,6 +33,10 @@ public class ShovelDetails {
 	private String sourceExchangeKey;
 	@JsonProperty("src-queue")
 	private String sourceQueue;
+	@JsonProperty("src-prefetch-count")
+	private Long sourcePrefetchCount;
+	@JsonProperty("src-delete-after")
+	private String sourceDeleteAfter;
 
 	@JsonProperty("dest-uri")
 	private String destinationURI;
@@ -42,6 +46,8 @@ public class ShovelDetails {
 	private String destinationExchangeKey;
 	@JsonProperty("dest-queue")
 	private String destinationQueue;
+	@JsonProperty("dest-add-timestamp-header")
+	private Boolean destinationAddTimestampHeader;
 
 	@JsonProperty("reconnect-delay")
 	private long reconnectDelay;
@@ -162,12 +168,48 @@ public class ShovelDetails {
 		this.publishProperties = publishProperties;
 	}
 
+	public Long getSourcePrefetchCount() {
+		return sourcePrefetchCount;
+	}
+
+	public void setSourcePrefetchCount(Long sourcePrefetchCount) {
+		this.sourcePrefetchCount = sourcePrefetchCount;
+	}
+
+	public String getSourceDeleteAfter() {
+		return sourceDeleteAfter;
+	}
+
+	public void setSourceDeleteAfter(String sourceDeleteAfter) {
+		this.sourceDeleteAfter = sourceDeleteAfter;
+	}
+
+	public Boolean isDestinationAddTimestampHeader() {
+		return destinationAddTimestampHeader;
+	}
+
+	public void setDestinationAddTimestampHeader(Boolean destinationAddTimestampHeader) {
+		this.destinationAddTimestampHeader = destinationAddTimestampHeader;
+	}
+
 	@Override
 	public String toString() {
-		return "ShovelDetails{" + "sourceURI=" + sourceURI + ", sourceExchange=" + sourceExchange + "sourceExchangeKey=" + sourceExchangeKey 
-				+ ", sourceQueue=" + sourceQueue + ", destinationURI=" + destinationURI + ", destinationExchange='" + destinationExchange 
-				+ ", destinationExchangeKey='" + destinationExchangeKey + '\''  + ", destinationQueue='" + destinationQueue + '\'' 
-				+ ", reconnectDelay='" + reconnectDelay + '\'' + ", addForwardHeaders='" + addForwardHeaders + '\'' + ", ackMode='" + ackMode + '\''
-				+ ", publishProperties='" + publishProperties + '}';
+		return "ShovelDetails{" +
+				"sourceURI='" + sourceURI + '\'' +
+				", sourceExchange='" + sourceExchange + '\'' +
+				", sourceExchangeKey='" + sourceExchangeKey + '\'' +
+				", sourceQueue='" + sourceQueue + '\'' +
+				", sourcePrefetchCount='" + sourcePrefetchCount + '\'' +
+				", sourceDeleteAfter='" + sourceDeleteAfter + '\'' +
+				", destinationURI='" + destinationURI + '\'' +
+				", destinationExchange='" + destinationExchange + '\'' +
+				", destinationExchangeKey='" + destinationExchangeKey + '\'' +
+				", destinationQueue='" + destinationQueue + '\'' +
+				", destinationAddTimestampHeader=" + destinationAddTimestampHeader +
+				", reconnectDelay=" + reconnectDelay +
+				", addForwardHeaders=" + addForwardHeaders +
+				", ackMode='" + ackMode + '\'' +
+				", publishProperties=" + publishProperties +
+				'}';
 	}
 }
