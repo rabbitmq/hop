@@ -1573,7 +1573,7 @@ class ClientSpec extends Specification {
     client.deleteQueue("/","queue1")
   }
 
-  def "Test ShovelDetails.sourcePrefetchCount not set"() {
+  def "PUT /api/parameters/shovel ShovelDetails.sourcePrefetchCount not sent if not set"() {
     given: "mock RestTemplate"
     def rtOriginalRef = client.rt
     client.rt = new MockRestTemplate()
@@ -1594,7 +1594,7 @@ class ClientSpec extends Specification {
     client.rt = rtOriginalRef
   }
 
-  def "Test ShovelDetails.destinationAddTimestampHeader not set"() {
+  def "PUT /api/parameters/shovel ShovelDetails.destinationAddTimestampHeader not sent if not set"() {
     given: "mock RestTemplate"
     def rtOriginalRef = client.rt
     client.rt = new MockRestTemplate()
@@ -1618,8 +1618,8 @@ class ClientSpec extends Specification {
   def "GET /api/parameters/shovel"() {
     given: "a basic topology"
     ShovelDetails value = new ShovelDetails("amqp://localhost:5672/vh1", "amqp://localhost:5672/vh2", 30, true, null);
-    value.setSourceQueue("queue1");
-    value.setDestinationExchange("exchange1");
+    value.setSourceQueue("queue1")
+    value.setDestinationExchange("exchange1")
     value.setSourcePrefetchCount(50L)
     value.setSourceDeleteAfter("never")
     value.setDestinationAddTimestampHeader(true)

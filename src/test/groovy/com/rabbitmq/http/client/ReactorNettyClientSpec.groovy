@@ -16,6 +16,9 @@
 
 package com.rabbitmq.http.client
 
+import com.fasterxml.jackson.core.JsonGenerationException
+import com.fasterxml.jackson.databind.JsonMappingException
+import com.fasterxml.jackson.databind.ObjectMapper
 import com.rabbitmq.client.AuthenticationFailureException
 import com.rabbitmq.client.Channel
 import com.rabbitmq.client.Connection
@@ -35,11 +38,15 @@ import com.rabbitmq.http.client.domain.ShovelStatus
 import com.rabbitmq.http.client.domain.TopicPermissions
 import com.rabbitmq.http.client.domain.UserPermissions
 import com.rabbitmq.http.client.domain.VhostInfo
+import groovy.json.JsonSlurper
+import io.netty.buffer.ByteBuf
+import io.netty.buffer.ByteBufOutputStream
 import reactor.core.publisher.Flux
 import reactor.core.publisher.Mono
 import spock.lang.IgnoreIf
 import spock.lang.Specification
 
+import java.nio.charset.Charset
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
@@ -1512,11 +1519,54 @@ class ReactorNettyClientSpec extends Specification {
         client.deleteQueue("/","queue1").block()
     }
 
+    def "PUT /api/parameters/shovel ShovelDetails.sourcePrefetchCount not sent if not set"() {
+        given: "a client that retrieves the body of the request"
+        def requestBody = new AtomicReference()
+        def delegate = ReactorNettyClient.createDefaultObjectMapper()
+        def objectMapper = new ByteBufValueRetrieverObjectMapper(requestBody, delegate)
+        def c = newLocalhostNodeClient(new ReactorNettyClientOptions().objectMapper({objectMapper}))
+
+        and: "a basic topology with null sourcePrefetchCount"
+        ShovelDetails details = new ShovelDetails("amqp://", "amqp://", 30, true, null);
+        details.setSourceQueue("queue1");
+        details.setDestinationExchange("exchange1");
+
+        when: "client declares the shovels"
+        c.declareShovel("/", new ShovelInfo("shovel1", details)).block()
+
+        then: "the json will not include src-prefetch-count"
+        def body = new JsonSlurper().parseText(requestBody.get())
+        body.value['src-prefetch-count'] == null
+    }
+
+    def "PUT /api/parameters/shovel ShovelDetails.destinationAddTimestampHeader not sent if not set"() {
+        given: "a client that retrieves the body of the request"
+        def requestBody = new AtomicReference()
+        def delegate = ReactorNettyClient.createDefaultObjectMapper()
+        def objectMapper = new ByteBufValueRetrieverObjectMapper(requestBody, delegate)
+        def c = newLocalhostNodeClient(new ReactorNettyClientOptions().objectMapper({objectMapper}))
+
+        and: "a basic topology with null destinationAddTimestampHeader"
+        ShovelDetails details = new ShovelDetails("amqp://", "amqp://", 30, true, null);
+        details.setSourceQueue("queue1");
+        details.setDestinationExchange("exchange1");
+
+        when: "client declares the shovels"
+        c.declareShovel("/", new ShovelInfo("shovel1", details)).block()
+
+        then: "the json will not include src-prefetch-count"
+        def body = new JsonSlurper().parseText(requestBody.get())
+        body.value['dest-add-timestamp-header'] == null
+    }
+
     def "GET /api/parameters/shovel"() {
         given: "a basic topology"
         ShovelDetails value = new ShovelDetails("amqp://localhost:5672/vh1", "amqp://localhost:5672/vh2", 30, true, null);
-        value.setSourceQueue("queue1");
-        value.setDestinationExchange("exchange1");
+        value.setSourceQueue("queue1")
+        value.setDestinationExchange("exchange1")
+        value.setSourcePrefetchCount(50L)
+        value.setSourceDeleteAfter("never")
+        value.setDestinationAddTimestampHeader(true)
         client.declareShovel("/", new ShovelInfo("shovel1", value)).block()
         when: "client requests the shovels"
         final shovels = awaitEventPropagation { client.getShovels() }
@@ -1536,6 +1586,9 @@ class ReactorNettyClientSpec extends Specification {
         s.details.reconnectDelay == 30
         s.details.addForwardHeaders
         s.details.publishProperties == null
+        s.details.sourcePrefetchCount == 50L
+        s.details.sourceDeleteAfter == "never"
+        s.details.destinationAddTimestampHeader
 
         cleanup:
         client.deleteShovel("/","shovel1").block()
@@ -1839,6 +1892,24 @@ class ReactorNettyClientSpec extends Specification {
         // e.g. "1.2.3" = "1.2.3" or "1.2.3" < "1.2.3.4"
         else {
             return Integer.signum(vals1.length - vals2.length)
+        }
+    }
+
+    static class ByteBufValueRetrieverObjectMapper extends ObjectMapper {
+
+        final AtomicReference<String> value
+        final ObjectMapper delegate
+
+        ByteBufValueRetrieverObjectMapper(AtomicReference<String> value, ObjectMapper delegate) {
+            this.value = value
+            this.delegate = delegate
+        }
+
+        @Override
+        void writeValue(OutputStream out, Object v) throws IOException, JsonGenerationException, JsonMappingException {
+            delegate.writeValue(out, v)
+            ByteBuf byteBuf = ((ByteBufOutputStream) out).buffer()
+            value.set(byteBuf.toString(Charset.forName("UTF-8")))
         }
     }
 
