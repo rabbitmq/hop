@@ -1592,6 +1592,7 @@ class ClientSpec extends Specification {
 
     cleanup:
     client.rt = rtOriginalRef
+    client.deleteShovel("/","shovel1")
   }
 
   def "PUT /api/parameters/shovel ShovelDetails.destinationAddTimestampHeader not sent if not set"() {
@@ -1613,6 +1614,8 @@ class ClientSpec extends Specification {
 
     cleanup:
     client.rt = rtOriginalRef
+    client.deleteShovel("/","shovel1")
+    client.deleteQueue("/", "queue1")
   }
 
   def "GET /api/parameters/shovel"() {
@@ -1649,6 +1652,7 @@ class ClientSpec extends Specification {
 
     cleanup:
     client.deleteShovel("/","shovel1")
+    client.deleteQueue("/", "queue1")
   }
 
   def "PUT /api/parameters/shovel with an empty publish properties map"() {
@@ -1665,6 +1669,7 @@ class ClientSpec extends Specification {
 
     cleanup:
     client.deleteShovel("/","shovel1")
+    client.deleteQueue("/", "queue1")
   }
 
   def "GET /api/shovels"() {

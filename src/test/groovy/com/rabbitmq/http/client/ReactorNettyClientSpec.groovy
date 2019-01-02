@@ -1537,6 +1537,10 @@ class ReactorNettyClientSpec extends Specification {
         then: "the json will not include src-prefetch-count"
         def body = new JsonSlurper().parseText(requestBody.get())
         body.value['src-prefetch-count'] == null
+
+        cleanup:
+        c.deleteShovel("/","shovel1").block()
+        c.deleteQueue("/", "queue1").block()
     }
 
     def "PUT /api/parameters/shovel ShovelDetails.destinationAddTimestampHeader not sent if not set"() {
@@ -1557,6 +1561,10 @@ class ReactorNettyClientSpec extends Specification {
         then: "the json will not include src-prefetch-count"
         def body = new JsonSlurper().parseText(requestBody.get())
         body.value['dest-add-timestamp-header'] == null
+
+        cleanup:
+        c.deleteShovel("/","shovel1").block()
+        c.deleteQueue("/", "queue1").block()
     }
 
     def "GET /api/parameters/shovel"() {
@@ -1592,6 +1600,7 @@ class ReactorNettyClientSpec extends Specification {
 
         cleanup:
         client.deleteShovel("/","shovel1").block()
+        client.deleteQueue("/", "queue1").block()
     }
 
     def "PUT /api/parameters/shovel with an empty publish properties map"() {
