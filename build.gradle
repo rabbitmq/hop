@@ -2,7 +2,6 @@ plugins {
   id 'groovy'
   id 'eclipse'
   id 'idea'
-  id 'jacoco'
   id 'org.sonarqube' version '2.5'
   id "io.spring.dependency-management" version "1.0.3.RELEASE"
   id "java"
@@ -76,10 +75,6 @@ dependencies {
 
 eclipse.project.natures += 'org.springframework.ide.eclipse.core.springnature'
 
-jacoco {
-  toolVersion = "0.8.2"
-}
-
 // enable all compiler warnings; individual projects may customize further
 [compileJava, compileTestJava, compileTestGroovy]*.options*.compilerArgs = ['-Xlint:all,-options']
 
@@ -91,9 +86,6 @@ test {
   // suppress all console output during testing unless running `gradle -i`
   logging.captureStandardOutput(LogLevel.INFO)
   maxHeapSize = "1024m"
-  jacoco {
-    destinationFile = file("$buildDir/jacoco.exec")
-  }
 }
 
 // force test runs even when there are no test changes,
@@ -115,16 +107,6 @@ artifacts {
   archives sourcesJar
   archives javadocJar
 }
-
-jacocoTestReport {
-  reports {
-    xml.enabled false
-    csv.enabled false
-    html.destination file("${buildDir}/reports/jacoco/html")
-  }
-}
-
-build.dependsOn jacocoTestReport
 
 sonarqube {
   properties {
