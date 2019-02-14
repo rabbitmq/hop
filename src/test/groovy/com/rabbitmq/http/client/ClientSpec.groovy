@@ -816,7 +816,7 @@ class ClientSpec extends Specification {
     final String d  = "hop.test"
     client.deleteExchange(v, d)
     client.declareExchange(v, d, new ExchangeInfo("fanout", false, false))
-    client.bindExchange(v, d, s, "")
+    client.bindExchange(v, d, s, "", [arg1: 'value1', arg2: 'value2'])
 
     when: "bindings between hop.test and amq.fanout are listed"
     final List<BindingInfo> xs = client.getExchangeBindingsBetween(v, s, d)
@@ -827,6 +827,11 @@ class ClientSpec extends Specification {
     b.source.equals(s)
     b.destination.equals(d)
     b.destinationType.equals("exchange")
+    b.arguments.size() == 2
+    b.arguments.containsKey("arg1")
+    b.arguments.arg1.equals("value1")
+    b.arguments.containsKey("arg2")
+    b.arguments.arg2.equals("value2")
 
     cleanup:
     client.deleteExchange(v, d)
@@ -838,7 +843,7 @@ class ClientSpec extends Specification {
     final String x  = 'amq.topic'
     final String q  = "hop.test"
     client.declareQueue(v, q, new QueueInfo(false, false, false))
-    client.bindQueue(v, q, x, "")
+    client.bindQueue(v, q, x, "", [arg1: 'value1', arg2: 'value2'])
 
     when: "bindings between hop.test and amq.topic are listed"
     final List<BindingInfo> xs = client.getQueueBindingsBetween(v, x, q)
@@ -849,6 +854,11 @@ class ClientSpec extends Specification {
     b.source.equals(x)
     b.destination.equals(q)
     b.destinationType.equals("queue")
+    b.arguments.size() == 2
+    b.arguments.containsKey("arg1")
+    b.arguments.arg1.equals("value1")
+    b.arguments.containsKey("arg2")
+    b.arguments.arg2.equals("value2")
 
     cleanup:
     client.deleteQueue(v, q)

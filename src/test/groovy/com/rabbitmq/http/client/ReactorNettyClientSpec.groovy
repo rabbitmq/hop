@@ -1370,7 +1370,7 @@ class ReactorNettyClientSpec extends Specification {
         final String d  = "hop.test"
         client.deleteExchange(v, d).block()
         client.declareExchange(v, d, new ExchangeInfo("fanout", false, false)).block()
-        client.bindExchange(v, d, s, "").block()
+        client.bindExchange(v, d, s, "", [arg1: 'value1', arg2: 'value2']).block()
 
         when: "bindings between hop.test and amq.fanout are listed"
         final Flux<BindingInfo> xs = client.getExchangeBindingsBetween(v, s, d)
@@ -1381,6 +1381,10 @@ class ReactorNettyClientSpec extends Specification {
         b.source.equals(s)
         b.destination.equals(d)
         b.destinationType.equals("exchange")
+        b.arguments.containsKey("arg1")
+        b.arguments.arg1.equals("value1")
+        b.arguments.containsKey("arg2")
+        b.arguments.arg2.equals("value2")
 
         cleanup:
         client.deleteExchange(v, d).block()
@@ -1392,7 +1396,7 @@ class ReactorNettyClientSpec extends Specification {
         final String x  = 'amq.topic'
         final String q  = "hop.test"
         client.declareQueue(v, q, new QueueInfo(false, false, false)).block()
-        client.bindQueue(v, q, x, "").block()
+        client.bindQueue(v, q, x, "", [arg1: 'value1', arg2: 'value2']).block()
 
         when: "bindings between hop.test and amq.topic are listed"
         final Flux<BindingInfo> xs = client.getQueueBindingsBetween(v, x, q)
@@ -1403,6 +1407,10 @@ class ReactorNettyClientSpec extends Specification {
         b.source.equals(x)
         b.destination.equals(q)
         b.destinationType.equals("queue")
+        b.arguments.containsKey("arg1")
+        b.arguments.arg1.equals("value1")
+        b.arguments.containsKey("arg2")
+        b.arguments.arg2.equals("value2")
 
         cleanup:
         client.deleteQueue(v, q).block()
