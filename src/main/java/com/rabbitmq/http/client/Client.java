@@ -666,7 +666,7 @@ public class Client {
     }
     Map<String, Object> body = new HashMap<String, Object>();
     if(!(args == null)) {
-      body.put("args", args);
+      body.put("arguments", args);
     }
     body.put("routing_key", routingKey);
 
