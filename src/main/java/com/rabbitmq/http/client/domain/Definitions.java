@@ -105,4 +105,18 @@ public class Definitions {
     public List<TopicPermissions> getTopicPermissions() {
         return topicPermissions;
     }
+
+    @Override
+    public String toString() {
+        return "Definitions{" +
+                "rabbitMQVersion='" + rabbitMQVersion + '\'' +
+                ", vhosts=" + vhosts +
+                ", users=" + users +
+                ", permissions=" + permissions +
+                ", topicPermissions=" + topicPermissions +
+                ", queues=" + queues +
+                ", exchanges=" + exchanges +
+                ", bindings=" + bindings +
+                '}';
+    }
 }

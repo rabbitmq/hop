@@ -62,4 +62,15 @@ public class TopicPermissions {
     public void setWrite(String write) {
         this.write = write;
     }
+
+    @Override
+    public String toString() {
+        return "TopicPermissions{" +
+                "user='" + user + '\'' +
+                ", vhost='" + vhost + '\'' +
+                ", exchange='" + exchange + '\'' +
+                ", read='" + read + '\'' +
+                ", write='" + write + '\'' +
+                '}';
+    }
 }

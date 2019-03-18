@@ -88,4 +88,17 @@ public class BindingInfo {
   public void setPropertiesKey(String propertiesKey) {
     this.propertiesKey = propertiesKey;
   }
+
+  @Override
+  public String toString() {
+    return "BindingInfo{" +
+            "vhost='" + vhost + '\'' +
+            ", source='" + source + '\'' +
+            ", destination='" + destination + '\'' +
+            ", destinationType='" + destinationType + '\'' +
+            ", routingKey='" + routingKey + '\'' +
+            ", arguments=" + arguments +
+            ", propertiesKey='" + propertiesKey + '\'' +
+            '}';
+  }
 }
