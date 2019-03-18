@@ -71,4 +71,15 @@ public class PolicyInfo {
     this.name = name;
   }
 
+  @Override
+  public String toString() {
+    return "PolicyInfo{" +
+            "name='" + name + '\'' +
+            ", vhost='" + vhost + '\'' +
+            ", pattern='" + pattern + '\'' +
+            ", definition=" + definition +
+            ", priority=" + priority +
+            ", applyTo='" + applyTo + '\'' +
+            '}';
+  }
 }

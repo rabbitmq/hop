@@ -102,4 +102,18 @@ public class ExchangeInfo {
   public void setArguments(Map<String, Object> arguments) {
     this.arguments = arguments;
   }
+
+  @Override
+  public String toString() {
+    return "ExchangeInfo{" +
+            "name='" + name + '\'' +
+            ", vhost='" + vhost + '\'' +
+            ", type='" + type + '\'' +
+            ", durable=" + durable +
+            ", autoDelete=" + autoDelete +
+            ", internal=" + internal +
+            ", arguments=" + arguments +
+            ", messageStats=" + messageStats +
+            '}';
+  }
 }

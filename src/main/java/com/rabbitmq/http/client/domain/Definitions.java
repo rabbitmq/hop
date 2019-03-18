@@ -25,7 +25,7 @@ import java.util.List;
 public class Definitions {
 
     @JsonProperty("rabbit_version")
-    private String rabbitMQVersion;
+    private String serverVersion;
 
     private List<VhostInfo> vhosts = new ArrayList<VhostInfo>();
 
@@ -43,11 +43,11 @@ public class Definitions {
     private List<BindingInfo> bindings = new ArrayList<BindingInfo>();
 
     public String getRabbitMQVersion() {
-        return rabbitMQVersion;
+        return serverVersion;
     }
 
     public void setRabbitMQVersion(String rabbitMQVersion) {
-        this.rabbitMQVersion = rabbitMQVersion;
+        this.serverVersion = rabbitMQVersion;
     }
 
     public List<VhostInfo> getVhosts() {
@@ -104,5 +104,19 @@ public class Definitions {
 
     public List<TopicPermissions> getTopicPermissions() {
         return topicPermissions;
+    }
+
+    @Override
+    public String toString() {
+        return "Definitions{" +
+                "serverVersion='" + serverVersion + '\'' +
+                ", vhosts=" + vhosts +
+                ", users=" + users +
+                ", permissions=" + permissions +
+                ", topicPermissions=" + topicPermissions +
+                ", queues=" + queues +
+                ", exchanges=" + exchanges +
+                ", bindings=" + bindings +
+                '}';
     }
 }

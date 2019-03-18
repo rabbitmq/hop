@@ -223,4 +223,30 @@ public class ChannelInfo {
   public void setConsumerDetails(List<ConsumerDetails> consumerDetails) {
       this.consumerDetails = consumerDetails;
     }
+
+  @Override
+  public String toString() {
+    return "ChannelInfo{" +
+            "vhost='" + vhost + '\'' +
+            ", user='" + user + '\'' +
+            ", number=" + number +
+            ", name='" + name + '\'' +
+            ", node='" + node + '\'' +
+            ", state='" + state + '\'' +
+            ", globalPrefetchCount=" + globalPrefetchCount +
+            ", prefetchCount=" + prefetchCount +
+            ", acksUncommitted=" + acksUncommitted +
+            ", messagesUncommitted=" + messagesUncommitted +
+            ", messagesUnconfirmed=" + messagesUnconfirmed +
+            ", messagesUnacknowledged=" + messagesUnacknowledged +
+            ", consumerCount=" + consumerCount +
+            ", publisherConfirms=" + publisherConfirms +
+            ", transactional=" + transactional +
+            ", idleSince='" + idleSince + '\'' +
+            ", connectionDetails=" + connectionDetails +
+            ", messageStats=" + messageStats +
+            ", consumerDetails=" + consumerDetails +
+            ", clientFlowBlocked=" + clientFlowBlocked +
+            '}';
+  }
 }
