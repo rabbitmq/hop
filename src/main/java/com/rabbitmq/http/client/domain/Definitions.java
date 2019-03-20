@@ -42,12 +42,32 @@ public class Definitions {
 
     private List<BindingInfo> bindings = new ArrayList<BindingInfo>();
 
+    /**
+     *
+     * @return
+     * @deprecated use {@link #getServerVersion()} instead.
+     */
+    @Deprecated
     public String getRabbitMQVersion() {
         return serverVersion;
     }
 
+    /**
+     *
+     * @param rabbitMQVersion
+     * @deprecated use {@link #setServerVersion(String)} instead.
+     */
+    @Deprecated
     public void setRabbitMQVersion(String rabbitMQVersion) {
         this.serverVersion = rabbitMQVersion;
+    }
+
+    public String getServerVersion() {
+        return serverVersion;
+    }
+
+    public void setServerVersion(String serverVersion) {
+        this.serverVersion = serverVersion;
     }
 
     public List<VhostInfo> getVhosts() {

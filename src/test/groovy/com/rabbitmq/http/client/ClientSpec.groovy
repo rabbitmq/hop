@@ -56,7 +56,7 @@ class ClientSpec extends Specification {
     client.getConnections().each { client.closeConnection(it.getName())}
     awaitAllConnectionsClosed(client)
     client.getConnections().each { println(it.getName())}
-    brokerVersion = client.getOverview().getRabbitMQVersion()
+    brokerVersion = client.getOverview().getServerVersion()
   }
 
   protected static Client newLocalhostNodeClient() {
@@ -908,7 +908,7 @@ class ClientSpec extends Specification {
     final vhi = vhs.first()
 
     then: "the info is returned"
-    verifyVhost(vhi, client.getOverview().getRabbitMQVersion())
+    verifyVhost(vhi, client.getOverview().getServerVersion())
   }
 
   def "GET /api/vhosts/{name}"() {
@@ -916,7 +916,7 @@ class ClientSpec extends Specification {
     final vhi = client.getVhost("/")
 
     then: "the info is returned"
-    verifyVhost(vhi, client.getOverview().getRabbitMQVersion())
+    verifyVhost(vhi, client.getOverview().getServerVersion())
   }
 
   @IgnoreIf({ os.windows })
@@ -1020,7 +1020,7 @@ class ClientSpec extends Specification {
   def "GET /api/users"() {
     when: "users are listed"
     final xs = client.getUsers()
-    final version = client.getOverview().getRabbitMQVersion()
+    final version = client.getOverview().getServerVersion()
 
     then: "a list of users is returned"
     final x = xs.find { it.name.equals("guest") }
@@ -1033,7 +1033,7 @@ class ClientSpec extends Specification {
   def "GET /api/users/{name} when user exists"() {
     when: "user guest if fetched"
     final x = client.getUser("guest")
-    final version = client.getOverview().getRabbitMQVersion()
+    final version = client.getOverview().getServerVersion()
 
     then: "user info returned"
     x.name == "guest"
@@ -1491,8 +1491,8 @@ class ClientSpec extends Specification {
     Definitions d = client.getDefinitions()
 
     then: "broker definitions are returned"
-    d.getRabbitMQVersion() != null
-    !d.getRabbitMQVersion().trim().isEmpty()
+    d.getServerVersion() != null
+    !d.getServerVersion().trim().isEmpty()
     !d.getVhosts().isEmpty()
     !d.getVhosts().get(0).getName().isEmpty()
     !d.getVhosts().isEmpty()

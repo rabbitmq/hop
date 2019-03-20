@@ -33,7 +33,7 @@ public class OverviewResponse {
   @JsonProperty("management_version")
   private String managementPluginVersion;
   @JsonProperty("rabbitmq_version")
-  private String rabbitMQVersion;
+  private String serverVersion;
   @JsonProperty("erlang_version")
   private String erlangVersion;
   @JsonProperty("erlang_full_version")
@@ -72,12 +72,32 @@ public class OverviewResponse {
     this.managementPluginVersion = managementPluginVersion;
   }
 
+  /**
+   *
+   * @return
+   * @deprecated use {@link #getServerVersion()} instead.
+   */
+  @Deprecated
   public String getRabbitMQVersion() {
-    return rabbitMQVersion;
+    return serverVersion;
   }
 
+  /**
+   *
+   * @param rabbitMQVersion
+   * @deprecated use {@link #setServerVersion(String)} instead.
+   */
+  @Deprecated
   public void setRabbitMQVersion(String rabbitMQVersion) {
-    this.rabbitMQVersion = rabbitMQVersion;
+    this.serverVersion = rabbitMQVersion;
+  }
+
+  public String getServerVersion() {
+    return serverVersion;
+  }
+
+  public void setServerVersion(String serverVersion) {
+    this.serverVersion = serverVersion;
   }
 
   public String getErlangVersion() {
@@ -190,7 +210,7 @@ public class OverviewResponse {
         "node='" + node + '\'' +
         ", clusterName='" + clusterName + '\'' +
         ", managementPluginVersion='" + managementPluginVersion + '\'' +
-        ", rabbitMQVersion='" + rabbitMQVersion + '\'' +
+        ", serverVersion='" + serverVersion + '\'' +
         ", erlangVersion='" + erlangVersion + '\'' +
         ", fullErlangVersion='" + fullErlangVersion + '\'' +
         ", statisticsLevel='" + statisticsLevel + '\'' +

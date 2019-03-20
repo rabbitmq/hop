@@ -74,7 +74,7 @@ class ReactorNettyClientSpec extends Specification {
     def setup() {
         client = newLocalhostNodeClient()
         client.getConnections().toStream().forEach({ c -> client.closeConnection(c.name).block() })
-        brokerVersion = client.getOverview().block().getRabbitMQVersion()
+        brokerVersion = client.getOverview().block().getServerVersion()
     }
 
     protected static ReactorNettyClient newLocalhostNodeClient() {
@@ -350,7 +350,7 @@ class ReactorNettyClientSpec extends Specification {
         final vhi = vhs.blockFirst()
 
         then: "the info is returned"
-        verifyVhost(vhi, client.getOverview().block().getRabbitMQVersion())
+        verifyVhost(vhi, client.getOverview().block().getServerVersion())
     }
 
     def "GET /api/vhosts/{name}"() {
@@ -358,7 +358,7 @@ class ReactorNettyClientSpec extends Specification {
         final vhi = client.getVhost("/").block()
 
         then: "the info is returned"
-        verifyVhost(vhi, client.getOverview().block().getRabbitMQVersion())
+        verifyVhost(vhi, client.getOverview().block().getServerVersion())
     }
 
     @IgnoreIf({ os.windows })
@@ -484,7 +484,7 @@ class ReactorNettyClientSpec extends Specification {
     def "GET /api/users"() {
         when: "users are listed"
         final xs = client.getUsers()
-        final version = client.getOverview().block().getRabbitMQVersion()
+        final version = client.getOverview().block().getServerVersion()
 
         then: "a list of users is returned"
         final x = xs.filter( {user -> user.name.equals("guest")} ).blockFirst()
@@ -497,7 +497,7 @@ class ReactorNettyClientSpec extends Specification {
     def "GET /api/users/{name} when user exists"() {
         when: "user guest if fetched"
         final x = client.getUser("guest").block()
-        final version = client.getOverview().block().getRabbitMQVersion()
+        final version = client.getOverview().block().getServerVersion()
 
         then: "user info returned"
         x.name == "guest"
@@ -1007,8 +1007,8 @@ class ReactorNettyClientSpec extends Specification {
         Definitions d = client.getDefinitions().block()
 
         then: "broker definitions are returned"
-        d.getRabbitMQVersion() != null
-        !d.getRabbitMQVersion().trim().isEmpty()
+        d.getServerVersion() != null
+        !d.getServerVersion().trim().isEmpty()
         !d.getVhosts().isEmpty()
         !d.getVhosts().get(0).getName().isEmpty()
         !d.getVhosts().isEmpty()
