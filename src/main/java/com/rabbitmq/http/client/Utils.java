@@ -57,7 +57,7 @@ class Utils {
      * Unreserved characters, i.e. alphanumeric, plus: {@code _ - ! . ~ ' ( ) *}
      * <p>
      *  This list is the same as the {@code unreserved} list in
-     *  <a href="http://www.ietf.org/rfc/rfc2396.txt">RFC 2396</a>
+     *  <a href="https://www.ietf.org/rfc/rfc2396.txt">RFC 2396</a>
      */
     private static final BitSet UNRESERVED   = new BitSet(256);
     /**
@@ -80,9 +80,9 @@ class Utils {
      * Reserved characters, i.e. {@code ;/?:@&=+$,[]}
      * <p>
      *  This list is the same as the {@code reserved} list in
-     *  <a href="http://www.ietf.org/rfc/rfc2396.txt">RFC 2396</a>
+     *  <a href="https://www.ietf.org/rfc/rfc2396.txt">RFC 2396</a>
      *  as augmented by
-     *  <a href="http://www.ietf.org/rfc/rfc2732.txt">RFC 2732</a>
+     *  <a href="https://www.ietf.org/rfc/rfc2732.txt">RFC 2732</a>
      */
     private static final BitSet RESERVED     = new BitSet(256);
 

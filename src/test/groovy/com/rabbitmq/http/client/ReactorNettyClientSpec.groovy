@@ -83,7 +83,7 @@ class ReactorNettyClientSpec extends Specification {
 
     protected static ReactorNettyClient newLocalhostNodeClient(ReactorNettyClientOptions options) {
         new ReactorNettyClient(
-                String.format("http://%s:%s@127.0.0.1:15672/api", DEFAULT_USERNAME, DEFAULT_PASSWORD), options
+                String.format("https://%s:%s@127.0.0.1:15672/api", DEFAULT_USERNAME, DEFAULT_PASSWORD), options
         )
     }
 
@@ -1883,7 +1883,7 @@ class ReactorNettyClientSpec extends Specification {
     }
 
     /**
-     * http://stackoverflow.com/questions/6701948/efficient-way-to-compare-version-strings-in-java
+     * https://stackoverflow.com/questions/6701948/efficient-way-to-compare-version-strings-in-java
      *
      */
     static Integer compareVersions(String str1, String str2) {
