@@ -83,7 +83,7 @@ class ReactorNettyClientSpec extends Specification {
 
     protected static ReactorNettyClient newLocalhostNodeClient(ReactorNettyClientOptions options) {
         new ReactorNettyClient(
-                String.format("https://%s:%s@127.0.0.1:15672/api", DEFAULT_USERNAME, DEFAULT_PASSWORD), options
+                String.format("http://%s:%s@127.0.0.1:15672/api", DEFAULT_USERNAME, DEFAULT_PASSWORD), options
         )
     }
 
