@@ -140,7 +140,7 @@ class ClientSpec extends Specification {
 
   def "GET /api/nodes with credentials in the URL"() {
     when: "credentials are provided in the URL"
-    final client = new Client("http://guest:guest@127.0.0.1:15672/api/")
+    final client = new Client("https://guest:guest@127.0.0.1:15672/api/")
 
     and: "retrieves a list of cluster nodes"
     final res = client.getNodes()
@@ -1796,7 +1796,7 @@ class ClientSpec extends Specification {
   }
 
   /**
-   * http://stackoverflow.com/questions/6701948/efficient-way-to-compare-version-strings-in-java
+   * https://stackoverflow.com/questions/6701948/efficient-way-to-compare-version-strings-in-java
    *
    */
   static Integer compareVersions(String str1, String str2) {

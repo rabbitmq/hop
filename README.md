@@ -15,7 +15,7 @@ and you should use Langohr instead.
 
 ## Reactive
 
-As of HOP 2.1.0, a new reactive, non-blocking IO client based on [Reactor Netty](http://projectreactor.io/) is available. Note
+As of HOP 2.1.0, a new reactive, non-blocking IO client based on [Reactor Netty](https://projectreactor.io/) is available. Note
 the original blocking IO client remains available.
 
 ## Project Maturity
@@ -32,7 +32,7 @@ This section will be updated as the project matures.
 
 [![Maven Central](https://maven-badges.herokuapp.com/maven-central/com.rabbitmq/http-client/badge.svg)](https://maven-badges.herokuapp.com/maven-central/com.rabbitmq/http-client)
 
-Project artifacts are available from Maven Central and [repo.spring.io](http://repo.spring.io).
+Project artifacts are available from Maven Central and [repo.spring.io](https://repo.spring.io).
 
 #### Maven
 

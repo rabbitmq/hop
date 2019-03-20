@@ -196,7 +196,7 @@ public class Client {
 
   /**
    * Construct an instance with the provided url and credentials.
-   * @param url the url e.g. "http://guest:guest@localhost:15672/api/".
+   * @param url the url e.g. "https://guest:guest@localhost:15672/api/".
    * @throws MalformedURLException for a badly formed URL.
    * @throws URISyntaxException for a badly formed URL.
    */
@@ -209,7 +209,7 @@ public class Client {
 
   /**
    * Construct an instance with the provided url and credentials.
-   * @param url the url e.g. "http://guest:guest@localhost:15672/api/".
+   * @param url the url e.g. "https://guest:guest@localhost:15672/api/".
    * @throws MalformedURLException for a badly formed URL.
    * @throws URISyntaxException for a badly formed URL.
    */

@@ -1,4 +1,4 @@
-@GrabResolver(name = 'spring-staging', root = 'http://repo.spring.io/libs-staging-local/')
+@GrabResolver(name = 'spring-staging', root = 'https://repo.spring.io/libs-staging-local/')
 @Grab(group = 'com.rabbitmq', module = 'http-client', version = "${version}")
 @Grab(group = 'org.springframework', module = 'spring-web', version = "5.1.3.RELEASE")
 @Grab(group = 'org.apache.httpcomponents', module = 'httpclient', version = "4.5.6")
