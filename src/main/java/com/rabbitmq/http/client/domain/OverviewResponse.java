@@ -74,7 +74,7 @@ public class OverviewResponse {
 
   /**
    *
-   * @return
+   * @return the server version
    * @deprecated use {@link #getServerVersion()} instead.
    */
   @Deprecated
@@ -84,7 +84,7 @@ public class OverviewResponse {
 
   /**
    *
-   * @param rabbitMQVersion
+   * @param rabbitMQVersion the server version
    * @deprecated use {@link #setServerVersion(String)} instead.
    */
   @Deprecated

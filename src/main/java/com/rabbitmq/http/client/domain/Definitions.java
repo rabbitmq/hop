@@ -44,7 +44,7 @@ public class Definitions {
 
     /**
      *
-     * @return
+     * @return the server version
      * @deprecated use {@link #getServerVersion()} instead.
      */
     @Deprecated
@@ -54,7 +54,7 @@ public class Definitions {
 
     /**
      *
-     * @param rabbitMQVersion
+     * @param rabbitMQVersion the server version
      * @deprecated use {@link #setServerVersion(String)} instead.
      */
     @Deprecated
