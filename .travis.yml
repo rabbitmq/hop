@@ -27,8 +27,6 @@ services:
 branches:
   only:
     - master
-    - 2.x.x-stable
-    - 1.3.x-stable
 before_script:
   - ./bin/before_build.sh
 
