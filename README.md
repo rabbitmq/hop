@@ -263,7 +263,7 @@ stock settings and rabbitmq-management plugin enabled.
 
 ## License
 
-[Apache 2.0](http://www.apache.org/licenses/LICENSE-2.0.html).
+[Apache 2.0](https://www.apache.org/licenses/LICENSE-2.0.html).
 
 
 ## Copyright
