@@ -42,12 +42,12 @@ If you want to use the **blocking IO client**, add the following dependencies:
 <dependency>
   <groupId>com.rabbitmq</groupId>
   <artifactId>http-client</artifactId>
-  <version>3.1.1.RELEASE</version>
+  <version>3.2.0.RELEASE</version>
 </dependency>
 <dependency>
   <groupId>org.springframework</groupId>
   <artifactId>spring-web</artifactId>
-  <version>5.1.4.RELEASE</version>
+  <version>5.1.5.RELEASE</version>
 </dependency>
 <dependency>
   <groupId>org.apache.httpcomponents</groupId>
@@ -62,12 +62,12 @@ If you want to use the **reactive, non-blocking IO client**, add the following d
 <dependency>
   <groupId>com.rabbitmq</groupId>
   <artifactId>http-client</artifactId>
-  <version>3.1.1.RELEASE</version>
+  <version>3.2.0.RELEASE</version>
 </dependency>
 <dependency>
   <groupId>io.projectreactor.ipc</groupId>
   <artifactId>reactor-netty</artifactId>
-  <version>0.8.4.RELEASE</version>
+  <version>0.8.5.RELEASE</version>
 </dependency>
 ```
 
@@ -76,16 +76,16 @@ If you want to use the **reactive, non-blocking IO client**, add the following d
 If you want to use the **blocking IO client**, add the following dependencies:
 
 ```groovy
-compile "com.rabbitmq:http-client:3.1.1.RELEASE"
-compile "org.springframework:spring-web:5.1.4.RELEASE"
+compile "com.rabbitmq:http-client:3.2.0.RELEASE"
+compile "org.springframework:spring-web:5.1.5.RELEASE"
 compile "org.apache.httpcomponents:httpclient:4.5.6"
 ```
 
 If you want to use the **reactive, non-blocking IO client**, add the following dependencies:
 
 ```groovy
-compile "com.rabbitmq:http-client:3.1.1.RELEASE"
-compile "io.projectreactor.ipc:reactor-netty:0.8.4.RELEASE"
+compile "com.rabbitmq:http-client:3.2.0.RELEASE"
+compile "io.projectreactor.ipc:reactor-netty:0.8.5.RELEASE"
 ```
 
 ## Usage Guide
