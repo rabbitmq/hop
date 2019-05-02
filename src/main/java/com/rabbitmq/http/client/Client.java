@@ -650,10 +650,25 @@ public class Client {
     return asListOrNull(result);
   }
 
+  /**
+   * Binds a queue to an exchange.
+   * @param vhost virtual host the queue and exchange are in
+   * @param queue the queue name
+   * @param exchange the exchange name
+   * @param routingKey the routing key to use
+   */
   public void bindQueue(String vhost, String queue, String exchange, String routingKey) {
     bindQueue(vhost, queue, exchange, routingKey, new HashMap<String, Object>());
   }
 
+  /**
+   * Binds a queue to an exchange.
+   * @param vhost virtual host the queue and exchange are in
+   * @param queue the queue name
+   * @param exchange the exchange name
+   * @param routingKey the routing key to use
+   * @param args additional map of arguments (used by some exchange types)
+   */
   public void bindQueue(String vhost, String queue, String exchange, String routingKey, Map<String, Object> args) {
     if(vhost == null || vhost.isEmpty()) {
       throw new IllegalArgumentException("vhost cannot be null or blank");
@@ -675,6 +690,13 @@ public class Client {
     this.rt.postForLocation(uri, body);
   }
 
+  /**
+   * Unbinds a queue from an exchange.
+   * @param vhost virtual host the queue and exchange are in
+   * @param queue the queue name
+   * @param exchange the exchange name
+   * @param routingKey the routing key used when binding
+   */
   public void unbindQueue(String vhost, String queue, String exchange, String routingKey) {
     if(vhost == null || vhost.isEmpty()) {
       throw new IllegalArgumentException("vhost cannot be null or blank");
@@ -690,10 +712,25 @@ public class Client {
       "/q/" + encodePathSegment(queue) + '/' + encodePathSegment(routingKey)));
   }
 
+  /**
+   * Binds a destination exchange to a source one.
+   * @param vhost virtual host the exchanges are in
+   * @param destination the destination exchange name
+   * @param source the source exchange name
+   * @param routingKey the routing key to use
+   */
   public void bindExchange(String vhost, String destination, String source, String routingKey) {
     bindExchange(vhost, destination, source, routingKey, new HashMap<String, Object>());
   }
 
+  /**
+   * Binds a destination exchange to a source one.
+   * @param vhost virtual host the exchanges are in
+   * @param destination the destination exchange name
+   * @param source the source exchange name
+   * @param routingKey the routing key to use
+   * @param args additional map of arguments (used by some exchange types)
+   */
   public void bindExchange(String vhost, String destination, String source, String routingKey, Map<String, Object> args) {
     if(vhost == null || vhost.isEmpty()) {
       throw new IllegalArgumentException("vhost cannot be null or blank");
@@ -715,6 +752,13 @@ public class Client {
     this.rt.postForLocation(uri, body);
   }
 
+  /**
+   * Unbinds a destination exchange from a source one.
+   * @param vhost virtual host the exchanges are in
+   * @param destination the destination exchange name
+   * @param source the source exchange name
+   * @param routingKey the routing key used when binding
+   */
   public void unbindExchange(String vhost, String destination, String source, String routingKey) {
     if(vhost == null || vhost.isEmpty()) {
       throw new IllegalArgumentException("vhost cannot be null or blank");
