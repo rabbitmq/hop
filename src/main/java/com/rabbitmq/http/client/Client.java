@@ -1,5 +1,5 @@
 /*
- * Copyright 2015-2017 the original author or authors.
+ * Copyright 2015-2019 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -154,18 +154,7 @@ public class Client {
    */
   private Client(URL url, String username, String password, SSLConnectionSocketFactory sslConnectionSocketFactory, SSLContext sslContext)
       throws MalformedURLException, URISyntaxException {
-    Assert.notNull(url, "URL is required; it must not be null");
-    Assert.notNull(username, "username is required; it must not be null");
-    Assert.notNull(password, "password is required; it must not be null");
-    if (url.toString().endsWith("/")) {
-      this.rootUri = url.toURI();
-    } else {
-      this.rootUri = new URL(url.toString() + "/").toURI();
-    }
-
-
-    this.rt = new RestTemplate(getRequestFactory(url, username, password, sslConnectionSocketFactory, sslContext, NO_OP_HTTP_CLIENT_BUILDER_CONFIGURATOR));
-    this.rt.setMessageConverters(getMessageConverters());
+    this(url, username, password, sslConnectionSocketFactory, sslContext, NO_OP_HTTP_CLIENT_BUILDER_CONFIGURATOR);
   }
 
   /**
@@ -224,7 +213,12 @@ public class Client {
     Assert.notNull(username, "username is required; it must not be null");
     Assert.notNull(password, "password is required; it must not be null");
     Assert.notNull(configurator, "configurator is required; it must not be null");
-    this.rootUri = url.toURI();
+
+    if (url.toString().endsWith("/")) {
+      this.rootUri = url.toURI();
+    } else {
+      this.rootUri = new URL(url.toString() + "/").toURI();
+    }
 
     HttpComponentsClientHttpRequestFactory rf = getRequestFactory(url, username, password,
         sslConnectionSocketFactory, sslContext, configurator);
