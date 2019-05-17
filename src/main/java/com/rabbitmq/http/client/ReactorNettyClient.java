@@ -70,7 +70,6 @@ import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
-import java.util.function.UnaryOperator;
 
 /**
  * Reactive client based on Reactor Netty.
@@ -577,7 +576,6 @@ public class ReactorNettyClient {
     private Mono<HttpResponse> doPost(Object body, String... pathSegments) {
         return client.headersWhen(authorizedHeader())
             .headers(JSON_HEADER)
-            .chunkedTransfer(false)
             .post()
             .uri(uri(pathSegments))
             .send(bodyPublisher(body))
@@ -592,7 +590,6 @@ public class ReactorNettyClient {
 
     private Mono<HttpResponse> doPut(Object body, String... pathSegments) {
         return client.headersWhen(authorizedHeader())
-            .chunkedTransfer(false)
             .put()
             .uri(uri(pathSegments))
             .send(bodyPublisher(body))
@@ -613,7 +610,6 @@ public class ReactorNettyClient {
     private Mono<HttpResponse> doPut(String... pathSegments) {
         return client.headersWhen(authorizedHeader())
             .headers(JSON_HEADER)
-            .chunkedTransfer(false)
             .put()
             .uri(uri(pathSegments))
             .response()
