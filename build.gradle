@@ -94,12 +94,12 @@ test {
 test.outputs.upToDateWhen { false }
 
 task sourcesJar(type: Jar) {
-  classifier = 'sources'
+  archiveClassifier = 'sources'
   from sourceSets.main.allJava
 }
 
 task javadocJar(type: Jar) {
-  classifier = 'javadoc'
+  archiveClassifier = 'javadoc'
   from javadoc
 }
 
@@ -137,8 +137,8 @@ javadoc {
 
 task docsZip(type: Zip) {
   group = 'Distribution'
-  classifier = 'docs'
-  description = "Builds -${classifier} archive containing the api"
+  archiveClassifier = 'docs'
+  description = "Builds -${archiveClassifier} archive containing the api"
 
   from(javadoc) {
     into 'api'
@@ -147,8 +147,8 @@ task docsZip(type: Zip) {
 
 task distZip(type: Zip, dependsOn: docsZip) {
   group = 'Distribution'
-  classifier = 'dist'
-  description = "Builds -${classifier} archive, containing all jars and docs, " +
+  archiveClassifier = 'dist'
+  description = "Builds -${archiveClassifier} archive, containing all jars and docs, " +
           "suitable for community download page."
 
   ext.baseDir = "${project.name}-${project.version}";
@@ -174,7 +174,7 @@ task distZip(type: Zip, dependsOn: docsZip) {
 // Not published by default; only for use when building from source.
 task depsZip(type: Zip, dependsOn: distZip) { zipTask ->
   group = 'Distribution'
-  classifier = 'dist-with-deps'
+  archiveClassifier = 'dist-with-deps'
   description = "Builds -${classifier} archive, containing everything " +
           "in the -${distZip.classifier} archive plus all dependencies."
 
