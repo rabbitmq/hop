@@ -30,11 +30,16 @@ import com.rabbitmq.http.client.domain.Definitions;
 import com.rabbitmq.http.client.domain.ExchangeInfo;
 import com.rabbitmq.http.client.domain.NodeInfo;
 import com.rabbitmq.http.client.domain.OverviewResponse;
+import com.rabbitmq.http.client.domain.ParameterWrapper;
 import com.rabbitmq.http.client.domain.PolicyInfo;
 import com.rabbitmq.http.client.domain.QueueInfo;
 import com.rabbitmq.http.client.domain.ShovelInfo;
 import com.rabbitmq.http.client.domain.ShovelStatus;
 import com.rabbitmq.http.client.domain.TopicPermissions;
+import com.rabbitmq.http.client.domain.UpstreamDetails;
+import com.rabbitmq.http.client.domain.UpstreamInfo;
+import com.rabbitmq.http.client.domain.UpstreamSetDetails;
+import com.rabbitmq.http.client.domain.UpstreamSetInfo;
 import com.rabbitmq.http.client.domain.UserInfo;
 import com.rabbitmq.http.client.domain.UserPermissions;
 import com.rabbitmq.http.client.domain.VhostInfo;
@@ -47,6 +52,7 @@ import io.netty.handler.codec.http.HttpHeaderValues;
 import io.netty.handler.codec.http.HttpHeaders;
 import io.netty.handler.codec.http.HttpMethod;
 import org.reactivestreams.Publisher;
+import org.springframework.util.StringUtils;
 import reactor.core.Exceptions;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -533,6 +539,98 @@ public class ReactorNettyClient {
 
     public Mono<HttpResponse> deleteShovel(String vhost, String shovelName) {
         return doDelete("parameters", "shovel", enc(vhost), enc(shovelName));
+    }
+
+    //
+    // Federation support
+    //
+    /**
+     * Declares an upstream
+     * @param vhost virtual host for which to declare the upstream
+     * @param name name of the upstream to declare
+     * @param details upstream arguments
+     */
+    public Mono<HttpResponse> declareUpstream(String vhost, String name, UpstreamDetails details) {
+        if (StringUtils.isEmpty(details.getUri())) {
+            throw new IllegalArgumentException("Upstream uri must not be null or empty");
+        }
+        ParameterWrapper<UpstreamDetails> body = new ParameterWrapper<UpstreamDetails>()
+                .setComponent("federation-upstream")
+                .setVhost(vhost)
+                .setName(name)
+                .setValue(details);
+        return doPut(body, "parameters", "federation-upstream", enc(vhost), enc(name));
+    }
+
+    /**
+     * Deletes an upstream
+     * @param vhost virtual host for which to delete the upstream
+     * @param name name of the upstream to delete
+     */
+    public Mono<HttpResponse> deleteUpstream(String vhost, String name) {
+        return doDelete("parameters", "federation-upstream", enc(vhost), enc(name));
+    }
+
+    /**
+     * Returns a list of upstreams for "/" virtual host
+     */
+    public Flux<UpstreamInfo> getUpstreams() {
+        return doGetFlux(UpstreamInfo.class, "parameters", "federation-upstream");
+    }
+
+    /**
+     * Returns a list of upstreams
+     * @param vhost virtual host the upstreams are in.
+     */
+    public Flux<UpstreamInfo> getUpstreams(String vhost) {
+        return doGetFlux(UpstreamInfo.class, "parameters", "federation-upstream", enc(vhost));
+
+    }
+
+    /**
+     * Declares an upstream set.
+     * @param vhost virtual host for which to declare the upstream set
+     * @param name name of the upstream set to declare
+     * @param details upstream set arguments
+     */
+    public Mono<HttpResponse> declareUpstreamSet(String vhost, String name, List<UpstreamSetDetails> details) {
+        for (UpstreamSetDetails item : details) {
+            if (StringUtils.isEmpty(item.getUpstream())) {
+                throw new IllegalArgumentException("Each federation upstream set item must have a non-null and not " +
+                        "empty upstream name");
+            }
+        }
+        ParameterWrapper<List<UpstreamSetDetails>> body = new ParameterWrapper<List<UpstreamSetDetails>>()
+                .setComponent("federation-upstream-set")
+                .setVhost(vhost)
+                .setName(name)
+                .setValue(details);
+        return doPut(body, "parameters", "federation-upstream-set", enc(vhost), enc(name));
+    }
+
+    /**
+     * Deletes an upstream set
+     * @param vhost virtual host for which to delete the upstream set
+     * @param name name of the upstream set to delete
+     */
+    public Mono<HttpResponse> deleteUpstreamSet(String vhost, String name) {
+        return doDelete("parameters", "federation-upstream-set", enc(vhost), enc(name));
+    }
+
+    /**
+     * Returns a list of upstream sets for "/" virtual host
+     */
+    public Flux<UpstreamSetInfo> getUpstreamSets() {
+        return doGetFlux(UpstreamSetInfo.class, "parameters", "federation-upstream-set");
+
+    }
+
+    /**
+     * Returns a ist of upstream sets
+     * @param vhost Virtual host from where to get upstreams.
+     */
+    public Flux<UpstreamSetInfo> getUpstreamSets(String vhost) {
+        return doGetFlux(UpstreamSetInfo.class, "parameters", "federation-upstream-set", enc(vhost));
     }
 
     private <T> Mono<T> doGetMono(Class<T> type, String... pathSegments) {

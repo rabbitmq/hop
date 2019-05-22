@@ -29,7 +29,10 @@ import java.util.Map;
 
 import javax.net.ssl.SSLContext;
 
+import com.rabbitmq.http.client.domain.ParameterWrapper;
 import com.rabbitmq.http.client.domain.TopicPermissions;
+import com.rabbitmq.http.client.domain.UpstreamDetails;
+import com.rabbitmq.http.client.domain.UpstreamSetDetails;
 import org.apache.http.HttpHost;
 import org.apache.http.auth.AuthScope;
 import org.apache.http.auth.UsernamePasswordCredentials;
@@ -43,9 +46,11 @@ import org.apache.http.impl.client.BasicAuthCache;
 import org.apache.http.impl.client.BasicCredentialsProvider;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.protocol.HttpContext;
+import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 import org.springframework.http.converter.HttpMessageConverter;
 import org.springframework.http.converter.json.Jackson2ObjectMapperBuilder;
@@ -866,6 +871,114 @@ public class Client {
 	    this.deleteIgnoring404(uriWithPath("./parameters/shovel/" + encodePathSegment(vhost) + "/" + encodePathSegment(shovelname)));
   }
 
+  //
+  // Federation support
+  //
+
+  /**
+   * Declares an upstream
+   * @param vhost virtual host for which to declare the upstream
+   * @param name name of the upstream to declare
+   * @param details upstream arguments
+   */
+  public void declareUpstream(String vhost, String name, UpstreamDetails details) {
+    if (StringUtils.isEmpty(details.getUri())) {
+      throw new IllegalArgumentException("Upstream uri must not be null or empty");
+    }
+    final URI uri = uriWithPath("./parameters/federation-upstream/"
+            + encodePathSegment(vhost) + "/" + encodePathSegment(name));
+    this.rt.put(uri, new ParameterWrapper<UpstreamDetails>()
+            .setComponent("federation-upstream")
+            .setVhost(vhost)
+            .setName(name)
+            .setValue(details));
+  }
+
+  /**
+   * Deletes an upstream
+   * @param vhost virtual host for which to delete the upstream
+   * @param name name of the upstream to delete
+   */
+  public void deleteUpstream(String vhost, String name) {
+    this.deleteIgnoring404(uriWithPath("./parameters/federation-upstream/"
+            + encodePathSegment(vhost) + "/" + encodePathSegment(name)));
+  }
+
+  /**
+   * Returns a list of upstreams for "/" virtual host
+   */
+  public List<ParameterWrapper<UpstreamDetails>> getUpstreams() {
+    return getParameters("federation-upstream");
+  }
+
+  /**
+   * Returns a list of upstreams
+   * @param vhost virtual host the upstreams are in.
+   */
+  public List<ParameterWrapper<UpstreamDetails>> getUpstreams(String vhost) {
+    return getParameters(vhost, "federation-upstream");
+
+  }
+
+  /**
+   * Declares an upstream set.
+   * @param vhost virtual host for which to declare the upstream set
+   * @param name name of the upstream set to declare
+   * @param details upstream set arguments
+   */
+  public void declareUpstreamSet(String vhost, String name, List<UpstreamSetDetails> details) {
+    for (UpstreamSetDetails item : details) {
+      if (StringUtils.isEmpty(item.getUpstream())) {
+        throw new IllegalArgumentException("Each federation upstream set item must have a non-null and not " +
+                "empty upstream name");
+      }
+    }
+    final URI uri = uriWithPath("./parameters/federation-upstream-set/"
+            + encodePathSegment(vhost) + "/" + encodePathSegment(name));
+    this.rt.put(uri, new ParameterWrapper<List<UpstreamSetDetails>>()
+            .setComponent("federation-upstream-set")
+            .setVhost(vhost)
+            .setName(name)
+            .setValue(details));
+  }
+
+  /**
+   * Deletes an upstream set
+   * @param vhost virtual host for which to delete the upstream set
+   * @param name name of the upstream set to delete
+   */
+  public void deleteUpstreamSet(String vhost, String name) {
+    this.deleteIgnoring404(uriWithPath("./parameters/federation-upstream-set/"
+            + encodePathSegment(vhost) + "/" + encodePathSegment(name)));
+  }
+
+  /**
+   * Returns a list of upstream sets for "/" virtual host
+   */
+  public List<ParameterWrapper<List<UpstreamSetDetails>>> getUpstreamSets() {
+    return getParameters("federation-upstream-set");
+  }
+
+  /**
+   * Returns a ist of upstream sets
+   * @param vhost Virtual host from where to get upstreams.
+   */
+  public List<ParameterWrapper<List<UpstreamSetDetails>>> getUpstreamSets(String vhost) {
+    return getParameters(vhost, "federation-upstream-set");
+  }
+
+  private <T> List<ParameterWrapper<T>> getParameters(String component) {
+    final URI uri = uriWithPath("./parameters/" + component + "/");
+    return rt.exchange(uri, HttpMethod.GET, null,
+            new ParameterizedTypeReference<List<ParameterWrapper<T>>>(){})
+            .getBody();
+  }
+
+  private <T> List<ParameterWrapper<T>> getParameters(String vhost, String component) {
+    final URI uri = uriWithPath("./parameters/" + component + "/" + encodePathSegment(vhost));
+    return getForObjectReturningNullOn404(uri,
+            new ParameterizedTypeReference<List<ParameterWrapper<T>>>(){});
+  }
 
   //
   // Implementation
@@ -961,6 +1074,15 @@ public class Client {
       } else {
         throw ce;
       }
+    }
+  }
+
+  private <T> T getForObjectReturningNullOn404(final URI uri, final ParameterizedTypeReference<T> responseType) {
+    ResponseEntity<T> response = rt.exchange(uri, HttpMethod.GET, null, new ParameterizedTypeReference<T>() {});
+    if (HttpStatus.NOT_FOUND == response.getStatusCode()) {
+      return null;
+    } else {
+      return response.getBody();
     }
   }
 

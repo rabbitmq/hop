@@ -27,5 +27,7 @@ $CTL eval 'supervisor2:terminate_child(rabbit_mgmt_agent_sup_sup, rabbit_mgmt_ag
 # Enable shovel plugin
 $PLUGINS enable rabbitmq_shovel
 $PLUGINS enable rabbitmq_shovel_management
+$PLUGINS enable rabbitmq_federation
+$PLUGINS enable rabbitmq_federation_management
 
 true
