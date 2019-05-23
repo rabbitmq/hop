@@ -34,7 +34,7 @@ ext {
   amqpClientVersion='5.7.0'
   commonsHttpClientVersion = '4.5.8'
   groovyVersion = '2.4.15'
-  jacksonVersion = '2.9.8'
+  jacksonVersion = '2.9.9'
   spockVersion = "1.3-groovy-2.4"
   reactorVersion = "3.3.0.M1"
   reactorNettyVersion = '0.9.0.M1'
