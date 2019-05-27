@@ -1760,7 +1760,7 @@ class ClientSpec extends Specification {
     final upstreamName = "upstream4"
     declareUpstream(client, vhost, upstreamName)
 
-    List<ParameterWrapper<UpstreamDetails>> upstreams = awaitEventPropagation { client.getUpstreams() }
+    List<UpstreamInfo> upstreams = awaitEventPropagation { client.getUpstreams() }
     verifyUpstreamDefinitions(vhost, upstreams, upstreamName)
 
     when: "client deletes upstream upstream4 in vhost /"
@@ -1779,6 +1779,7 @@ class ClientSpec extends Specification {
     final upstreamSetName = "upstream-set-1"
     final upstreamA = "A"
     final upstreamB = "B"
+    final policyName = "federation-policy"
     declareUpstream(client, vhost, upstreamA);
     declareUpstream(client, vhost, upstreamB);
     final d1 = new UpstreamSetDetails()
@@ -1791,30 +1792,37 @@ class ClientSpec extends Specification {
     detailsSet.add(d1)
     detailsSet.add(d2)
     client.declareUpstreamSet(vhost, upstreamSetName, detailsSet)
+    PolicyInfo p = new PolicyInfo()
+    p.setApplyTo("exchanges")
+    p.setName(policyName)
+    p.setPattern("amq\\.topic")
+    p.setDefinition(Collections.singletonMap("federation-upstream-set", upstreamSetName))
+    client.declarePolicy(vhost, policyName, p)
 
     when: "client requests the upstream set list"
     final upstreamSets = awaitEventPropagation { client.getUpstreamSets() }
 
     then: "upstream set with two upstreams is returned"
-    assert !upstreamSets.isEmpty()
-    ParameterWrapper<UpstreamSetDetails> upstreamSet = upstreamSets.find { it.name.equals(upstreamSetName) }
-    assert upstreamSet != null
-    assert upstreamSet.name.equals(upstreamSetName)
-    assert upstreamSet.vhost.equals(vhost)
-    assert upstreamSet.component.equals("federation-upstream-set")
+    !upstreamSets.isEmpty()
+    UpstreamSetInfo upstreamSet = upstreamSets.find { it.name.equals(upstreamSetName) }
+    upstreamSet != null
+    upstreamSet.name.equals(upstreamSetName)
+    upstreamSet.vhost.equals(vhost)
+    upstreamSet.component.equals("federation-upstream-set")
     List<UpstreamSetDetails> upstreams = upstreamSet.value
-    assert upstreams != null
-    assert upstreams.size() == 2
+    upstreams != null
+    upstreams.size() == 2
     UpstreamSetDetails responseUpstreamA = upstreams.find { it.upstream.equals(upstreamA) }
-    assert responseUpstreamA != null
-    assert responseUpstreamA.upstream.equals(upstreamA)
-    assert responseUpstreamA.exchange.equals("exchangeA")
+    responseUpstreamA != null
+    responseUpstreamA.upstream.equals(upstreamA)
+    responseUpstreamA.exchange.equals("exchangeA")
     UpstreamSetDetails responseUpstreamB = upstreams.find { it.upstream.equals(upstreamB) }
-    assert responseUpstreamB != null
-    assert responseUpstreamB.upstream.equals(upstreamB)
-    assert responseUpstreamB.exchange.equals("exchangeB")
+    responseUpstreamB != null
+    responseUpstreamB.upstream.equals(upstreamB)
+    responseUpstreamB.exchange.equals("exchangeB")
 
     cleanup:
+    client.deletePolicy(vhost, policyName)
     client.deleteUpstreamSet(vhost,upstreamSetName)
     client.deleteUpstream(vhost,upstreamA)
     client.deleteUpstream(vhost,upstreamB)
@@ -1991,7 +1999,7 @@ class ClientSpec extends Specification {
 
   protected static void verifyUpstreamDefinitions(vhost, upstreams, upstreamName) {
     assert !upstreams.isEmpty()
-    ParameterWrapper<UpstreamDetails> upstream = upstreams.find { it.name.equals(upstreamName) }
+    UpstreamInfo upstream = upstreams.find { it.name.equals(upstreamName) }
     assert upstream != null
     assert upstream.name.equals(upstreamName)
     assert upstream.vhost.equals(vhost)

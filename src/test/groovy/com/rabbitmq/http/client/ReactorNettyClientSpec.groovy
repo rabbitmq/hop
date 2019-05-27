@@ -1828,7 +1828,7 @@ class ReactorNettyClientSpec extends Specification {
         final upstreamSetName = "upstream-set-1"
         final upstreamA = "A"
         final upstreamB = "B"
-        final policyName = "ppp"
+        final policyName = "federation-policy"
         declareUpstream(client, vhost, upstreamA);
         declareUpstream(client, vhost, upstreamB);
         final d1 = new UpstreamSetDetails()
@@ -1852,23 +1852,23 @@ class ReactorNettyClientSpec extends Specification {
         Flux<UpstreamSetInfo> upstreamSets = awaitEventPropagation { client.getUpstreamSets() }
 
         then: "upstream set with two upstreams is returned"
-        assert upstreamSets.hasElements().block()
+        upstreamSets.hasElements().block()
         UpstreamSetInfo upstreamSet = upstreamSets.filter { it.name.equals(upstreamSetName) }.blockFirst()
-        assert upstreamSet != null
-        assert upstreamSet.name.equals(upstreamSetName)
-        assert upstreamSet.vhost.equals(vhost)
-        assert upstreamSet.component.equals("federation-upstream-set")
+        upstreamSet != null
+        upstreamSet.name.equals(upstreamSetName)
+        upstreamSet.vhost.equals(vhost)
+        upstreamSet.component.equals("federation-upstream-set")
         List<UpstreamSetDetails> upstreams = upstreamSet.value
-        assert upstreams != null
-        assert upstreams.size() == 2
+        upstreams != null
+        upstreams.size() == 2
         UpstreamSetDetails responseUpstreamA = upstreams.find { it.upstream.equals(upstreamA) }
-        assert responseUpstreamA != null
-        assert responseUpstreamA.upstream.equals(upstreamA)
-        assert responseUpstreamA.exchange.equals("amq.direct")
+        responseUpstreamA != null
+        responseUpstreamA.upstream.equals(upstreamA)
+        responseUpstreamA.exchange.equals("amq.direct")
         UpstreamSetDetails responseUpstreamB = upstreams.find { it.upstream.equals(upstreamB) }
-        assert responseUpstreamB != null
-        assert responseUpstreamB.upstream.equals(upstreamB)
-        assert responseUpstreamB.exchange.equals("amq.fanout")
+        responseUpstreamB != null
+        responseUpstreamB.upstream.equals(upstreamB)
+        responseUpstreamB.exchange.equals("amq.fanout")
 
         cleanup:
         client.deletePolicy(vhost, policyName)

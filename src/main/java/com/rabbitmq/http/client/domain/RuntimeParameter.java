@@ -3,7 +3,7 @@ package com.rabbitmq.http.client.domain;
 import com.fasterxml.jackson.annotation.JsonInclude;
 
 @JsonInclude(JsonInclude.Include.NON_NULL)
-public class ParameterWrapper<T> {
+public class RuntimeParameter<T> {
     private String name;
     private String vhost;
     private String component;
@@ -13,41 +13,37 @@ public class ParameterWrapper<T> {
         return name;
     }
 
-    public ParameterWrapper<T> setName(String name) {
+    public void setName(String name) {
         this.name = name;
-        return this;
     }
 
     public String getVhost() {
         return vhost;
     }
 
-    public ParameterWrapper<T> setVhost(String vhost) {
+    public void setVhost(String vhost) {
         this.vhost = vhost;
-        return this;
     }
 
     public String getComponent() {
         return component;
     }
 
-    public ParameterWrapper<T> setComponent(String component) {
+    public void setComponent(String component) {
         this.component = component;
-        return this;
     }
 
     public T getValue() {
         return value;
     }
 
-    public ParameterWrapper<T> setValue(T value) {
+    public void setValue(T value) {
         this.value = value;
-        return this;
     }
 
     @Override
     public String toString() {
-        return "ParameterWrapper{" +
+        return "RuntimeParameter{" +
                 "name='" + name + '\'' +
                 ", vhost='" + vhost + '\'' +
                 ", component='" + component + '\'' +

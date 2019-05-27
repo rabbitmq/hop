@@ -29,10 +29,11 @@ import java.util.Map;
 
 import javax.net.ssl.SSLContext;
 
-import com.rabbitmq.http.client.domain.ParameterWrapper;
 import com.rabbitmq.http.client.domain.TopicPermissions;
 import com.rabbitmq.http.client.domain.UpstreamDetails;
+import com.rabbitmq.http.client.domain.UpstreamInfo;
 import com.rabbitmq.http.client.domain.UpstreamSetDetails;
+import com.rabbitmq.http.client.domain.UpstreamSetInfo;
 import org.apache.http.HttpHost;
 import org.apache.http.auth.AuthScope;
 import org.apache.http.auth.UsernamePasswordCredentials;
@@ -887,11 +888,12 @@ public class Client {
     }
     final URI uri = uriWithPath("./parameters/federation-upstream/"
             + encodePathSegment(vhost) + "/" + encodePathSegment(name));
-    this.rt.put(uri, new ParameterWrapper<UpstreamDetails>()
-            .setComponent("federation-upstream")
-            .setVhost(vhost)
-            .setName(name)
-            .setValue(details));
+    UpstreamInfo body = new UpstreamInfo();
+    body.setComponent("federation-upstream");
+    body.setVhost(vhost);
+    body.setName(name);
+    body.setValue(details);
+    this.rt.put(uri, body);
   }
 
   /**
@@ -907,7 +909,7 @@ public class Client {
   /**
    * Returns a list of upstreams for "/" virtual host
    */
-  public List<ParameterWrapper<UpstreamDetails>> getUpstreams() {
+  public List<UpstreamInfo> getUpstreams() {
     return getParameters("federation-upstream");
   }
 
@@ -915,7 +917,7 @@ public class Client {
    * Returns a list of upstreams
    * @param vhost virtual host the upstreams are in.
    */
-  public List<ParameterWrapper<UpstreamDetails>> getUpstreams(String vhost) {
+  public List<UpstreamInfo> getUpstreams(String vhost) {
     return getParameters(vhost, "federation-upstream");
 
   }
@@ -935,11 +937,12 @@ public class Client {
     }
     final URI uri = uriWithPath("./parameters/federation-upstream-set/"
             + encodePathSegment(vhost) + "/" + encodePathSegment(name));
-    this.rt.put(uri, new ParameterWrapper<List<UpstreamSetDetails>>()
-            .setComponent("federation-upstream-set")
-            .setVhost(vhost)
-            .setName(name)
-            .setValue(details));
+    UpstreamSetInfo body = new UpstreamSetInfo();
+    body.setComponent("federation-upstream-set");
+    body.setVhost(vhost);
+    body.setName(name);
+    body.setValue(details);
+    this.rt.put(uri, body);
   }
 
   /**
@@ -955,7 +958,7 @@ public class Client {
   /**
    * Returns a list of upstream sets for "/" virtual host
    */
-  public List<ParameterWrapper<List<UpstreamSetDetails>>> getUpstreamSets() {
+  public List<UpstreamSetInfo> getUpstreamSets() {
     return getParameters("federation-upstream-set");
   }
 
@@ -963,21 +966,18 @@ public class Client {
    * Returns a ist of upstream sets
    * @param vhost Virtual host from where to get upstreams.
    */
-  public List<ParameterWrapper<List<UpstreamSetDetails>>> getUpstreamSets(String vhost) {
+  public List<UpstreamSetInfo> getUpstreamSets(String vhost) {
     return getParameters(vhost, "federation-upstream-set");
   }
 
-  private <T> List<ParameterWrapper<T>> getParameters(String component) {
+  private <T> List<T> getParameters(String component) {
     final URI uri = uriWithPath("./parameters/" + component + "/");
-    return rt.exchange(uri, HttpMethod.GET, null,
-            new ParameterizedTypeReference<List<ParameterWrapper<T>>>(){})
-            .getBody();
+    return rt.exchange(uri, HttpMethod.GET, null, new ParameterizedTypeReference<List<T>>(){}).getBody();
   }
 
-  private <T> List<ParameterWrapper<T>> getParameters(String vhost, String component) {
+  private <T> List<T> getParameters(String vhost, String component) {
     final URI uri = uriWithPath("./parameters/" + component + "/" + encodePathSegment(vhost));
-    return getForObjectReturningNullOn404(uri,
-            new ParameterizedTypeReference<List<ParameterWrapper<T>>>(){});
+    return getForObjectReturningNullOn404(uri, new ParameterizedTypeReference<List<T>>(){});
   }
 
   //

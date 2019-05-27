@@ -30,7 +30,6 @@ import com.rabbitmq.http.client.domain.Definitions;
 import com.rabbitmq.http.client.domain.ExchangeInfo;
 import com.rabbitmq.http.client.domain.NodeInfo;
 import com.rabbitmq.http.client.domain.OverviewResponse;
-import com.rabbitmq.http.client.domain.ParameterWrapper;
 import com.rabbitmq.http.client.domain.PolicyInfo;
 import com.rabbitmq.http.client.domain.QueueInfo;
 import com.rabbitmq.http.client.domain.ShovelInfo;
@@ -544,6 +543,7 @@ public class ReactorNettyClient {
     //
     // Federation support
     //
+
     /**
      * Declares an upstream
      * @param vhost virtual host for which to declare the upstream
@@ -554,11 +554,11 @@ public class ReactorNettyClient {
         if (StringUtils.isEmpty(details.getUri())) {
             throw new IllegalArgumentException("Upstream uri must not be null or empty");
         }
-        ParameterWrapper<UpstreamDetails> body = new ParameterWrapper<UpstreamDetails>()
-                .setComponent("federation-upstream")
-                .setVhost(vhost)
-                .setName(name)
-                .setValue(details);
+        UpstreamInfo body = new UpstreamInfo();
+        body.setComponent("federation-upstream");
+        body.setVhost(vhost);
+        body.setName(name);
+        body.setValue(details);
         return doPut(body, "parameters", "federation-upstream", enc(vhost), enc(name));
     }
 
@@ -600,11 +600,11 @@ public class ReactorNettyClient {
                         "empty upstream name");
             }
         }
-        ParameterWrapper<List<UpstreamSetDetails>> body = new ParameterWrapper<List<UpstreamSetDetails>>()
-                .setComponent("federation-upstream-set")
-                .setVhost(vhost)
-                .setName(name)
-                .setValue(details);
+        UpstreamSetInfo body = new UpstreamSetInfo();
+        body.setComponent("federation-upstream-set");
+        body.setVhost(vhost);
+        body.setName(name);
+        body.setValue(details);
         return doPut(body, "parameters", "federation-upstream-set", enc(vhost), enc(name));
     }
 
