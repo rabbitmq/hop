@@ -1709,6 +1709,138 @@ class ClientSpec extends Specification {
     client.deleteShovel("/", shovelName)
   }
 
+  def "GET /api/parameters/federation-upstream declare and get at root vhost"() {
+    given: "an upstream"
+    final vhost = "/"
+    final upstreamName = "upstream1"
+    declareUpstream(client, vhost, upstreamName)
+
+    when: "client requests the upstreams"
+    final upstreams = awaitEventPropagation { client.getUpstreams() }
+
+    then: "list of upstreams that contains the new upstream is returned"
+    verifyUpstreamDefinitions(vhost, upstreams, upstreamName)
+
+    cleanup:
+    client.deleteUpstream(vhost, upstreamName)
+  }
+
+  def "GET /api/parameters/federation-upstream declare and get at non-root vhost"() {
+    given: "an upstream"
+    final vhost = "foo"
+    final upstreamName = "upstream2"
+    client.createVhost(vhost)
+    declareUpstream(client, vhost, upstreamName)
+
+    when: "client requests the upstreams"
+    final upstreams = awaitEventPropagation { client.getUpstreams(vhost) }
+
+    then: "list of upstreams that contains the new upstream is returned"
+    verifyUpstreamDefinitions(vhost, upstreams, upstreamName)
+
+    cleanup:
+    client.deleteUpstream(vhost,upstreamName)
+    client.deleteVhost(vhost)
+  }
+
+  def "PUT /api/parameters/federation-upstream with null upstream uri"() {
+    given: "an Upstream without upstream uri"
+    UpstreamDetails upstreamDetails = new UpstreamDetails()
+
+    when: "client tries to declare an Upstream"
+    client.declareUpstream("/", "upstream3", upstreamDetails)
+
+    then: "an illegal argument exception is thrown"
+    thrown(IllegalArgumentException)
+  }
+
+  def "DELETE /api/parameters/federation-upstream/{vhost}/{name}"() {
+    given: "upstream upstream4 in vhost /"
+    final vhost = "/"
+    final upstreamName = "upstream4"
+    declareUpstream(client, vhost, upstreamName)
+
+    List<UpstreamInfo> upstreams = awaitEventPropagation { client.getUpstreams() }
+    verifyUpstreamDefinitions(vhost, upstreams, upstreamName)
+
+    when: "client deletes upstream upstream4 in vhost /"
+    client.deleteUpstream(vhost, upstreamName)
+
+    and: "upstream list in / is reloaded"
+    upstreams = client.getUpstreams()
+
+    then: "upstream4 no longer exists"
+    upstreams.find { it.name.equals(upstreamName) } == null
+  }
+
+  def "GET /api/parameters/federation-upstream-set declare and get"() {
+    given: "an upstream set with two upstreams"
+    final vhost = "/"
+    final upstreamSetName = "upstream-set-1"
+    final upstreamA = "A"
+    final upstreamB = "B"
+    final policyName = "federation-policy"
+    declareUpstream(client, vhost, upstreamA);
+    declareUpstream(client, vhost, upstreamB);
+    final d1 = new UpstreamSetDetails()
+    d1.setUpstream(upstreamA)
+    d1.setExchange("exchangeA")
+    final d2 = new UpstreamSetDetails()
+    d2.setUpstream(upstreamB)
+    d2.setExchange("exchangeB")
+    final detailsSet = new ArrayList()
+    detailsSet.add(d1)
+    detailsSet.add(d2)
+    client.declareUpstreamSet(vhost, upstreamSetName, detailsSet)
+    PolicyInfo p = new PolicyInfo()
+    p.setApplyTo("exchanges")
+    p.setName(policyName)
+    p.setPattern("amq\\.topic")
+    p.setDefinition(Collections.singletonMap("federation-upstream-set", upstreamSetName))
+    client.declarePolicy(vhost, policyName, p)
+
+    when: "client requests the upstream set list"
+    final upstreamSets = awaitEventPropagation { client.getUpstreamSets() }
+
+    then: "upstream set with two upstreams is returned"
+    !upstreamSets.isEmpty()
+    UpstreamSetInfo upstreamSet = upstreamSets.find { it.name.equals(upstreamSetName) }
+    upstreamSet != null
+    upstreamSet.name.equals(upstreamSetName)
+    upstreamSet.vhost.equals(vhost)
+    upstreamSet.component.equals("federation-upstream-set")
+    List<UpstreamSetDetails> upstreams = upstreamSet.value
+    upstreams != null
+    upstreams.size() == 2
+    UpstreamSetDetails responseUpstreamA = upstreams.find { it.upstream.equals(upstreamA) }
+    responseUpstreamA != null
+    responseUpstreamA.upstream.equals(upstreamA)
+    responseUpstreamA.exchange.equals("exchangeA")
+    UpstreamSetDetails responseUpstreamB = upstreams.find { it.upstream.equals(upstreamB) }
+    responseUpstreamB != null
+    responseUpstreamB.upstream.equals(upstreamB)
+    responseUpstreamB.exchange.equals("exchangeB")
+
+    cleanup:
+    client.deletePolicy(vhost, policyName)
+    client.deleteUpstreamSet(vhost,upstreamSetName)
+    client.deleteUpstream(vhost,upstreamA)
+    client.deleteUpstream(vhost,upstreamB)
+  }
+
+  def "PUT /api/parameters/federation-upstream-set without upstreams"() {
+    given: "an Upstream without upstream uri"
+    final upstreamSetDetails = new UpstreamSetDetails()
+    final detailsSet = new ArrayList()
+    detailsSet.add(upstreamSetDetails)
+
+    when: "client tries to declare an Upstream"
+    client.declareUpstreamSet("/", "upstrea-set-2", detailsSet);
+
+    then: "an illegal argument exception is thrown"
+    thrown(IllegalArgumentException)
+  }
+
   protected static boolean awaitOn(CountDownLatch latch) {
     latch.await(10, TimeUnit.SECONDS)
   }
@@ -1857,6 +1989,22 @@ class ClientSpec extends Specification {
         result = client.getConnections()
       }
       result
+  }
+
+  protected static void declareUpstream(client, vhost, upstreamName) {
+    UpstreamDetails upstreamDetails = new UpstreamDetails()
+    upstreamDetails.setUri("amqp://localhost:5672")
+    client.declareUpstream(vhost, upstreamName, upstreamDetails)
+  }
+
+  protected static void verifyUpstreamDefinitions(vhost, upstreams, upstreamName) {
+    assert !upstreams.isEmpty()
+    UpstreamInfo upstream = upstreams.find { it.name.equals(upstreamName) }
+    assert upstream != null
+    assert upstream.name.equals(upstreamName)
+    assert upstream.vhost.equals(vhost)
+    assert upstream.component.equals("federation-upstream")
+    assert upstream.value.uri.equals("amqp://localhost:5672")
   }
 
   static class MockRestTemplate extends RestTemplate {
