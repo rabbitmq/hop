@@ -5,20 +5,29 @@ import com.fasterxml.jackson.annotation.JsonValue;
 
 public enum AckMode {
     /**
-     * Messages are acknowledged to the upstream broker after they have been confirmed downstream. This handles network
-     * errors and broker failures without losing messages, and is the slowest option.
+     * Consumes in manual acknowledgement mode.
+     * Messages are acknowledged to the upstream broker after they have been confirmed downstream.
+     *
+     * This is the safest option that offers lowest throughput.
+     * @see https://www.rabbitmq.com/confirms.html
      */
     ON_CONFIRM("on-confirm"),
 
     /**
-     * Messages are acknowledged to the upstream broker after they have been published downstream. This handles network
-     * errors without losing messages, but may lose messages in the event of broker failures.
+     * Consumes in manual acknowledgement mode.
+     * Messages are acknowledged to the upstream broker after they have been published downstream
+     * without waiting for publisher confirms. In other words, this uses fire-and-forget publishing.
+     *
+     * This is a moderately safe safe option that does not handle downstream node failures.
+     * @see https://www.rabbitmq.com/confirms.html
      */
     ON_PUBLISH("on-publish"),
 
     /**
-     * Message acknowledgements are not used. This is the fastest option, but may lose messages in the event of network
-     * or broker failures.
+     * Consumes in automatic acknowledgement mode.
+     *
+     * Unsafe, offers best throughput.
+     * @see https://www.rabbitmq.com/confirms.html
      */
     NO_ACK("no-ack");
 
