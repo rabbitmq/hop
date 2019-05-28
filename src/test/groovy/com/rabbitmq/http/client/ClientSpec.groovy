@@ -1,5 +1,5 @@
 /*
- * Copyright 2015-2017 the original author or authors.
+ * Copyright 2015-2019 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -1707,6 +1707,27 @@ class ClientSpec extends Specification {
 
     cleanup:
     client.deleteShovel("/", shovelName)
+  }
+
+  def "GET /api/parameters/federation-upstream declare and get at root vhost with non-null ack mode"() {
+    given: "an upstream with non-null ack mode"
+    final vhost = "/"
+    final upstreamName = "upstream1"
+    UpstreamDetails upstreamDetails = new UpstreamDetails()
+    upstreamDetails.setUri("amqp://localhost:5672")
+    upstreamDetails.setAckMode(AckMode.ON_CONFIRM)
+    client.declareUpstream(vhost, upstreamName, upstreamDetails)
+
+    when: "client requests the upstreams"
+    final upstreams = awaitEventPropagation { client.getUpstreams() }
+
+    then: "list of upstreams that contains the new upstream is returned and ack mode is correctly retrieved"
+    verifyUpstreamDefinitions(vhost, upstreams, upstreamName)
+    UpstreamInfo upstream = upstreams.find { it.name.equals(upstreamName) }
+    upstream.value.ackMode == AckMode.ON_CONFIRM
+
+    cleanup:
+    client.deleteUpstream(vhost, upstreamName)
   }
 
   def "GET /api/parameters/federation-upstream declare and get at root vhost"() {

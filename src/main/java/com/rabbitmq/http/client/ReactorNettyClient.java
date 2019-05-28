@@ -555,7 +555,6 @@ public class ReactorNettyClient {
             throw new IllegalArgumentException("Upstream uri must not be null or empty");
         }
         UpstreamInfo body = new UpstreamInfo();
-        body.setComponent("federation-upstream");
         body.setVhost(vhost);
         body.setName(name);
         body.setValue(details);
@@ -601,7 +600,6 @@ public class ReactorNettyClient {
             }
         }
         UpstreamSetInfo body = new UpstreamSetInfo();
-        body.setComponent("federation-upstream-set");
         body.setVhost(vhost);
         body.setName(name);
         body.setValue(details);

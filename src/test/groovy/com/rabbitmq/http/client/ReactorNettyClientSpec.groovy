@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 the original author or authors.
+ * Copyright 2018-2019 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@ import com.rabbitmq.client.AuthenticationFailureException
 import com.rabbitmq.client.Channel
 import com.rabbitmq.client.Connection
 import com.rabbitmq.client.ConnectionFactory
+import com.rabbitmq.http.client.domain.AckMode
 import com.rabbitmq.http.client.domain.BindingInfo
 import com.rabbitmq.http.client.domain.ChannelInfo
 import com.rabbitmq.http.client.domain.ClusterId
@@ -1758,6 +1759,27 @@ class ReactorNettyClientSpec extends Specification {
         client.deleteExchange(v, s).block()
     }
 
+    def "GET /api/parameters/federation-upstream declare and get at root vhost with non-null ack mode"() {
+        given: "an upstream"
+        final vhost = "/"
+        final upstreamName = "upstream1"
+        UpstreamDetails upstreamDetails = new UpstreamDetails()
+        upstreamDetails.setUri("amqp://localhost:5672")
+        upstreamDetails.setAckMode(AckMode.ON_CONFIRM)
+        client.declareUpstream(vhost, upstreamName, upstreamDetails).block()
+
+        when: "client requests the upstreams"
+        final upstreams = awaitEventPropagation { client.getUpstreams() }
+
+        then: "list of upstreams that contains the new upstream is returned and ack mode is correctly retrieved"
+        verifyUpstreamDefinitions(vhost, upstreams, upstreamName)
+        UpstreamInfo upstream = upstreams.filter() { it.name.equals(upstreamName) }.blockFirst()
+        upstream.value.ackMode == AckMode.ON_CONFIRM
+
+        cleanup:
+        client.deleteUpstream(vhost, upstreamName).block()
+    }
+
     def "GET /api/parameters/federation-upstream declare and get at root vhost"() {
         given: "an upstream"
         final vhost = "/"
@@ -1829,8 +1851,8 @@ class ReactorNettyClientSpec extends Specification {
         final upstreamA = "A"
         final upstreamB = "B"
         final policyName = "federation-policy"
-        declareUpstream(client, vhost, upstreamA);
-        declareUpstream(client, vhost, upstreamB);
+        declareUpstream(client, vhost, upstreamA)
+        declareUpstream(client, vhost, upstreamB)
         final d1 = new UpstreamSetDetails()
         d1.setUpstream(upstreamA)
         d1.setExchange("amq.direct")

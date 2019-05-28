@@ -889,7 +889,6 @@ public class Client {
     final URI uri = uriWithPath("./parameters/federation-upstream/"
             + encodePathSegment(vhost) + "/" + encodePathSegment(name));
     UpstreamInfo body = new UpstreamInfo();
-    body.setComponent("federation-upstream");
     body.setVhost(vhost);
     body.setName(name);
     body.setValue(details);
@@ -910,7 +909,7 @@ public class Client {
    * Returns a list of upstreams for "/" virtual host
    */
   public List<UpstreamInfo> getUpstreams() {
-    return getParameters("federation-upstream");
+    return getParameters("federation-upstream", new ParameterizedTypeReference<List<UpstreamInfo>>() {});
   }
 
   /**
@@ -918,8 +917,7 @@ public class Client {
    * @param vhost virtual host the upstreams are in.
    */
   public List<UpstreamInfo> getUpstreams(String vhost) {
-    return getParameters(vhost, "federation-upstream");
-
+    return getParameters(vhost, "federation-upstream", new ParameterizedTypeReference<List<UpstreamInfo>>() {});
   }
 
   /**
@@ -938,7 +936,6 @@ public class Client {
     final URI uri = uriWithPath("./parameters/federation-upstream-set/"
             + encodePathSegment(vhost) + "/" + encodePathSegment(name));
     UpstreamSetInfo body = new UpstreamSetInfo();
-    body.setComponent("federation-upstream-set");
     body.setVhost(vhost);
     body.setName(name);
     body.setValue(details);
@@ -959,7 +956,7 @@ public class Client {
    * Returns a list of upstream sets for "/" virtual host
    */
   public List<UpstreamSetInfo> getUpstreamSets() {
-    return getParameters("federation-upstream-set");
+    return getParameters("federation-upstream-set", new ParameterizedTypeReference<List<UpstreamSetInfo>>() {});
   }
 
   /**
@@ -967,17 +964,17 @@ public class Client {
    * @param vhost Virtual host from where to get upstreams.
    */
   public List<UpstreamSetInfo> getUpstreamSets(String vhost) {
-    return getParameters(vhost, "federation-upstream-set");
+      return getParameters(vhost, "federation-upstream-set", new ParameterizedTypeReference<List<UpstreamSetInfo>>() {});
   }
 
-  private <T> List<T> getParameters(String component) {
+  private <T> List<T> getParameters(String component, final ParameterizedTypeReference<List<T>> responseType) {
     final URI uri = uriWithPath("./parameters/" + component + "/");
-    return rt.exchange(uri, HttpMethod.GET, null, new ParameterizedTypeReference<List<T>>(){}).getBody();
+    return rt.exchange(uri, HttpMethod.GET, null, responseType).getBody();
   }
 
-  private <T> List<T> getParameters(String vhost, String component) {
+  private <T> List<T> getParameters(String vhost, String component, final ParameterizedTypeReference<List<T>> responseType) {
     final URI uri = uriWithPath("./parameters/" + component + "/" + encodePathSegment(vhost));
-    return getForObjectReturningNullOn404(uri, new ParameterizedTypeReference<List<T>>(){});
+    return getForObjectReturningNullOn404(uri, responseType);
   }
 
   //
@@ -1078,7 +1075,7 @@ public class Client {
   }
 
   private <T> T getForObjectReturningNullOn404(final URI uri, final ParameterizedTypeReference<T> responseType) {
-    ResponseEntity<T> response = rt.exchange(uri, HttpMethod.GET, null, new ParameterizedTypeReference<T>() {});
+    ResponseEntity<T> response = rt.exchange(uri, HttpMethod.GET, null, responseType);
     if (HttpStatus.NOT_FOUND == response.getStatusCode()) {
       return null;
     } else {
