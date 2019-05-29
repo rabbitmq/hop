@@ -43,7 +43,6 @@ import com.rabbitmq.http.client.domain.UserInfo;
 import com.rabbitmq.http.client.domain.UserPermissions;
 import com.rabbitmq.http.client.domain.VhostInfo;
 import io.netty.buffer.ByteBuf;
-import io.netty.buffer.ByteBufAllocator;
 import io.netty.buffer.ByteBufOutputStream;
 import io.netty.buffer.PooledByteBufAllocator;
 import io.netty.handler.codec.http.HttpHeaderNames;
@@ -146,8 +145,7 @@ public class ReactorNettyClient {
             this.responseCallback = response ->
                 options.onResponseCallback().accept(new HttpEndpoint(response.uri(), response.method().name()), toHttpResponse(response));
         }
-        ByteBufAllocator byteBufAllocator = new PooledByteBufAllocator();
-        this.byteBufSupplier = () -> byteBufAllocator.buffer();
+        this.byteBufSupplier = () -> PooledByteBufAllocator.DEFAULT.buffer();
     }
 
     private static String urlWithoutCredentials(String url) {
