@@ -145,7 +145,9 @@ public class ReactorNettyClient {
             this.responseCallback = response ->
                 options.onResponseCallback().accept(new HttpEndpoint(response.uri(), response.method().name()), toHttpResponse(response));
         }
-        this.byteBufSupplier = () -> PooledByteBufAllocator.DEFAULT.buffer();
+        this.byteBufSupplier = options.byteBufSupplier() == null ?
+                () -> PooledByteBufAllocator.DEFAULT.buffer() :
+                options.byteBufSupplier();
     }
 
     private static String urlWithoutCredentials(String url) {

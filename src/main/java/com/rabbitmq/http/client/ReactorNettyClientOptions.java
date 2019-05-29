@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 the original author or authors.
+ * Copyright 2018-2019 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@
 package com.rabbitmq.http.client;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.netty.buffer.ByteBuf;
 import reactor.core.publisher.Mono;
 import reactor.netty.http.client.HttpClient;
 
@@ -41,6 +42,8 @@ public class ReactorNettyClientOptions {
     private Mono<String> token;
 
     private BiConsumer<? super HttpEndpoint, ? super HttpResponse> onResponseCallback;
+
+    private Supplier<ByteBuf> byteBufSupplier;
 
     public Supplier<ObjectMapper> objectMapper() {
         return objectMapper;
@@ -77,5 +80,14 @@ public class ReactorNettyClientOptions {
     public ReactorNettyClientOptions client(Supplier<HttpClient> client) {
         this.client = client;
         return this;
+    }
+
+    public ReactorNettyClientOptions byteBufSupplier(Supplier<ByteBuf> byteBufSupplier) {
+        this.byteBufSupplier = byteBufSupplier;
+        return this;
+    }
+
+    public Supplier<ByteBuf> byteBufSupplier() {
+        return this.byteBufSupplier;
     }
 }
