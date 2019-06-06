@@ -16,24 +16,10 @@
 
 package com.rabbitmq.http.client;
 
-import java.net.MalformedURLException;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.net.URL;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
-import javax.net.ssl.SSLContext;
-
-import com.rabbitmq.http.client.domain.TopicPermissions;
-import com.rabbitmq.http.client.domain.UpstreamDetails;
-import com.rabbitmq.http.client.domain.UpstreamInfo;
-import com.rabbitmq.http.client.domain.UpstreamSetDetails;
-import com.rabbitmq.http.client.domain.UpstreamSetInfo;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.rabbitmq.http.client.domain.*;
 import org.apache.http.HttpHost;
 import org.apache.http.auth.AuthScope;
 import org.apache.http.auth.UsernamePasswordCredentials;
@@ -64,26 +50,12 @@ import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.util.UriUtils;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.DeserializationFeature;
-import com.rabbitmq.http.client.domain.AlivenessTestResult;
-import com.rabbitmq.http.client.domain.BindingInfo;
-import com.rabbitmq.http.client.domain.ChannelInfo;
-import com.rabbitmq.http.client.domain.ClusterId;
-import com.rabbitmq.http.client.domain.ConnectionInfo;
-import com.rabbitmq.http.client.domain.CurrentUserDetails;
-import com.rabbitmq.http.client.domain.Definitions;
-import com.rabbitmq.http.client.domain.ExchangeInfo;
-import com.rabbitmq.http.client.domain.NodeInfo;
-import com.rabbitmq.http.client.domain.OverviewResponse;
-import com.rabbitmq.http.client.domain.PolicyInfo;
-import com.rabbitmq.http.client.domain.QueueInfo;
-import com.rabbitmq.http.client.domain.ShovelInfo;
-import com.rabbitmq.http.client.domain.ShovelStatus;
-import com.rabbitmq.http.client.domain.UserInfo;
-import com.rabbitmq.http.client.domain.UserPermissions;
-import com.rabbitmq.http.client.domain.VhostInfo;
+import javax.net.ssl.SSLContext;
+import java.net.MalformedURLException;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.URL;
+import java.util.*;
 
 public class Client {
   private static final HttpClientBuilderConfigurator NO_OP_HTTP_CLIENT_BUILDER_CONFIGURATOR =
@@ -907,17 +879,23 @@ public class Client {
 
   /**
    * Returns a list of upstreams for "/" virtual host
+   *
+   * @return upstream info
    */
   public List<UpstreamInfo> getUpstreams() {
-    return getParameters("federation-upstream", new ParameterizedTypeReference<List<UpstreamInfo>>() {});
+    return getParameters("federation-upstream", new ParameterizedTypeReference<List<UpstreamInfo>>() {
+    });
   }
 
   /**
    * Returns a list of upstreams
+   *
    * @param vhost virtual host the upstreams are in.
+   * @return upstream info
    */
   public List<UpstreamInfo> getUpstreams(String vhost) {
-    return getParameters(vhost, "federation-upstream", new ParameterizedTypeReference<List<UpstreamInfo>>() {});
+    return getParameters(vhost, "federation-upstream", new ParameterizedTypeReference<List<UpstreamInfo>>() {
+    });
   }
 
   /**
@@ -954,17 +932,23 @@ public class Client {
 
   /**
    * Returns a list of upstream sets for "/" virtual host
+   *
+   * @return upstream info
    */
   public List<UpstreamSetInfo> getUpstreamSets() {
-    return getParameters("federation-upstream-set", new ParameterizedTypeReference<List<UpstreamSetInfo>>() {});
+    return getParameters("federation-upstream-set", new ParameterizedTypeReference<List<UpstreamSetInfo>>() {
+    });
   }
 
   /**
    * Returns a ist of upstream sets
+   *
    * @param vhost Virtual host from where to get upstreams.
+   * @return upstream set info
    */
   public List<UpstreamSetInfo> getUpstreamSets(String vhost) {
-      return getParameters(vhost, "federation-upstream-set", new ParameterizedTypeReference<List<UpstreamSetInfo>>() {});
+    return getParameters(vhost, "federation-upstream-set", new ParameterizedTypeReference<List<UpstreamSetInfo>>() {
+    });
   }
 
   private <T> List<T> getParameters(String component, final ParameterizedTypeReference<List<T>> responseType) {

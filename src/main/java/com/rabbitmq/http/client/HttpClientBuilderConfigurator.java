@@ -48,7 +48,7 @@ public interface HttpClientBuilderConfigurator {
     /**
      * Configure the {@link HttpClientBuilder}.
      *
-     * @param builder
+     * @param builder incoming builder
      * @return configured builder, usually same instance as the parameter
      */
     HttpClientBuilder configure(HttpClientBuilder builder);

@@ -25,9 +25,10 @@ public enum AckMode {
     /**
      * Consumes in manual acknowledgement mode.
      * Messages are acknowledged to the upstream broker after they have been confirmed downstream.
-     *
+     * <p>
      * This is the safest option that offers lowest throughput.
-     * @see https://www.rabbitmq.com/confirms.html
+     *
+     * @see <a href="https://www.rabbitmq.com/confirms.html">Confirms</a>
      */
     ON_CONFIRM("on-confirm"),
 
@@ -35,17 +36,19 @@ public enum AckMode {
      * Consumes in manual acknowledgement mode.
      * Messages are acknowledged to the upstream broker after they have been published downstream
      * without waiting for publisher confirms. In other words, this uses fire-and-forget publishing.
-     *
+     * <p>
      * This is a moderately safe safe option that does not handle downstream node failures.
-     * @see https://www.rabbitmq.com/confirms.html
+     *
+     * @see <a href="https://www.rabbitmq.com/confirms.html">Confirms</a>
      */
     ON_PUBLISH("on-publish"),
 
     /**
      * Consumes in automatic acknowledgement mode.
-     *
+     * <p>
      * Unsafe, offers best throughput.
-     * @see https://www.rabbitmq.com/confirms.html
+     *
+     * @see <a href="https://www.rabbitmq.com/confirms.html">Confirms</a>
      */
     AUTOMATIC("no-ack");
 

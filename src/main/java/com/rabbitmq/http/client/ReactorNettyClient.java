@@ -20,28 +20,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.MapperFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.rabbitmq.http.client.domain.AlivenessTestResult;
-import com.rabbitmq.http.client.domain.BindingInfo;
-import com.rabbitmq.http.client.domain.ChannelInfo;
-import com.rabbitmq.http.client.domain.ClusterId;
-import com.rabbitmq.http.client.domain.ConnectionInfo;
-import com.rabbitmq.http.client.domain.CurrentUserDetails;
-import com.rabbitmq.http.client.domain.Definitions;
-import com.rabbitmq.http.client.domain.ExchangeInfo;
-import com.rabbitmq.http.client.domain.NodeInfo;
-import com.rabbitmq.http.client.domain.OverviewResponse;
-import com.rabbitmq.http.client.domain.PolicyInfo;
-import com.rabbitmq.http.client.domain.QueueInfo;
-import com.rabbitmq.http.client.domain.ShovelInfo;
-import com.rabbitmq.http.client.domain.ShovelStatus;
-import com.rabbitmq.http.client.domain.TopicPermissions;
-import com.rabbitmq.http.client.domain.UpstreamDetails;
-import com.rabbitmq.http.client.domain.UpstreamInfo;
-import com.rabbitmq.http.client.domain.UpstreamSetDetails;
-import com.rabbitmq.http.client.domain.UpstreamSetInfo;
-import com.rabbitmq.http.client.domain.UserInfo;
-import com.rabbitmq.http.client.domain.UserPermissions;
-import com.rabbitmq.http.client.domain.VhostInfo;
+import com.rabbitmq.http.client.domain.*;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufOutputStream;
 import io.netty.buffer.PooledByteBufAllocator;
@@ -64,12 +43,7 @@ import java.io.OutputStream;
 import java.lang.reflect.Array;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
-import java.util.Base64;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -546,9 +520,11 @@ public class ReactorNettyClient {
 
     /**
      * Declares an upstream
-     * @param vhost virtual host for which to declare the upstream
-     * @param name name of the upstream to declare
+     *
+     * @param vhost   virtual host for which to declare the upstream
+     * @param name    name of the upstream to declare
      * @param details upstream arguments
+     * @return HTTP response in a mono
      */
     public Mono<HttpResponse> declareUpstream(String vhost, String name, UpstreamDetails details) {
         if (StringUtils.isEmpty(details.getUri())) {
@@ -563,8 +539,10 @@ public class ReactorNettyClient {
 
     /**
      * Deletes an upstream
+     *
      * @param vhost virtual host for which to delete the upstream
-     * @param name name of the upstream to delete
+     * @param name  name of the upstream to delete
+     * @return HTTP response in a mono
      */
     public Mono<HttpResponse> deleteUpstream(String vhost, String name) {
         return doDelete("parameters", "federation-upstream", enc(vhost), enc(name));
@@ -572,6 +550,8 @@ public class ReactorNettyClient {
 
     /**
      * Returns a list of upstreams for "/" virtual host
+     *
+     * @return flux of upstream info
      */
     public Flux<UpstreamInfo> getUpstreams() {
         return doGetFlux(UpstreamInfo.class, "parameters", "federation-upstream");
@@ -579,7 +559,9 @@ public class ReactorNettyClient {
 
     /**
      * Returns a list of upstreams
+     *
      * @param vhost virtual host the upstreams are in.
+     * @return flux of upstream info
      */
     public Flux<UpstreamInfo> getUpstreams(String vhost) {
         return doGetFlux(UpstreamInfo.class, "parameters", "federation-upstream", enc(vhost));
@@ -588,9 +570,11 @@ public class ReactorNettyClient {
 
     /**
      * Declares an upstream set.
-     * @param vhost virtual host for which to declare the upstream set
-     * @param name name of the upstream set to declare
+     *
+     * @param vhost   virtual host for which to declare the upstream set
+     * @param name    name of the upstream set to declare
      * @param details upstream set arguments
+     * @return HTTP response in a mono
      */
     public Mono<HttpResponse> declareUpstreamSet(String vhost, String name, List<UpstreamSetDetails> details) {
         for (UpstreamSetDetails item : details) {
@@ -608,8 +592,10 @@ public class ReactorNettyClient {
 
     /**
      * Deletes an upstream set
+     *
      * @param vhost virtual host for which to delete the upstream set
-     * @param name name of the upstream set to delete
+     * @param name  name of the upstream set to delete
+     * @return HTTP response in a mono
      */
     public Mono<HttpResponse> deleteUpstreamSet(String vhost, String name) {
         return doDelete("parameters", "federation-upstream-set", enc(vhost), enc(name));
@@ -617,6 +603,8 @@ public class ReactorNettyClient {
 
     /**
      * Returns a list of upstream sets for "/" virtual host
+     *
+     * @return flux of upstream set info
      */
     public Flux<UpstreamSetInfo> getUpstreamSets() {
         return doGetFlux(UpstreamSetInfo.class, "parameters", "federation-upstream-set");
@@ -625,7 +613,9 @@ public class ReactorNettyClient {
 
     /**
      * Returns a ist of upstream sets
+     *
      * @param vhost Virtual host from where to get upstreams.
+     * @return flux of upstream set info
      */
     public Flux<UpstreamSetInfo> getUpstreamSets(String vhost) {
         return doGetFlux(UpstreamSetInfo.class, "parameters", "federation-upstream-set", enc(vhost));
