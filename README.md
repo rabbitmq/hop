@@ -55,9 +55,9 @@ If you want to use the **blocking IO client**, add the following dependencies:
   <version>4.5.6</version>
 </dependency>
 <dependency>
-    <groupId>com.fasterxml.jackson.core</groupId>
-    <artifactId>jackson-databind</artifactId>
-    <version>2.9.9.1</version>
+  <groupId>com.fasterxml.jackson.core</groupId>
+  <artifactId>jackson-databind</artifactId>
+  <version>2.9.9.1</version>
 </dependency>
 ```
 
@@ -75,9 +75,9 @@ If you want to use the **reactive, non-blocking IO client**, add the following d
   <version>0.8.5.RELEASE</version>
 </dependency>
 <dependency>
-    <groupId>com.fasterxml.jackson.core</groupId>
-    <artifactId>jackson-databind</artifactId>
-    <version>2.9.9.1</version>
+  <groupId>com.fasterxml.jackson.core</groupId>
+  <artifactId>jackson-databind</artifactId>
+  <version>2.9.9.1</version>
 </dependency>
 ```
 
