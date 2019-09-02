@@ -17,7 +17,6 @@
 package com.rabbitmq.http.client;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.rabbitmq.http.client.domain.*;
 import org.apache.http.HttpHost;
@@ -61,7 +60,7 @@ public class Client {
   private static final HttpClientBuilderConfigurator NO_OP_HTTP_CLIENT_BUILDER_CONFIGURATOR =
       builder -> builder;
 
-  private RestTemplate rt;
+  RestTemplate rt;
   private URI rootUri;
 
   //
@@ -341,7 +340,58 @@ public class Client {
     return getForObjectReturningNullOn404(uri, VhostInfo.class);
   }
 
-  public void createVhost(String name) throws JsonProcessingException {
+  /**
+   * Create a virtual host with name, tracing flag, and metadata.
+   * Note metadata (description and tags) are supported as of RabbitMQ 3.8.
+   *
+   * @param name        name of the virtual host
+   * @param tracing     whether tracing is enabled or not
+   * @param description virtual host description (requires RabbitMQ 3.8 or more)
+   * @param tags        virtual host tags (requires RabbitMQ 3.8 or more)
+   * @since 3.4.0
+   */
+  public void createVhost(String name, boolean tracing, String description, String... tags) {
+    Map<String, Object> body = new HashMap<String, Object>();
+    body.put("tracing", tracing);
+
+    if (description != null && !description.isEmpty()) {
+      body.put("description", description);
+    }
+
+    if (tags != null && tags.length > 0) {
+      body.put("tags", String.join(",", tags));
+    }
+
+    final URI uri = uriWithPath("./vhosts/" + encodePathSegment(name));
+    this.rt.put(uri, body);
+  }
+
+  /**
+   * Create a virtual host with name and metadata.
+   * Note metadata (description and tags) are supported as of RabbitMQ 3.8.
+   *
+   * @param name        name of the virtual host
+   * @param description virtual host description (requires RabbitMQ 3.8 or more)
+   * @param tags        virtual host tags (requires RabbitMQ 3.8 or more)
+   * @since 3.4.0
+   */
+  public void createVhost(String name, String description, String... tags) {
+    this.createVhost(name, false, description, tags);
+  }
+
+  /**
+   * Create a virtual host with name and tracing flag.
+   * Note metadata (description and tags) are supported as of RabbitMQ 3.8.
+   *
+   * @param name    name of the virtual host
+   * @param tracing whether tracing is enabled or not
+   * @since 3.4.0
+   */
+  public void createVhost(String name, boolean tracing) {
+    this.createVhost(name, tracing, null);
+  }
+
+  public void createVhost(String name) {
     final URI uri = uriWithPath("./vhosts/" + encodePathSegment(name));
     this.rt.put(uri, null);
   }
@@ -480,7 +530,7 @@ public class Client {
     }
     Map<String, Object> body = new HashMap<String, Object>();
     body.put("password", new String(password));
-    body.put("tags", joinStrings(",", tags));
+    body.put("tags", String.join(",", tags));
 
     final URI uri = uriWithPath("./users/" + encodePathSegment(username));
     this.rt.put(uri, body);
@@ -497,7 +547,7 @@ public class Client {
     }
     Map<String, Object> body = new HashMap<String, Object>();
     body.put("password_hash", String.valueOf(passwordHash));
-    body.put("tags", joinStrings(",", tags));
+    body.put("tags", String.join(",", tags));
 
     final URI uri = uriWithPath("./users/" + encodePathSegment(username));
     this.rt.put(uri, body);
@@ -512,7 +562,7 @@ public class Client {
     if(password != null) {
       body.put("password", new String(password));
     }
-    body.put("tags", joinStrings(",", tags));
+    body.put("tags", String.join(",", tags));
 
     final URI uri = uriWithPath("./users/" + encodePathSegment(username));
     this.rt.put(uri, body);
@@ -1094,23 +1144,6 @@ public class Client {
     } else {
       return Arrays.asList(result);
     }
-  }
-
-  private String joinStrings(String delimiter, List<String> tags) {
-    StringBuilder sb = new StringBuilder();
-    boolean appendedFirst = false;
-    for (String tag : tags) {
-      if(!appendedFirst) {
-        sb.append(tag);
-        appendedFirst = true;
-      } else {
-        sb.append(delimiter);
-        if(tag != null) {
-          sb.append(tag);
-        }
-      }
-    }
-    return sb.toString();
   }
 
   private static String urlWithoutCredentials(String url) throws MalformedURLException {

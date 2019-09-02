@@ -168,7 +168,7 @@ class ClientSpec extends Specification {
 
     when: "client retrieves a list of connections"
 
-    final res = awaitEventPropagation({ client.getConnections() })
+    final ConnectionInfo[] res = awaitEventPropagation({ client.getConnections() }) as ConnectionInfo[]
     final fst = res.first()
 
     then: "the list is returned"
@@ -185,7 +185,7 @@ class ClientSpec extends Specification {
 
     when: "client retrieves connection info with the correct name"
 
-    final xs = awaitEventPropagation({ client.getConnections() })
+    final ConnectionInfo[] xs = awaitEventPropagation({ client.getConnections() }) as ConnectionInfo[]
     final x = client.getConnection(xs.first().name)
 
     then: "the info is returned"
@@ -202,10 +202,10 @@ class ClientSpec extends Specification {
 
     when: "client retrieves connection info with the correct name"
 
-    def xs = awaitEventPropagation({ client.getConnections() })
+    ConnectionInfo[] xs = awaitEventPropagation({ client.getConnections() }) as ConnectionInfo[]
     // applying filter as some previous connections can still show up the management API
     xs = xs.findAll({
-      it.clientProperties.connectionName.equals(s)
+      (it.clientProperties.connectionName == s)
     })
     final x = client.getConnection(xs.first().name)
 
@@ -227,10 +227,10 @@ class ClientSpec extends Specification {
 
     when: "client closes the connection"
 
-    def xs = awaitEventPropagation({ client.getConnections() })
+    ConnectionInfo[] xs = awaitEventPropagation({ client.getConnections() }) as ConnectionInfo[]
     // applying filter as some previous connections can still show up the management API
     xs = xs.findAll({
-      it.clientProperties.connectionName.equals(s)
+      (it.clientProperties.connectionName == s)
     })
     xs.each({ client.closeConnection(it.name) })
 
@@ -256,10 +256,10 @@ class ClientSpec extends Specification {
 
     when: "client closes the connection"
 
-    def xs = awaitEventPropagation({ client.getConnections() })
+    ConnectionInfo[] xs = awaitEventPropagation({ client.getConnections() }) as ConnectionInfo[]
     // applying filter as some previous connections can still show up the management API
     xs = xs.findAll({
-      it.clientProperties.connectionName.equals(s)
+      (it.clientProperties.connectionName == s)
     })
     xs.each({ client.closeConnection(it.name, "because reasons!") })
 
@@ -283,13 +283,13 @@ class ClientSpec extends Specification {
 
     when: "client lists channels"
 
-    def xs = awaitEventPropagation({ client.getConnections() })
+    ConnectionInfo[] xs = awaitEventPropagation({ client.getConnections() }) as ConnectionInfo[]
     // applying filter as some previous connections can still show up the management API
     xs = xs.findAll({
-      it.clientProperties.connectionName.equals(s)
+      (it.clientProperties.connectionName == s)
     })
     def cn = xs.first().name
-    def chs = awaitEventPropagation({ client.getChannels() })
+    ChannelInfo[] chs = awaitEventPropagation({ client.getChannels() }) as ChannelInfo[]
     // channel name starts with the connection name
     // e.g. 127.0.0.1:42590 -> 127.0.0.1:5672 (1)
     chs = chs.findAll({ it.name.startsWith(cn) })
@@ -312,14 +312,14 @@ class ClientSpec extends Specification {
 
     when: "client lists channels on that connection"
 
-    def xs = awaitEventPropagation({ client.getConnections() })
+    ConnectionInfo[] xs = awaitEventPropagation({ client.getConnections() }) as ConnectionInfo[]
     // applying filter as some previous connections can still show up the management API
     xs = xs.findAll({
-      it.clientProperties.connectionName.equals(s)
+      (it.clientProperties.connectionName == s)
     })
     def cn = xs.first().name
 
-    final chs = awaitEventPropagation({ client.getChannels(cn) })
+    final ChannelInfo[] chs = awaitEventPropagation({ client.getChannels(cn) }) as ChannelInfo[]
     final chi = chs.first()
 
     then: "the list is returned"
@@ -339,13 +339,13 @@ class ClientSpec extends Specification {
 
     when: "client retrieves channel info"
 
-    def xs = awaitEventPropagation({ client.getConnections() })
+    ConnectionInfo[] xs = awaitEventPropagation({ client.getConnections() }) as ConnectionInfo[]
     // applying filter as some previous connections can still show up the management API
     xs = xs.findAll({
-      it.clientProperties.connectionName.equals(s)
+      (it.clientProperties.connectionName == s)
     })
     def cn = xs.first().name
-    final chs = awaitEventPropagation({ client.getChannels(cn) })
+    final ChannelInfo[] chs = awaitEventPropagation({ client.getChannels(cn) }) as ChannelInfo[]
     final chi = client.getChannel(chs.first().name)
 
     then: "the info is returned"
@@ -435,9 +435,9 @@ class ClientSpec extends Specification {
     xs.find { (it.name == s) } == null
   }
 
-//  def "POST /api/exchanges/{vhost}/{name}/publish"() {
+    //  def "POST /api/exchanges/{vhost}/{name}/publish"() {
     // TODO
-//  }
+    //  }
 
   def "GET /api/exchanges/{vhost}/{name}/bindings/source"() {
     given: "a queue named hop.queue1"
@@ -598,10 +598,10 @@ class ClientSpec extends Specification {
     List<QueueInfo> xs = client.getQueues(v)
 
     then: "hop.test is listed"
-    QueueInfo x = xs.find { it.name.equals(s) }
+    QueueInfo x = xs.find { (it.name == s) }
     x != null
-    x.vhost.equals(v)
-    x.name.equals(s)
+    x.vhost == v
+    x.name == s
     !x.durable
     !x.exclusive
     !x.autoDelete
@@ -624,13 +624,13 @@ class ClientSpec extends Specification {
     List<PolicyInfo> ps = client.getPolicies(v)
 
     then: "hop.test is listed"
-    PolicyInfo p = ps.find { it.name.equals(s) }
+    PolicyInfo p = ps.find { (it.name == s) }
     p != null
-    p.vhost.equals(v)
-    p.name.equals(s)
-    p.priority.equals(1)
-    p.applyTo.equals("all")
-    p.definition.equals(d)
+    p.vhost == v
+    p.name == s
+    p.priority == 1
+    p.applyTo == "all"
+    p.definition == d
 
     cleanup:
     client.deletePolicy(v, s)
@@ -658,7 +658,7 @@ class ClientSpec extends Specification {
     client.declareQueue(v, s, new QueueInfo(false, false, false))
 
     List<QueueInfo> xs = client.getQueues(v)
-    QueueInfo x = xs.find { it.name.equals(s) }
+    QueueInfo x = xs.find { (it.name == s) }
     x != null
     verifyQueueInfo(x)
 
@@ -669,7 +669,7 @@ class ClientSpec extends Specification {
     xs = client.getQueues(v)
 
     then: "${s} no longer exists"
-    xs.find { it.name.equals(s) } == null
+    xs.find { (it.name == s) } == null
   }
 
   def "GET /api/bindings"() {
@@ -688,7 +688,7 @@ class ClientSpec extends Specification {
     final List<BindingInfo> xs = client.getBindings()
 
     then: "amq.fanout bindings are listed"
-    xs.findAll { it.destinationType.equals("queue") && it.source.equals(x) }
+    xs.findAll { it.destinationType == "queue" && it.source == x }
       .size() >= 3
 
     cleanup:
@@ -712,7 +712,7 @@ class ClientSpec extends Specification {
     final List<BindingInfo> xs = client.getBindings("/")
 
     then: "amq.fanout bindings are listed"
-    xs.findAll { it.destinationType.equals("queue") && it.source.equals(x) }
+    xs.findAll { it.destinationType == "queue" && it.source == x }
       .size() >= 2
 
     cleanup:
@@ -734,7 +734,7 @@ class ClientSpec extends Specification {
     final List<BindingInfo> xs = client.getBindings("/")
 
     then: "the amq.fanout binding is listed"
-    xs.find { it.destinationType.equals("queue") && it.source.equals(x) && it.destination.equals(q) }
+    xs.find { it.destinationType == "queue" && it.source == x && it.destination == q }
 
     cleanup:
     ch.queueDelete(q)
@@ -754,7 +754,7 @@ class ClientSpec extends Specification {
     final List<BindingInfo> xs = client.getQueueBindings("/", q)
 
     then: "the amq.fanout binding is listed"
-    xs.find { it.destinationType.equals("queue") && it.source.equals(x) && it.destination.equals(q) }
+    xs.find { it.destinationType == "queue" && it.source == x && it.destination == q }
 
     cleanup:
     ch.queueDelete(q)
@@ -776,9 +776,9 @@ class ClientSpec extends Specification {
     then: "the amq.fanout binding is listed"
     final b = xs.find()
     xs.size() == 1
-    b.source.equals(x)
-    b.destination.equals(q)
-    b.destinationType.equals("queue")
+    b.source == x
+    b.destination == q
+    b.destinationType == "queue"
 
     cleanup:
     ch.queueDelete(q)
@@ -800,9 +800,9 @@ class ClientSpec extends Specification {
     then: "the amq.topic binding is listed"
     final b = xs.find()
     xs.size() == 1
-    b.source.equals(s)
-    b.destination.equals(d)
-    b.destinationType.equals("exchange")
+    b.source == s
+    b.destination == d
+    b.destinationType == "exchange"
 
     cleanup:
     ch.exchangeDelete(d)
@@ -824,14 +824,14 @@ class ClientSpec extends Specification {
     then: "the amq.fanout binding is listed"
     final b = xs.find()
     xs.size() == 1
-    b.source.equals(s)
-    b.destination.equals(d)
-    b.destinationType.equals("exchange")
+    b.source == s
+    b.destination == d
+    b.destinationType == "exchange"
     b.arguments.size() == 2
     b.arguments.containsKey("arg1")
-    b.arguments.arg1.equals("value1")
+    b.arguments.arg1 == "value1"
     b.arguments.containsKey("arg2")
-    b.arguments.arg2.equals("value2")
+    b.arguments.arg2 == "value2"
 
     cleanup:
     client.deleteExchange(v, d)
@@ -851,14 +851,14 @@ class ClientSpec extends Specification {
     then: "the amq.fanout binding is listed"
     final b = xs.find()
     xs.size() == 1
-    b.source.equals(x)
-    b.destination.equals(q)
-    b.destinationType.equals("queue")
+    b.source == x
+    b.destination == q
+    b.destinationType == "queue"
     b.arguments.size() == 2
     b.arguments.containsKey("arg1")
-    b.arguments.arg1.equals("value1")
+    b.arguments.arg1 == "value1"
     b.arguments.containsKey("arg2")
-    b.arguments.arg2.equals("value2")
+    b.arguments.arg2 == "value2"
 
     cleanup:
     client.deleteQueue(v, q)
@@ -952,6 +952,26 @@ class ClientSpec extends Specification {
     ]
   }
 
+  def "PUT /api/vhosts/{name} with metadata"() {
+    if (!isVersion38orLater()) return
+    when: "client creates a vhost with metadata"
+    final vhost = "vhost-with-metadata"
+    client.createVhost(vhost, true, "vhost description", "production", "application1", "realm1")
+    final vhi = client.getVhost(vhost)
+
+    then: "the vhost is created"
+    vhi.name == vhost
+    vhi.description == "vhost description"
+    vhi.tags.size() == 3
+    vhi.tags.contains("production") && vhi.tags.contains("application1") && vhi.tags.contains("realm1")
+    vhi.tracing
+
+    cleanup:
+    if (isVersion38orLater()) {
+      client.deleteVhost(vhost)
+    }
+  }
+
   def "DELETE /api/vhosts/{name} when vhost exists"() {
     given: "a vhost named hop-test-to-be-deleted"
     final s = "hop-test-to-be-deleted"
@@ -982,7 +1002,7 @@ class ClientSpec extends Specification {
     final xs = client.getPermissionsIn(s)
 
     then: "they include permissions for the guest user"
-    UserPermissions x = xs.find { it.user.equals("guest") }
+    UserPermissions x = xs.find { (it.user == "guest") }
     x.read == ".*"
   }
 
@@ -1002,7 +1022,7 @@ class ClientSpec extends Specification {
     final xs = client.getTopicPermissionsIn(s)
 
     then: "they include topic permissions for the guest user"
-    TopicPermissions x = xs.find { it.user.equals("guest") }
+    TopicPermissions x = xs.find { (it.user == "guest") }
     x.exchange == "amq.topic"
     x.read == ".*"
   }
@@ -1023,7 +1043,7 @@ class ClientSpec extends Specification {
     final version = client.getOverview().getServerVersion()
 
     then: "a list of users is returned"
-    final x = xs.find { it.name.equals("guest") }
+    final x = xs.find { (it.name == "guest") }
     x.name == "guest"
     x.passwordHash != null
     isVersion36orLater(version) ? x.hashingAlgorithm != null : x.hashingAlgorithm == null
@@ -1093,7 +1113,7 @@ class ClientSpec extends Specification {
     final xs = client.getPermissionsOf(s)
 
     then: "they include permissions for the / vhost"
-    UserPermissions x = xs.find { it.vhost.equals("/") }
+    UserPermissions x = xs.find { (it.vhost == "/") }
     x.read == ".*"
   }
 
@@ -1113,7 +1133,7 @@ class ClientSpec extends Specification {
     final xs = client.getTopicPermissionsOf(s)
 
     then: "they include topic permissions for the / vhost"
-    TopicPermissions x = xs.find { it.vhost.equals("/") }
+    TopicPermissions x = xs.find { (it.vhost == "/") }
     x.exchange == "amq.topic"
     x.read == ".*"
   }
@@ -1139,7 +1159,7 @@ class ClientSpec extends Specification {
     client.updatePermissions("/", u, new UserPermissions(".*", ".*", ".*"))
 
     when: "alt-user tries to connect with a blank password"
-    final conn = openConnection("alt-user", "alt-user")
+    openConnection("alt-user", "alt-user")
 
     then: "connection is refused"
     // it would have a chance of being accepted if the x509 authentication mechanism was used. MK.
@@ -1164,7 +1184,7 @@ class ClientSpec extends Specification {
     final xs = client.getPermissions()
 
     then: "they include permissions for user guest in vhost /"
-    final UserPermissions x = xs.find { it.vhost.equals("/") && it.user.equals(s) }
+    final UserPermissions x = xs.find { it.vhost == "/" && it.user == s }
     x.read == ".*"
   }
 
@@ -1273,7 +1293,7 @@ class ClientSpec extends Specification {
     final xs = client.getTopicPermissions()
 
     then: "they include topic permissions for user guest in vhost /"
-    final TopicPermissions x = xs.find { it.vhost.equals("/") && it.user.equals(s) }
+    final TopicPermissions x = xs.find { it.vhost == "/" && it.user == s }
     x.exchange == "amq.topic"
     x.read == ".*"
   }
@@ -1286,7 +1306,7 @@ class ClientSpec extends Specification {
     final xs = client.getTopicPermissions(v, u)
 
     then: "a list of topic permissions objects is returned"
-    final TopicPermissions x = xs.find { it.vhost.equals(v) && it.user.equals(u) }
+    final TopicPermissions x = xs.find { it.vhost == v && it.user == u }
     x.exchange == "amq.topic"
     x.read == ".*"
   }
@@ -1471,7 +1491,7 @@ class ClientSpec extends Specification {
     final String x = client.getClusterName().name
 
     then: "the name is updated"
-    x.equals("rabbit@warren")
+    x == "rabbit@warren"
 
     cleanup:
     client.setClusterName(s)
@@ -1521,10 +1541,10 @@ class ClientSpec extends Specification {
     then: "broker definitions are returned"
     !d.getQueues().isEmpty()
     d.getQueues().size() >= 3
-    QueueInfo q = d.getQueues().find { it.name.equals("queue1") && it.vhost.equals("/") }
+    QueueInfo q = d.getQueues().find { it.name == "queue1" && it.vhost == "/" }
     q != null
-    q.vhost.equals("/")
-    q.name.equals("queue1")
+    q.vhost == "/"
+    q.name == "queue1"
     !q.durable
     !q.exclusive
     !q.autoDelete
@@ -1546,10 +1566,10 @@ class ClientSpec extends Specification {
     then: "broker definitions are returned"
     !d.getExchanges().isEmpty()
     d.getExchanges().size() >= 3
-    ExchangeInfo e = d.getExchanges().find { it.name.equals("exchange1") }
+    ExchangeInfo e = d.getExchanges().find { (it.name == "exchange1") }
     e != null
-    e.vhost.equals("/")
-    e.name.equals("exchange1")
+    e.vhost == "/"
+    e.name == "exchange1"
     !e.durable
     !e.internal
     !e.autoDelete
@@ -1571,13 +1591,13 @@ class ClientSpec extends Specification {
     !d.getBindings().isEmpty()
     d.getBindings().size() >= 1
     BindingInfo b = d.getBindings().find {
-      it.source.equals("amq.fanout") && it.destination.equals("queue1") && it.destinationType.equals("queue")
+      it.source == "amq.fanout" && it.destination == "queue1" && it.destinationType == "queue"
     }
     b != null
-    b.vhost.equals("/")
-    b.source.equals("amq.fanout")
-    b.destination.equals("queue1")
-    b.destinationType.equals("queue")
+    b.vhost == "/"
+    b.source == "amq.fanout"
+    b.destination == "queue1"
+    b.destinationType == "queue"
 
     cleanup:
     client.deleteQueue("/","queue1")
@@ -1589,9 +1609,9 @@ class ClientSpec extends Specification {
     client.rt = new MockRestTemplate()
 
     and: "a basic topology with null sourcePrefetchCount"
-    ShovelDetails details = new ShovelDetails("amqp://", "amqp://", 30, true, null);
-    details.setSourceQueue("queue1");
-    details.setDestinationExchange("exchange1");
+    ShovelDetails details = new ShovelDetails("amqp://", "amqp://", 30, true, null)
+    details.setSourceQueue("queue1")
+    details.setDestinationExchange("exchange1")
 
     when: "client declares the shovels"
     client.declareShovel("/", new ShovelInfo("shovel1", details))
@@ -1611,9 +1631,9 @@ class ClientSpec extends Specification {
     client.rt = new MockRestTemplate()
 
     and: "a basic topology with null destinationAddTimestampHeader"
-    ShovelDetails details = new ShovelDetails("amqp://", "amqp://", 30, true, null);
-    details.setSourceQueue("queue1");
-    details.setDestinationExchange("exchange1");
+    ShovelDetails details = new ShovelDetails("amqp://", "amqp://", 30, true, null)
+    details.setSourceQueue("queue1")
+    details.setDestinationExchange("exchange1")
 
     when: "client declares the shovels"
     client.declareShovel("/", new ShovelInfo("shovel1", details))
@@ -1630,7 +1650,7 @@ class ClientSpec extends Specification {
 
   def "GET /api/parameters/shovel"() {
     given: "a basic topology"
-    ShovelDetails value = new ShovelDetails("amqp://localhost:5672/vh1", "amqp://localhost:5672/vh2", 30, true, null);
+    ShovelDetails value = new ShovelDetails("amqp://localhost:5672/vh1", "amqp://localhost:5672/vh2", 30, true, null)
     value.setSourceQueue("queue1")
     value.setDestinationExchange("exchange1")
     value.setSourcePrefetchCount(50L)
@@ -1643,15 +1663,15 @@ class ClientSpec extends Specification {
     then: "broker definitions are returned"
     !shovels.isEmpty()
     shovels.size() >= 1
-    ShovelInfo s = shovels.find { it.name.equals("shovel1") }
+    ShovelInfo s = shovels.find { (it.name == "shovel1") } as ShovelInfo
     s != null
-    s.name.equals("shovel1")
-    s.virtualHost.equals("/")
-    s.details.sourceURI.equals("amqp://localhost:5672/vh1")
+    s.name == "shovel1"
+    s.virtualHost == "/"
+    s.details.sourceURI == "amqp://localhost:5672/vh1"
     s.details.sourceExchange == null
-    s.details.sourceQueue.equals("queue1")
-    s.details.destinationURI.equals("amqp://localhost:5672/vh2")
-    s.details.destinationExchange.equals("exchange1")
+    s.details.sourceQueue == "queue1"
+    s.details.destinationURI == "amqp://localhost:5672/vh2"
+    s.details.destinationExchange == "exchange1"
     s.details.destinationQueue == null
     s.details.reconnectDelay == 30
     s.details.addForwardHeaders
@@ -1667,9 +1687,9 @@ class ClientSpec extends Specification {
 
   def "PUT /api/parameters/shovel with an empty publish properties map"() {
     given: "a Shovel with empty publish properties"
-    ShovelDetails value = new ShovelDetails("amqp://localhost:5672/vh1", "amqp://localhost:5672/vh2", 30, true, [:]);
-    value.setSourceQueue("queue1");
-    value.setDestinationExchange("exchange1");
+    ShovelDetails value = new ShovelDetails("amqp://localhost:5672/vh1", "amqp://localhost:5672/vh2", 30, true, [:])
+    value.setSourceQueue("queue1")
+    value.setDestinationExchange("exchange1")
 
     when: "client tries to declare a Shovel"
     client.declareShovel("/", new ShovelInfo("shovel10", value))
@@ -1684,9 +1704,9 @@ class ClientSpec extends Specification {
 
   def "GET /api/shovels"() {
     given: "a basic topology"
-    ShovelDetails value = new ShovelDetails("amqp://localhost:5672/vh1", "amqp://localhost:5672/vh2", 30, true, null);
-    value.setSourceQueue("queue1");
-    value.setDestinationExchange("exchange1");
+    ShovelDetails value = new ShovelDetails("amqp://localhost:5672/vh1", "amqp://localhost:5672/vh2", 30, true, null)
+    value.setSourceQueue("queue1")
+    value.setDestinationExchange("exchange1")
     final shovelName = "shovel2"
     client.declareShovel("/", new ShovelInfo(shovelName, value))
 
@@ -1696,11 +1716,11 @@ class ClientSpec extends Specification {
     then: "shovels status are returned"
     !shovels.isEmpty()
     shovels.size() >= 1
-    ShovelStatus s = shovels.find { it.name.equals(shovelName) }
+    ShovelStatus s = shovels.find { (it.name == shovelName) } as ShovelStatus
     s != null
-    s.name.equals(shovelName)
-    s.virtualHost.equals("/")
-    s.type.equals("dynamic")
+    s.name == shovelName
+    s.virtualHost == "/"
+    s.type == "dynamic"
     s.state != null
     s.sourceURI == null
     s.destinationURI == null
@@ -1723,7 +1743,7 @@ class ClientSpec extends Specification {
 
     then: "list of upstreams that contains the new upstream is returned and ack mode is correctly retrieved"
     verifyUpstreamDefinitions(vhost, upstreams, upstreamName)
-    UpstreamInfo upstream = upstreams.find { it.name.equals(upstreamName) }
+    UpstreamInfo upstream = upstreams.find { (it.name == upstreamName) } as UpstreamInfo
     upstream.value.ackMode == AckMode.ON_CONFIRM
 
     cleanup:
@@ -1781,7 +1801,7 @@ class ClientSpec extends Specification {
     final upstreamName = "upstream4"
     declareUpstream(client, vhost, upstreamName)
 
-    List<UpstreamInfo> upstreams = awaitEventPropagation { client.getUpstreams() }
+    List<UpstreamInfo> upstreams = awaitEventPropagation { client.getUpstreams() } as List<UpstreamInfo>
     verifyUpstreamDefinitions(vhost, upstreams, upstreamName)
 
     when: "client deletes upstream upstream4 in vhost /"
@@ -1791,7 +1811,7 @@ class ClientSpec extends Specification {
     upstreams = client.getUpstreams()
 
     then: "upstream4 no longer exists"
-    upstreams.find { it.name.equals(upstreamName) } == null
+    upstreams.find { (it.name == upstreamName) } == null
   }
 
   def "GET /api/parameters/federation-upstream-set declare and get"() {
@@ -1801,8 +1821,8 @@ class ClientSpec extends Specification {
     final upstreamA = "A"
     final upstreamB = "B"
     final policyName = "federation-policy"
-    declareUpstream(client, vhost, upstreamA);
-    declareUpstream(client, vhost, upstreamB);
+    declareUpstream(client, vhost, upstreamA)
+    declareUpstream(client, vhost, upstreamB)
     final d1 = new UpstreamSetDetails()
     d1.setUpstream(upstreamA)
     d1.setExchange("exchangeA")
@@ -1825,22 +1845,22 @@ class ClientSpec extends Specification {
 
     then: "upstream set with two upstreams is returned"
     !upstreamSets.isEmpty()
-    UpstreamSetInfo upstreamSet = upstreamSets.find { it.name.equals(upstreamSetName) }
+    UpstreamSetInfo upstreamSet = upstreamSets.find { (it.name == upstreamSetName) } as UpstreamSetInfo
     upstreamSet != null
-    upstreamSet.name.equals(upstreamSetName)
-    upstreamSet.vhost.equals(vhost)
-    upstreamSet.component.equals("federation-upstream-set")
+    upstreamSet.name == upstreamSetName
+    upstreamSet.vhost == vhost
+    upstreamSet.component == "federation-upstream-set"
     List<UpstreamSetDetails> upstreams = upstreamSet.value
     upstreams != null
     upstreams.size() == 2
-    UpstreamSetDetails responseUpstreamA = upstreams.find { it.upstream.equals(upstreamA) }
+    UpstreamSetDetails responseUpstreamA = upstreams.find { (it.upstream == upstreamA) }
     responseUpstreamA != null
-    responseUpstreamA.upstream.equals(upstreamA)
-    responseUpstreamA.exchange.equals("exchangeA")
-    UpstreamSetDetails responseUpstreamB = upstreams.find { it.upstream.equals(upstreamB) }
+    responseUpstreamA.upstream == upstreamA
+    responseUpstreamA.exchange == "exchangeA"
+    UpstreamSetDetails responseUpstreamB = upstreams.find { (it.upstream == upstreamB) }
     responseUpstreamB != null
-    responseUpstreamB.upstream.equals(upstreamB)
-    responseUpstreamB.exchange.equals("exchangeB")
+    responseUpstreamB.upstream == upstreamB
+    responseUpstreamB.exchange == "exchangeB"
 
     cleanup:
     client.deletePolicy(vhost, policyName)
@@ -1856,7 +1876,7 @@ class ClientSpec extends Specification {
     detailsSet.add(upstreamSetDetails)
 
     when: "client tries to declare an Upstream"
-    client.declareUpstreamSet("/", "upstrea-set-2", detailsSet);
+    client.declareUpstreamSet("/", "upstrea-set-2", detailsSet)
 
     then: "an illegal argument exception is thrown"
     thrown(IllegalArgumentException)
@@ -1869,7 +1889,7 @@ class ClientSpec extends Specification {
   protected static void verifyConnectionInfo(ConnectionInfo info) {
     assert info.port == ConnectionFactory.DEFAULT_AMQP_PORT
     assert !info.usesTLS
-    assert info.peerHost.equals(info.host)
+    assert info.peerHost == info.host
   }
 
   protected static void verifyChannelInfo(ChannelInfo chi, Channel ch) {
@@ -1886,12 +1906,14 @@ class ClientSpec extends Specification {
     assert vhi.name == "/"
     assert !vhi.tracing
     assert isVersion37orLater(version) ? vhi.clusterState != null : vhi.clusterState == null
+    assert isVersion38orLater(version) ? vhi.description != null : vhi.description == null
   }
 
   protected Connection openConnection() {
     this.cf.newConnection()
   }
 
+  @SuppressWarnings("GrMethodMayBeStatic")
   protected Connection openConnection(String username, String password) {
     final cf = new ConnectionFactory()
     cf.setUsername(username)
@@ -1912,6 +1934,7 @@ class ClientSpec extends Specification {
     assert node.memoryUsed <= node.memoryLimit
   }
 
+  @SuppressWarnings("GrEqualsBetweenInconvertibleTypes")
   protected static void verifyExchangeInfo(ExchangeInfo x) {
     assert x.type != null
     assert x.durable != null
@@ -1927,6 +1950,7 @@ class ClientSpec extends Specification {
     assert x.applyTo != null
   }
 
+  @SuppressWarnings("GrEqualsBetweenInconvertibleTypes")
   protected static void verifyQueueInfo(QueueInfo x) {
     assert x.name != null
     assert x.durable != null
@@ -1935,17 +1959,26 @@ class ClientSpec extends Specification {
   }
 
   static boolean isVersion36orLater(String currentVersion) {
-    String v = currentVersion.replaceAll("\\+.*\$", "");
+    String v = currentVersion.replaceAll("\\+.*\$", "")
     v == "0.0.0" ? true : compareVersions(v, "3.6.0") >= 0
   }
 
   static boolean isVersion37orLater(String currentVersion) {
-    String v = currentVersion.replaceAll("\\+.*\$", "");
+    String v = currentVersion.replaceAll("\\+.*\$", "")
     v == "0.0.0" ? true : compareVersions(v, "3.7.0") >= 0
+  }
+
+  static boolean isVersion38orLater(String currentVersion) {
+    String v = currentVersion.replaceAll("\\+.*\$", "")
+    v == "0.0.0" ? true : compareVersions(v, "3.8.0") >= 0
   }
 
   boolean isVersion37orLater() {
     return isVersion37orLater(brokerVersion)
+  }
+
+  boolean isVersion38orLater() {
+    return isVersion38orLater(brokerVersion)
   }
 
   /**
@@ -2020,12 +2053,12 @@ class ClientSpec extends Specification {
 
   protected static void verifyUpstreamDefinitions(vhost, upstreams, upstreamName) {
     assert !upstreams.isEmpty()
-    UpstreamInfo upstream = upstreams.find { it.name.equals(upstreamName) }
+    UpstreamInfo upstream = upstreams.find { (it.name == upstreamName) } as UpstreamInfo
     assert upstream != null
-    assert upstream.name.equals(upstreamName)
-    assert upstream.vhost.equals(vhost)
-    assert upstream.component.equals("federation-upstream")
-    assert upstream.value.uri.equals("amqp://localhost:5672")
+    assert upstream.name == upstreamName
+    assert upstream.vhost == vhost
+    assert upstream.component == "federation-upstream"
+    assert upstream.value.uri == "amqp://localhost:5672"
   }
 
   static class MockRestTemplate extends RestTemplate {
@@ -2036,7 +2069,7 @@ class ClientSpec extends Specification {
                               ResponseExtractor<T> responseExtractor) throws RestClientException {
       ClientHttpRequest request = createRequest(url, method)
       if (requestCallback != null) {
-        requestCallback.doWithRequest(request);
+        requestCallback.doWithRequest(request)
       }
       requestCaptor = request
       return null

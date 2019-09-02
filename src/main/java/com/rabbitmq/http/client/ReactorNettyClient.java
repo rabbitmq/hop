@@ -222,6 +222,58 @@ public class ReactorNettyClient {
         return doGetMono(VhostInfo.class, "vhosts", enc(name));
     }
 
+    /**
+     * Create a virtual host with name, tracing flag, and metadata.
+     * Note metadata (description and tags) are supported as of RabbitMQ 3.8.
+     *
+     * @param name        name of the virtual host
+     * @param tracing     whether tracing is enabled or not
+     * @param description virtual host description (requires RabbitMQ 3.8 or more)
+     * @param tags        virtual host tags (requires RabbitMQ 3.8 or more)
+     * @return response wrapped in {@link Mono}
+     * @since 3.4.0
+     */
+    public Mono<HttpResponse> createVhost(String name, boolean tracing, String description, String ... tags) {
+        Map<String, Object> body = new HashMap<String, Object>();
+        body.put("tracing", tracing);
+
+        if (description != null && !description.isEmpty()) {
+            body.put("description", description);
+        }
+
+        if (tags != null && tags.length > 0) {
+            body.put("tags", String.join(",", tags));
+        }
+        return doPut(body, "vhosts", enc(name));
+    }
+
+    /**
+     * Create a virtual host with name and metadata.
+     * Note metadata (description and tags) are supported as of RabbitMQ 3.8.
+     *
+     * @param name        name of the virtual host
+     * @param description virtual host description (requires RabbitMQ 3.8 or more)
+     * @param tags        virtual host tags (requires RabbitMQ 3.8 or more)
+     * @return response wrapped in {@link Mono}
+     * @since 3.4.0
+     */
+    public Mono<HttpResponse> createVhost(String name, String description, String ... tags) {
+        return createVhost(name, false, description, tags);
+    }
+
+    /**
+     * Create a virtual host with name and tracing flag.
+     * Note metadata (description and tags) are supported as of RabbitMQ 3.8.
+     *
+     * @param name    name of the virtual host
+     * @param tracing whether tracing is enabled or not
+     * @return response wrapped in {@link Mono}
+     * @since 3.4.0
+     */
+    public Mono<HttpResponse> createVhost(String name, boolean tracing) {
+        return createVhost(name, tracing, null);
+    }
+
     public Mono<HttpResponse> createVhost(String name) {
         return doPut("vhosts", enc(name));
     }
