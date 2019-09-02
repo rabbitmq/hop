@@ -16,14 +16,19 @@
 
 package com.rabbitmq.http.client.domain;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import java.util.Arrays;
+import java.util.List;
 import java.util.Map;
 
 @SuppressWarnings("unused")
 public class VhostInfo {
   private String name;
   private boolean tracing;
+  private String description;
+  private List<String> tags;
   @JsonProperty("cluster_state")
   private Map<String, String> clusterState;
   @JsonProperty("message_stats")
@@ -53,6 +58,8 @@ public class VhostInfo {
   public String toString() {
     return "VhostInfo{" +
         "name='" + name + '\'' +
+        ", description=" + description +
+        ", tags=" + tags +
         ", tracing=" + tracing +
         ", clusterState=" + clusterState +
         ", messageStats=" + messageStats +
@@ -91,6 +98,28 @@ public class VhostInfo {
 
   public void setClusterState(Map<String, String> clusterState) {
     this.clusterState = clusterState;
+  }
+
+  public String getDescription() {
+    return description;
+  }
+
+  public void setDescription(String description) {
+    this.description = description;
+  }
+
+  public List<String> getTags() {
+    return tags;
+  }
+
+  @JsonProperty("tags")
+  public void setTags(List<String> tags) {
+    this.tags = tags;
+  }
+
+  @JsonIgnore
+  public void setTags(String tags) {
+    this.tags = Arrays.asList(tags.split(","));
   }
 
   public MessageStats getMessageStats() {

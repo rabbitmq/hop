@@ -400,6 +400,27 @@ class ReactorNettyClientSpec extends Specification {
         ]
     }
 
+    def "PUT /api/vhosts/{name} with metadata"() {
+        if (!isVersion38orLater()) return
+        when: "client creates a vhost with metadata"
+        final vhost = "vhost-with-metadata"
+        client.createVhost(vhost, true, "vhost description", "production", "application1", "realm1").block()
+
+        final vhi = client.getVhost(vhost).block()
+
+        then: "the vhost is created"
+        vhi.name == vhost
+        vhi.description == "vhost description"
+        vhi.tags.size() == 3
+        vhi.tags.contains("production") && vhi.tags.contains("application1") && vhi.tags.contains("realm1")
+        vhi.tracing
+
+        cleanup:
+        if (isVersion38orLater()) {
+            client.deleteVhost(vhost)
+        }
+    }
+
     def "DELETE /api/vhosts/{name} when vhost exists"() {
         given: "a vhost named hop-test-to-be-deleted"
         final s = "hop-test-to-be-deleted"
@@ -1971,6 +1992,7 @@ class ReactorNettyClientSpec extends Specification {
         assert vhi.name == "/"
         assert !vhi.tracing
         assert isVersion37orLater(version) ? vhi.clusterState != null : vhi.clusterState == null
+        assert isVersion38orLater(version) ? vhi.description != null : vhi.description == null
     }
 
     protected static void verifyQueueInfo(QueueInfo x) {
@@ -2036,8 +2058,17 @@ class ReactorNettyClientSpec extends Specification {
         v == "0.0.0" ? true : compareVersions(v, "3.7.0") >= 0
     }
 
+    static boolean isVersion38orLater(String currentVersion) {
+        String v = currentVersion.replaceAll("\\+.*\$", "");
+        v == "0.0.0" ? true : compareVersions(v, "3.8.0") >= 0
+    }
+
     boolean isVersion37orLater() {
         return isVersion37orLater(brokerVersion)
+    }
+
+    boolean isVersion38orLater() {
+        return isVersion38orLater(brokerVersion)
     }
 
     /**
