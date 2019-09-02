@@ -60,7 +60,7 @@ public class Client {
   private static final HttpClientBuilderConfigurator NO_OP_HTTP_CLIENT_BUILDER_CONFIGURATOR =
       builder -> builder;
 
-  private RestTemplate rt;
+  RestTemplate rt;
   private URI rootUri;
 
   //
