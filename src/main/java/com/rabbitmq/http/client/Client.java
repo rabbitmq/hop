@@ -388,7 +388,7 @@ public class Client {
    * @since 3.4.0
    */
   public void createVhost(String name, boolean tracing) {
-    this.createVhost(name, tracing, null, null);
+    this.createVhost(name, tracing, null);
   }
 
   public void createVhost(String name) {
