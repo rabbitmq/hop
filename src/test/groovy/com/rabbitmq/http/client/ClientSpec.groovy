@@ -32,6 +32,7 @@ import spock.lang.Specification
 
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicReference
 
 class ClientSpec extends Specification {
 
@@ -435,9 +436,47 @@ class ClientSpec extends Specification {
     xs.find { (it.name == s) } == null
   }
 
-    //  def "POST /api/exchanges/{vhost}/{name}/publish"() {
-    // TODO
-    //  }
+  def "POST /api/exchanges/{vhost}/{name}/publish"() {
+    given: "a queue named hop.publish and a consumer on this queue"
+    final v = "/"
+    final conn = openConnection()
+    final ch = conn.createChannel()
+    final q = "hop.publish"
+    ch.queueDeclare(q, false, false, false, null)
+    ch.queueBind(q, "amq.direct", q)
+    final latch = new CountDownLatch(1)
+    final payloadReference = new AtomicReference<String>()
+    final propertiesReference = new AtomicReference<AMQP.BasicProperties>()
+    ch.basicConsume(q, true, {ctag, message ->
+      payloadReference.set(new String(message.getBody()))
+      propertiesReference.set(message.getProperties())
+      latch.countDown()
+    }, (CancelCallback) {ctag -> })
+
+    when: "client publishes a message to the queue"
+    final properties = new HashMap()
+    properties.put("delivery_mode", 1)
+    properties.put("content_type", "text/plain")
+    properties.put("priority", 5)
+    properties.put("headers", Collections.singletonMap("header1", "value1"))
+    final routed = client.publish(v, "amq.direct", q,
+            new OutboundMessage().payload("Hello world!").utf8Encoded().properties(properties))
+
+    then: "the message is routed to the queue and consumed"
+    routed
+    latch.await(5, TimeUnit.SECONDS)
+    payloadReference.get() == "Hello world!"
+    propertiesReference.get().getDeliveryMode() == 1
+    propertiesReference.get().getContentType() == "text/plain"
+    propertiesReference.get().getPriority() == 5
+    propertiesReference.get().getHeaders() != null
+    propertiesReference.get().getHeaders().size() == 1
+    propertiesReference.get().getHeaders().get("header1").toString() == "value1"
+
+    cleanup:
+    ch.queueDelete(q)
+    conn.close()
+  }
 
   def "GET /api/exchanges/{vhost}/{name}/bindings/source"() {
     given: "a queue named hop.queue1"

@@ -472,6 +472,54 @@ public class Client {
     this.deleteIgnoring404(uriWithPath("./exchanges/" + encodePathSegment(vhost) + "/" + encodePathSegment(name)));
   }
 
+  /**
+   * Publish a message.
+   * <p>
+   * <b>DO NOT USE THIS METHOD IN PRODUCTION</b>. The HTTP API has to create a new TCP
+   * connection for each message published, which is far from ideal for high performance publishing.
+   * <p>
+   * Use this method for test or development code only. Use AMQP or other protocols using
+   * long-lived connection to publish messages in production.
+   *
+   * @param vhost
+   * @param exchange
+   * @param routingKey
+   * @param outboundMessage
+   * @return true if message has been routed to at least a queue, false otherwise
+   * @since 3.4.0
+   */
+  public boolean publish(String vhost, String exchange, String routingKey, OutboundMessage outboundMessage) {
+    if (vhost == null || vhost.isEmpty()) {
+      throw new IllegalArgumentException("vhost cannot be null or blank");
+    }
+    if (exchange == null || exchange.isEmpty()) {
+      throw new IllegalArgumentException("exchange cannot be null or blank");
+    }
+    if (routingKey == null) {
+      throw new IllegalArgumentException("routing key cannot be null");
+    }
+    if (outboundMessage == null) {
+      throw new IllegalArgumentException("message cannot be null");
+    }
+    if (outboundMessage.getPayload() == null) {
+      throw new IllegalArgumentException("message payload cannot be null");
+    }
+    Map<String, Object> body = new HashMap<String, Object>();
+    body.put("routing_key", routingKey);
+    body.put("properties", outboundMessage.getProperties() == null ? Collections.EMPTY_MAP : outboundMessage.getProperties());
+    body.put("payload", outboundMessage.getPayload());
+    body.put("payload_encoding", outboundMessage.getPayloadEncoding());
+
+    final URI uri = uriWithPath("./exchanges/" + encodePathSegment(vhost) + "/" + encodePathSegment(exchange) + "/publish");
+    Map<?, ?> response = this.rt.postForObject(uri, body, Map.class);
+    Boolean routed = (Boolean) response.get("routed");
+    if (routed == null) {
+      return false;
+    } else {
+      return routed.booleanValue();
+    }
+  }
+
   public List<QueueInfo> getQueues() {
     final URI uri = uriWithPath("./queues/");
     return Arrays.asList(this.rt.getForObject(uri, QueueInfo[].class));

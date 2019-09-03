@@ -422,6 +422,54 @@ public class ReactorNettyClient {
         return doDelete("exchanges", enc(vhost), enc(name));
     }
 
+    /**
+     * Publish a message.
+     * <p>
+     * <b>DO NOT USE THIS METHOD IN PRODUCTION</b>. The HTTP API has to create a new TCP
+     * connection for each message published, which is far from ideal for high performance publishing.
+     * <p>
+     * Use this method for test or development code only. Use AMQP or other protocols using
+     * long-lived connection to publish messages in production.
+     *
+     * @param vhost
+     * @param exchange
+     * @param routingKey
+     * @param outboundMessage
+     * @return true if message has been routed to at least a queue, false otherwise
+     * @since 3.4.0
+     */
+    public Mono<Boolean> publish(String vhost, String exchange, String routingKey, OutboundMessage outboundMessage) {
+        if (vhost == null || vhost.isEmpty()) {
+            throw new IllegalArgumentException("vhost cannot be null or blank");
+        }
+        if (exchange == null || exchange.isEmpty()) {
+            throw new IllegalArgumentException("exchange cannot be null or blank");
+        }
+        if (routingKey == null) {
+            throw new IllegalArgumentException("routing key cannot be null");
+        }
+        if (outboundMessage == null) {
+            throw new IllegalArgumentException("message cannot be null");
+        }
+        if (outboundMessage.getPayload() == null) {
+            throw new IllegalArgumentException("message payload cannot be null");
+        }
+        Map<String, Object> body = new HashMap<String, Object>();
+        body.put("routing_key", routingKey);
+        body.put("properties", outboundMessage.getProperties() == null ? Collections.EMPTY_MAP : outboundMessage.getProperties());
+        body.put("payload", outboundMessage.getPayload());
+        body.put("payload_encoding", outboundMessage.getPayloadEncoding());
+
+        return doPost(body, Map.class, "exchanges", enc(vhost), enc(exchange), "publish").map(response -> {
+            Boolean routed = (Boolean) response.get("routed");
+            if (routed == null) {
+                return Boolean.FALSE;
+            } else {
+                return routed;
+            }
+        });
+    }
+
     public Mono<AlivenessTestResult> alivenessTest(String vhost) {
         return doGetMono(AlivenessTestResult.class, "aliveness-test", enc(vhost));
     }
@@ -720,6 +768,15 @@ public class ReactorNettyClient {
             .response()
             .doOnNext(applyResponseCallback())
             .map(ReactorNettyClient::toHttpResponse);
+    }
+
+    private <T> Mono<T> doPost(Object body, Class<T> type, String... pathSegments) {
+        return Mono.from(client.headersWhen(authorizedHeader())
+                .headers(JSON_HEADER)
+                .post()
+                .uri(uri(pathSegments))
+                .send(bodyPublisher(body))
+                .response(decode(type)));
     }
 
     protected Consumer<HttpClientResponse> applyResponseCallback() {

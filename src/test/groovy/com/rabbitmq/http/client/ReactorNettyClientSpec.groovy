@@ -19,7 +19,9 @@ package com.rabbitmq.http.client
 import com.fasterxml.jackson.core.JsonGenerationException
 import com.fasterxml.jackson.databind.JsonMappingException
 import com.fasterxml.jackson.databind.ObjectMapper
+import com.rabbitmq.client.AMQP
 import com.rabbitmq.client.AuthenticationFailureException
+import com.rabbitmq.client.CancelCallback
 import com.rabbitmq.client.Channel
 import com.rabbitmq.client.Connection
 import com.rabbitmq.client.ConnectionFactory
@@ -30,6 +32,7 @@ import com.rabbitmq.http.client.domain.ClusterId
 import com.rabbitmq.http.client.domain.ConnectionInfo
 import com.rabbitmq.http.client.domain.Definitions
 import com.rabbitmq.http.client.domain.ExchangeInfo
+import com.rabbitmq.http.client.domain.OutboundMessage
 import com.rabbitmq.http.client.domain.NodeInfo
 import com.rabbitmq.http.client.domain.PolicyInfo
 import com.rabbitmq.http.client.domain.QueueInfo
@@ -1696,6 +1699,48 @@ class ReactorNettyClientSpec extends Specification {
 
         then: "hop.test no longer exists"
         !xs.filter( { e -> e.name == s } ).hasElements().block()
+    }
+
+    def "POST /api/exchanges/{vhost}/{name}/publish"() {
+        given: "a queue named hop.publish and a consumer on this queue"
+        final v = "/"
+        final conn = openConnection()
+        final ch = conn.createChannel()
+        final q = "hop.publish"
+        ch.queueDeclare(q, false, false, false, null)
+        ch.queueBind(q, "amq.direct", q)
+        final latch = new CountDownLatch(1)
+        final payloadReference = new AtomicReference<String>()
+        final propertiesReference = new AtomicReference<AMQP.BasicProperties>()
+        ch.basicConsume(q, true, {ctag, message ->
+            payloadReference.set(new String(message.getBody()))
+            propertiesReference.set(message.getProperties())
+            latch.countDown()
+        }, (CancelCallback) { ctag -> })
+
+        when: "client publishes a message to the queue"
+        final properties = new HashMap()
+        properties.put("delivery_mode", 1)
+        properties.put("content_type", "text/plain")
+        properties.put("priority", 5)
+        properties.put("headers", Collections.singletonMap("header1", "value1"))
+        final routed = client.publish(v, "amq.direct", q,
+                new OutboundMessage().payload("Hello world!").utf8Encoded().properties(properties)).block()
+
+        then: "the message is routed to the queue and consumed"
+        routed.booleanValue()
+        latch.await(5, TimeUnit.SECONDS)
+        payloadReference.get() == "Hello world!"
+        propertiesReference.get().getDeliveryMode() == 1
+        propertiesReference.get().getContentType() == "text/plain"
+        propertiesReference.get().getPriority() == 5
+        propertiesReference.get().getHeaders() != null
+        propertiesReference.get().getHeaders().size() == 1
+        propertiesReference.get().getHeaders().get("header1").toString() == "value1"
+
+        cleanup:
+        ch.queueDelete(q)
+        conn.close()
     }
 
     def "GET /api/exchanges/{vhost} when vhost DOES NOT exist"() {
