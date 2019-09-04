@@ -472,18 +472,18 @@ public class Client {
   }
 
   /**
-   * Publish a message.
+   * Publishes a message to an exchange.
    * <p>
    * <b>DO NOT USE THIS METHOD IN PRODUCTION</b>. The HTTP API has to create a new TCP
-   * connection for each message published, which is far from ideal for high performance publishing.
+   * connection for each message published, which is highly suboptimal.
    * <p>
-   * Use this method for test or development code only. Use AMQP or other protocols using
-   * long-lived connection to publish messages in production.
+   * Use this method for test or development code only.
+   * In production, use AMQP 0-9-1 or any other messaging protocol that uses a long-lived connection.
    *
-   * @param vhost
-   * @param exchange
-   * @param routingKey
-   * @param outboundMessage
+   * @param vhost the virtual host to use
+   * @param exchange the target exchange
+   * @param routingKey the routing key to use
+   * @param outboundMessage the message to publish
    * @return true if message has been routed to at least a queue, false otherwise
    * @since 3.4.0
    */
