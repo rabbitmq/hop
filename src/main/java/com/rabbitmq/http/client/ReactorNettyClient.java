@@ -263,7 +263,6 @@ public class ReactorNettyClient {
 
     /**
      * Create a virtual host with name and tracing flag.
-     * Note metadata (description and tags) are supported as of RabbitMQ 3.8.
      *
      * @param name    name of the virtual host
      * @param tracing whether tracing is enabled or not
@@ -422,6 +421,42 @@ public class ReactorNettyClient {
         return doDelete("exchanges", enc(vhost), enc(name));
     }
 
+    /**
+     * Publish a message.
+     * <p>
+     * <b>DO NOT USE THIS METHOD IN PRODUCTION</b>. The HTTP API has to create a new TCP
+     * connection for each message published, which is far from ideal for high performance publishing.
+     * <p>
+     * Use this method for test or development code only. Use AMQP or other protocols using
+     * long-lived connection to publish messages in production.
+     *
+     * @param vhost
+     * @param exchange
+     * @param routingKey
+     * @param outboundMessage
+     * @return true if message has been routed to at least a queue, false otherwise
+     * @since 3.4.0
+     */
+    public Mono<Boolean> publish(String vhost, String exchange, String routingKey, OutboundMessage outboundMessage) {
+        if (vhost == null || vhost.isEmpty()) {
+            throw new IllegalArgumentException("vhost cannot be null or blank");
+        }
+        if (exchange == null || exchange.isEmpty()) {
+            throw new IllegalArgumentException("exchange cannot be null or blank");
+        }
+
+        Map<String, Object> body = Utils.bodyForPublish(routingKey, outboundMessage);
+
+        return doPostMono(body, Map.class, "exchanges", enc(vhost), enc(exchange), "publish").map(response -> {
+            Boolean routed = (Boolean) response.get("routed");
+            if (routed == null) {
+                return Boolean.FALSE;
+            } else {
+                return routed;
+            }
+        });
+    }
+
     public Mono<AlivenessTestResult> alivenessTest(String vhost) {
         return doGetMono(AlivenessTestResult.class, "aliveness-test", enc(vhost));
     }
@@ -468,6 +503,76 @@ public class ReactorNettyClient {
 
     public Mono<HttpResponse> deleteQueue(String vhost, String name) {
         return doDelete("queues", enc(vhost), enc(name));
+    }
+
+    /**
+     * Get messages from a queue.
+     *
+     * <b>DO NOT USE THIS METHOD IN PRODUCTION</b>. Getting messages with the HTTP API
+     * is intended for diagnostics or tests. It does not implement reliable delivery
+     * and so should be treated as a sysadmin's tool rather than a general API for messaging.
+     *
+     * @param vhost    the virtual host the target queue is in
+     * @param queue    the queue to consume from
+     * @param count    the maximum number of messages to get
+     * @param ackMode  determines whether the messages will be removed from the queue
+     * @param encoding the expected encoding of the message payload
+     * @param truncate to truncate the message payload if it is larger than the size given (in bytes), -1 means no truncation
+     * @return the messages wrapped in a {@link Flux}
+     * @see GetAckMode
+     * @see GetEncoding
+     * @since 3.4.0
+     */
+    public Flux<InboundMessage> get(String vhost, String queue,
+                                    int count, GetAckMode ackMode, GetEncoding encoding, int truncate) {
+        if (vhost == null || vhost.isEmpty()) {
+            throw new IllegalArgumentException("vhost cannot be null or blank");
+        }
+        if (queue == null || queue.isEmpty()) {
+            throw new IllegalArgumentException("queue cannot be null or blank");
+        }
+        Map<String, Object> body = Utils.bodyForGet(count, ackMode, encoding, truncate);
+        return doPostFlux(body, InboundMessage.class, "queues", enc(vhost), enc(queue), "get");
+    }
+
+    /**
+     * Get messages from a queue, with no limit for message payload truncation.
+     *
+     * <b>DO NOT USE THIS METHOD IN PRODUCTION</b>. Getting messages with the HTTP API
+     * is intended for diagnostics or tests. It does not implement reliable delivery
+     * and so should be treated as a sysadmin's tool rather than a general API for messaging.
+     *
+     * @param vhost    the virtual host the target queue is in
+     * @param queue    the queue to consume from
+     * @param count    the maximum number of messages to get
+     * @param ackMode  determines whether the messages will be removed from the queue
+     * @param encoding the expected encoding of the message payload
+     * @return the messages wrapped in a {@link Flux}
+     * @see GetAckMode
+     * @see GetEncoding
+     * @since 3.4.0
+     */
+    public Flux<InboundMessage> get(String vhost, String queue,
+                                    int count, GetAckMode ackMode, GetEncoding encoding) {
+        return get(vhost, queue, count, ackMode, encoding, -1);
+    }
+
+    /**
+     * Get one message from a queue and requeue it.
+     *
+     * <b>DO NOT USE THIS METHOD IN PRODUCTION</b>. Getting messages with the HTTP API
+     * is intended for diagnostics or tests. It does not implement reliable delivery
+     * and so should be treated as a sysadmin's tool rather than a general API for messaging.
+     *
+     * @param vhost the virtual host the target queue is in
+     * @param queue the queue to consume from
+     * @return the message wrapped in a {@link Mono}
+     * @see GetAckMode
+     * @see GetEncoding
+     * @since 3.4.0
+     */
+    public Mono<InboundMessage> get(String vhost, String queue) {
+        return get(vhost, queue, 1, GetAckMode.NACK_REQUEUE_TRUE, GetEncoding.AUTO, 50000).last();
     }
 
     public Flux<BindingInfo> getBindings() {
@@ -720,6 +825,20 @@ public class ReactorNettyClient {
             .response()
             .doOnNext(applyResponseCallback())
             .map(ReactorNettyClient::toHttpResponse);
+    }
+
+    private <T> Mono<T> doPostMono(Object body, Class<T> type, String... pathSegments) {
+        return Mono.from(client.headersWhen(authorizedHeader())
+                .headers(JSON_HEADER)
+                .post()
+                .uri(uri(pathSegments))
+                .send(bodyPublisher(body))
+                .response(decode(type)));
+    }
+
+    @SuppressWarnings("unchecked")
+    private <T> Flux<T> doPostFlux(Object body, Class<T> type, String... pathSegments) {
+        return (Flux<T>) doPostMono(body, Array.newInstance(type, 0).getClass(), pathSegments).flatMapMany(items -> Flux.fromArray((Object[]) items));
     }
 
     protected Consumer<HttpClientResponse> applyResponseCallback() {

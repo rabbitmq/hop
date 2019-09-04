@@ -19,7 +19,9 @@ package com.rabbitmq.http.client
 import com.fasterxml.jackson.core.JsonGenerationException
 import com.fasterxml.jackson.databind.JsonMappingException
 import com.fasterxml.jackson.databind.ObjectMapper
+import com.rabbitmq.client.AMQP
 import com.rabbitmq.client.AuthenticationFailureException
+import com.rabbitmq.client.CancelCallback
 import com.rabbitmq.client.Channel
 import com.rabbitmq.client.Connection
 import com.rabbitmq.client.ConnectionFactory
@@ -30,6 +32,8 @@ import com.rabbitmq.http.client.domain.ClusterId
 import com.rabbitmq.http.client.domain.ConnectionInfo
 import com.rabbitmq.http.client.domain.Definitions
 import com.rabbitmq.http.client.domain.ExchangeInfo
+import com.rabbitmq.http.client.domain.InboundMessage
+import com.rabbitmq.http.client.domain.OutboundMessage
 import com.rabbitmq.http.client.domain.NodeInfo
 import com.rabbitmq.http.client.domain.PolicyInfo
 import com.rabbitmq.http.client.domain.QueueInfo
@@ -1450,6 +1454,77 @@ class ReactorNettyClientSpec extends Specification {
         // TODO
 //    }
 
+    def "POST /api/queues/{vhost}/:exchange/get"() {
+        given: "a queue named hop.get and some messages in this queue"
+        final v = "/"
+        final conn = openConnection()
+        final ch = conn.createChannel()
+        final q = "hop.get"
+        ch.queueDeclare(q, false, false, false, null)
+        ch.confirmSelect()
+        final messageCount = 5
+        final properties = new AMQP.BasicProperties.Builder()
+                .contentType("text/plain").deliveryMode(1).priority(5)
+                .headers(Collections.singletonMap("header1", "value1"))
+                .build()
+        (1..messageCount).each { it ->
+            ch.basicPublish("", q, properties, "payload${it}".getBytes(Charset.forName("UTF-8")))
+        }
+        ch.waitForConfirms(5_000)
+
+        when: "client GETs from this queue"
+        final Flux<InboundMessage> messages = client.get(v, q, messageCount, GetAckMode.NACK_REQUEUE_TRUE, GetEncoding.AUTO, -1)
+            .cache() // we cache the flux to avoid sending the requests several times when counting, getting the first message, etc.
+                     // no doing would result in redelivered = true
+
+        then: "the messages are returned"
+        messages.count().block() == messageCount
+        final message = messages.blockFirst()
+        message.payload.startsWith("payload")
+        message.payloadBytes == "payload".size() + 1
+        !message.redelivered
+        message.routingKey == q
+        message.payloadEncoding == "string"
+        message.properties != null
+        message.properties.size() == 4
+        message.properties.get("priority") == 5
+        message.properties.get("delivery_mode") == 1
+        message.properties.get("content_type") == "text/plain"
+        message.properties.get("headers") != null
+        message.properties.get("headers").size() == 1
+        message.properties.get("headers").get("header1") == "value1"
+
+        cleanup:
+        ch.queueDelete(q)
+        conn.close()
+    }
+
+    def "POST /api/queues/{vhost}/:exchange/get for one message"() {
+        given: "a queue named hop.get and a message in this queue"
+        final v = "/"
+        final conn = openConnection()
+        final ch = conn.createChannel()
+        final q = "hop.get"
+        ch.queueDeclare(q, false, false, false, null)
+        ch.confirmSelect()
+        ch.basicPublish("", q, null, "payload".getBytes(Charset.forName("UTF-8")))
+        ch.waitForConfirms(5_000)
+
+        when: "client GETs from this queue"
+        final message = client.get(v, q).block()
+
+        then: "the messages are returned"
+        message.payload == "payload"
+        message.payloadBytes == "payload".size()
+        !message.redelivered
+        message.routingKey == q
+        message.payloadEncoding == "string"
+
+        cleanup:
+        ch.queueDelete(q)
+        conn.close()
+    }
+
     def "DELETE /api/queues/{vhost}/{name}/contents"() {
         given: "queue hop.test with 10 messages"
         final Connection conn = cf.newConnection()
@@ -1696,6 +1771,48 @@ class ReactorNettyClientSpec extends Specification {
 
         then: "hop.test no longer exists"
         !xs.filter( { e -> e.name == s } ).hasElements().block()
+    }
+
+    def "POST /api/exchanges/{vhost}/{name}/publish"() {
+        given: "a queue named hop.publish and a consumer on this queue"
+        final v = "/"
+        final conn = openConnection()
+        final ch = conn.createChannel()
+        final q = "hop.publish"
+        ch.queueDeclare(q, false, false, false, null)
+        ch.queueBind(q, "amq.direct", q)
+        final latch = new CountDownLatch(1)
+        final payloadReference = new AtomicReference<String>()
+        final propertiesReference = new AtomicReference<AMQP.BasicProperties>()
+        ch.basicConsume(q, true, {ctag, message ->
+            payloadReference.set(new String(message.getBody()))
+            propertiesReference.set(message.getProperties())
+            latch.countDown()
+        }, (CancelCallback) { ctag -> })
+
+        when: "client publishes a message to the queue"
+        final properties = new HashMap()
+        properties.put("delivery_mode", 1)
+        properties.put("content_type", "text/plain")
+        properties.put("priority", 5)
+        properties.put("headers", Collections.singletonMap("header1", "value1"))
+        final routed = client.publish(v, "amq.direct", q,
+                new OutboundMessage().payload("Hello world!").utf8Encoded().properties(properties)).block()
+
+        then: "the message is routed to the queue and consumed"
+        routed.booleanValue()
+        latch.await(5, TimeUnit.SECONDS)
+        payloadReference.get() == "Hello world!"
+        propertiesReference.get().getDeliveryMode() == 1
+        propertiesReference.get().getContentType() == "text/plain"
+        propertiesReference.get().getPriority() == 5
+        propertiesReference.get().getHeaders() != null
+        propertiesReference.get().getHeaders().size() == 1
+        propertiesReference.get().getHeaders().get("header1").toString() == "value1"
+
+        cleanup:
+        ch.queueDelete(q)
+        conn.close()
     }
 
     def "GET /api/exchanges/{vhost} when vhost DOES NOT exist"() {

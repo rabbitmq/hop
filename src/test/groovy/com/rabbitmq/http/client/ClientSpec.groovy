@@ -30,8 +30,11 @@ import org.springframework.web.client.RestTemplate
 import spock.lang.IgnoreIf
 import spock.lang.Specification
 
+import java.nio.charset.Charset
+import java.security.Policy
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
+import java.util.concurrent.atomic.AtomicReference
 
 class ClientSpec extends Specification {
 
@@ -435,9 +438,47 @@ class ClientSpec extends Specification {
     xs.find { (it.name == s) } == null
   }
 
-    //  def "POST /api/exchanges/{vhost}/{name}/publish"() {
-    // TODO
-    //  }
+  def "POST /api/exchanges/{vhost}/{name}/publish"() {
+    given: "a queue named hop.publish and a consumer on this queue"
+    final v = "/"
+    final conn = openConnection()
+    final ch = conn.createChannel()
+    final q = "hop.publish"
+    ch.queueDeclare(q, false, false, false, null)
+    ch.queueBind(q, "amq.direct", q)
+    final latch = new CountDownLatch(1)
+    final payloadReference = new AtomicReference<String>()
+    final propertiesReference = new AtomicReference<AMQP.BasicProperties>()
+    ch.basicConsume(q, true, {ctag, message ->
+      payloadReference.set(new String(message.getBody()))
+      propertiesReference.set(message.getProperties())
+      latch.countDown()
+    }, { ctag -> } as CancelCallback)
+
+    when: "client publishes a message to the queue"
+    final properties = new HashMap()
+    properties.put("delivery_mode", 1)
+    properties.put("content_type", "text/plain")
+    properties.put("priority", 5)
+    properties.put("headers", Collections.singletonMap("header1", "value1"))
+    final routed = client.publish(v, "amq.direct", q,
+            new OutboundMessage().payload("Hello world!").utf8Encoded().properties(properties))
+
+    then: "the message is routed to the queue and consumed"
+    routed
+    latch.await(5, TimeUnit.SECONDS)
+    payloadReference.get() == "Hello world!"
+    propertiesReference.get().getDeliveryMode() == 1
+    propertiesReference.get().getContentType() == "text/plain"
+    propertiesReference.get().getPriority() == 5
+    propertiesReference.get().getHeaders() != null
+    propertiesReference.get().getHeaders().size() == 1
+    propertiesReference.get().getHeaders().get("header1").toString() == "value1"
+
+    cleanup:
+    ch.queueDelete(q)
+    conn.close()
+  }
 
   def "GET /api/exchanges/{vhost}/{name}/bindings/source"() {
     given: "a queue named hop.queue1"
@@ -871,6 +912,75 @@ class ClientSpec extends Specification {
 //  def "DELETE /api/bindings/{vhost}/e/:exchange/q/:queue/props"() {
     // TODO
 //  }
+
+  def "POST /api/queues/{vhost}/:exchange/get"() {
+    given: "a queue named hop.get and some messages in this queue"
+    final v = "/"
+    final conn = openConnection()
+    final ch = conn.createChannel()
+    final q = "hop.get"
+    ch.queueDeclare(q, false, false, false, null)
+    ch.confirmSelect()
+    final messageCount = 5
+    final properties = new AMQP.BasicProperties.Builder()
+            .contentType("text/plain").deliveryMode(1).priority(5)
+            .headers(Collections.singletonMap("header1", "value1"))
+            .build()
+    (1..messageCount).each { it ->
+      ch.basicPublish("", q, properties, "payload${it}".getBytes(Charset.forName("UTF-8")))
+    }
+    ch.waitForConfirms(5_000)
+
+    when: "client GETs from this queue"
+    final List<InboundMessage> messages = client.get(v, q, messageCount, GetAckMode.NACK_REQUEUE_TRUE, GetEncoding.AUTO, -1)
+
+    then: "the messages are returned"
+    messages.size() == messageCount
+    final message = messages.get(0)
+    message.payload.startsWith("payload")
+    message.payloadBytes == "payload".size() + 1
+    !message.redelivered
+    message.routingKey == q
+    message.payloadEncoding == "string"
+    message.properties != null
+    message.properties.size() == 4
+    message.properties.get("priority") == 5
+    message.properties.get("delivery_mode") == 1
+    message.properties.get("content_type") == "text/plain"
+    message.properties.get("headers") != null
+    message.properties.get("headers").size() == 1
+    message.properties.get("headers").get("header1") == "value1"
+
+    cleanup:
+    ch.queueDelete(q)
+    conn.close()
+  }
+
+  def "POST /api/queues/{vhost}/:exchange/get for one message"() {
+    given: "a queue named hop.get and a message in this queue"
+    final v = "/"
+    final conn = openConnection()
+    final ch = conn.createChannel()
+    final q = "hop.get"
+    ch.queueDeclare(q, false, false, false, null)
+    ch.confirmSelect()
+    ch.basicPublish("", q, null, "payload".getBytes(Charset.forName("UTF-8")))
+    ch.waitForConfirms(5_000)
+
+    when: "client GETs from this queue"
+    final message = client.get(v, q)
+
+    then: "the messages are returned"
+    message.payload == "payload"
+    message.payloadBytes == "payload".size()
+    !message.redelivered
+    message.routingKey == q
+    message.payloadEncoding == "string"
+
+    cleanup:
+    ch.queueDelete(q)
+    conn.close()
+  }
 
   def "DELETE /api/queues/{vhost}/{name}/contents"() {
     given: "queue hop.test with 10 messages"
@@ -1422,7 +1532,7 @@ class ClientSpec extends Specification {
     client.declarePolicy(v, s, new PolicyInfo(p, 0, null, d))
 
     when: "client lists policies"
-    final xs = awaitEventPropagation({ client.getPolicies() })
+    PolicyInfo[] xs = awaitEventPropagation({ client.getPolicies() }) as PolicyInfo[]
 
     then: "a list of policies is returned"
     final x = xs.first()
@@ -1442,7 +1552,7 @@ class ClientSpec extends Specification {
     client.declarePolicy(v, s, new PolicyInfo(p, 0, null, d))
 
     when: "client lists policies"
-    final xs = awaitEventPropagation({ client.getPolicies("/") })
+    PolicyInfo[] xs = awaitEventPropagation({ client.getPolicies("/") }) as PolicyInfo[]
 
     then: "a list of queues is returned"
     final x = xs.first()
