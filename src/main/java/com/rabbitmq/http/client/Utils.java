@@ -1,5 +1,5 @@
 /*
- * Copyright 2018 the original author or authors.
+ * Copyright 2018-2019 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,9 +16,14 @@
 
 package com.rabbitmq.http.client;
 
+import com.rabbitmq.http.client.domain.OutboundMessage;
+
 import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
 import java.util.BitSet;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.Map;
 
 /**
  *
@@ -26,6 +31,44 @@ import java.util.BitSet;
 class Utils {
 
     private static final Charset CHARSET_UTF8 = Charset.forName("UTF-8");
+
+    static Map<String, Object> bodyForPublish(String routingKey, OutboundMessage outboundMessage) {
+        if (routingKey == null) {
+            throw new IllegalArgumentException("routing key cannot be null");
+        }
+        if (outboundMessage == null) {
+            throw new IllegalArgumentException("message cannot be null");
+        }
+        if (outboundMessage.getPayload() == null) {
+            throw new IllegalArgumentException("message payload cannot be null");
+        }
+        Map<String, Object> body = new HashMap<String, Object>();
+        body.put("routing_key", routingKey);
+        body.put("properties", outboundMessage.getProperties() == null ? Collections.EMPTY_MAP : outboundMessage.getProperties());
+        body.put("payload", outboundMessage.getPayload());
+        body.put("payload_encoding", outboundMessage.getPayloadEncoding());
+        return body;
+    }
+
+    static Map<String, Object> bodyForGet(int count, GetAckMode ackMode, GetEncoding encoding, int truncate) {
+        if (count <= 0) {
+            throw new IllegalArgumentException("count must be greater than 0");
+        }
+        if (ackMode == null) {
+            throw new IllegalArgumentException("acknowledgment mode cannot be null");
+        }
+        if (encoding == null) {
+            throw new IllegalArgumentException("encoding cannot be null");
+        }
+        Map<String, Object> body = new HashMap<>();
+        body.put("count", count);
+        body.put("ackmode", ackMode.ackMode);
+        body.put("encoding", encoding.encoding);
+        if (truncate >= 0) {
+            body.put("truncate", truncate);
+        }
+        return body;
+    }
 
     /* from https://github.com/apache/httpcomponents-client/commit/b58e7d46d75e1d3c42f5fd6db9bd45f32a49c639#diff-a74b24f025e68ec11e4550b42e9f807d */
 

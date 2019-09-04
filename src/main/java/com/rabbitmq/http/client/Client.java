@@ -381,7 +381,6 @@ public class Client {
 
   /**
    * Create a virtual host with name and tracing flag.
-   * Note metadata (description and tags) are supported as of RabbitMQ 3.8.
    *
    * @param name    name of the virtual host
    * @param tracing whether tracing is enabled or not
@@ -495,20 +494,8 @@ public class Client {
     if (exchange == null || exchange.isEmpty()) {
       throw new IllegalArgumentException("exchange cannot be null or blank");
     }
-    if (routingKey == null) {
-      throw new IllegalArgumentException("routing key cannot be null");
-    }
-    if (outboundMessage == null) {
-      throw new IllegalArgumentException("message cannot be null");
-    }
-    if (outboundMessage.getPayload() == null) {
-      throw new IllegalArgumentException("message payload cannot be null");
-    }
-    Map<String, Object> body = new HashMap<String, Object>();
-    body.put("routing_key", routingKey);
-    body.put("properties", outboundMessage.getProperties() == null ? Collections.EMPTY_MAP : outboundMessage.getProperties());
-    body.put("payload", outboundMessage.getPayload());
-    body.put("payload_encoding", outboundMessage.getPayloadEncoding());
+
+    Map<String, Object> body = Utils.bodyForPublish(routingKey, outboundMessage);
 
     final URI uri = uriWithPath("./exchanges/" + encodePathSegment(vhost) + "/" + encodePathSegment(exchange) + "/publish");
     Map<?, ?> response = this.rt.postForObject(uri, body, Map.class);
@@ -553,6 +540,83 @@ public class Client {
   public void deleteQueue(String vhost, String name) {
     this.deleteIgnoring404(uriWithPath("./queues/" + encodePathSegment(vhost) + "/" + encodePathSegment(name)));
   }
+
+    /**
+     * Get messages from a queue.
+     *
+     * <b>DO NOT USE THIS METHOD IN PRODUCTION</b>. Getting messages with the HTTP API
+     * is intended for diagnostics or tests. It does not implement reliable delivery
+     * and so should be treated as a sysadmin's tool rather than a general API for messaging.
+     *
+     * @param vhost    the virtual host the target queue is in
+     * @param queue    the queue to consume from
+     * @param count    the maximum number of messages to get
+     * @param ackMode  determines whether the messages will be removed from the queue
+     * @param encoding the expected encoding of the message payload
+     * @param truncate to truncate the message payload if it is larger than the size given (in bytes), -1 means no truncation
+     * @return the list of messages
+     * @see GetAckMode
+     * @see GetEncoding
+     * @since 3.4.0
+     */
+    public List<InboundMessage> get(String vhost, String queue,
+                                    int count, GetAckMode ackMode, GetEncoding encoding, int truncate) {
+        if (vhost == null || vhost.isEmpty()) {
+            throw new IllegalArgumentException("vhost cannot be null or blank");
+        }
+        if (queue == null || queue.isEmpty()) {
+            throw new IllegalArgumentException("queue cannot be null or blank");
+        }
+        Map<String, Object> body = Utils.bodyForGet(count, ackMode, encoding, truncate);
+
+        final URI uri = uriWithPath("./queues/" + encodePathSegment(vhost) + "/" + encodePathSegment(queue) + "/get");
+        return Arrays.asList(this.rt.postForObject(uri, body, InboundMessage[].class));
+    }
+
+    /**
+     * Get messages from a queue, with no limit for message payload truncation.
+     *
+     * <b>DO NOT USE THIS METHOD IN PRODUCTION</b>. Getting messages with the HTTP API
+     * is intended for diagnostics or tests. It does not implement reliable delivery
+     * and so should be treated as a sysadmin's tool rather than a general API for messaging.
+     *
+     * @param vhost    the virtual host the target queue is in
+     * @param queue    the queue to consume from
+     * @param count    the maximum number of messages to get
+     * @param ackMode  determines whether the messages will be removed from the queue
+     * @param encoding the expected encoding of the message payload
+     * @return the list of messages
+     * @see GetAckMode
+     * @see GetEncoding
+     * @since 3.4.0
+     */
+    public List<InboundMessage> get(String vhost, String queue,
+                                    int count, GetAckMode ackMode, GetEncoding encoding) {
+        return get(vhost, queue, count, ackMode, encoding, -1);
+    }
+
+    /**
+     * Get one message from a queue and requeue it.
+     *
+     * <b>DO NOT USE THIS METHOD IN PRODUCTION</b>. Getting messages with the HTTP API
+     * is intended for diagnostics or tests. It does not implement reliable delivery
+     * and so should be treated as a sysadmin's tool rather than a general API for messaging.
+     *
+     * @param vhost the virtual host the target queue is in
+     * @param queue the queue to consume from
+     * @return the message, null if the queue is empty
+     * @see GetAckMode
+     * @see GetEncoding
+     * @since 3.4.0
+     */
+    public InboundMessage get(String vhost, String queue) {
+        List<InboundMessage> inboundMessages = get(vhost, queue, 1, GetAckMode.NACK_REQUEUE_TRUE, GetEncoding.AUTO, 50000);
+        if (inboundMessages != null && inboundMessages.size() == 1) {
+            return inboundMessages.get(0);
+        } else {
+            return null;
+        }
+    }
 
   public void deletePolicy(String vhost, String name) {
     this.deleteIgnoring404(uriWithPath("./policies/" + encodePathSegment(vhost) + "/" + encodePathSegment(name)));
