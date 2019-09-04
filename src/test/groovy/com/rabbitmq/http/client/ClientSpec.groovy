@@ -31,6 +31,7 @@ import spock.lang.IgnoreIf
 import spock.lang.Specification
 
 import java.nio.charset.Charset
+import java.security.Policy
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicReference
@@ -452,7 +453,7 @@ class ClientSpec extends Specification {
       payloadReference.set(new String(message.getBody()))
       propertiesReference.set(message.getProperties())
       latch.countDown()
-    }, (CancelCallback) {ctag -> })
+    }, { ctag -> } as CancelCallback)
 
     when: "client publishes a message to the queue"
     final properties = new HashMap()
@@ -1531,7 +1532,7 @@ class ClientSpec extends Specification {
     client.declarePolicy(v, s, new PolicyInfo(p, 0, null, d))
 
     when: "client lists policies"
-    final xs = awaitEventPropagation({ client.getPolicies() })
+    PolicyInfo[] xs = awaitEventPropagation({ client.getPolicies() }) as PolicyInfo[]
 
     then: "a list of policies is returned"
     final x = xs.first()
@@ -1551,7 +1552,7 @@ class ClientSpec extends Specification {
     client.declarePolicy(v, s, new PolicyInfo(p, 0, null, d))
 
     when: "client lists policies"
-    final xs = awaitEventPropagation({ client.getPolicies("/") })
+    PolicyInfo[] xs = awaitEventPropagation({ client.getPolicies("/") }) as PolicyInfo[]
 
     then: "a list of queues is returned"
     final x = xs.first()
