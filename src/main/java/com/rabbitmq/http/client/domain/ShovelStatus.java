@@ -51,9 +51,9 @@ public class ShovelStatus {
 	private String type;
 	private String state;
 	private ShovelDefinition definition;
-	@JsonProperty("src-uri")
+	@JsonProperty("src_uri")
 	private String sourceURI;
-	@JsonProperty("dest-uri")
+	@JsonProperty("dest_uri")
 	private String destinationURI;
 	private String reason;
 

@@ -1742,12 +1742,17 @@ class ReactorNettyClientSpec extends Specification {
         shovels.hasElements().block()
         ShovelStatus s = shovels.filter( { s -> s.name.equals(shovelName) } ).blockFirst()
         s != null
-        s.name.equals(shovelName)
-        s.virtualHost.equals("/")
-        s.type.equals("dynamic")
-        s.state != null
-        s.sourceURI == null
-        s.destinationURI == null
+        s.name == shovelName
+        s.virtualHost == "/"
+        s.type == "dynamic"
+        waitAtMostUntilTrue(5, {
+            ShovelStatus shovelStatus = client.getShovelsStatus().filter( { status -> status.name.equals(shovelName) } ).blockFirst()
+            shovelStatus.state == "running"
+        })
+        ShovelStatus status = client.getShovelsStatus().filter( { it -> it.name.equals(shovelName) } ).blockFirst()
+        status.state == "running"
+        status.sourceURI == "amqp://localhost:5672/vh1"
+        status.destinationURI == "amqp://localhost:5672/vh2"
 
         cleanup:
         client.deleteShovel("/", shovelName).block()

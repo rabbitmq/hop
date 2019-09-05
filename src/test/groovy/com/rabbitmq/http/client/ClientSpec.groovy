@@ -1830,9 +1830,14 @@ class ClientSpec extends Specification {
     s.name == shovelName
     s.virtualHost == "/"
     s.type == "dynamic"
-    s.state != null
-    s.sourceURI == null
-    s.destinationURI == null
+    waitUntil {
+      ShovelStatus shovelStatus = client.getShovelsStatus().find { (it.name == shovelName) } as ShovelStatus
+      shovelStatus.state == "running"
+    }
+    ShovelStatus status = client.getShovelsStatus().find { (it.name == shovelName) } as ShovelStatus
+    status.state == "running"
+    status.sourceURI == "amqp://localhost:5672/vh1"
+    status.destinationURI == "amqp://localhost:5672/vh2"
 
     cleanup:
     client.deleteShovel("/", shovelName)
@@ -2141,6 +2146,17 @@ class ClientSpec extends Specification {
       Thread.sleep(1000)
       null
     }
+  }
+
+  protected static boolean waitUntil(Closure callback) {
+    int n = 0
+    def result = callback()
+    while (!result && n < 10000) {
+      Thread.sleep(500)
+      n += 500
+      result = callback()
+    }
+    callback()
   }
 
   protected static Object awaitAllConnectionsClosed(client) {
