@@ -1830,10 +1830,10 @@ class ClientSpec extends Specification {
     s.name == shovelName
     s.virtualHost == "/"
     s.type == "dynamic"
-    waitUntil {
+    waitAtMostUntilTrue(30, {
       ShovelStatus shovelStatus = client.getShovelsStatus().find { (it.name == shovelName) } as ShovelStatus
       shovelStatus.state == "running"
-    }
+    })
     ShovelStatus status = client.getShovelsStatus().find { (it.name == shovelName) } as ShovelStatus
     status.state == "running"
     status.sourceURI == "amqp://localhost:5672/vh1"
@@ -2148,15 +2148,20 @@ class ClientSpec extends Specification {
     }
   }
 
-  protected static boolean waitUntil(Closure callback) {
-    int n = 0
-    def result = callback()
-    while (!result && n < 10000) {
-      Thread.sleep(500)
-      n += 500
-      result = callback()
+  protected static boolean waitAtMostUntilTrue(int timeoutInSeconds, Closure<Boolean> callback) {
+    if (callback()) {
+      return true
     }
-    callback()
+    int timeout = timeoutInSeconds * 1000
+    int waited = 0
+    while (waited <= timeout) {
+      Thread.sleep(100)
+      waited += 100
+      if (callback()) {
+        return true
+      }
+    }
+    false
   }
 
   protected static Object awaitAllConnectionsClosed(client) {

@@ -1745,7 +1745,7 @@ class ReactorNettyClientSpec extends Specification {
         s.name == shovelName
         s.virtualHost == "/"
         s.type == "dynamic"
-        waitAtMostUntilTrue(5, {
+        waitAtMostUntilTrue(30, {
             ShovelStatus shovelStatus = client.getShovelsStatus().filter( { status -> status.name.equals(shovelName) } ).blockFirst()
             shovelStatus.state == "running"
         })
