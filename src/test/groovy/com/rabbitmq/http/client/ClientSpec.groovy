@@ -31,7 +31,6 @@ import spock.lang.IgnoreIf
 import spock.lang.Specification
 
 import java.nio.charset.Charset
-import java.security.Policy
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicReference
