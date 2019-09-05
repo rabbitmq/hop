@@ -42,17 +42,17 @@ If you want to use the **blocking IO client**, add the following dependencies:
 <dependency>
   <groupId>com.rabbitmq</groupId>
   <artifactId>http-client</artifactId>
-  <version>3.2.0.RELEASE</version>
+  <version>3.3.0.RELEASE</version>
 </dependency>
 <dependency>
   <groupId>org.springframework</groupId>
   <artifactId>spring-web</artifactId>
-  <version>5.1.5.RELEASE</version>
+  <version>5.1.8.RELEASE</version>
 </dependency>
 <dependency>
   <groupId>org.apache.httpcomponents</groupId>
   <artifactId>httpclient</artifactId>
-  <version>4.5.6</version>
+  <version>4.5.9</version>
 </dependency>
 <dependency>
   <groupId>com.fasterxml.jackson.core</groupId>
@@ -67,12 +67,12 @@ If you want to use the **reactive, non-blocking IO client**, add the following d
 <dependency>
   <groupId>com.rabbitmq</groupId>
   <artifactId>http-client</artifactId>
-  <version>3.2.0.RELEASE</version>
+  <version>3.3.0.RELEASE</version>
 </dependency>
 <dependency>
   <groupId>io.projectreactor.ipc</groupId>
   <artifactId>reactor-netty</artifactId>
-  <version>0.8.5.RELEASE</version>
+  <version>0.8.9.RELEASE</version>
 </dependency>
 <dependency>
   <groupId>com.fasterxml.jackson.core</groupId>
@@ -86,17 +86,17 @@ If you want to use the **reactive, non-blocking IO client**, add the following d
 If you want to use the **blocking IO client**, add the following dependencies:
 
 ```groovy
-compile "com.rabbitmq:http-client:3.2.0.RELEASE"
-compile "org.springframework:spring-web:5.1.5.RELEASE"
-compile "org.apache.httpcomponents:httpclient:4.5.6"
+compile "com.rabbitmq:http-client:3.3.0.RELEASE"
+compile "org.springframework:spring-web:5.1.8.RELEASE"
+compile "org.apache.httpcomponents:httpclient:4.5.9"
 compile "com.fasterxml.jackson.core:jackson-databind:2.9.9.3"
 ```
 
 If you want to use the **reactive, non-blocking IO client**, add the following dependencies:
 
 ```groovy
-compile "com.rabbitmq:http-client:3.2.0.RELEASE"
-compile "io.projectreactor.ipc:reactor-netty:0.8.5.RELEASE"
+compile "com.rabbitmq:http-client:3.3.0.RELEASE"
+compile "io.projectreactor.ipc:reactor-netty:0.8.9.RELEASE"
 compile "com.fasterxml.jackson.core:jackson-databind:2.9.9.3"
 ```
 
