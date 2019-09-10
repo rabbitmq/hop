@@ -70,7 +70,7 @@ If you want to use the **reactive, non-blocking IO client**, add the following d
   <version>3.3.0.RELEASE</version>
 </dependency>
 <dependency>
-  <groupId>io.projectreactor.ipc</groupId>
+  <groupId>io.projectreactor.netty</groupId>
   <artifactId>reactor-netty</artifactId>
   <version>0.8.9.RELEASE</version>
 </dependency>
@@ -96,7 +96,7 @@ If you want to use the **reactive, non-blocking IO client**, add the following d
 
 ```groovy
 compile "com.rabbitmq:http-client:3.3.0.RELEASE"
-compile "io.projectreactor.ipc:reactor-netty:0.8.9.RELEASE"
+compile "io.projectreactor.netty:reactor-netty:0.8.9.RELEASE"
 compile "com.fasterxml.jackson.core:jackson-databind:2.9.9.3"
 ```
 
