@@ -57,7 +57,7 @@ If you want to use the **blocking IO client**, add the following dependencies:
 <dependency>
   <groupId>com.fasterxml.jackson.core</groupId>
   <artifactId>jackson-databind</artifactId>
-  <version>2.9.9.3</version>
+  <version>2.9.10</version>
 </dependency>
 ```
 
@@ -77,7 +77,7 @@ If you want to use the **reactive, non-blocking IO client**, add the following d
 <dependency>
   <groupId>com.fasterxml.jackson.core</groupId>
   <artifactId>jackson-databind</artifactId>
-  <version>2.9.9.3</version>
+  <version>2.9.10</version>
 </dependency>
 ```
 
@@ -89,7 +89,7 @@ If you want to use the **blocking IO client**, add the following dependencies:
 compile "com.rabbitmq:http-client:3.4.0.RELEASE"
 compile "org.springframework:spring-web:5.1.9.RELEASE"
 compile "org.apache.httpcomponents:httpclient:4.5.9"
-compile "com.fasterxml.jackson.core:jackson-databind:2.9.9.3"
+compile "com.fasterxml.jackson.core:jackson-databind:2.9.10"
 ```
 
 If you want to use the **reactive, non-blocking IO client**, add the following dependencies:
@@ -97,7 +97,7 @@ If you want to use the **reactive, non-blocking IO client**, add the following d
 ```groovy
 compile "com.rabbitmq:http-client:3.4.0.RELEASE"
 compile "io.projectreactor.netty:reactor-netty:0.8.11.RELEASE"
-compile "com.fasterxml.jackson.core:jackson-databind:2.9.9.3"
+compile "com.fasterxml.jackson.core:jackson-databind:2.9.10"
 ```
 
 ## Usage Guide
