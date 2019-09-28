@@ -15,7 +15,7 @@ and you should use Langohr instead.
 
 ## Reactive
 
-As of HOP 2.1.0, a new reactive, non-blocking IO client based on [Reactor Netty](https://projectreactor.io/) is available. Note
+As of Hop 2.1.0, a new reactive, non-blocking IO client based on [Reactor Netty](https://projectreactor.io/) is available. Note
 the original blocking IO client remains available.
 
 ## Project Maturity
