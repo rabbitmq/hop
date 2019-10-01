@@ -6,6 +6,8 @@ mv rabbitmq_server-3.8.0 rabbitmq
 
 rabbitmq/sbin/rabbitmq-server -detached
 
-sleep 3
+sleep 10
+
+rabbitmq/sbin/rabbitmqctl status
 
 true
