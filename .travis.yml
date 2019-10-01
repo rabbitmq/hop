@@ -20,8 +20,7 @@ branches:
   only:
     - master
 env:
-  - HOP_RABBITMQCTL=rabbitmq/sbin/rabbitmqctl
-  - HOP_RABBITMQ_PLUGINS=rabbitmq/sbin/rabbitmq-plugins
+  - HOP_RABBITMQCTL=rabbitmq/sbin/rabbitmqctl HOP_RABBITMQ_PLUGINS=rabbitmq/sbin/rabbitmq-plugins
 before_script:
   - ./bin/set_up_infra.sh
   - ./bin/before_build.sh
