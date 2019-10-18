@@ -85,8 +85,8 @@ public class ReactorNettyClient {
 
     public ReactorNettyClient(String url, ReactorNettyClientOptions options) {
         this(urlWithoutCredentials(url),
-            URI.create(url).getUserInfo().split(":")[0],
-            URI.create(url).getUserInfo().split(":")[1], options);
+                Utils.extractUsernamePassword(url)[0],
+                Utils.extractUsernamePassword(url)[1], options);
     }
 
     public ReactorNettyClient(String url) {
