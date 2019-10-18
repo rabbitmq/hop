@@ -18,8 +18,13 @@ package com.rabbitmq.http.client;
 
 import com.rabbitmq.http.client.domain.OutboundMessage;
 
+import java.io.UnsupportedEncodingException;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.net.URLDecoder;
 import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.BitSet;
 import java.util.Collections;
 import java.util.HashMap;
@@ -68,6 +73,41 @@ class Utils {
             body.put("truncate", truncate);
         }
         return body;
+    }
+
+    static String[] extractUsernamePassword(String url) {
+        String userInfo = null;
+        try {
+            userInfo = new URL(url).getUserInfo();
+        } catch (MalformedURLException e) {
+            throw new IllegalArgumentException("Malformed URL", e);
+        }
+        if (userInfo == null) {
+            throw new IllegalArgumentException("Could not extract password from URL. " +
+                    "URL should be like 'https://guest:guest@localhost:15672/api/'");
+        }
+        String[] usernamePassword = userInfo.split(":");
+        if (usernamePassword == null || usernamePassword.length != 2) {
+            throw new IllegalArgumentException("Could not extract password from URL. " +
+                    "URL should be like 'https://guest:guest@localhost:15672/api/'");
+        }
+
+        return new String[]{
+                decode(usernamePassword[0]), decode(usernamePassword[1])
+        };
+    }
+
+    static String decode(String potentiallyEncodedString) {
+        if (potentiallyEncodedString != null && !potentiallyEncodedString.isEmpty()) {
+            try {
+                return URLDecoder.decode(potentiallyEncodedString, CHARSET_UTF8.name());
+            } catch (UnsupportedEncodingException e) {
+                // should not happen, the character encoding is fixed and valid
+                throw new IllegalStateException("Error while decoding string", e);
+            }
+        } else {
+            return potentiallyEncodedString;
+        }
     }
 
     /* from https://github.com/apache/httpcomponents-client/commit/b58e7d46d75e1d3c42f5fd6db9bd45f32a49c639#diff-a74b24f025e68ec11e4550b42e9f807d */

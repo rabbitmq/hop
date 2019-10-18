@@ -52,6 +52,7 @@ import io.netty.buffer.ByteBuf
 import io.netty.buffer.ByteBufOutputStream
 import reactor.core.publisher.Flux
 import reactor.core.publisher.Mono
+import reactor.netty.http.client.HttpClient
 import spock.lang.IgnoreIf
 import spock.lang.Specification
 
@@ -139,6 +140,29 @@ class ReactorNettyClientSpec extends Specification {
         if (conn.isOpen()) {
             conn.close()
         }
+    }
+
+    def "user info decoding"() {
+        when: "username and password are encoded in the URL"
+        def authorization = new AtomicReference<String>()
+        def httpClient = HttpClient.create().baseUrl("http://localhost:15672/api/")
+                .doAfterRequest({request, connection ->
+                    authorization.set(request.requestHeaders().get("authorization"))
+                })
+
+        def localClient = new ReactorNettyClient(
+                "http://test+user:test%40password@localhost:15672/api/",
+                new ReactorNettyClientOptions().client({ httpClient }))
+
+        try {
+            localClient.getOverview().block()
+        } catch (Exception e) {
+            // OK
+        }
+
+        then: "username and password are decoded before going into the request"
+        // the authorization header is the same as with the decoded credentials
+        authorization.get() == ReactorNettyClient.basicAuthentication("test user", "test@password")
     }
 
     def "GET /api/nodes"() {

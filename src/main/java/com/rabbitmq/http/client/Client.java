@@ -167,9 +167,21 @@ public class Client {
    * @throws URISyntaxException for a badly formed URL.
    */
   public Client(String url) throws MalformedURLException, URISyntaxException {
+    this(url, NO_OP_HTTP_CLIENT_BUILDER_CONFIGURATOR);
+  }
+
+  /**
+   * Construct an instance with the provided url and credentials.
+   * @param url the url e.g. "https://guest:guest@localhost:15672/api/".
+   * @param configurator {@link HttpClientBuilderConfigurator} to use
+   * @throws MalformedURLException for a badly formed URL.
+   * @throws URISyntaxException for a badly formed URL.
+   */
+  public Client(String url, HttpClientBuilderConfigurator configurator) throws MalformedURLException, URISyntaxException {
     this(urlWithoutCredentials(url),
-         StringUtils.split(new URL(url).getUserInfo(),":")[0],
-         StringUtils.split(new URL(url).getUserInfo(),":")[1]
+            Utils.extractUsernamePassword(url)[0],
+            Utils.extractUsernamePassword(url)[1],
+            configurator
     );
   }
 
@@ -1156,23 +1168,23 @@ public class Client {
                                                                    final String username, final String password,
                                                                    final SSLConnectionSocketFactory sslConnectionSocketFactory,
                                                                    final SSLContext sslContext,
-                                                                   final HttpClientBuilderConfigurator configurator) throws MalformedURLException {
+                                                                   final HttpClientBuilderConfigurator configurator) {
     String theUser = username;
     String thePassword = password;
     String userInfo = url.getUserInfo();
     if (userInfo != null && theUser == null) {
       String[] userParts = userInfo.split(":");
       if (userParts.length > 0) {
-        theUser = userParts[0];
+        theUser = Utils.decode(userParts[0]);
       }
       if (userParts.length > 1) {
-        thePassword = userParts[1];
+        thePassword = Utils.decode(userParts[1]);
       }
     }
 
     // configure HttpClientBuilder essentials
     final HttpClientBuilder bldr = HttpClientBuilder.create().
-        setDefaultCredentialsProvider(getCredentialsProvider(url, theUser, thePassword));
+        setDefaultCredentialsProvider(getCredentialsProvider(theUser, thePassword));
     if (sslConnectionSocketFactory != null) {
       bldr.setSSLSocketFactory(sslConnectionSocketFactory);
     }
@@ -1200,7 +1212,7 @@ public class Client {
     };
   }
 
-  private CredentialsProvider getCredentialsProvider(final URL url, final String username, final String password) {
+  private CredentialsProvider getCredentialsProvider(final String username, final String password) {
     CredentialsProvider cp = new BasicCredentialsProvider();
     cp.setCredentials(new AuthScope(AuthScope.ANY_HOST, AuthScope.ANY_PORT),
         new UsernamePasswordCredentials(username, password));
