@@ -1694,10 +1694,46 @@ class ReactorNettyClientSpec extends Specification {
         s != null
         s.name.equals("shovel1")
         s.virtualHost.equals("/")
-        s.details.sourceURI.equals("amqp://localhost:5672/vh1")
+        s.details.sourceURIs.equals(["amqp://localhost:5672/vh1"])
         s.details.sourceExchange == null
         s.details.sourceQueue.equals("queue1")
-        s.details.destinationURI.equals("amqp://localhost:5672/vh2")
+        s.details.destinationURIs.equals(["amqp://localhost:5672/vh2"])
+        s.details.destinationExchange.equals("exchange1")
+        s.details.destinationQueue == null
+        s.details.reconnectDelay == 30
+        s.details.addForwardHeaders
+        s.details.publishProperties == null
+        s.details.sourcePrefetchCount == 50L
+        s.details.sourceDeleteAfter == "never"
+        s.details.destinationAddTimestampHeader
+
+        cleanup:
+        client.deleteShovel("/","shovel1").block()
+        client.deleteQueue("/", "queue1").block()
+    }
+
+    def "GET /api/parameters/shovel"() {
+        given: "a basic topology"
+        ShovelDetails value = new ShovelDetails(["amqp://localhost:5672/vh1", "amqp://localhost:5672/vh3"], ["amqp://localhost:5672/vh2", "amqp://localhost:5672/vh4"], 30, true, null);
+        value.setSourceQueue("queue1")
+        value.setDestinationExchange("exchange1")
+        value.setSourcePrefetchCount(50L)
+        value.setSourceDeleteAfter("never")
+        value.setDestinationAddTimestampHeader(true)
+        client.declareShovel("/", new ShovelInfo("shovel1", value)).block()
+        when: "client requests the shovels"
+        final shovels = awaitEventPropagation { client.getShovels() }
+
+        then: "broker definitions are returned"
+        shovels.hasElements().block()
+        ShovelInfo s = shovels.filter( { s -> s.name.equals("shovel1") } ).blockFirst()
+        s != null
+        s.name.equals("shovel1")
+        s.virtualHost.equals("/")
+        s.details.sourceURIs.equals(["amqp://localhost:5672/vh1", "amqp://localhost:5672/vh3"])
+        s.details.sourceExchange == null
+        s.details.sourceQueue.equals("queue1")
+        s.details.destinationURIs.equals(["amqp://localhost:5672/vh2", "amqp://localhost:5672/vh4"])
         s.details.destinationExchange.equals("exchange1")
         s.details.destinationQueue == null
         s.details.reconnectDelay == 30

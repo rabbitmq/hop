@@ -16,9 +16,17 @@
 
 package com.rabbitmq.http.client.domain;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
+import static com.fasterxml.jackson.annotation.JsonFormat.Feature.ACCEPT_SINGLE_VALUE_AS_ARRAY;
+import static com.fasterxml.jackson.annotation.JsonFormat.Feature.WRITE_SINGLE_ELEM_ARRAYS_UNWRAPPED;
 
 //{"src-uri":  "amqp://",              "src-queue":  "my-queue",
 //    "dest-uri": "amqp://remote-server", "dest-queue": "another-queue"}
@@ -26,7 +34,8 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 public class ShovelDetails {
 
 	@JsonProperty("src-uri")
-	private String sourceURI;
+	@JsonFormat(with = {ACCEPT_SINGLE_VALUE_AS_ARRAY, WRITE_SINGLE_ELEM_ARRAYS_UNWRAPPED})
+    private List<String> sourceURIs;
 	@JsonProperty("src-exchange")
 	private String sourceExchange;
 	@JsonProperty("src-exchange-key")
@@ -39,7 +48,8 @@ public class ShovelDetails {
 	private String sourceDeleteAfter;
 
 	@JsonProperty("dest-uri")
-	private String destinationURI;
+	@JsonFormat(with = {ACCEPT_SINGLE_VALUE_AS_ARRAY, WRITE_SINGLE_ELEM_ARRAYS_UNWRAPPED})
+    private List<String> destinationURIs;
 	@JsonProperty("dest-exchange")
 	private String destinationExchange;
 	@JsonProperty("dest-exchange-key")
@@ -64,19 +74,42 @@ public class ShovelDetails {
 	}
 
 	public ShovelDetails(String sourceURI, String destURI, long reconnectDelay, boolean addForwardHeaders, Map<String, Object> publishProperties) {
-		this.sourceURI = sourceURI;
-		this.destinationURI = destURI;
+        this.sourceURIs = Collections.singletonList(sourceURI);
+        this.destinationURIs = Collections.singletonList(destURI);
 		this.reconnectDelay = reconnectDelay;
 		this.addForwardHeaders = addForwardHeaders;
 		this.publishProperties = publishProperties;
 	}
 
-	public String getSourceURI() {
-		return sourceURI;
+    public ShovelDetails(List<String> sourceURIs, List<String> destURIs, long reconnectDelay, boolean addForwardHeaders, Map<String, Object> publishProperties) {
+        checkURIsArgument("sourceURIs", sourceURIs);
+        checkURIsArgument("destURIs", destURIs);
+
+        this.sourceURIs = Collections.unmodifiableList(sourceURIs);
+        this.destinationURIs = Collections.unmodifiableList(destURIs);
+		this.reconnectDelay = reconnectDelay;
+		this.addForwardHeaders = addForwardHeaders;
+		this.publishProperties = publishProperties;
 	}
 
+	@Deprecated
+    @JsonIgnore
+	public String getSourceURI() {
+        return sourceURIs.get(0);
+	}
+
+	@Deprecated
 	public void setSourceURI(String sourceURI) {
-		this.sourceURI = sourceURI;
+        this.sourceURIs = Collections.singletonList(sourceURI);
+	}
+
+	public List<String> getSourceURIs() {
+        return sourceURIs;
+	}
+
+	public void setSourceURIs(List<String> sourceURIs) {
+        checkURIsArgument("sourceURIs", sourceURIs);
+        this.sourceURIs = Collections.unmodifiableList(sourceURIs);
 	}
 
 	public String getSourceExchange() {
@@ -103,12 +136,24 @@ public class ShovelDetails {
 		this.sourceQueue = sourceQueue;
 	}
 
+	@Deprecated
+    @JsonIgnore
 	public String getDestinationURI() {
-		return destinationURI;
+        return destinationURIs.get(0);
 	}
 
+	@Deprecated
 	public void setDestinationURI(String destURI) {
-		this.destinationURI = destURI;
+        this.destinationURIs = Collections.singletonList(destURI);
+	}
+
+	public List<String> getDestinationURIs() {
+        return destinationURIs;
+	}
+
+	public void setDestinationURI(List<String> destURIs) {
+        checkURIsArgument("destURIs", destURIs);
+        this.destinationURIs = Collections.unmodifiableList(destURIs);
 	}
 
 	public String getDestinationExchange() {
@@ -195,13 +240,13 @@ public class ShovelDetails {
 	@Override
 	public String toString() {
 		return "ShovelDetails{" +
-				"sourceURI='" + sourceURI + '\'' +
+                "sourceURI='" + URIsToString(sourceURIs) + '\'' +
 				", sourceExchange='" + sourceExchange + '\'' +
 				", sourceExchangeKey='" + sourceExchangeKey + '\'' +
 				", sourceQueue='" + sourceQueue + '\'' +
 				", sourcePrefetchCount='" + sourcePrefetchCount + '\'' +
 				", sourceDeleteAfter='" + sourceDeleteAfter + '\'' +
-				", destinationURI='" + destinationURI + '\'' +
+                ", destinationURI='" + URIsToString(destinationURIs) + '\'' +
 				", destinationExchange='" + destinationExchange + '\'' +
 				", destinationExchangeKey='" + destinationExchangeKey + '\'' +
 				", destinationQueue='" + destinationQueue + '\'' +
@@ -211,5 +256,19 @@ public class ShovelDetails {
 				", ackMode='" + ackMode + '\'' +
 				", publishProperties=" + publishProperties +
 				'}';
+	}
+
+	private void checkURIsArgument(String argumentName, List<String> argument) {
+		if (argument == null || argument.isEmpty()) {
+			throw new IllegalArgumentException(argumentName + " argument must contains at least one URI");
+		}
+	}
+
+	private String URIsToString(List<String> uris) {
+		if (uris.size() == 1) {
+			// for back compatibility
+			return uris.get(0);
+		}
+		return Arrays.toString(uris.toArray());
 	}
 }
