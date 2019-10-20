@@ -35,7 +35,7 @@ public class ShovelDetails {
 
 	@JsonProperty("src-uri")
 	@JsonFormat(with = {ACCEPT_SINGLE_VALUE_AS_ARRAY, WRITE_SINGLE_ELEM_ARRAYS_UNWRAPPED})
-    private List<String> sourceURIs;
+	private List<String> sourceURIs;
 	@JsonProperty("src-exchange")
 	private String sourceExchange;
 	@JsonProperty("src-exchange-key")
@@ -49,7 +49,7 @@ public class ShovelDetails {
 
 	@JsonProperty("dest-uri")
 	@JsonFormat(with = {ACCEPT_SINGLE_VALUE_AS_ARRAY, WRITE_SINGLE_ELEM_ARRAYS_UNWRAPPED})
-    private List<String> destinationURIs;
+	private List<String> destinationURIs;
 	@JsonProperty("dest-exchange")
 	private String destinationExchange;
 	@JsonProperty("dest-exchange-key")
@@ -74,42 +74,42 @@ public class ShovelDetails {
 	}
 
 	public ShovelDetails(String sourceURI, String destURI, long reconnectDelay, boolean addForwardHeaders, Map<String, Object> publishProperties) {
-        this.sourceURIs = Collections.singletonList(sourceURI);
-        this.destinationURIs = Collections.singletonList(destURI);
+		this.sourceURIs = Collections.singletonList(sourceURI);
+		this.destinationURIs = Collections.singletonList(destURI);
 		this.reconnectDelay = reconnectDelay;
 		this.addForwardHeaders = addForwardHeaders;
 		this.publishProperties = publishProperties;
 	}
 
-    public ShovelDetails(List<String> sourceURIs, List<String> destURIs, long reconnectDelay, boolean addForwardHeaders, Map<String, Object> publishProperties) {
-        checkURIsArgument("sourceURIs", sourceURIs);
-        checkURIsArgument("destURIs", destURIs);
+	public ShovelDetails(List<String> sourceURIs, List<String> destURIs, long reconnectDelay, boolean addForwardHeaders, Map<String, Object> publishProperties) {
+		checkURIsArgument("sourceURIs", sourceURIs);
+		checkURIsArgument("destURIs", destURIs);
 
-        this.sourceURIs = Collections.unmodifiableList(sourceURIs);
-        this.destinationURIs = Collections.unmodifiableList(destURIs);
+		this.sourceURIs = Collections.unmodifiableList(sourceURIs);
+		this.destinationURIs = Collections.unmodifiableList(destURIs);
 		this.reconnectDelay = reconnectDelay;
 		this.addForwardHeaders = addForwardHeaders;
 		this.publishProperties = publishProperties;
 	}
 
 	@Deprecated
-    @JsonIgnore
+	@JsonIgnore
 	public String getSourceURI() {
-        return sourceURIs.get(0);
+		return sourceURIs.get(0);
 	}
 
 	@Deprecated
 	public void setSourceURI(String sourceURI) {
-        this.sourceURIs = Collections.singletonList(sourceURI);
+		this.sourceURIs = Collections.singletonList(sourceURI);
 	}
 
 	public List<String> getSourceURIs() {
-        return sourceURIs;
+		return sourceURIs;
 	}
 
 	public void setSourceURIs(List<String> sourceURIs) {
-        checkURIsArgument("sourceURIs", sourceURIs);
-        this.sourceURIs = Collections.unmodifiableList(sourceURIs);
+		checkURIsArgument("sourceURIs", sourceURIs);
+		this.sourceURIs = Collections.unmodifiableList(sourceURIs);
 	}
 
 	public String getSourceExchange() {
@@ -137,23 +137,23 @@ public class ShovelDetails {
 	}
 
 	@Deprecated
-    @JsonIgnore
+	@JsonIgnore
 	public String getDestinationURI() {
-        return destinationURIs.get(0);
+		return destinationURIs.get(0);
 	}
 
 	@Deprecated
 	public void setDestinationURI(String destURI) {
-        this.destinationURIs = Collections.singletonList(destURI);
+		this.destinationURIs = Collections.singletonList(destURI);
 	}
 
 	public List<String> getDestinationURIs() {
-        return destinationURIs;
+		return destinationURIs;
 	}
 
 	public void setDestinationURI(List<String> destURIs) {
-        checkURIsArgument("destURIs", destURIs);
-        this.destinationURIs = Collections.unmodifiableList(destURIs);
+		checkURIsArgument("destURIs", destURIs);
+		this.destinationURIs = Collections.unmodifiableList(destURIs);
 	}
 
 	public String getDestinationExchange() {
@@ -240,13 +240,13 @@ public class ShovelDetails {
 	@Override
 	public String toString() {
 		return "ShovelDetails{" +
-                "sourceURI='" + URIsToString(sourceURIs) + '\'' +
+				"sourceURI='" + URIsToString(sourceURIs) + '\'' +
 				", sourceExchange='" + sourceExchange + '\'' +
 				", sourceExchangeKey='" + sourceExchangeKey + '\'' +
 				", sourceQueue='" + sourceQueue + '\'' +
 				", sourcePrefetchCount='" + sourcePrefetchCount + '\'' +
 				", sourceDeleteAfter='" + sourceDeleteAfter + '\'' +
-                ", destinationURI='" + URIsToString(destinationURIs) + '\'' +
+				", destinationURI='" + URIsToString(destinationURIs) + '\'' +
 				", destinationExchange='" + destinationExchange + '\'' +
 				", destinationExchangeKey='" + destinationExchangeKey + '\'' +
 				", destinationQueue='" + destinationQueue + '\'' +
