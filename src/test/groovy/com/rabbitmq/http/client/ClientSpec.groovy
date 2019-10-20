@@ -1806,10 +1806,10 @@ class ClientSpec extends Specification {
     s != null
     s.name == "shovel1"
     s.virtualHost == "/"
-    s.details.sourceURI == "amqp://localhost:5672/vh1"
+    s.details.sourceURIs.equals(["amqp://localhost:5672/vh1"])
     s.details.sourceExchange == null
     s.details.sourceQueue == "queue1"
-    s.details.destinationURI == "amqp://localhost:5672/vh2"
+    s.details.destinationURIs.equals(["amqp://localhost:5672/vh2"])
     s.details.destinationExchange == "exchange1"
     s.details.destinationQueue == null
     s.details.reconnectDelay == 30
@@ -1821,6 +1821,43 @@ class ClientSpec extends Specification {
 
     cleanup:
     client.deleteShovel("/","shovel1")
+    client.deleteQueue("/", "queue1")
+  }
+
+  def "GET /api/parameters/shovel with multiple URIs "() {
+    given: "a basic topology"
+    ShovelDetails value = new ShovelDetails(["amqp://localhost:5672/vh1", "amqp://localhost:5672/vh3"], ["amqp://localhost:5672/vh2", "amqp://localhost:5672/vh4"], 30, true, null)
+    value.setSourceQueue("queue1")
+    value.setDestinationExchange("exchange1")
+    value.setSourcePrefetchCount(50L)
+    value.setSourceDeleteAfter("never")
+    value.setDestinationAddTimestampHeader(true)
+    client.declareShovel("/", new ShovelInfo("shovel2", value))
+    when: "client requests the shovels"
+    final shovels = awaitEventPropagation { client.getShovels() }
+
+    then: "broker definitions are returned"
+    !shovels.isEmpty()
+    shovels.size() >= 1
+    ShovelInfo s = shovels.find { (it.name == "shovel2") } as ShovelInfo
+    s != null
+    s.name == "shovel2"
+    s.virtualHost == "/"
+    s.details.sourceURIs.equals(["amqp://localhost:5672/vh1", "amqp://localhost:5672/vh3"])
+    s.details.sourceExchange == null
+    s.details.sourceQueue == "queue1"
+    s.details.destinationURIs.equals(["amqp://localhost:5672/vh2", "amqp://localhost:5672/vh4"])
+    s.details.destinationExchange == "exchange1"
+    s.details.destinationQueue == null
+    s.details.reconnectDelay == 30
+    s.details.addForwardHeaders
+    s.details.publishProperties == null
+    s.details.sourcePrefetchCount == 50L
+    s.details.sourceDeleteAfter == "never"
+    s.details.destinationAddTimestampHeader
+
+    cleanup:
+    client.deleteShovel("/","shovel2")
     client.deleteQueue("/", "queue1")
   }
 
