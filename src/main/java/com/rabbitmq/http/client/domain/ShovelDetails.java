@@ -74,11 +74,7 @@ public class ShovelDetails {
 	}
 
 	public ShovelDetails(String sourceURI, String destURI, long reconnectDelay, boolean addForwardHeaders, Map<String, Object> publishProperties) {
-        this.sourceURIs = Collections.singletonList(sourceURI);
-        this.destinationURIs = Collections.singletonList(destURI);
-		this.reconnectDelay = reconnectDelay;
-		this.addForwardHeaders = addForwardHeaders;
-		this.publishProperties = publishProperties;
+		this(Collections.singletonList(sourceURI), Collections.singletonList(destURI), reconnectDelay, addForwardHeaders, publishProperties);
 	}
 
     public ShovelDetails(List<String> sourceURIs, List<String> destURIs, long reconnectDelay, boolean addForwardHeaders, Map<String, Object> publishProperties) {
@@ -92,15 +88,23 @@ public class ShovelDetails {
 		this.publishProperties = publishProperties;
 	}
 
+	/**
+	 * @return the first source source URI
+	 * @deprecated use {@link #getSourceURIs()} instead
+	 */
 	@Deprecated
-    @JsonIgnore
+	@JsonIgnore
 	public String getSourceURI() {
-        return sourceURIs.get(0);
+		return sourceURIs.get(0);
 	}
 
+	/**
+	 * @param sourceURI
+	 * @deprecated use {@link #setSourceURIs(List)} instead
+	 */
 	@Deprecated
 	public void setSourceURI(String sourceURI) {
-        this.sourceURIs = Collections.singletonList(sourceURI);
+		this.sourceURIs = Collections.singletonList(sourceURI);
 	}
 
 	public List<String> getSourceURIs() {
@@ -136,12 +140,21 @@ public class ShovelDetails {
 		this.sourceQueue = sourceQueue;
 	}
 
+	/**
+	 * @return the first destination URI
+	 * @deprecated use {@link #getDestinationURIs()} instead
+	 */
 	@Deprecated
-    @JsonIgnore
+	@JsonIgnore
 	public String getDestinationURI() {
-        return destinationURIs.get(0);
+		return destinationURIs.get(0);
 	}
 
+	/**
+	 *
+	 * @param destURI
+	 * @deprecated use {@link #setDestinationURIs(List)} instead
+	 */
 	@Deprecated
 	public void setDestinationURI(String destURI) {
         this.destinationURIs = Collections.singletonList(destURI);
@@ -151,7 +164,7 @@ public class ShovelDetails {
         return destinationURIs;
 	}
 
-	public void setDestinationURI(List<String> destURIs) {
+	public void setDestinationURIs(List<String> destURIs) {
         checkURIsArgument("destURIs", destURIs);
         this.destinationURIs = Collections.unmodifiableList(destURIs);
 	}
@@ -240,13 +253,13 @@ public class ShovelDetails {
 	@Override
 	public String toString() {
 		return "ShovelDetails{" +
-                "sourceURI='" + URIsToString(sourceURIs) + '\'' +
+                "sourceURIs='" + URIsToString(sourceURIs) + '\'' +
 				", sourceExchange='" + sourceExchange + '\'' +
 				", sourceExchangeKey='" + sourceExchangeKey + '\'' +
 				", sourceQueue='" + sourceQueue + '\'' +
 				", sourcePrefetchCount='" + sourcePrefetchCount + '\'' +
 				", sourceDeleteAfter='" + sourceDeleteAfter + '\'' +
-                ", destinationURI='" + URIsToString(destinationURIs) + '\'' +
+                ", destinationURIs='" + URIsToString(destinationURIs) + '\'' +
 				", destinationExchange='" + destinationExchange + '\'' +
 				", destinationExchangeKey='" + destinationExchangeKey + '\'' +
 				", destinationQueue='" + destinationQueue + '\'' +
@@ -258,13 +271,13 @@ public class ShovelDetails {
 				'}';
 	}
 
-	private void checkURIsArgument(String argumentName, List<String> argument) {
+	private static void checkURIsArgument(String argumentName, List<String> argument) {
 		if (argument == null || argument.isEmpty()) {
 			throw new IllegalArgumentException(argumentName + " argument must contains at least one URI");
 		}
 	}
 
-	private String URIsToString(List<String> uris) {
+	private static String URIsToString(List<String> uris) {
 		if (uris.size() == 1) {
 			// for back compatibility
 			return uris.get(0);

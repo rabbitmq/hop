@@ -1788,7 +1788,7 @@ class ClientSpec extends Specification {
   }
 
   def "GET /api/parameters/shovel"() {
-    given: "a basic topology"
+    given: "a shovel defined"
     ShovelDetails value = new ShovelDetails("amqp://localhost:5672/vh1", "amqp://localhost:5672/vh2", 30, true, null)
     value.setSourceQueue("queue1")
     value.setDestinationExchange("exchange1")
@@ -1799,7 +1799,7 @@ class ClientSpec extends Specification {
     when: "client requests the shovels"
     final shovels = awaitEventPropagation { client.getShovels() }
 
-    then: "broker definitions are returned"
+    then: "shovel definitions are returned"
     !shovels.isEmpty()
     shovels.size() >= 1
     ShovelInfo s = shovels.find { (it.name == "shovel1") } as ShovelInfo
@@ -1824,8 +1824,8 @@ class ClientSpec extends Specification {
     client.deleteQueue("/", "queue1")
   }
 
-  def "GET /api/parameters/shovel with multiple URIs "() {
-    given: "a basic topology"
+  def "GET /api/parameters/shovel with multiple URIs"() {
+    given: "a shovel defined with multiple URIs"
     ShovelDetails value = new ShovelDetails(["amqp://localhost:5672/vh1", "amqp://localhost:5672/vh3"], ["amqp://localhost:5672/vh2", "amqp://localhost:5672/vh4"], 30, true, null)
     value.setSourceQueue("queue1")
     value.setDestinationExchange("exchange1")
@@ -1836,7 +1836,7 @@ class ClientSpec extends Specification {
     when: "client requests the shovels"
     final shovels = awaitEventPropagation { client.getShovels() }
 
-    then: "broker definitions are returned"
+    then: "shovel definitions are returned"
     !shovels.isEmpty()
     shovels.size() >= 1
     ShovelInfo s = shovels.find { (it.name == "shovel2") } as ShovelInfo
