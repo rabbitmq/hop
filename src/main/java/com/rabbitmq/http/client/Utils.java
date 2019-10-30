@@ -17,6 +17,7 @@
 package com.rabbitmq.http.client;
 
 import com.rabbitmq.http.client.domain.OutboundMessage;
+import org.springframework.util.StringUtils;
 
 import java.io.UnsupportedEncodingException;
 import java.net.MalformedURLException;
@@ -108,6 +109,16 @@ class Utils {
         } else {
             return potentiallyEncodedString;
         }
+    }
+
+    static String urlWithoutCredentials(String url) {
+        URL url1 = null;
+        try {
+            url1 = new URL(url);
+        } catch (MalformedURLException e) {
+            throw new IllegalArgumentException("URL is malformed");
+        }
+        return StringUtils.replace(url, url1.getUserInfo() + "@", "");
     }
 
     /* from https://github.com/apache/httpcomponents-client/commit/b58e7d46d75e1d3c42f5fd6db9bd45f32a49c639#diff-a74b24f025e68ec11e4550b42e9f807d */

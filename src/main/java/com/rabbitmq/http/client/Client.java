@@ -178,7 +178,7 @@ public class Client {
    * @throws URISyntaxException for a badly formed URL.
    */
   public Client(String url, HttpClientBuilderConfigurator configurator) throws MalformedURLException, URISyntaxException {
-    this(urlWithoutCredentials(url),
+    this(Utils.urlWithoutCredentials(url),
             Utils.extractUsernamePassword(url)[0],
             Utils.extractUsernamePassword(url)[1],
             configurator
@@ -1270,8 +1270,4 @@ public class Client {
     }
   }
 
-  private static String urlWithoutCredentials(String url) throws MalformedURLException {
-    URL url1 = new URL(url);
-    return StringUtils.replace(url, url1.getUserInfo() + "@", "");
-  }
 }

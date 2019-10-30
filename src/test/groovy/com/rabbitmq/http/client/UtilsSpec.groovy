@@ -47,4 +47,20 @@ class UtilsSpec extends Specification {
     usernamePassword[1] == "test@password"
   }
 
+  def "URL without credentials, credentials not encoded"() {
+    when: "credentials do not need encoding in the URL"
+    def urlWithoutCredentials = Utils.urlWithoutCredentials("http://mylogin:mypassword@localhost:15672")
+
+    then: "credentials are properly removed from the URL"
+    urlWithoutCredentials == "http://localhost:15672"
+  }
+
+  def "URL without credentials, credentials need to be encoded"() {
+    when: "credentials need encoding in the URL"
+    def urlWithoutCredentials = Utils.urlWithoutCredentials("https://test+user:test%40password@myrabbithost/api/")
+
+    then: "credentials are properly removed from the URL"
+    urlWithoutCredentials == "https://myrabbithost/api/"
+  }
+
 }

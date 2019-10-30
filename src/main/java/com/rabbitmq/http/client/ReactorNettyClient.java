@@ -41,7 +41,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.lang.reflect.Array;
-import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.function.BiFunction;
@@ -84,7 +83,7 @@ public class ReactorNettyClient {
     private final Consumer<HttpClientResponse> responseCallback;
 
     public ReactorNettyClient(String url, ReactorNettyClientOptions options) {
-        this(urlWithoutCredentials(url),
+        this(Utils.urlWithoutCredentials(url),
                 Utils.extractUsernamePassword(url)[0],
                 Utils.extractUsernamePassword(url)[1], options);
     }
@@ -122,11 +121,6 @@ public class ReactorNettyClient {
         this.byteBufSupplier = options.byteBufSupplier() == null ?
                 () -> PooledByteBufAllocator.DEFAULT.buffer() :
                 options.byteBufSupplier();
-    }
-
-    private static String urlWithoutCredentials(String url) {
-        URI url1 = URI.create(url);
-        return url.replace(url1.getUserInfo() + "@", "");
     }
 
     private static HttpResponse toHttpResponse(HttpClientResponse response) {
