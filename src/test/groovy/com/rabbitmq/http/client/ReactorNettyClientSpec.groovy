@@ -93,8 +93,14 @@ class ReactorNettyClientSpec extends Specification {
 
     protected static ReactorNettyClient newLocalhostNodeClient(ReactorNettyClientOptions options) {
         new ReactorNettyClient(
-                String.format("http://%s:%s@127.0.0.1:15672/api", DEFAULT_USERNAME, DEFAULT_PASSWORD), options
+                String.format("http://%s:%s@127.0.0.1:%d/api", DEFAULT_USERNAME, DEFAULT_PASSWORD, managementPort()), options
         )
+    }
+
+    static int managementPort() {
+        return System.getProperty("rabbitmq.management.port") == null ?
+                15672 :
+                Integer.valueOf(System.getProperty("rabbitmq.management.port"))
     }
 
     def "GET /api/overview"() {
@@ -145,13 +151,13 @@ class ReactorNettyClientSpec extends Specification {
     def "user info decoding"() {
         when: "username and password are encoded in the URL"
         def authorization = new AtomicReference<String>()
-        def httpClient = HttpClient.create().baseUrl("http://localhost:15672/api/")
+        def httpClient = HttpClient.create().baseUrl("http://localhost:" + managementPort() + "/api/")
                 .doAfterRequest({request, connection ->
                     authorization.set(request.requestHeaders().get("authorization"))
                 })
 
         def localClient = new ReactorNettyClient(
-                "http://test+user:test%40password@localhost:15672/api/",
+                "http://test+user:test%40password@localhost:" + managementPort() +  "/api/",
                 new ReactorNettyClientOptions().client({ httpClient }))
 
         try {
