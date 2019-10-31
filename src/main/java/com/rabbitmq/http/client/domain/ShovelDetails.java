@@ -95,7 +95,11 @@ public class ShovelDetails {
 	@Deprecated
 	@JsonIgnore
 	public String getSourceURI() {
-		return sourceURIs.get(0);
+		if(sourceURIs.isEmpty()) {
+			throw new IllegalStateException("URIs may not be empty.");
+		} else {
+			return sourceURIs.get(0);
+		}
 	}
 
 	/**
