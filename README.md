@@ -217,11 +217,32 @@ c.getBindingsByDestination("/", "an.exchange");
 
 ## Running Tests
 
-    gradle check
+To run the suite against a specific RabbitMQ node, export `HOP_RABBITMQCTL` and `HOP_RABBITMQ_PLUGINS` to point at `rabbitmqctl` and `rabbitmq-plugins` from the installation.
+
+Then set up the node that is assumed to be running:
+
+``` sh
+./bin/before_build.sh
+```
+
+This will enable several plugins used by the test suite and configure the node
+to use a much shorter event refresh interval so that HTTP API reflects system state
+changes with less of a delay.
+
+To run the tests:
+
+``` sh
+./gradlew check
+```
 
 The test suite assumes RabbitMQ is running locally with
-stock settings and rabbitmq-management plugin enabled.
+stock settings and a few plugins are enabled:
 
+ * `rabbitmq_management`
+ * `rabbitmq_shovel_management`
+ * `rabbitmq_federation_management`  
+
+To run the suite against a specific RabbitMQ node, export `HOP_RABBITMQCTL` and `HOP_RABBITMQ_PLUGINS` to point at `rabbitmqctl` and `rabbitmq-plugins` from the installation.
 
 ## License
 
