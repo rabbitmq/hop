@@ -27,20 +27,20 @@ public class Definitions {
     @JsonProperty("rabbit_version")
     private String serverVersion;
 
-    private List<VhostInfo> vhosts = new ArrayList<VhostInfo>();
+    private List<VhostInfo> vhosts = new ArrayList<>();
 
-    private List<UserInfo> users = new ArrayList<UserInfo>();
+    private List<UserInfo> users = new ArrayList<>();
 
-    private List<UserPermissions> permissions = new ArrayList<UserPermissions>();
+    private List<UserPermissions> permissions = new ArrayList<>();
 
     @JsonProperty("topic_permissions")
     private List<TopicPermissions> topicPermissions = new ArrayList<>();
 
-    private List<QueueInfo> queues = new ArrayList<QueueInfo>();
+    private List<QueueInfo> queues = new ArrayList<>();
 
-    private List<ExchangeInfo> exchanges = new ArrayList<ExchangeInfo>();
+    private List<ExchangeInfo> exchanges = new ArrayList<>();
 
-    private List<BindingInfo> bindings = new ArrayList<BindingInfo>();
+    private List<BindingInfo> bindings = new ArrayList<>();
 
     /**
      *
