@@ -99,7 +99,7 @@ public class ShovelDetails {
 	}
 
 	/**
-	 * @param sourceURI
+	 * @param sourceURI the source URI
 	 * @deprecated use {@link #setSourceURIs(List)} instead
 	 */
 	@Deprecated
@@ -152,7 +152,7 @@ public class ShovelDetails {
 
 	/**
 	 *
-	 * @param destURI
+	 * @param destURI the destination URI
 	 * @deprecated use {@link #setDestinationURIs(List)} instead
 	 */
 	@Deprecated
