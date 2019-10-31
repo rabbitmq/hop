@@ -239,9 +239,19 @@ To run the tests:
 The test suite assumes RabbitMQ is running locally with
 stock settings and a few plugins are enabled:
 
- * `rabbitmq_management`
+ * `rabbitmq_management` (listening on port 15672)
  * `rabbitmq_shovel_management`
  * `rabbitmq_federation_management`  
+
+To run the suite against a specific RabbitMQ node, export `HOP_RABBITMQCTL` and `HOP_RABBITMQ_PLUGINS`
+to point at `rabbitmqctl` and `rabbitmq-plugins` from the installation.
+
+The test suite can use a different port than 15672 by specifying it with the
+`rabbitmq.management.port` system property:
+
+``` sh
+./gradlew check -Drabbitmq.management.port=15673
+```
 
 [Travis file](https://github.com/rabbitmq/hop/blob/master/.travis.yml) contains instructions to install and configure 
 local Erlang and RabbitMQ

@@ -66,11 +66,17 @@ class ClientSpec extends Specification {
   }
 
   protected static Client newLocalhostNodeClient() {
-    new Client("http://127.0.0.1:15672/api/", DEFAULT_USERNAME, DEFAULT_PASSWORD)
+    new Client("http://127.0.0.1:" + managementPort() + "/api/", DEFAULT_USERNAME, DEFAULT_PASSWORD)
   }
 
   protected static Client newLocalhostNodeClient(HttpClientBuilderConfigurator cfg) {
-    new Client("http://127.0.0.1:15672/api/", DEFAULT_USERNAME, DEFAULT_PASSWORD, cfg)
+    new Client("http://127.0.0.1:" + managementPort() + "/api/", DEFAULT_USERNAME, DEFAULT_PASSWORD, cfg)
+  }
+
+  static int managementPort() {
+    return System.getProperty("rabbitmq.management.port") == null ?
+            15672 :
+            Integer.valueOf(System.getProperty("rabbitmq.management.port"))
   }
 
   def "GET /api/overview"() {
@@ -121,7 +127,7 @@ class ClientSpec extends Specification {
   def "user info decoding"() {
     when: "username and password are encoded in the URL"
     def usernamePassword = new AtomicReference<>()
-    def localClient = new Client("http://test+user:test%40password@localhost:15672/api/", { builder ->
+    def localClient = new Client("http://test+user:test%40password@localhost:" + managementPort() + "/api/", { builder ->
       builder.addInterceptorLast(new HttpRequestInterceptor() {
         @Override
         void process(org.apache.http.HttpRequest request, HttpContext context) throws org.apache.http.HttpException, IOException {
@@ -172,7 +178,7 @@ class ClientSpec extends Specification {
 
   def "GET /api/nodes with credentials in the URL"() {
     when: "credentials are provided in the URL"
-    final client = new Client("http://guest:guest@127.0.0.1:15672/api/")
+    final client = new Client("http://guest:guest@127.0.0.1:" + managementPort() + "/api/")
 
     and: "retrieves a list of cluster nodes"
     final res = client.getNodes()
