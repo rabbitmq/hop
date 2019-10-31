@@ -1,7 +1,5 @@
 package com.rabbitmq.http.client.domain;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
-
 /*
     "owner_pid_details": {
         "name": "127.0.0.1:57130 -> 127.0.0.1:5672",

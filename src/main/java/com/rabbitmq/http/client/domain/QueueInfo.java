@@ -23,67 +23,68 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.HashMap;
 import java.util.Map;
 
-//{
-//        "arguments": {},
-//        "auto_delete": true,
-//        "backing_queue_status": {
-//            "avg_ack_egress_rate": 0.0,
-//            "avg_ack_ingress_rate": 0.0,
-//            "avg_egress_rate": 0.0,
-//            "avg_ingress_rate": 0.0,
-//            "delta": [
-//                "delta",
-//                "undefined",
-//                0,
-//                "undefined"
-//            ],
-//            "len": 0,
-//            "next_seq_id": 0,
-//            "q1": 0,
-//            "q2": 0,
-//            "q3": 0,
-//            "q4": 0,
-//            "target_ram_count": "infinity"
-//        },
-//        "consumer_utilisation": "",
-//        "consumers": 0,
-//        "disk_reads": 0,
-//        "disk_writes": 0,
-//        "durable": false,
-//        introduced in RabbitMQ 3.6.0; older versions have to check owner_pid_details.
-//        "exclusive": false,
-//        "exclusive_consumer_tag": "",
-//        "idle_since": "2015-03-21 0:04:25",
-//        "memory": 13960,
-//        "message_bytes": 0,
-//        "message_bytes_persistent": 0,
-//        "message_bytes_ram": 0,
-//        "message_bytes_ready": 0,
-//        "message_bytes_unacknowledged": 0,
-//        "messages": 0,
-//        "messages_details": {
-//            "rate": 0.0
-//        },
-//        "messages_persistent": 0,
-//        "messages_ram": 0,
-//        "messages_ready": 0,
-//        "messages_ready_details": {
-//            "rate": 0.0
-//        },
-//        "messages_ready_ram": 0,
-//        "messages_unacknowledged": 0,
-//        "messages_unacknowledged_details": {
-//            "rate": 0.0
-//        },
-//        "messages_unacknowledged_ram": 0,
-//        "name": "langohr.tests2.queues.non-auto-deleted1",
-//        "node": "rabbit@mercurio",
-//        "policy": "",
-//        "recoverable_slaves": "",
-//        "state": "running",
-//        "vhost": "/"
-//    }
-
+/*
+{
+        "arguments": {},
+        "auto_delete": true,
+        "backing_queue_status": {
+            "avg_ack_egress_rate": 0.0,
+            "avg_ack_ingress_rate": 0.0,
+            "avg_egress_rate": 0.0,
+            "avg_ingress_rate": 0.0,
+            "delta": [
+                "delta",
+                "undefined",
+                0,
+                "undefined"
+            ],
+            "len": 0,
+            "next_seq_id": 0,
+            "q1": 0,
+            "q2": 0,
+            "q3": 0,
+            "q4": 0,
+            "target_ram_count": "infinity"
+        },
+        "consumer_utilisation": "",
+        "consumers": 0,
+        "disk_reads": 0,
+        "disk_writes": 0,
+        "durable": false,
+        introduced in RabbitMQ 3.6.0; older versions have to check owner_pid_details.
+        "exclusive": false,
+        "exclusive_consumer_tag": "",
+        "idle_since": "2015-03-21 0:04:25",
+        "memory": 13960,
+        "message_bytes": 0,
+        "message_bytes_persistent": 0,
+        "message_bytes_ram": 0,
+        "message_bytes_ready": 0,
+        "message_bytes_unacknowledged": 0,
+        "messages": 0,
+        "messages_details": {
+            "rate": 0.0
+        },
+        "messages_persistent": 0,
+        "messages_ram": 0,
+        "messages_ready": 0,
+        "messages_ready_details": {
+            "rate": 0.0
+        },
+        "messages_ready_ram": 0,
+        "messages_unacknowledged": 0,
+        "messages_unacknowledged_details": {
+            "rate": 0.0
+        },
+        "messages_unacknowledged_ram": 0,
+        "name": "langohr.tests2.queues.non-auto-deleted1",
+        "node": "rabbit@mercurio",
+        "policy": "",
+        "recoverable_slaves": "",
+        "state": "running",
+        "vhost": "/"
+    }
+ */
 @SuppressWarnings("unused")
 @JsonIgnoreProperties("backing_queue_status")
 public class QueueInfo {

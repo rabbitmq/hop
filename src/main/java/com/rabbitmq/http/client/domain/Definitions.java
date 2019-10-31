@@ -49,7 +49,7 @@ public class Definitions {
      */
     @Deprecated
     public String getRabbitMQVersion() {
-        return serverVersion;
+        return getServerVersion();
     }
 
     /**
@@ -59,7 +59,7 @@ public class Definitions {
      */
     @Deprecated
     public void setRabbitMQVersion(String rabbitMQVersion) {
-        this.serverVersion = rabbitMQVersion;
+       setServerVersion(rabbitMQVersion);
     }
 
     public String getServerVersion() {

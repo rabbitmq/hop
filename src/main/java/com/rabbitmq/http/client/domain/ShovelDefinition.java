@@ -37,9 +37,6 @@ public class ShovelDefinition {
 	@JsonProperty("dest-queue")
 	private String destinationQueue;
 
-	public ShovelDefinition() {
-	}
-
 	public String getSourceExchange() {
 		return sourceExchange;
 	}

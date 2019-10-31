@@ -18,30 +18,31 @@ package com.rabbitmq.http.client.domain;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-// {
-//    "node": "",
-//    "timestamp": "",
-//    "name": "",
-//    "vhost": "",
-//    "type": "",
-//    "state": "",
-//    "reason": ""
-//},
-//{
-//    "node": "",
-//    "timestamp": "",
-//    "name": "",
-//    "vhost": "",
-//    "type": "",
-//    "state": "",
-//    "definition": {
-//        "src-queue": "",
-//        "dest-exchange": ""
-//    },
-//    "src_uri": "",
-//    "dest_uri": ""
-//}
-
+/*
+ {
+    "node": "",
+    "timestamp": "",
+    "name": "",
+    "vhost": "",
+    "type": "",
+    "state": "",
+    "reason": ""
+},
+{
+    "node": "",
+    "timestamp": "",
+    "name": "",
+    "vhost": "",
+    "type": "",
+    "state": "",
+    "definition": {
+        "src-queue": "",
+        "dest-exchange": ""
+    },
+    "src_uri": "",
+    "dest_uri": ""
+}
+ */
 public class ShovelStatus {
 
 	private String node;
@@ -56,9 +57,6 @@ public class ShovelStatus {
 	@JsonProperty("dest_uri")
 	private String destinationURI;
 	private String reason;
-
-	public ShovelStatus() {
-	}
 
 	public String getNode() {
 		return node;

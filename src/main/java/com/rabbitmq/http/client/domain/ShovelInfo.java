@@ -18,24 +18,25 @@ package com.rabbitmq.http.client.domain;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-// {
-//     "value": {
-//         "src-uri": "",
-//         "src-exchange": "",
-//         "src-queue": "",
-//         "dest-uri": "",
-//         "dest-exchange": "",
-//         "dest-queue": "",
-//         "reconnect-delay": 0,
-//         "add-forward-headers": true,
-//         "publish-properties": {
-//         }
-//     },
-//     "vhost": "",
-//     "component": "shovel",
-//     "name": ""
-// }
-
+/*
+ {
+     "value": {
+         "src-uri": "",
+         "src-exchange": "",
+         "src-queue": "",
+         "dest-uri": "",
+         "dest-exchange": "",
+         "dest-queue": "",
+         "reconnect-delay": 0,
+         "add-forward-headers": true,
+         "publish-properties": {
+         }
+     },
+     "vhost": "",
+     "component": "shovel",
+     "name": ""
+ }
+ */
 public class ShovelInfo {
 
 	private String name;
