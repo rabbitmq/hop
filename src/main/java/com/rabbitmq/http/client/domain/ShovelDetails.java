@@ -88,25 +88,6 @@ public class ShovelDetails {
 		this.publishProperties = publishProperties;
 	}
 
-	/**
-	 * @return the first source source URI
-	 * @deprecated use {@link #getSourceURIs()} instead
-	 */
-	@Deprecated
-	@JsonIgnore
-	public String getSourceURI() {
-		return sourceURIs.get(0);
-	}
-
-	/**
-	 * @param sourceURI the source URI
-	 * @deprecated use {@link #setSourceURIs(List)} instead
-	 */
-	@Deprecated
-	public void setSourceURI(String sourceURI) {
-		this.sourceURIs = Collections.singletonList(sourceURI);
-	}
-
 	public List<String> getSourceURIs() {
         return sourceURIs;
 	}
@@ -138,26 +119,6 @@ public class ShovelDetails {
 
 	public void setSourceQueue(String sourceQueue) {
 		this.sourceQueue = sourceQueue;
-	}
-
-	/**
-	 * @return the first destination URI
-	 * @deprecated use {@link #getDestinationURIs()} instead
-	 */
-	@Deprecated
-	@JsonIgnore
-	public String getDestinationURI() {
-		return destinationURIs.get(0);
-	}
-
-	/**
-	 *
-	 * @param destURI the destination URI
-	 * @deprecated use {@link #setDestinationURIs(List)} instead
-	 */
-	@Deprecated
-	public void setDestinationURI(String destURI) {
-        this.destinationURIs = Collections.singletonList(destURI);
 	}
 
 	public List<String> getDestinationURIs() {
