@@ -60,7 +60,8 @@ public enum AckMode {
 
     @JsonCreator
     static AckMode fromValue(String value) {
-        return Arrays.stream(AckMode.values()).filter(e -> e.value.equals(value)).findFirst().get();
+        return Arrays.stream(AckMode.values()).filter(e -> e.value.equals(value))
+                .findFirst().orElseThrow(() -> new IllegalArgumentException("Unexpected value for mode: " + value));
     }
 
     @JsonValue

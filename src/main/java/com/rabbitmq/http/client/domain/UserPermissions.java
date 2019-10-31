@@ -73,7 +73,7 @@ public class UserPermissions {
     this.configure = configure;
   }
 
-  public static UserPermissions FULL = fullPermissions();
+  public static final UserPermissions FULL = fullPermissions();
 
   private static UserPermissions fullPermissions() {
     UserPermissions p = new UserPermissions();
