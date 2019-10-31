@@ -68,6 +68,7 @@ public class Client {
   private static final String POLICIES = "./policies/";
   private static final String BINDINGS = "./bindings/";
   private static final String PARAMETERS_SHOVEL = "./parameters/shovel/";
+
   private static final String VHOST_ERROR = "vhost cannot be null or blank";
   private static final String EXCHANGE_ERROR = "exchange cannot be null or blank";
   private static final String QUEUE_ERROR = "queue cannot be null or blank";
@@ -1267,7 +1268,6 @@ public class Client {
 
   private <T> List<T> asListOrNull(T[] result) {
     if(result == null) {
-      //TODO should be an empty list instead ?
       return null;
     } else {
       return Arrays.asList(result);
