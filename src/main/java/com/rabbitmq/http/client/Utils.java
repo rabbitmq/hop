@@ -32,11 +32,15 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- *
+ * A set of useful utilities
  */
 class Utils {
 
-    private static final Charset CHARSET_UTF8 = Charset.forName("UTF-8");
+    private Utils() {
+        // no instances should be created
+    }
+
+    private static final Charset CHARSET_UTF8 = StandardCharsets.UTF_8;
 
     static Map<String, Object> bodyForPublish(String routingKey, OutboundMessage outboundMessage) {
         if (routingKey == null) {
@@ -48,9 +52,9 @@ class Utils {
         if (outboundMessage.getPayload() == null) {
             throw new IllegalArgumentException("message payload cannot be null");
         }
-        Map<String, Object> body = new HashMap<String, Object>();
+        Map<String, Object> body = new HashMap<>();
         body.put("routing_key", routingKey);
-        body.put("properties", outboundMessage.getProperties() == null ? Collections.EMPTY_MAP : outboundMessage.getProperties());
+        body.put("properties", outboundMessage.getProperties() == null ? Collections.emptyMap() : outboundMessage.getProperties());
         body.put("payload", outboundMessage.getPayload());
         body.put("payload_encoding", outboundMessage.getPayloadEncoding());
         return body;
