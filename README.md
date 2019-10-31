@@ -217,7 +217,8 @@ c.getBindingsByDestination("/", "an.exchange");
 
 ## Running Tests
 
-To run the suite against a specific RabbitMQ node, export `HOP_RABBITMQCTL` and `HOP_RABBITMQ_PLUGINS` to point at `rabbitmqctl` and `rabbitmq-plugins` from the installation.
+To run the suite against a specific RabbitMQ node, export `HOP_RABBITMQCTL` and `HOP_RABBITMQ_PLUGINS` 
+to point at `rabbitmqctl` and `rabbitmq-plugins` from the installation.
 
 Then set up the node that is assumed to be running:
 
@@ -242,7 +243,8 @@ stock settings and a few plugins are enabled:
  * `rabbitmq_shovel_management`
  * `rabbitmq_federation_management`  
 
-To run the suite against a specific RabbitMQ node, export `HOP_RABBITMQCTL` and `HOP_RABBITMQ_PLUGINS` to point at `rabbitmqctl` and `rabbitmq-plugins` from the installation.
+[Travis file](https://github.com/rabbitmq/hop/blob/master/.travis.yml) contains instructions to install and configure 
+local Erlang and RabbitMQ
 
 ## License
 
