@@ -57,6 +57,22 @@ import java.net.URL;
 import java.util.*;
 
 public class Client {
+
+  private static final String CONNECTIONS = "./connections/";
+  private static final String VHOSTS = "./vhosts/";
+  private static final String USERS = "./users/";
+  private static final String PERMISSIONS = "./permissions/";
+  private static final String TOPIC_PERMISSIONS = "./topic-permissions/";
+  private static final String EXCHANGES = "./exchanges/";
+  private static final String QUEUES = "./queues/";
+  private static final String POLICIES = "./policies/";
+  private static final String BINDINGS = "./bindings/";
+  private static final String PARAMETERS_SHOVEL = "./parameters/shovel/";
+  private static final String VHOST_ERROR = "vhost cannot be null or blank";
+  private static final String EXCHANGE_ERROR = "exchange cannot be null or blank";
+  private static final String QUEUE_ERROR = "queue cannot be null or blank";
+  private static final String USERNAME_ERROR = "username cannot be null";
+
   private static final HttpClientBuilderConfigurator NO_OP_HTTP_CLIENT_BUILDER_CONFIGURATOR =
       builder -> builder;
 
@@ -145,19 +161,6 @@ public class Client {
    */
   public Client(URL url, String username, String password, SSLContext sslContext) throws MalformedURLException, URISyntaxException {
     this(url, username, password, null, sslContext);
-  }
-
-  /**
-   * Construct an instance with the provided url and credentials.
-   * @param url the url e.g. "http://localhost:15672/api/".
-   * @param username the username.
-   * @param password the password
-   * @param sslConnectionSocketFactory ssl connection factory for http client
-   * @throws MalformedURLException for a badly formed URL.
-   * @throws URISyntaxException for a badly formed URL.
-   */
-  private Client(URL url, String username, String password, SSLConnectionSocketFactory sslConnectionSocketFactory) throws MalformedURLException, URISyntaxException {
-    this(url, username, password, sslConnectionSocketFactory, null);
   }
 
   /**
@@ -269,7 +272,7 @@ public class Client {
    * @return list of connections across the cluster
    */
   public List<ConnectionInfo> getConnections() {
-    final URI uri = uriWithPath("./connections/");
+    final URI uri = uriWithPath(CONNECTIONS);
     return Arrays.asList(this.rt.getForObject(uri, ConnectionInfo[].class));
   }
 
@@ -280,7 +283,7 @@ public class Client {
    * @return connection information
    */
   public ConnectionInfo getConnection(String name) {
-    final URI uri = uriWithPath("./connections/" + encodePathSegment(name));
+    final URI uri = uriWithPath(CONNECTIONS + encodePathSegment(name));
     return this.rt.getForObject(uri, ConnectionInfo.class);
   }
 
@@ -291,7 +294,7 @@ public class Client {
    * @param name connection name
    */
   public void closeConnection(String name) {
-    final URI uri = uriWithPath("./connections/" + encodePathSegment(name));
+    final URI uri = uriWithPath(CONNECTIONS + encodePathSegment(name));
     deleteIgnoring404(uri);
   }
 
@@ -303,9 +306,9 @@ public class Client {
    * @param reason the reason of closing
    */
   public void closeConnection(String name, String reason) {
-    final URI uri = uriWithPath("./connections/" + encodePathSegment(name));
+    final URI uri = uriWithPath(CONNECTIONS + encodePathSegment(name));
 
-    MultiValueMap<String, String> headers = new LinkedMultiValueMap<String, String>();
+    MultiValueMap<String, String> headers = new LinkedMultiValueMap<>();
     headers.put("X-Reason", Collections.singletonList(reason));
 
     deleteIgnoring404(uri, headers);
@@ -327,7 +330,7 @@ public class Client {
    * @return list of channels on the connection
    */
   public List<ChannelInfo> getChannels(String connectionName) {
-    final URI uri = uriWithPath("./connections/" + encodePathSegment(connectionName) + "/channels/");
+    final URI uri = uriWithPath(CONNECTIONS + encodePathSegment(connectionName) + "/channels/");
     return Arrays.asList(this.rt.getForObject(uri, ChannelInfo[].class));
   }
 
@@ -343,12 +346,12 @@ public class Client {
   }
 
   public List<VhostInfo> getVhosts() {
-    final URI uri = uriWithPath("./vhosts/");
+    final URI uri = uriWithPath(VHOSTS);
     return Arrays.asList(this.rt.getForObject(uri, VhostInfo[].class));
   }
 
   public VhostInfo getVhost(String name) {
-    final URI uri = uriWithPath("./vhosts/" + encodePathSegment(name));
+    final URI uri = uriWithPath(VHOSTS + encodePathSegment(name));
     return getForObjectReturningNullOn404(uri, VhostInfo.class);
   }
 
@@ -363,7 +366,7 @@ public class Client {
    * @since 3.4.0
    */
   public void createVhost(String name, boolean tracing, String description, String... tags) {
-    Map<String, Object> body = new HashMap<String, Object>();
+    Map<String, Object> body = new HashMap<>();
     body.put("tracing", tracing);
 
     if (description != null && !description.isEmpty()) {
@@ -374,7 +377,7 @@ public class Client {
       body.put("tags", String.join(",", tags));
     }
 
-    final URI uri = uriWithPath("./vhosts/" + encodePathSegment(name));
+    final URI uri = uriWithPath(VHOSTS + encodePathSegment(name));
     this.rt.put(uri, body);
   }
 
@@ -403,23 +406,23 @@ public class Client {
   }
 
   public void createVhost(String name) {
-    final URI uri = uriWithPath("./vhosts/" + encodePathSegment(name));
+    final URI uri = uriWithPath(VHOSTS + encodePathSegment(name));
     this.rt.put(uri, null);
   }
 
   public void deleteVhost(String name) {
-    final URI uri = uriWithPath("./vhosts/" + encodePathSegment(name));
+    final URI uri = uriWithPath(VHOSTS + encodePathSegment(name));
     deleteIgnoring404(uri);
   }
 
   public List<UserPermissions> getPermissionsIn(String vhost) {
-    final URI uri = uriWithPath("./vhosts/" + encodePathSegment(vhost) + "/permissions");
+    final URI uri = uriWithPath(VHOSTS + encodePathSegment(vhost) + "/permissions");
     UserPermissions[] result = this.getForObjectReturningNullOn404(uri, UserPermissions[].class);
     return asListOrNull(result);
   }
 
   public List<UserPermissions> getPermissionsOf(String username) {
-    final URI uri = uriWithPath("./users/" + encodePathSegment(username) + "/permissions");
+    final URI uri = uriWithPath(USERS + encodePathSegment(username) + "/permissions");
     UserPermissions[] result = this.getForObjectReturningNullOn404(uri, UserPermissions[].class);
     return asListOrNull(result);
   }
@@ -431,18 +434,18 @@ public class Client {
   }
 
   public UserPermissions getPermissions(String vhost, String username) {
-    final URI uri = uriWithPath("./permissions/" + encodePathSegment(vhost) + "/" + encodePathSegment(username));
+    final URI uri = uriWithPath(PERMISSIONS + encodePathSegment(vhost) + "/" + encodePathSegment(username));
     return this.getForObjectReturningNullOn404(uri, UserPermissions.class);
   }
 
   public List<TopicPermissions> getTopicPermissionsIn(String vhost) {
-    final URI uri = uriWithPath("./vhosts/" + encodePathSegment(vhost) + "/topic-permissions");
+    final URI uri = uriWithPath(VHOSTS + encodePathSegment(vhost) + "/topic-permissions");
     TopicPermissions[] result = this.getForObjectReturningNullOn404(uri, TopicPermissions[].class);
     return asListOrNull(result);
   }
 
   public List<TopicPermissions> getTopicPermissionsOf(String username) {
-    final URI uri = uriWithPath("./users/" + encodePathSegment(username) + "/topic-permissions");
+    final URI uri = uriWithPath(USERS + encodePathSegment(username) + "/topic-permissions");
     TopicPermissions[] result = this.getForObjectReturningNullOn404(uri, TopicPermissions[].class);
     return asListOrNull(result);
   }
@@ -454,33 +457,33 @@ public class Client {
   }
 
   public List<TopicPermissions> getTopicPermissions(String vhost, String username) {
-    final URI uri = uriWithPath("./topic-permissions/" + encodePathSegment(vhost) + "/" + encodePathSegment(username));
+    final URI uri = uriWithPath(TOPIC_PERMISSIONS + encodePathSegment(vhost) + "/" + encodePathSegment(username));
     return asListOrNull(this.getForObjectReturningNullOn404(uri, TopicPermissions[].class));
   }
 
   public List<ExchangeInfo> getExchanges() {
-    final URI uri = uriWithPath("./exchanges/");
+    final URI uri = uriWithPath(EXCHANGES);
     return Arrays.asList(this.rt.getForObject(uri, ExchangeInfo[].class));
   }
 
   public List<ExchangeInfo> getExchanges(String vhost) {
-    final URI uri = uriWithPath("./exchanges/" + encodePathSegment(vhost));
+    final URI uri = uriWithPath(EXCHANGES + encodePathSegment(vhost));
     final ExchangeInfo[] result = this.getForObjectReturningNullOn404(uri, ExchangeInfo[].class);
     return asListOrNull(result);
   }
 
   public ExchangeInfo getExchange(String vhost, String name) {
-    final URI uri = uriWithPath("./exchanges/" + encodePathSegment(vhost) + "/" + encodePathSegment(name));
+    final URI uri = uriWithPath(EXCHANGES + encodePathSegment(vhost) + "/" + encodePathSegment(name));
     return this.getForObjectReturningNullOn404(uri, ExchangeInfo.class);
   }
 
   public void declareExchange(String vhost, String name, ExchangeInfo info) {
-    final URI uri = uriWithPath("./exchanges/" + encodePathSegment(vhost) + "/" + encodePathSegment(name));
+    final URI uri = uriWithPath(EXCHANGES + encodePathSegment(vhost) + "/" + encodePathSegment(name));
     this.rt.put(uri, info);
   }
 
   public void deleteExchange(String vhost, String name) {
-    this.deleteIgnoring404(uriWithPath("./exchanges/" + encodePathSegment(vhost) + "/" + encodePathSegment(name)));
+    this.deleteIgnoring404(uriWithPath(EXCHANGES + encodePathSegment(vhost) + "/" + encodePathSegment(name)));
   }
 
   /**
@@ -501,15 +504,15 @@ public class Client {
    */
   public boolean publish(String vhost, String exchange, String routingKey, OutboundMessage outboundMessage) {
     if (vhost == null || vhost.isEmpty()) {
-      throw new IllegalArgumentException("vhost cannot be null or blank");
+      throw new IllegalArgumentException(VHOST_ERROR);
     }
     if (exchange == null || exchange.isEmpty()) {
-      throw new IllegalArgumentException("exchange cannot be null or blank");
+      throw new IllegalArgumentException(EXCHANGE_ERROR);
     }
 
     Map<String, Object> body = Utils.bodyForPublish(routingKey, outboundMessage);
 
-    final URI uri = uriWithPath("./exchanges/" + encodePathSegment(vhost) + "/" + encodePathSegment(exchange) + "/publish");
+    final URI uri = uriWithPath(EXCHANGES + encodePathSegment(vhost) + "/" + encodePathSegment(exchange) + "/publish");
     Map<?, ?> response = this.rt.postForObject(uri, body, Map.class);
     Boolean routed = (Boolean) response.get("routed");
     if (routed == null) {
@@ -520,37 +523,37 @@ public class Client {
   }
 
   public List<QueueInfo> getQueues() {
-    final URI uri = uriWithPath("./queues/");
+    final URI uri = uriWithPath(QUEUES);
     return Arrays.asList(this.rt.getForObject(uri, QueueInfo[].class));
   }
 
   public List<QueueInfo> getQueues(String vhost) {
-    final URI uri = uriWithPath("./queues/" + encodePathSegment(vhost));
+    final URI uri = uriWithPath(QUEUES + encodePathSegment(vhost));
     final QueueInfo[] result = this.getForObjectReturningNullOn404(uri, QueueInfo[].class);
     return asListOrNull(result);
   }
 
   public QueueInfo getQueue(String vhost, String name) {
-    final URI uri = uriWithPath("./queues/" + encodePathSegment(vhost) + "/" + encodePathSegment(name));
+    final URI uri = uriWithPath(QUEUES + encodePathSegment(vhost) + "/" + encodePathSegment(name));
     return this.getForObjectReturningNullOn404(uri, QueueInfo.class);
   }
 
   public void declarePolicy(String vhost, String name, PolicyInfo info) {
-    final URI uri = uriWithPath("./policies/" + encodePathSegment(vhost) + "/" + encodePathSegment(name));
+    final URI uri = uriWithPath(POLICIES + encodePathSegment(vhost) + "/" + encodePathSegment(name));
     this.rt.put(uri, info);
   }
 
   public void declareQueue(String vhost, String name, QueueInfo info) {
-    final URI uri = uriWithPath("./queues/" + encodePathSegment(vhost) + "/" + encodePathSegment(name));
+    final URI uri = uriWithPath(QUEUES + encodePathSegment(vhost) + "/" + encodePathSegment(name));
     this.rt.put(uri, info);
   }
 
   public void purgeQueue(String vhost, String name) {
-    this.deleteIgnoring404(uriWithPath("./queues/" + encodePathSegment(vhost) + "/" + encodePathSegment(name) + "/contents/"));
+    this.deleteIgnoring404(uriWithPath(QUEUES + encodePathSegment(vhost) + "/" + encodePathSegment(name) + "/contents/"));
   }
 
   public void deleteQueue(String vhost, String name) {
-    this.deleteIgnoring404(uriWithPath("./queues/" + encodePathSegment(vhost) + "/" + encodePathSegment(name)));
+    this.deleteIgnoring404(uriWithPath(QUEUES + encodePathSegment(vhost) + "/" + encodePathSegment(name)));
   }
 
     /**
@@ -574,14 +577,14 @@ public class Client {
     public List<InboundMessage> get(String vhost, String queue,
                                     int count, GetAckMode ackMode, GetEncoding encoding, int truncate) {
         if (vhost == null || vhost.isEmpty()) {
-            throw new IllegalArgumentException("vhost cannot be null or blank");
+            throw new IllegalArgumentException(VHOST_ERROR);
         }
         if (queue == null || queue.isEmpty()) {
-            throw new IllegalArgumentException("queue cannot be null or blank");
+            throw new IllegalArgumentException(QUEUE_ERROR);
         }
         Map<String, Object> body = Utils.bodyForGet(count, ackMode, encoding, truncate);
 
-        final URI uri = uriWithPath("./queues/" + encodePathSegment(vhost) + "/" + encodePathSegment(queue) + "/get");
+        final URI uri = uriWithPath(QUEUES + encodePathSegment(vhost) + "/" + encodePathSegment(queue) + "/get");
         return Arrays.asList(this.rt.postForObject(uri, body, InboundMessage[].class));
     }
 
@@ -631,109 +634,109 @@ public class Client {
     }
 
   public void deletePolicy(String vhost, String name) {
-    this.deleteIgnoring404(uriWithPath("./policies/" + encodePathSegment(vhost) + "/" + encodePathSegment(name)));
+    this.deleteIgnoring404(uriWithPath(POLICIES + encodePathSegment(vhost) + "/" + encodePathSegment(name)));
   }
 
   public List<UserInfo> getUsers() {
-    final URI uri = uriWithPath("./users/");
+    final URI uri = uriWithPath(USERS);
     return Arrays.asList(this.rt.getForObject(uri, UserInfo[].class));
   }
 
   public UserInfo getUser(String username) {
-    final URI uri = uriWithPath("./users/" + encodePathSegment(username));
+    final URI uri = uriWithPath(USERS + encodePathSegment(username));
     return this.getForObjectReturningNullOn404(uri, UserInfo.class);
   }
 
   public void createUser(String username, char[] password, List<String> tags) {
     if(username == null) {
-      throw new IllegalArgumentException("username cannot be null");
+      throw new IllegalArgumentException(USERNAME_ERROR);
     }
     if(password == null) {
       throw new IllegalArgumentException("password cannot be null or empty. If you need to create a user that "
             + "will only authenticate using an x509 certificate, use createUserWithPasswordHash with a blank hash.");
     }
-    Map<String, Object> body = new HashMap<String, Object>();
+    Map<String, Object> body = new HashMap<>();
     body.put("password", new String(password));
     body.put("tags", String.join(",", tags));
 
-    final URI uri = uriWithPath("./users/" + encodePathSegment(username));
+    final URI uri = uriWithPath(USERS + encodePathSegment(username));
     this.rt.put(uri, body);
   }
 
   public void createUserWithPasswordHash(String username, char[] passwordHash, List<String> tags) {
     if(username == null) {
-      throw new IllegalArgumentException("username cannot be null");
+      throw new IllegalArgumentException(USERNAME_ERROR);
     }
     // passwordless authentication is a thing. See
     // https://github.com/rabbitmq/hop/issues/94 and https://www.rabbitmq.com/authentication.html. MK.
     if(passwordHash == null) {
       passwordHash = "".toCharArray();
     }
-    Map<String, Object> body = new HashMap<String, Object>();
+    Map<String, Object> body = new HashMap<>();
     body.put("password_hash", String.valueOf(passwordHash));
     body.put("tags", String.join(",", tags));
 
-    final URI uri = uriWithPath("./users/" + encodePathSegment(username));
+    final URI uri = uriWithPath(USERS + encodePathSegment(username));
     this.rt.put(uri, body);
   }
 
   public void updateUser(String username, char[] password, List<String> tags) {
     if(username == null) {
-      throw new IllegalArgumentException("username cannot be null");
+      throw new IllegalArgumentException(USERNAME_ERROR);
     }
-    Map<String, Object> body = new HashMap<String, Object>();
+    Map<String, Object> body = new HashMap<>();
     // only update password if provided
     if(password != null) {
       body.put("password", new String(password));
     }
     body.put("tags", String.join(",", tags));
 
-    final URI uri = uriWithPath("./users/" + encodePathSegment(username));
+    final URI uri = uriWithPath(USERS + encodePathSegment(username));
     this.rt.put(uri, body);
   }
 
   public void deleteUser(String username) {
-    this.deleteIgnoring404(uriWithPath("./users/" + encodePathSegment(username)));
+    this.deleteIgnoring404(uriWithPath(USERS + encodePathSegment(username)));
   }
 
   public void updatePermissions(String vhost, String username, UserPermissions permissions) {
-    final URI uri = uriWithPath("./permissions/" + encodePathSegment(vhost) + "/" + encodePathSegment(username));
+    final URI uri = uriWithPath(PERMISSIONS + encodePathSegment(vhost) + "/" + encodePathSegment(username));
     this.rt.put(uri, permissions);
   }
 
   public void clearPermissions(String vhost, String username) {
-    final URI uri = uriWithPath("./permissions/" + encodePathSegment(vhost) + "/" + encodePathSegment(username));
+    final URI uri = uriWithPath(PERMISSIONS + encodePathSegment(vhost) + "/" + encodePathSegment(username));
     deleteIgnoring404(uri);
   }
 
   public void updateTopicPermissions(String vhost, String username, TopicPermissions permissions) {
-    final URI uri = uriWithPath("./topic-permissions/" + encodePathSegment(vhost) + "/" + encodePathSegment(username));
+    final URI uri = uriWithPath(TOPIC_PERMISSIONS + encodePathSegment(vhost) + "/" + encodePathSegment(username));
     this.rt.put(uri, permissions);
   }
 
   public void clearTopicPermissions(String vhost, String username) {
-    final URI uri = uriWithPath("./topic-permissions/" + encodePathSegment(vhost) + "/" + encodePathSegment(username));
+    final URI uri = uriWithPath(TOPIC_PERMISSIONS + encodePathSegment(vhost) + "/" + encodePathSegment(username));
     deleteIgnoring404(uri);
   }
 
   public List<PolicyInfo> getPolicies() {
-    final URI uri = uriWithPath("./policies/");
+    final URI uri = uriWithPath(POLICIES);
     return Arrays.asList(this.rt.getForObject(uri, PolicyInfo[].class));
   }
 
   public List<PolicyInfo> getPolicies(String vhost) {
-    final URI uri = uriWithPath("./policies/" + encodePathSegment(vhost));
+    final URI uri = uriWithPath(POLICIES + encodePathSegment(vhost));
     final PolicyInfo[] result = this.getForObjectReturningNullOn404(uri, PolicyInfo[].class);
     return asListOrNull(result);
   }
 
   public List<BindingInfo> getBindings() {
-    final URI uri = uriWithPath("./bindings/");
+    final URI uri = uriWithPath(BINDINGS);
     return Arrays.asList(this.rt.getForObject(uri, BindingInfo[].class));
   }
 
   public List<BindingInfo> getBindings(String vhost) {
-    final URI uri = uriWithPath("./bindings/" + encodePathSegment(vhost));
+    final URI uri = uriWithPath(BINDINGS + encodePathSegment(vhost));
     return Arrays.asList(this.rt.getForObject(uri, BindingInfo[].class));
   }
 
@@ -747,7 +750,7 @@ public class Client {
    */
   public List<BindingInfo> getBindingsBySource(String vhost, String exchange) {
     final String x = exchange.equals("") ? "amq.default" : exchange;
-    final URI uri = uriWithPath("./exchanges/" + encodePathSegment(vhost) +
+    final URI uri = uriWithPath(EXCHANGES + encodePathSegment(vhost) +
         "/" + encodePathSegment(x) + "/bindings/source");
     return Arrays.asList(this.rt.getForObject(uri, BindingInfo[].class));
   }
@@ -762,7 +765,7 @@ public class Client {
    */
   public List<BindingInfo> getExchangeBindingsByDestination(String vhost, String exchange) {
     final String x = exchange.equals("") ? "amq.default" : exchange;
-    final URI uri = uriWithPath("./exchanges/" + encodePathSegment(vhost) +
+    final URI uri = uriWithPath(EXCHANGES + encodePathSegment(vhost) +
         "/" + encodePathSegment(x) + "/bindings/destination");
     final BindingInfo[] result = this.rt.getForObject(uri, BindingInfo[].class);
     return asListOrNull(result);
@@ -776,21 +779,21 @@ public class Client {
    * @return list of bindings
    */
   public List<BindingInfo> getQueueBindings(String vhost, String queue) {
-    final URI uri = uriWithPath("./queues/" + encodePathSegment(vhost) +
+    final URI uri = uriWithPath(QUEUES + encodePathSegment(vhost) +
         "/" + encodePathSegment(queue) + "/bindings");
     final BindingInfo[] result = this.rt.getForObject(uri, BindingInfo[].class);
     return asListOrNull(result);
   }
 
   public List<BindingInfo> getQueueBindingsBetween(String vhost, String exchange, String queue) {
-    final URI uri = uriWithPath("./bindings/" + encodePathSegment(vhost) +
+    final URI uri = uriWithPath(BINDINGS + encodePathSegment(vhost) +
         "/e/" + encodePathSegment(exchange) + "/q/" + encodePathSegment(queue));
     final BindingInfo[] result = this.rt.getForObject(uri, BindingInfo[].class);
     return asListOrNull(result);
   }
 
   public List<BindingInfo> getExchangeBindingsBetween(String vhost, String source, String destination) {
-    final URI uri = uriWithPath("./bindings/" + encodePathSegment(vhost) +
+    final URI uri = uriWithPath(BINDINGS + encodePathSegment(vhost) +
         "/e/" + encodePathSegment(source) + "/e/" + encodePathSegment(destination));
     final BindingInfo[] result = this.rt.getForObject(uri, BindingInfo[].class);
     return asListOrNull(result);
@@ -817,21 +820,21 @@ public class Client {
    */
   public void bindQueue(String vhost, String queue, String exchange, String routingKey, Map<String, Object> args) {
     if(vhost == null || vhost.isEmpty()) {
-      throw new IllegalArgumentException("vhost cannot be null or blank");
+      throw new IllegalArgumentException(VHOST_ERROR);
     }
     if(queue == null || queue.isEmpty()) {
-      throw new IllegalArgumentException("queue cannot be null or blank");
+      throw new IllegalArgumentException(QUEUE_ERROR);
     }
     if(exchange == null || exchange.isEmpty()) {
-      throw new IllegalArgumentException("exchange cannot be null or blank");
+      throw new IllegalArgumentException(EXCHANGE_ERROR);
     }
-    Map<String, Object> body = new HashMap<String, Object>();
-    if(!(args == null)) {
+    Map<String, Object> body = new HashMap<>();
+    if(args != null) {
       body.put("arguments", args);
     }
     body.put("routing_key", routingKey);
 
-    final URI uri = uriWithPath("./bindings/" + encodePathSegment(vhost) +
+    final URI uri = uriWithPath(BINDINGS + encodePathSegment(vhost) +
       "/e/" + encodePathSegment(exchange) + "/q/" + encodePathSegment(queue));
     this.rt.postForLocation(uri, body);
   }
@@ -845,16 +848,16 @@ public class Client {
    */
   public void unbindQueue(String vhost, String queue, String exchange, String routingKey) {
     if(vhost == null || vhost.isEmpty()) {
-      throw new IllegalArgumentException("vhost cannot be null or blank");
+      throw new IllegalArgumentException(VHOST_ERROR);
     }
     if(queue == null || queue.isEmpty()) {
-      throw new IllegalArgumentException("queue cannot be null or blank");
+      throw new IllegalArgumentException(QUEUE_ERROR);
     }
     if(exchange == null || exchange.isEmpty()) {
-      throw new IllegalArgumentException("exchange cannot be null or blank");
+      throw new IllegalArgumentException(EXCHANGE_ERROR);
     }
     
-    this.deleteIgnoring404(uriWithPath("./bindings/" + encodePathSegment(vhost) + "/e/" + encodePathSegment(exchange) + 
+    this.deleteIgnoring404(uriWithPath(BINDINGS + encodePathSegment(vhost) + "/e/" + encodePathSegment(exchange) +
       "/q/" + encodePathSegment(queue) + '/' + encodePathSegment(routingKey)));
   }
 
@@ -879,7 +882,7 @@ public class Client {
    */
   public void bindExchange(String vhost, String destination, String source, String routingKey, Map<String, Object> args) {
     if(vhost == null || vhost.isEmpty()) {
-      throw new IllegalArgumentException("vhost cannot be null or blank");
+      throw new IllegalArgumentException(VHOST_ERROR);
     }
     if(destination == null || destination.isEmpty()) {
       throw new IllegalArgumentException("destination cannot be null or blank");
@@ -887,13 +890,13 @@ public class Client {
     if(source == null || source.isEmpty()) {
       throw new IllegalArgumentException("source cannot be null or blank");
     }
-    Map<String, Object> body = new HashMap<String, Object>();
-    if(!(args == null)) {
+    Map<String, Object> body = new HashMap<>();
+    if(args != null) {
       body.put("arguments", args);
     }
     body.put("routing_key", routingKey);
 
-    final URI uri = uriWithPath("./bindings/" + encodePathSegment(vhost) +
+    final URI uri = uriWithPath(BINDINGS + encodePathSegment(vhost) +
       "/e/" + encodePathSegment(source) + "/e/" + encodePathSegment(destination));
     this.rt.postForLocation(uri, body);
   }
@@ -907,7 +910,7 @@ public class Client {
    */
   public void unbindExchange(String vhost, String destination, String source, String routingKey) {
     if(vhost == null || vhost.isEmpty()) {
-      throw new IllegalArgumentException("vhost cannot be null or blank");
+      throw new IllegalArgumentException(VHOST_ERROR);
     }
     if(destination == null || destination.isEmpty()) {
       throw new IllegalArgumentException("destination cannot be null or blank");
@@ -916,7 +919,7 @@ public class Client {
       throw new IllegalArgumentException("source cannot be null or blank");
     }
 	    
-    this.deleteIgnoring404(uriWithPath("./bindings/" + encodePathSegment(vhost) + "/e/" + encodePathSegment(source) + 
+    this.deleteIgnoring404(uriWithPath(BINDINGS + encodePathSegment(vhost) + "/e/" + encodePathSegment(source) +
       "/e/" + encodePathSegment(destination) + '/' + encodePathSegment(routingKey)));
   }
 
@@ -929,7 +932,7 @@ public class Client {
       throw new IllegalArgumentException("name cannot be null or blank");
     }
     final URI uri = uriWithPath("./cluster-name");
-    Map<String, String> m = new HashMap<String, String>();
+    Map<String, String> m = new HashMap<>();
     m.put("name", name);
     this.rt.put(uri, m);
   }
@@ -960,7 +963,7 @@ public class Client {
     if(props != null && props.isEmpty()) {
       throw new IllegalArgumentException("Shovel publish properties must be a non-empty map or null");
     }
-    final URI uri = uriWithPath("./parameters/shovel/" + encodePathSegment(vhost) + "/" + encodePathSegment(info.getName()));
+    final URI uri = uriWithPath(PARAMETERS_SHOVEL + encodePathSegment(vhost) + "/" + encodePathSegment(info.getName()));
     this.rt.put(uri, info);
   }
 
@@ -970,7 +973,7 @@ public class Client {
    * @return Shovels.
    */
   public List<ShovelInfo> getShovels() {
-    final URI uri = uriWithPath("./parameters/shovel/");
+    final URI uri = uriWithPath(PARAMETERS_SHOVEL);
     return Arrays.asList(this.rt.getForObject(uri, ShovelInfo[].class));
   }
 
@@ -981,7 +984,7 @@ public class Client {
    * @return Shovels.
    */
   public List<ShovelInfo> getShovels(String vhost) {
-    final URI uri = uriWithPath("./parameters/shovel/" + encodePathSegment(vhost));
+    final URI uri = uriWithPath(PARAMETERS_SHOVEL + encodePathSegment(vhost));
     final ShovelInfo[] result = this.getForObjectReturningNullOn404(uri, ShovelInfo[].class);
     return asListOrNull(result);
   }
@@ -1015,7 +1018,7 @@ public class Client {
    * @param shovelname Shovel to be deleted.
    */
   public void deleteShovel(String vhost, String shovelname) {
-	    this.deleteIgnoring404(uriWithPath("./parameters/shovel/" + encodePathSegment(vhost) + "/" + encodePathSegment(shovelname)));
+	    this.deleteIgnoring404(uriWithPath(PARAMETERS_SHOVEL + encodePathSegment(vhost) + "/" + encodePathSegment(shovelname)));
   }
 
   //
@@ -1155,7 +1158,7 @@ public class Client {
   }
 
   private List<HttpMessageConverter<?>> getMessageConverters() {
-    List<HttpMessageConverter<?>> xs = new ArrayList<HttpMessageConverter<?>>();
+    List<HttpMessageConverter<?>> xs = new ArrayList<>();
     final Jackson2ObjectMapperBuilder bldr = Jackson2ObjectMapperBuilder
         .json()
         .serializationInclusion(JsonInclude.Include.NON_NULL)
@@ -1245,7 +1248,7 @@ public class Client {
     try {
       this.rt.delete(uri);
     } catch (final HttpClientErrorException ce) {
-      if(!(ce.getStatusCode() == HttpStatus.NOT_FOUND)) {
+      if(ce.getStatusCode() != HttpStatus.NOT_FOUND) {
         throw ce;
       }
     }
@@ -1253,10 +1256,10 @@ public class Client {
 
   private void deleteIgnoring404(URI uri, MultiValueMap<String, String> headers) {
     try {
-      HttpEntity<Object> entity = new HttpEntity<Object>(null, headers);
+      HttpEntity<Object> entity = new HttpEntity<>(null, headers);
       this.rt.exchange(uri, HttpMethod.DELETE, entity, Object.class);
     } catch (final HttpClientErrorException ce) {
-      if(!(ce.getStatusCode() == HttpStatus.NOT_FOUND)) {
+      if(ce.getStatusCode() != HttpStatus.NOT_FOUND) {
         throw ce;
       }
     }
@@ -1264,10 +1267,10 @@ public class Client {
 
   private <T> List<T> asListOrNull(T[] result) {
     if(result == null) {
+      //TODO should be an empty list instead ?
       return null;
     } else {
       return Arrays.asList(result);
     }
   }
-
 }
