@@ -35,6 +35,8 @@ public class ConsumerDetails {
   private Map<String, Object> arguments;
   @JsonProperty("queue")
   private QueueDetails queueDetails;
+  @JsonProperty("active")
+  private boolean active = true;
 
   public String getConsumerTag() {
     return consumerTag;
@@ -84,6 +86,14 @@ public class ConsumerDetails {
     this.queueDetails = queueDetails;
   }
 
+  public boolean isActive() {
+    return active;
+  }
+
+  public void setActive(boolean active) {
+    this.active = active;
+  }
+
   @Override
   public String toString() {
     return "ConsumerDetails{" +
@@ -93,6 +103,7 @@ public class ConsumerDetails {
         ", exclusive=" + exclusive +
         ", arguments=" + arguments +
         ", queueDetails=" + queueDetails +
+        ", active='" + active +
         '}';
   }
 }

@@ -21,6 +21,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 //{
@@ -149,6 +150,10 @@ public class QueueInfo {
   // TODO: should we expose backing_queue_status,
   //       which is an implementation detail?
 
+  @JsonProperty("consumer_details")
+  private List<ConsumerDetails> consumerDetails;
+  @JsonProperty("single_active_consumer_tag")
+  private String singleActiveConsumerTag;
 
   public QueueInfo() {
   }
@@ -402,6 +407,22 @@ public class QueueInfo {
     this.ownerPidDetails = ownerPidDetails;
   }
 
+  public List<ConsumerDetails> getConsumerDetails() {
+    return consumerDetails;
+  }
+
+  public void setConsumerDetails(List<ConsumerDetails> consumerDetails) {
+    this.consumerDetails = consumerDetails;
+  }
+
+  public String getSingleActiveConsumerTag() {
+    return singleActiveConsumerTag;
+  }
+
+  public void setSingleActiveConsumerTag(String singleActiveConsumerTag) {
+    this.singleActiveConsumerTag = singleActiveConsumerTag;
+  }
+
   @Override
   public String toString() {
     return "QueueInfo{" +
@@ -433,6 +454,7 @@ public class QueueInfo {
         ", messagesUnacknowledged=" + messagesUnacknowledged +
         ", messagesUnacknowledgedDetails=" + messagesUnacknowledgedDetails +
         ", consumerCount=" + consumerCount +
+        ", singleActiveConsumerTag=" + singleActiveConsumerTag +
         '}';
   }
 }
