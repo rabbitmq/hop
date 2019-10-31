@@ -445,7 +445,7 @@ class ReactorNettyClientSpec extends Specification {
 
         cleanup:
         if (isVersion38orLater()) {
-            client.deleteVhost(vhost)
+            client.deleteVhost(vhost).block()
         }
     }
 
