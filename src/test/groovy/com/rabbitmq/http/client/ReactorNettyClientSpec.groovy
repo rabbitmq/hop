@@ -432,6 +432,7 @@ class ReactorNettyClientSpec extends Specification {
         if (!isVersion38orLater()) return
         when: "client creates a vhost with metadata"
         final vhost = "vhost-with-metadata"
+        client.deleteVhost(vhost).block()
         client.createVhost(vhost, true, "vhost description", "production", "application1", "realm1").block()
 
         final vhi = client.getVhost(vhost).block()

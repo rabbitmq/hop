@@ -1095,6 +1095,7 @@ class ClientSpec extends Specification {
     if (!isVersion38orLater()) return
     when: "client creates a vhost with metadata"
     final vhost = "vhost-with-metadata"
+    client.deleteVhost(vhost)
     client.createVhost(vhost, true, "vhost description", "production", "application1", "realm1")
     final vhi = client.getVhost(vhost)
 
