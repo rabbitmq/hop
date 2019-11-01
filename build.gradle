@@ -83,6 +83,8 @@ test {
     logger.lifecycle("Running test \"${descriptor}\"")
   }
 
+  systemProperty 'rabbitmq.management.port', System.getProperty('rabbitmq.management.port') ?: '15672'
+
   // suppress all console output during testing unless running `gradle -i`
   logging.captureStandardOutput(LogLevel.INFO)
   maxHeapSize = "1024m"
