@@ -541,6 +541,37 @@ public class Client {
     this.deleteIgnoring404(uriWithPath("./queues/" + encodePathSegment(vhost) + "/" + encodePathSegment(name)));
   }
 
+  /**
+   * Get messages from a queue. Compatible with older RabbitMQ versions i.e. 3.6.*
+   *
+   * <b>DO NOT USE THIS METHOD IN PRODUCTION</b>. Getting messages with the HTTP API
+   * is intended for diagnostics or tests. It does not implement reliable delivery
+   * and so should be treated as a sysadmin's tool rather than a general API for messaging.
+   *
+   * @param vhost    the virtual host the target queue is in
+   * @param queue    the queue to consume from
+   * @param count    the maximum number of messages to get
+   * @param requeue  determines whether the messages will be requeued to the queue
+   * @param encoding the expected encoding of the message payload
+   * @param truncate to truncate the message payload if it is larger than the size given (in bytes), -1 means no truncation
+   * @return the list of messages
+   * @see GetEncoding
+   * @since 3.5.1
+   */
+  public List<InboundMessage> get(String vhost, String queue,
+                                  int count, boolean requeue, GetEncoding encoding, int truncate) {
+    if (vhost == null || vhost.isEmpty()) {
+      throw new IllegalArgumentException("vhost cannot be null or blank");
+    }
+    if (queue == null || queue.isEmpty()) {
+      throw new IllegalArgumentException("queue cannot be null or blank");
+    }
+    Map<String, Object> body = Utils.bodyForGet(count, requeue, encoding, truncate);
+
+    final URI uri = uriWithPath("./queues/" + encodePathSegment(vhost) + "/" + encodePathSegment(queue) + "/get");
+    return Arrays.asList(this.rt.postForObject(uri, body, InboundMessage[].class));
+  }
+
     /**
      * Get messages from a queue.
      *
