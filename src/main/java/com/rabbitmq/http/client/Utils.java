@@ -70,23 +70,6 @@ class Utils {
         return body;
     }
 
-    static Map<String, Object> bodyForGet(int count, boolean requeue, GetEncoding encoding, int truncate) {
-        if (count <= 0) {
-            throw new IllegalArgumentException("count must be greater than 0");
-        }
-        if (encoding == null) {
-            throw new IllegalArgumentException("encoding cannot be null");
-        }
-        Map<String, Object> body = new HashMap<>();
-        body.put("count", count);
-        body.put("requeue", requeue);
-        body.put("encoding", encoding.encoding);
-        if (truncate >= 0) {
-            body.put("truncate", truncate);
-        }
-        return body;
-    }
-
     /* from https://github.com/apache/httpcomponents-client/commit/b58e7d46d75e1d3c42f5fd6db9bd45f32a49c639#diff-a74b24f025e68ec11e4550b42e9f807d */
 
     static String encodePath(String content, Charset charset) {
