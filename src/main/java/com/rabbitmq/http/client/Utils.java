@@ -60,8 +60,15 @@ class Utils {
         if (encoding == null) {
             throw new IllegalArgumentException("encoding cannot be null");
         }
+        boolean requeue;
+        if (ackMode.ackMode.equals("ack_requeue_true") || ackMode.ackMode.equals("reject_requeue_false")) {
+            requeue = true;
+        } else {
+            requeue = false;
+        }
         Map<String, Object> body = new HashMap<>();
         body.put("count", count);
+        body.put("requeue", requeue);
         body.put("ackmode", ackMode.ackMode);
         body.put("encoding", encoding.encoding);
         if (truncate >= 0) {
