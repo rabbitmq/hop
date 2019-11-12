@@ -16,6 +16,7 @@
 
 package com.rabbitmq.http.client.domain;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
@@ -28,6 +29,8 @@ public class VhostInfo {
   private String name;
   private boolean tracing;
   private String description;
+
+  @JsonFormat(with = JsonFormat.Feature.ACCEPT_SINGLE_VALUE_AS_ARRAY)
   private List<String> tags;
   @JsonProperty("cluster_state")
   private Map<String, String> clusterState;
