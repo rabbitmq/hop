@@ -252,6 +252,10 @@ The test suite can use a different port than 15672 by specifying it with the
 ./gradlew check -Drabbitmq.management.port=15673
 ```
 
+## Versioning
+
+This library uses [semantic versioning](https://semver.org/).
+
 ## License
 
 [Apache 2.0](https://www.apache.org/licenses/LICENSE-2.0.html).
