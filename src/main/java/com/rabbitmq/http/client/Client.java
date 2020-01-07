@@ -18,30 +18,39 @@ package com.rabbitmq.http.client;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.DeserializationFeature;
-import com.rabbitmq.http.client.domain.*;
-import org.apache.http.HttpHost;
-import org.apache.http.auth.AuthScope;
-import org.apache.http.auth.UsernamePasswordCredentials;
-import org.apache.http.client.AuthCache;
-import org.apache.http.client.CredentialsProvider;
-import org.apache.http.client.HttpClient;
-import org.apache.http.client.protocol.HttpClientContext;
+import com.rabbitmq.http.client.domain.AlivenessTestResult;
+import com.rabbitmq.http.client.domain.BindingInfo;
+import com.rabbitmq.http.client.domain.ChannelInfo;
+import com.rabbitmq.http.client.domain.ClusterId;
+import com.rabbitmq.http.client.domain.ConnectionInfo;
+import com.rabbitmq.http.client.domain.CurrentUserDetails;
+import com.rabbitmq.http.client.domain.Definitions;
+import com.rabbitmq.http.client.domain.ExchangeInfo;
+import com.rabbitmq.http.client.domain.InboundMessage;
+import com.rabbitmq.http.client.domain.NodeInfo;
+import com.rabbitmq.http.client.domain.OutboundMessage;
+import com.rabbitmq.http.client.domain.OverviewResponse;
+import com.rabbitmq.http.client.domain.PolicyInfo;
+import com.rabbitmq.http.client.domain.QueueInfo;
+import com.rabbitmq.http.client.domain.ShovelInfo;
+import com.rabbitmq.http.client.domain.ShovelStatus;
+import com.rabbitmq.http.client.domain.TopicPermissions;
+import com.rabbitmq.http.client.domain.UpstreamDetails;
+import com.rabbitmq.http.client.domain.UpstreamInfo;
+import com.rabbitmq.http.client.domain.UpstreamSetDetails;
+import com.rabbitmq.http.client.domain.UpstreamSetInfo;
+import com.rabbitmq.http.client.domain.UserInfo;
+import com.rabbitmq.http.client.domain.UserPermissions;
+import com.rabbitmq.http.client.domain.VhostInfo;
 import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
-import org.apache.http.impl.auth.BasicScheme;
-import org.apache.http.impl.client.BasicAuthCache;
-import org.apache.http.impl.client.BasicCredentialsProvider;
-import org.apache.http.impl.client.HttpClientBuilder;
-import org.apache.http.protocol.HttpContext;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.http.client.HttpComponentsClientHttpRequestFactory;
 import org.springframework.http.converter.HttpMessageConverter;
 import org.springframework.http.converter.json.Jackson2ObjectMapperBuilder;
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
-import org.springframework.util.Assert;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.util.StringUtils;
@@ -54,7 +63,12 @@ import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 public class Client {
   private static final HttpClientBuilderConfigurator NO_OP_HTTP_CLIENT_BUILDER_CONFIGURATOR =
@@ -74,7 +88,9 @@ public class Client {
    * @param password the password
    * @throws MalformedURLException for a badly formed URL.
    * @throws URISyntaxException for a badly formed URL.
+   * @deprecated User {@link #Client(ClientConfigurer)}
    */
+  @Deprecated
   public Client(String url, String username, String password) throws MalformedURLException, URISyntaxException {
     this(new URL(url), username, password);
   }
@@ -87,7 +103,9 @@ public class Client {
    * @param configurator {@link HttpClientBuilderConfigurator} to use
    * @throws MalformedURLException for a badly formed URL.
    * @throws URISyntaxException for a badly formed URL.
+   * @deprecated User {@link #Client(ClientConfigurer)}
    */
+  @Deprecated
   public Client(String url, String username, String password, HttpClientBuilderConfigurator configurator)
       throws MalformedURLException, URISyntaxException {
     this(new URL(url), username, password, configurator);
@@ -100,7 +118,9 @@ public class Client {
    * @param password the password
    * @throws MalformedURLException for a badly formed URL.
    * @throws URISyntaxException for a badly formed URL.
+   * @deprecated User {@link #Client(ClientConfigurer)}
    */
+  @Deprecated
   public Client(URL url, String username, String password) throws MalformedURLException, URISyntaxException {
     this(url, username, password, null, null);
   }
@@ -113,7 +133,9 @@ public class Client {
    * @param configurator {@link HttpClientBuilderConfigurator} to use
    * @throws MalformedURLException for a badly formed URL.
    * @throws URISyntaxException for a badly formed URL.
+   * @deprecated User {@link #Client(ClientConfigurer)}
    */
+  @Deprecated
   public Client(URL url, String username, String password, HttpClientBuilderConfigurator configurator)
       throws MalformedURLException, URISyntaxException {
     this(url, username, password, null, null, configurator);
@@ -128,7 +150,9 @@ public class Client {
    * @param sslContext ssl context for http client
    * @throws MalformedURLException for a badly formed URL.
    * @throws URISyntaxException for a badly formed URL.
+   * @deprecated User {@link #Client(ClientConfigurer)}
    */
+  @Deprecated
   private Client(URL url, String username, String password, SSLConnectionSocketFactory sslConnectionSocketFactory, SSLContext sslContext)
       throws MalformedURLException, URISyntaxException {
     this(url, username, password, sslConnectionSocketFactory, sslContext, NO_OP_HTTP_CLIENT_BUILDER_CONFIGURATOR);
@@ -142,7 +166,9 @@ public class Client {
    * @param sslContext ssl context for http client
    * @throws MalformedURLException for a badly formed URL.
    * @throws URISyntaxException for a badly formed URL.
+   * @deprecated User {@link #Client(ClientConfigurer)}
    */
+  @Deprecated
   public Client(URL url, String username, String password, SSLContext sslContext) throws MalformedURLException, URISyntaxException {
     this(url, username, password, null, sslContext);
   }
@@ -155,7 +181,9 @@ public class Client {
    * @param sslConnectionSocketFactory ssl connection factory for http client
    * @throws MalformedURLException for a badly formed URL.
    * @throws URISyntaxException for a badly formed URL.
+   * @deprecated User {@link #Client(ClientConfigurer)}
    */
+  @Deprecated
   private Client(URL url, String username, String password, SSLConnectionSocketFactory sslConnectionSocketFactory) throws MalformedURLException, URISyntaxException {
     this(url, username, password, sslConnectionSocketFactory, null);
   }
@@ -165,7 +193,9 @@ public class Client {
    * @param url the url e.g. "https://guest:guest@localhost:15672/api/".
    * @throws MalformedURLException for a badly formed URL.
    * @throws URISyntaxException for a badly formed URL.
+   * @deprecated User {@link #Client(ClientConfigurer)}
    */
+  @Deprecated
   public Client(String url) throws MalformedURLException, URISyntaxException {
     this(url, NO_OP_HTTP_CLIENT_BUILDER_CONFIGURATOR);
   }
@@ -176,7 +206,9 @@ public class Client {
    * @param configurator {@link HttpClientBuilderConfigurator} to use
    * @throws MalformedURLException for a badly formed URL.
    * @throws URISyntaxException for a badly formed URL.
+   * @deprecated User {@link #Client(ClientConfigurer)}
    */
+  @Deprecated
   public Client(String url, HttpClientBuilderConfigurator configurator) throws MalformedURLException, URISyntaxException {
     this(Utils.urlWithoutCredentials(url),
             Utils.extractUsernamePassword(url)[0],
@@ -190,28 +222,20 @@ public class Client {
    * @param url the url e.g. "https://guest:guest@localhost:15672/api/".
    * @throws MalformedURLException for a badly formed URL.
    * @throws URISyntaxException for a badly formed URL.
+   * @deprecated User {@link #Client(ClientConfigurer)}
    */
+  @Deprecated
   public Client(URL url) throws MalformedURLException, URISyntaxException {
     this(url, null, null);
   }
 
-  private Client(URL url, String username, String password, SSLConnectionSocketFactory sslConnectionSocketFactory,
-                 SSLContext sslContext,
-                 HttpClientBuilderConfigurator configurator) throws URISyntaxException, MalformedURLException {
-    Assert.notNull(url, "URL is required; it must not be null");
-    Assert.notNull(username, "username is required; it must not be null");
-    Assert.notNull(password, "password is required; it must not be null");
-    Assert.notNull(configurator, "configurator is required; it must not be null");
+  private Client(URL url, String username, String password, SSLConnectionSocketFactory sslConnectionSocketFactory, SSLContext sslContext, HttpClientBuilderConfigurator configurator) throws MalformedURLException, URISyntaxException {
+    this(new HttpComponentsClientConfigurer(url, username, password, sslConnectionSocketFactory, sslContext, configurator));
+  }
 
-    if (url.toString().endsWith("/")) {
-      this.rootUri = url.toURI();
-    } else {
-      this.rootUri = new URL(url.toString() + "/").toURI();
-    }
-
-    HttpComponentsClientHttpRequestFactory rf = getRequestFactory(url, username, password,
-        sslConnectionSocketFactory, sslContext, configurator);
-    this.rt = new RestTemplate(rf);
+  public Client(ClientConfigurer configuration) {
+    this.rootUri = configuration.getRootUri();
+    this.rt = new RestTemplate(configuration.getRequestFactory());
     this.rt.setMessageConverters(getMessageConverters());
   }
 
@@ -1162,62 +1186,6 @@ public class Client {
         .featuresToEnable(DeserializationFeature.ACCEPT_EMPTY_ARRAY_AS_NULL_OBJECT);
     xs.add(new MappingJackson2HttpMessageConverter(bldr.build()));
     return xs;
-  }
-
-  private HttpComponentsClientHttpRequestFactory getRequestFactory(final URL url,
-                                                                   final String username, final String password,
-                                                                   final SSLConnectionSocketFactory sslConnectionSocketFactory,
-                                                                   final SSLContext sslContext,
-                                                                   final HttpClientBuilderConfigurator configurator) {
-    String theUser = username;
-    String thePassword = password;
-    String userInfo = url.getUserInfo();
-    if (userInfo != null && theUser == null) {
-      String[] userParts = userInfo.split(":");
-      if (userParts.length > 0) {
-        theUser = Utils.decode(userParts[0]);
-      }
-      if (userParts.length > 1) {
-        thePassword = Utils.decode(userParts[1]);
-      }
-    }
-
-    // configure HttpClientBuilder essentials
-    final HttpClientBuilder bldr = HttpClientBuilder.create().
-        setDefaultCredentialsProvider(getCredentialsProvider(theUser, thePassword));
-    if (sslConnectionSocketFactory != null) {
-      bldr.setSSLSocketFactory(sslConnectionSocketFactory);
-    }
-    if (sslContext != null) {
-      bldr.setSSLContext(sslContext);
-    }
-
-    HttpClient httpClient;
-    // this lets the user perform non-essential configuration (e.g. timeouts)
-    // but reduces the risk of essentials not being set. MK.
-    HttpClientBuilder b = configurator.configure(bldr);
-    httpClient = b.build();
-
-    // RabbitMQ HTTP API currently does not support challenge/response for PUT methods.
-    AuthCache authCache = new BasicAuthCache();
-    BasicScheme basicScheme = new BasicScheme();
-    authCache.put(new HttpHost(rootUri.getHost(), rootUri.getPort(), rootUri.getScheme()), basicScheme);
-    final HttpClientContext ctx = HttpClientContext.create();
-    ctx.setAuthCache(authCache);
-    return new HttpComponentsClientHttpRequestFactory(httpClient) {
-      @Override
-      protected HttpContext createHttpContext(HttpMethod httpMethod, URI uri) {
-        return ctx;
-      }
-    };
-  }
-
-  private CredentialsProvider getCredentialsProvider(final String username, final String password) {
-    CredentialsProvider cp = new BasicCredentialsProvider();
-    cp.setCredentials(new AuthScope(AuthScope.ANY_HOST, AuthScope.ANY_PORT),
-        new UsernamePasswordCredentials(username, password));
-
-    return cp;
   }
 
   private <T> T getForObjectReturningNullOn404(final URI uri, final Class<T> klass) {

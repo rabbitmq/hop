@@ -19,18 +19,10 @@ package com.rabbitmq.http.client
 import com.rabbitmq.client.*
 import com.rabbitmq.http.client.domain.*
 import groovy.json.JsonSlurper
-import org.apache.http.HttpRequestInterceptor
-import org.apache.http.auth.AuthScope
-import org.apache.http.client.protocol.HttpClientContext
-import org.apache.http.protocol.HttpContext
 import org.springframework.http.HttpMethod
 import org.springframework.http.HttpStatus
 import org.springframework.http.client.ClientHttpRequest
-import org.springframework.web.client.HttpClientErrorException
-import org.springframework.web.client.RequestCallback
-import org.springframework.web.client.ResponseExtractor
-import org.springframework.web.client.RestClientException
-import org.springframework.web.client.RestTemplate
+import org.springframework.web.client.*
 import spock.lang.IgnoreIf
 import spock.lang.Specification
 
@@ -39,7 +31,7 @@ import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicReference
 
-class ClientSpec extends Specification {
+abstract class ClientSpec extends Specification {
 
   protected static final String DEFAULT_USERNAME = "guest"
 
@@ -65,13 +57,9 @@ class ClientSpec extends Specification {
     brokerVersion = client.getOverview().getServerVersion()
   }
 
-  protected static Client newLocalhostNodeClient() {
-    new Client("http://127.0.0.1:" + managementPort() + "/api/", DEFAULT_USERNAME, DEFAULT_PASSWORD)
-  }
-
-  protected static Client newLocalhostNodeClient(HttpClientBuilderConfigurator cfg) {
-    new Client("http://127.0.0.1:" + managementPort() + "/api/", DEFAULT_USERNAME, DEFAULT_PASSWORD, cfg)
-  }
+  abstract protected Client newLocalhostNodeClient();
+  abstract protected Client newLocalhostNodeClientWithConfiguration();
+  abstract protected Client newLocalhostNodeClientWithCredentialsInUrl();
 
   static int managementPort() {
     return System.getProperty("rabbitmq.management.port") == null ?
@@ -124,32 +112,6 @@ class ClientSpec extends Specification {
     }
   }
 
-  def "user info decoding"() {
-    when: "username and password are encoded in the URL"
-    def usernamePassword = new AtomicReference<>()
-    def localClient = new Client("http://test+user:test%40password@localhost:" + managementPort() + "/api/", { builder ->
-      builder.addInterceptorLast(new HttpRequestInterceptor() {
-        @Override
-        void process(org.apache.http.HttpRequest request, HttpContext context) throws org.apache.http.HttpException, IOException {
-          HttpClientContext httpCtx = (HttpContext) context
-          def credentials = httpCtx.getCredentialsProvider().getCredentials(new AuthScope(AuthScope.ANY_HOST, AuthScope.ANY_PORT))
-          usernamePassword.set(credentials.getUserPrincipal().name + ":" + credentials.getPassword())
-        }
-      })
-      return builder
-    }
-    )
-
-    try {
-      localClient.getOverview()
-    } catch (Exception e) {
-      // OK
-    }
-
-    then: "username and password are decoded before going into the request"
-    usernamePassword.get() == "test user:test@password"
-  }
-
   def "GET /api/nodes"() {
     when: "client retrieves a list of cluster nodes"
     final res = client.getNodes()
@@ -165,7 +127,7 @@ class ClientSpec extends Specification {
     // this number has no particular meaning
     // but it should be enough connections for this test suite
     // and then some. MK.
-    final client = newLocalhostNodeClient({ builder -> builder.setMaxConnTotal(8192) })
+    final client = newLocalhostNodeClientWithConfiguration()
 
     and: "client retrieves a list of cluster nodes"
     final res = client.getNodes()
@@ -178,7 +140,7 @@ class ClientSpec extends Specification {
 
   def "GET /api/nodes with credentials in the URL"() {
     when: "credentials are provided in the URL"
-    final client = new Client("http://guest:guest@127.0.0.1:" + managementPort() + "/api/")
+    final client = newLocalhostNodeClientWithCredentialsInUrl()
 
     and: "retrieves a list of cluster nodes"
     final res = client.getNodes()
