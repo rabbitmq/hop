@@ -256,6 +256,11 @@ The test suite can use a different port than 15672 by specifying it with the
 
 This library uses [semantic versioning](https://semver.org/).
 
+## Support
+
+See the [RabbitMQ Java libraries support page](https://www.rabbitmq.com/java-versions.html)
+for the support timeline of this library.
+
 ## License
 
 [Apache 2.0](https://www.apache.org/licenses/LICENSE-2.0.html).
