@@ -88,7 +88,7 @@ public class Client {
    * @param password the password
    * @throws MalformedURLException for a badly formed URL.
    * @throws URISyntaxException for a badly formed URL.
-   * @deprecated User {@link #Client(ClientConfigurer)}
+   * @deprecated use {@link #Client(ClientConfigurer)}
    */
   @Deprecated
   public Client(String url, String username, String password) throws MalformedURLException, URISyntaxException {
@@ -103,7 +103,7 @@ public class Client {
    * @param configurator {@link HttpClientBuilderConfigurator} to use
    * @throws MalformedURLException for a badly formed URL.
    * @throws URISyntaxException for a badly formed URL.
-   * @deprecated User {@link #Client(ClientConfigurer)}
+   * @deprecated use {@link #Client(ClientConfigurer)}
    */
   @Deprecated
   public Client(String url, String username, String password, HttpClientBuilderConfigurator configurator)
@@ -118,7 +118,7 @@ public class Client {
    * @param password the password
    * @throws MalformedURLException for a badly formed URL.
    * @throws URISyntaxException for a badly formed URL.
-   * @deprecated User {@link #Client(ClientConfigurer)}
+   * @deprecated use {@link #Client(ClientConfigurer)}
    */
   @Deprecated
   public Client(URL url, String username, String password) throws MalformedURLException, URISyntaxException {
@@ -133,7 +133,7 @@ public class Client {
    * @param configurator {@link HttpClientBuilderConfigurator} to use
    * @throws MalformedURLException for a badly formed URL.
    * @throws URISyntaxException for a badly formed URL.
-   * @deprecated User {@link #Client(ClientConfigurer)}
+   * @deprecated use {@link #Client(ClientConfigurer)}
    */
   @Deprecated
   public Client(URL url, String username, String password, HttpClientBuilderConfigurator configurator)
@@ -150,7 +150,7 @@ public class Client {
    * @param sslContext ssl context for http client
    * @throws MalformedURLException for a badly formed URL.
    * @throws URISyntaxException for a badly formed URL.
-   * @deprecated User {@link #Client(ClientConfigurer)}
+   * @deprecated use {@link #Client(ClientConfigurer)}
    */
   @Deprecated
   private Client(URL url, String username, String password, SSLConnectionSocketFactory sslConnectionSocketFactory, SSLContext sslContext)
@@ -166,7 +166,7 @@ public class Client {
    * @param sslContext ssl context for http client
    * @throws MalformedURLException for a badly formed URL.
    * @throws URISyntaxException for a badly formed URL.
-   * @deprecated User {@link #Client(ClientConfigurer)}
+   * @deprecated use {@link #Client(ClientConfigurer)}
    */
   @Deprecated
   public Client(URL url, String username, String password, SSLContext sslContext) throws MalformedURLException, URISyntaxException {
@@ -181,7 +181,7 @@ public class Client {
    * @param sslConnectionSocketFactory ssl connection factory for http client
    * @throws MalformedURLException for a badly formed URL.
    * @throws URISyntaxException for a badly formed URL.
-   * @deprecated User {@link #Client(ClientConfigurer)}
+   * @deprecated use {@link #Client(ClientConfigurer)}
    */
   @Deprecated
   private Client(URL url, String username, String password, SSLConnectionSocketFactory sslConnectionSocketFactory) throws MalformedURLException, URISyntaxException {
@@ -193,7 +193,7 @@ public class Client {
    * @param url the url e.g. "https://guest:guest@localhost:15672/api/".
    * @throws MalformedURLException for a badly formed URL.
    * @throws URISyntaxException for a badly formed URL.
-   * @deprecated User {@link #Client(ClientConfigurer)}
+   * @deprecated use {@link #Client(ClientConfigurer)}
    */
   @Deprecated
   public Client(String url) throws MalformedURLException, URISyntaxException {
@@ -206,7 +206,7 @@ public class Client {
    * @param configurator {@link HttpClientBuilderConfigurator} to use
    * @throws MalformedURLException for a badly formed URL.
    * @throws URISyntaxException for a badly formed URL.
-   * @deprecated User {@link #Client(ClientConfigurer)}
+   * @deprecated use {@link #Client(ClientConfigurer)}
    */
   @Deprecated
   public Client(String url, HttpClientBuilderConfigurator configurator) throws MalformedURLException, URISyntaxException {
@@ -222,7 +222,7 @@ public class Client {
    * @param url the url e.g. "https://guest:guest@localhost:15672/api/".
    * @throws MalformedURLException for a badly formed URL.
    * @throws URISyntaxException for a badly formed URL.
-   * @deprecated User {@link #Client(ClientConfigurer)}
+   * @deprecated use {@link #Client(ClientConfigurer)}
    */
   @Deprecated
   public Client(URL url) throws MalformedURLException, URISyntaxException {
