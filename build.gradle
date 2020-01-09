@@ -63,9 +63,11 @@ sourceSets {
 //  }
 
 //  ['jdk', 'httpclient', 'okhttp'].each {
-//    jdkIntegrationTest {
-//      java.srcDirs = ["src/integration-test/jdk/java"]
-//    }
+    jdkIntegrationTest {
+      java.srcDirs = ["src/integration-test/jdk/java"]
+      compileClasspath += main.output
+      runtimeClasspath += main.output
+    }
     httpclientIntegrationTest {
       java.srcDirs = ["src/integration-test/httpclient/java"]
       compileClasspath += main.output
@@ -97,8 +99,9 @@ dependencies {
   testCompile "org.spockframework:spock-core:$spockVersion"
   testCompile "com.rabbitmq:amqp-client:$amqpClientVersion"
 
-//  jdkIntegrationTestCompile "junit:junit:4.13"
-//  jdkIntegrationTestCompile "org.springframework:spring-web:$springVersion"
+  jdkIntegrationTestCompile "junit:junit:4.13"
+  jdkIntegrationTestCompile "org.springframework:spring-web:$springVersion"
+  jdkIntegrationTestCompile "com.fasterxml.jackson.core:jackson-databind:$jacksonVersion"
 
   httpclientIntegrationTestCompile "junit:junit:4.13"
   httpclientIntegrationTestCompile "org.springframework:spring-web:$springVersion"
@@ -129,6 +132,11 @@ test {
   maxHeapSize = "1024m"
 }
 
+task jdkIntegrationTest(type: Test) {
+  testClassesDirs = sourceSets.jdkIntegrationTest.output.classesDirs
+  classpath = sourceSets.jdkIntegrationTest.runtimeClasspath
+}
+
 task httpclientIntegrationTest(type: Test) {
   testClassesDirs = sourceSets.httpclientIntegrationTest.output.classesDirs
   classpath = sourceSets.httpclientIntegrationTest.runtimeClasspath
@@ -138,6 +146,10 @@ task okhttpIntegrationTest(type: Test) {
   testClassesDirs = sourceSets.okhttpIntegrationTest.output.classesDirs
   classpath = sourceSets.okhttpIntegrationTest.runtimeClasspath
 }
+
+jdkIntegrationTest.shouldRunAfter test
+httpclientIntegrationTest.shouldRunAfter test
+okhttpIntegrationTest.shouldRunAfter test
 
 // force test runs even when there are no test changes,
 // such test loops are very useful for testing race conditions
