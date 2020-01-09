@@ -1,5 +1,5 @@
 /*
- * Copyright 2017-2019 the original author or authors.
+ * Copyright 2020 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,25 +17,20 @@
 package com.rabbitmq.http.client;
 
 import okhttp3.OkHttpClient;
-import org.apache.http.HttpHost;
-import org.apache.http.HttpRequestInterceptor;
-import org.apache.http.conn.routing.HttpRoutePlanner;
-import org.apache.http.conn.socket.LayeredConnectionSocketFactory;
-import org.apache.http.impl.client.HttpClientBuilder;
-
-import javax.net.ssl.HostnameVerifier;
-import javax.net.ssl.SSLContext;
 
 /**
  * Implementations of this interface can perform post-configuration
  * of {@link OkHttpClient.Builder} used by {@link Client} internally.
- * Note that {@link Client} will configure all essential settings
+ * Note that {@link OkHttpRestTemplateConfigurator} will configure all essential settings
  * before invoking the configurator.
  * <p>
  * {@link OkHttpClientBuilderConfigurator} implementations typically
  * customize request interceptors to set specific headers, proxy-related
  * and TLS-related settings.
+ *
+ * @since 3.6.0
  */
+@FunctionalInterface
 public interface OkHttpClientBuilderConfigurator {
 
     /**
