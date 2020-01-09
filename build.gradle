@@ -55,29 +55,16 @@ ext {
                   "https://fasterxml.github.io/jackson-databind/javadoc/2.9/"] as String[]
 }
 
-sourceSets {
-//  java {
-//    registerFeature('signing') {
-//      usingSourceSet(sourceSets.main)
-//    }
-//  }
+def httpClients = ['jdk', 'httpclient', 'okhttp']
 
-//  ['jdk', 'httpclient', 'okhttp'].each {
-    jdkIntegrationTest {
-      java.srcDirs = ["src/integration-test/jdk/java"]
+sourceSets {
+  httpClients.each { client ->
+    sourceSets.create("${client}DependencyTest") {
+      java.srcDirs = ["src/integration-test/${client}/java"]
       compileClasspath += main.output
       runtimeClasspath += main.output
     }
-    httpclientIntegrationTest {
-      java.srcDirs = ["src/integration-test/httpclient/java"]
-      compileClasspath += main.output
-      runtimeClasspath += main.output
-    }
-    okhttpIntegrationTest {
-      java.srcDirs = ["src/integration-test/okhttp/java"]
-      compileClasspath += main.output
-      runtimeClasspath += main.output
-    }
+  }
 }
 
 dependencyManagement {
@@ -99,19 +86,19 @@ dependencies {
   testCompile "org.spockframework:spock-core:$spockVersion"
   testCompile "com.rabbitmq:amqp-client:$amqpClientVersion"
 
-  jdkIntegrationTestCompile "junit:junit:4.13"
-  jdkIntegrationTestCompile "org.springframework:spring-web:$springVersion"
-  jdkIntegrationTestCompile "com.fasterxml.jackson.core:jackson-databind:$jacksonVersion"
+  jdkDependencyTestCompile "junit:junit:4.13"
+  jdkDependencyTestCompile "org.springframework:spring-web:$springVersion"
+  jdkDependencyTestCompile "com.fasterxml.jackson.core:jackson-databind:$jacksonVersion"
 
-  httpclientIntegrationTestCompile "junit:junit:4.13"
-  httpclientIntegrationTestCompile "org.springframework:spring-web:$springVersion"
-  httpclientIntegrationTestCompile "org.apache.httpcomponents:httpclient:$commonsHttpClientVersion"
-  httpclientIntegrationTestCompile "com.fasterxml.jackson.core:jackson-databind:$jacksonVersion"
+  httpclientDependencyTestCompile "junit:junit:4.13"
+  httpclientDependencyTestCompile "org.springframework:spring-web:$springVersion"
+  httpclientDependencyTestCompile "org.apache.httpcomponents:httpclient:$commonsHttpClientVersion"
+  httpclientDependencyTestCompile "com.fasterxml.jackson.core:jackson-databind:$jacksonVersion"
 
-  okhttpIntegrationTestCompile "junit:junit:4.13"
-  okhttpIntegrationTestCompile "org.springframework:spring-web:$springVersion"
-  okhttpIntegrationTestCompile "com.squareup.okhttp3:okhttp:$okHttpVersion"
-  okhttpIntegrationTestCompile "com.fasterxml.jackson.core:jackson-databind:$jacksonVersion"
+  okhttpDependencyTestCompile "junit:junit:4.13"
+  okhttpDependencyTestCompile "org.springframework:spring-web:$springVersion"
+  okhttpDependencyTestCompile "com.squareup.okhttp3:okhttp:$okHttpVersion"
+  okhttpDependencyTestCompile "com.fasterxml.jackson.core:jackson-databind:$jacksonVersion"
 
 }
 
@@ -132,24 +119,13 @@ test {
   maxHeapSize = "1024m"
 }
 
-task jdkIntegrationTest(type: Test) {
-  testClassesDirs = sourceSets.jdkIntegrationTest.output.classesDirs
-  classpath = sourceSets.jdkIntegrationTest.runtimeClasspath
+httpClients.each { client ->
+  tasks.create(name: "${client}DependencyTest", type: Test) {
+    testClassesDirs = sourceSets["${client}DependencyTest"].output.classesDirs
+    classpath = sourceSets["${client}DependencyTest"].runtimeClasspath
+    test.dependsOn name
+  }
 }
-
-task httpclientIntegrationTest(type: Test) {
-  testClassesDirs = sourceSets.httpclientIntegrationTest.output.classesDirs
-  classpath = sourceSets.httpclientIntegrationTest.runtimeClasspath
-}
-
-task okhttpIntegrationTest(type: Test) {
-  testClassesDirs = sourceSets.okhttpIntegrationTest.output.classesDirs
-  classpath = sourceSets.okhttpIntegrationTest.runtimeClasspath
-}
-
-jdkIntegrationTest.shouldRunAfter test
-httpclientIntegrationTest.shouldRunAfter test
-okhttpIntegrationTest.shouldRunAfter test
 
 // force test runs even when there are no test changes,
 // such test loops are very useful for testing race conditions
