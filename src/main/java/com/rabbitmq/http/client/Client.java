@@ -1,5 +1,5 @@
 /*
- * Copyright 2015-2019 the original author or authors.
+ * Copyright 2015-2020 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -74,8 +74,8 @@ public class Client {
   private static final HttpClientBuilderConfigurator NO_OP_HTTP_CLIENT_BUILDER_CONFIGURATOR =
       builder -> builder;
 
-  RestTemplate rt;
-  private URI rootUri;
+  RestTemplate rt; // FIXME make this private and final
+  private URI rootUri; // FIXME make this final
 
   //
   // API
@@ -88,9 +88,7 @@ public class Client {
    * @param password the password
    * @throws MalformedURLException for a badly formed URL.
    * @throws URISyntaxException for a badly formed URL.
-   * @deprecated use {@link #Client(ClientConfigurer)}
    */
-  @Deprecated
   public Client(String url, String username, String password) throws MalformedURLException, URISyntaxException {
     this(new URL(url), username, password);
   }
@@ -103,9 +101,7 @@ public class Client {
    * @param configurator {@link HttpClientBuilderConfigurator} to use
    * @throws MalformedURLException for a badly formed URL.
    * @throws URISyntaxException for a badly formed URL.
-   * @deprecated use {@link #Client(ClientConfigurer)}
    */
-  @Deprecated
   public Client(String url, String username, String password, HttpClientBuilderConfigurator configurator)
       throws MalformedURLException, URISyntaxException {
     this(new URL(url), username, password, configurator);
@@ -118,9 +114,7 @@ public class Client {
    * @param password the password
    * @throws MalformedURLException for a badly formed URL.
    * @throws URISyntaxException for a badly formed URL.
-   * @deprecated use {@link #Client(ClientConfigurer)}
    */
-  @Deprecated
   public Client(URL url, String username, String password) throws MalformedURLException, URISyntaxException {
     this(url, username, password, null, null);
   }
@@ -133,9 +127,7 @@ public class Client {
    * @param configurator {@link HttpClientBuilderConfigurator} to use
    * @throws MalformedURLException for a badly formed URL.
    * @throws URISyntaxException for a badly formed URL.
-   * @deprecated use {@link #Client(ClientConfigurer)}
    */
-  @Deprecated
   public Client(URL url, String username, String password, HttpClientBuilderConfigurator configurator)
       throws MalformedURLException, URISyntaxException {
     this(url, username, password, null, null, configurator);
@@ -150,9 +142,7 @@ public class Client {
    * @param sslContext ssl context for http client
    * @throws MalformedURLException for a badly formed URL.
    * @throws URISyntaxException for a badly formed URL.
-   * @deprecated use {@link #Client(ClientConfigurer)}
    */
-  @Deprecated
   private Client(URL url, String username, String password, SSLConnectionSocketFactory sslConnectionSocketFactory, SSLContext sslContext)
       throws MalformedURLException, URISyntaxException {
     this(url, username, password, sslConnectionSocketFactory, sslContext, NO_OP_HTTP_CLIENT_BUILDER_CONFIGURATOR);
@@ -166,9 +156,7 @@ public class Client {
    * @param sslContext ssl context for http client
    * @throws MalformedURLException for a badly formed URL.
    * @throws URISyntaxException for a badly formed URL.
-   * @deprecated use {@link #Client(ClientConfigurer)}
    */
-  @Deprecated
   public Client(URL url, String username, String password, SSLContext sslContext) throws MalformedURLException, URISyntaxException {
     this(url, username, password, null, sslContext);
   }
@@ -181,9 +169,7 @@ public class Client {
    * @param sslConnectionSocketFactory ssl connection factory for http client
    * @throws MalformedURLException for a badly formed URL.
    * @throws URISyntaxException for a badly formed URL.
-   * @deprecated use {@link #Client(ClientConfigurer)}
    */
-  @Deprecated
   private Client(URL url, String username, String password, SSLConnectionSocketFactory sslConnectionSocketFactory) throws MalformedURLException, URISyntaxException {
     this(url, username, password, sslConnectionSocketFactory, null);
   }
@@ -193,9 +179,7 @@ public class Client {
    * @param url the url e.g. "https://guest:guest@localhost:15672/api/".
    * @throws MalformedURLException for a badly formed URL.
    * @throws URISyntaxException for a badly formed URL.
-   * @deprecated use {@link #Client(ClientConfigurer)}
    */
-  @Deprecated
   public Client(String url) throws MalformedURLException, URISyntaxException {
     this(url, NO_OP_HTTP_CLIENT_BUILDER_CONFIGURATOR);
   }
@@ -206,9 +190,7 @@ public class Client {
    * @param configurator {@link HttpClientBuilderConfigurator} to use
    * @throws MalformedURLException for a badly formed URL.
    * @throws URISyntaxException for a badly formed URL.
-   * @deprecated use {@link #Client(ClientConfigurer)}
    */
-  @Deprecated
   public Client(String url, HttpClientBuilderConfigurator configurator) throws MalformedURLException, URISyntaxException {
     this(Utils.urlWithoutCredentials(url),
             Utils.extractUsernamePassword(url)[0],
@@ -222,21 +204,36 @@ public class Client {
    * @param url the url e.g. "https://guest:guest@localhost:15672/api/".
    * @throws MalformedURLException for a badly formed URL.
    * @throws URISyntaxException for a badly formed URL.
-   * @deprecated use {@link #Client(ClientConfigurer)}
    */
-  @Deprecated
   public Client(URL url) throws MalformedURLException, URISyntaxException {
     this(url, null, null);
   }
 
   private Client(URL url, String username, String password, SSLConnectionSocketFactory sslConnectionSocketFactory, SSLContext sslContext, HttpClientBuilderConfigurator configurator) throws MalformedURLException, URISyntaxException {
-    this(new HttpComponentsClientConfigurer(url, username, password, sslConnectionSocketFactory, sslContext, configurator));
+    this(new ClientParameters().url(url).username(username).password(password)
+            .restTemplateConfigurator(new HttpComponentsRestTemplateConfigurator(sslConnectionSocketFactory, sslContext, configurator)));
   }
 
-  public Client(ClientConfigurer configuration) {
-    this.rootUri = configuration.getRootUri();
-    this.rt = new RestTemplate(configuration.getRequestFactory());
-    this.rt.setMessageConverters(getMessageConverters());
+  /**
+   *  Construct an instance with the provided {@link ClientParameters}.
+   * @param parameters the client parameters to use
+   * @throws URISyntaxException
+   * @throws MalformedURLException
+   */
+  public Client(ClientParameters parameters) throws URISyntaxException, MalformedURLException {
+    parameters.validate();
+    URL url = parameters.getUrl();
+    if (url.toString().endsWith("/")) {
+      this.rootUri = url.toURI();
+    } else {
+      this.rootUri = new URL(url.toString() + "/").toURI();
+    }
+    RestTemplate restTemplate = new RestTemplate();
+    restTemplate.setMessageConverters(getMessageConverters());
+    RestTemplateConfigurator restTemplateConfigurator = parameters.getRestTemplateConfigurator() == null ?
+            new HttpComponentsRestTemplateConfigurator() :
+            parameters.getRestTemplateConfigurator();
+    this.rt = restTemplateConfigurator.configure(new ClientCreationContext(restTemplate, parameters, this.rootUri));
   }
 
   /**
