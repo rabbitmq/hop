@@ -2131,11 +2131,13 @@ class ClientSpec extends Specification {
     client << clients()
   }
 
-  @Unroll
   def "PUT /api/parameters/shovel ShovelDetails.sourcePrefetchCount not sent if not set"() {
     given: "mock RestTemplate"
-    def rtOriginalRef = client.rt
-    client.rt = new MockRestTemplate()
+    MockRestTemplate rt = new MockRestTemplate()
+    Client c = new Client(
+            new ClientParameters().url(url()).username(DEFAULT_USERNAME).password(DEFAULT_PASSWORD)
+              .restTemplateConfigurator({ context -> rt})
+    )
 
     and: "a basic topology with null sourcePrefetchCount"
     ShovelDetails details = new ShovelDetails("amqp://", "amqp://", 30, true, null)
@@ -2143,14 +2145,13 @@ class ClientSpec extends Specification {
     details.setDestinationExchange("exchange1")
 
     when: "client declares the shovels"
-    client.declareShovel("/", new ShovelInfo("shovel1", details))
+    c.declareShovel("/", new ShovelInfo("shovel1", details))
 
     then: "the json will not include src-prefetch-count"
-    def body = new JsonSlurper().parseText(client.rt.requestCaptor.body.toString())
+    def body = new JsonSlurper().parseText(rt.requestCaptor.body.toString())
     body.value['src-prefetch-count'] == null
 
     cleanup:
-    client.rt = rtOriginalRef
     client.deleteShovel("/","shovel1")
 
     where:
@@ -2160,8 +2161,11 @@ class ClientSpec extends Specification {
   @Unroll
   def "PUT /api/parameters/shovel ShovelDetails.destinationAddTimestampHeader not sent if not set"() {
     given: "mock RestTemplate"
-    def rtOriginalRef = client.rt
-    client.rt = new MockRestTemplate()
+    MockRestTemplate rt = new MockRestTemplate()
+    Client c = new Client(
+            new ClientParameters().url(url()).username(DEFAULT_USERNAME).password(DEFAULT_PASSWORD)
+                    .restTemplateConfigurator({ context -> rt})
+    )
 
     and: "a basic topology with null destinationAddTimestampHeader"
     ShovelDetails details = new ShovelDetails("amqp://", "amqp://", 30, true, null)
@@ -2169,14 +2173,13 @@ class ClientSpec extends Specification {
     details.setDestinationExchange("exchange1")
 
     when: "client declares the shovels"
-    client.declareShovel("/", new ShovelInfo("shovel1", details))
+    c.declareShovel("/", new ShovelInfo("shovel1", details))
 
     then: "the json will not include dest-add-timestamp-header"
-    def body = new JsonSlurper().parseText(client.rt.requestCaptor.body.toString())
+    def body = new JsonSlurper().parseText(rt.requestCaptor.body.toString())
     body.value['dest-add-timestamp-header'] == null
 
     cleanup:
-    client.rt = rtOriginalRef
     client.deleteShovel("/","shovel1")
     client.deleteQueue("/", "queue1")
 

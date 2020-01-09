@@ -74,8 +74,8 @@ public class Client {
   private static final HttpClientBuilderConfigurator NO_OP_HTTP_CLIENT_BUILDER_CONFIGURATOR =
       builder -> builder;
 
-  RestTemplate rt; // FIXME make this private and final
-  private URI rootUri; // FIXME make this final
+  private final RestTemplate rt;
+  private final URI rootUri;
 
   //
   // API
