@@ -55,6 +55,29 @@ ext {
                   "https://fasterxml.github.io/jackson-databind/javadoc/2.9/"] as String[]
 }
 
+sourceSets {
+//  java {
+//    registerFeature('signing') {
+//      usingSourceSet(sourceSets.main)
+//    }
+//  }
+
+//  ['jdk', 'httpclient', 'okhttp'].each {
+//    jdkIntegrationTest {
+//      java.srcDirs = ["src/integration-test/jdk/java"]
+//    }
+    httpclientIntegrationTest {
+      java.srcDirs = ["src/integration-test/httpclient/java"]
+      compileClasspath += main.output
+      runtimeClasspath += main.output
+    }
+    okhttpIntegrationTest {
+      java.srcDirs = ["src/integration-test/okhttp/java"]
+      compileClasspath += main.output
+      runtimeClasspath += main.output
+    }
+}
+
 dependencyManagement {
   resolutionStrategy {
     cacheChangingModulesFor 0, 'seconds'
@@ -66,13 +89,27 @@ dependencies {
   compile ("org.springframework:spring-web:$springVersion", optional)
   compile ("org.apache.httpcomponents:httpclient:$commonsHttpClientVersion", optional)
   compile ("com.squareup.okhttp3:okhttp:$okHttpVersion", optional)
-  compile "com.fasterxml.jackson.core:jackson-databind:$jacksonVersion"
+  compile ("com.fasterxml.jackson.core:jackson-databind:$jacksonVersion")
   compile ("io.projectreactor:reactor-core:$reactorVersion", optional)
   compile ("io.projectreactor.netty:reactor-netty:$reactorNettyVersion", optional)
 
   testCompile "org.codehaus.groovy:groovy-all:$groovyVersion"
   testCompile "org.spockframework:spock-core:$spockVersion"
   testCompile "com.rabbitmq:amqp-client:$amqpClientVersion"
+
+//  jdkIntegrationTestCompile "junit:junit:4.13"
+//  jdkIntegrationTestCompile "org.springframework:spring-web:$springVersion"
+
+  httpclientIntegrationTestCompile "junit:junit:4.13"
+  httpclientIntegrationTestCompile "org.springframework:spring-web:$springVersion"
+  httpclientIntegrationTestCompile "org.apache.httpcomponents:httpclient:$commonsHttpClientVersion"
+  httpclientIntegrationTestCompile "com.fasterxml.jackson.core:jackson-databind:$jacksonVersion"
+
+  okhttpIntegrationTestCompile "junit:junit:4.13"
+  okhttpIntegrationTestCompile "org.springframework:spring-web:$springVersion"
+  okhttpIntegrationTestCompile "com.squareup.okhttp3:okhttp:$okHttpVersion"
+  okhttpIntegrationTestCompile "com.fasterxml.jackson.core:jackson-databind:$jacksonVersion"
+
 }
 
 eclipse.project.natures += 'org.springframework.ide.eclipse.core.springnature'
@@ -90,6 +127,16 @@ test {
   // suppress all console output during testing unless running `gradle -i`
   logging.captureStandardOutput(LogLevel.INFO)
   maxHeapSize = "1024m"
+}
+
+task httpclientIntegrationTest(type: Test) {
+  testClassesDirs = sourceSets.httpclientIntegrationTest.output.classesDirs
+  classpath = sourceSets.httpclientIntegrationTest.runtimeClasspath
+}
+
+task okhttpIntegrationTest(type: Test) {
+  testClassesDirs = sourceSets.okhttpIntegrationTest.output.classesDirs
+  classpath = sourceSets.okhttpIntegrationTest.runtimeClasspath
 }
 
 // force test runs even when there are no test changes,
