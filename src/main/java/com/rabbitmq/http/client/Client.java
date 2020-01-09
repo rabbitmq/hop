@@ -71,9 +71,6 @@ import java.util.List;
 import java.util.Map;
 
 public class Client {
-  private static final HttpClientBuilderConfigurator NO_OP_HTTP_CLIENT_BUILDER_CONFIGURATOR =
-      builder -> builder;
-
   RestTemplate rt; // FIXME make this private and final
   private URI rootUri; // FIXME make this final
 
@@ -145,7 +142,11 @@ public class Client {
    */
   private Client(URL url, String username, String password, SSLConnectionSocketFactory sslConnectionSocketFactory, SSLContext sslContext)
       throws MalformedURLException, URISyntaxException {
-    this(url, username, password, sslConnectionSocketFactory, sslContext, NO_OP_HTTP_CLIENT_BUILDER_CONFIGURATOR);
+    this(new ClientParameters()
+            .url(url).username(username).password(password).restTemplateConfigurator(
+                    new HttpComponentsRestTemplateConfigurator(sslConnectionSocketFactory, sslContext)
+            )
+    );
   }
 
   /**
@@ -181,7 +182,7 @@ public class Client {
    * @throws URISyntaxException for a badly formed URL.
    */
   public Client(String url) throws MalformedURLException, URISyntaxException {
-    this(url, NO_OP_HTTP_CLIENT_BUILDER_CONFIGURATOR);
+    this(new ClientParameters().url(url).restTemplateConfigurator(new HttpComponentsRestTemplateConfigurator()));
   }
 
   /**
