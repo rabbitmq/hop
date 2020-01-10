@@ -71,6 +71,7 @@ import java.util.List;
 import java.util.Map;
 
 public class Client {
+
   RestTemplate rt; // FIXME make this private and final
   private URI rootUri; // FIXME make this final
 
