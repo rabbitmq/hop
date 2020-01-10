@@ -124,7 +124,7 @@ The blocking IO client uses [Apache HTTP Components](https://hc.apache.org/) by 
 To use OkHttp, use an `OkHttpRestTemplateConfigurator` instance when creating the client:
 
 ```java
-Client client ) new Client(
+Client client = new Client(
     new ClientParameters().url("http://localhost:15672/api").username("guest").password("guest")
      .restTemplateConfigurator(new OkHttpRestTemplateConfigurator())
 );
@@ -154,7 +154,7 @@ To use standard JDK HTTP facilities (`HttpURLConnection`), use an `SimpleRestTem
 instance when creating the client:
 
 ```java
-Client client ) new Client(
+Client client = new Client(
    new ClientParameters().url("http://localhost:15672/api").username("guest").password("guest")
     .restTemplateConfigurator(new SimpleRestTemplateConfigurator())
 );
