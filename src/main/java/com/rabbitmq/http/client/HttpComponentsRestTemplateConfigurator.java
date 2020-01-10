@@ -94,9 +94,10 @@ public class HttpComponentsRestTemplateConfigurator implements RestTemplateConfi
      * @see HttpClientBuilder#setSSLContext(SSLContext)
      */
     public HttpComponentsRestTemplateConfigurator(SSLConnectionSocketFactory sslConnectionSocketFactory, SSLContext sslContext, HttpClientBuilderConfigurator configurator) {
-        this.configurator = configurator;
+        Assert.notNull(configurator, "configurator is required; it must not be null");
         this.sslConnectionSocketFactory = sslConnectionSocketFactory;
         this.sslContext = sslContext;
+        this.configurator = configurator;
     }
 
     @Override
@@ -121,7 +122,6 @@ public class HttpComponentsRestTemplateConfigurator implements RestTemplateConfi
                                                        final SSLConnectionSocketFactory sslConnectionSocketFactory,
                                                        final SSLContext sslContext,
                                                        final HttpClientBuilderConfigurator configurator) {
-        Assert.notNull(configurator, "configurator is required; it must not be null");
         String theUser = username;
         String thePassword = password;
         String userInfo = url.getUserInfo();

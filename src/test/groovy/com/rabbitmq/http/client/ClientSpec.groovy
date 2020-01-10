@@ -60,7 +60,13 @@ class ClientSpec extends Specification {
             new Client(
                     new ClientParameters().url(url()).username(DEFAULT_USERNAME).password(DEFAULT_PASSWORD)
                             .restTemplateConfigurator(new OkHttpRestTemplateConfigurator())
+            ),
+            new Client(
+                    new ClientParameters().url(url()).username(DEFAULT_USERNAME).password(DEFAULT_PASSWORD)
+                            .restTemplateConfigurator(new SimpleRestTemplateConfigurator())
             )
+
+
     ]
   }
 
@@ -72,6 +78,12 @@ class ClientSpec extends Specification {
                             .restTemplateConfigurator(
                                     new OkHttpRestTemplateConfigurator({ builder -> builder.readTimeout(10, TimeUnit.SECONDS) })
                             )
+            ),
+            new Client(
+                    new ClientParameters().url(url()).username(DEFAULT_USERNAME).password(DEFAULT_PASSWORD)
+                            .restTemplateConfigurator(
+                                    new SimpleRestTemplateConfigurator({ connection -> connection.setConnectTimeout(60000) })
+                            )
             )
     ]
   }
@@ -82,6 +94,10 @@ class ClientSpec extends Specification {
             new Client(
                     new ClientParameters().url("http://" + DEFAULT_USERNAME + ":" + DEFAULT_PASSWORD + "@127.0.0.1:" + managementPort() + "/api/")
                             .restTemplateConfigurator(new OkHttpRestTemplateConfigurator())
+            ),
+            new Client(
+                    new ClientParameters().url("http://" + DEFAULT_USERNAME + ":" + DEFAULT_PASSWORD + "@127.0.0.1:" + managementPort() + "/api/")
+                            .restTemplateConfigurator(new SimpleRestTemplateConfigurator())
             )
     ]
   }

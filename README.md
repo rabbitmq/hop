@@ -117,14 +117,17 @@ Client c = new Client("http://127.0.0.1:15672/api/", "guest", "guest");
 ### HTTP Layer
 
 The blocking IO client uses [Apache HTTP Components](https://hc.apache.org/) by default, but also supports
-[OkHttp](https://square.github.io/okhttp/). To use OkHttp, use an `OkHttpRestTemplateConfigurator`
-instance when creating the client:
+[OkHttp](https://square.github.io/okhttp/) and standard JDK HTTP facilities.
+
+#### OkHttp
+
+To use OkHttp, use an `OkHttpRestTemplateConfigurator` instance when creating the client:
 
 ```java
 Client client ) new Client(
     new ClientParameters().url("http://localhost:15672/api").username("guest").password("guest")
      .restTemplateConfigurator(new OkHttpRestTemplateConfigurator())
-)
+);
 ```
 
 This requires to have OkHttp on the classpath. For this, replace the `httpclient` dependency above by `okhttp`.
@@ -144,6 +147,21 @@ For Gradle:
 ```groovy
 compile "com.squareup.okhttp3:okhttp:3.14.4"
 ```
+
+#### Standard JDK HTTP Facilities
+
+To use standard JDK HTTP facilities (`HttpURLConnection`), use an `SimpleRestTemplateConfigurator`
+instance when creating the client:
+
+```java
+Client client ) new Client(
+   new ClientParameters().url("http://localhost:15672/api").username("guest").password("guest")
+    .restTemplateConfigurator(new SimpleRestTemplateConfigurator())
+);
+```
+
+When using standard JDK HTTP facilities, the dependency on `httpclient` or `okhttp` mentioned above is no
+longer necessary and can be removed from the Maven or Gradle configuration.
 
 ### Getting Overview
 
