@@ -55,6 +55,18 @@ ext {
                   "https://fasterxml.github.io/jackson-databind/javadoc/2.9/"] as String[]
 }
 
+def httpClients = ['jdk', 'httpclient', 'okhttp']
+
+sourceSets {
+  httpClients.each { client ->
+    sourceSets.create("${client}DependencyTest") {
+      java.srcDirs = ["src/integration-test/${client}/java"]
+      compileClasspath += main.output
+      runtimeClasspath += main.output
+    }
+  }
+}
+
 dependencyManagement {
   resolutionStrategy {
     cacheChangingModulesFor 0, 'seconds'
@@ -66,13 +78,28 @@ dependencies {
   compile ("org.springframework:spring-web:$springVersion", optional)
   compile ("org.apache.httpcomponents:httpclient:$commonsHttpClientVersion", optional)
   compile ("com.squareup.okhttp3:okhttp:$okHttpVersion", optional)
-  compile "com.fasterxml.jackson.core:jackson-databind:$jacksonVersion"
+  compile ("com.fasterxml.jackson.core:jackson-databind:$jacksonVersion")
   compile ("io.projectreactor:reactor-core:$reactorVersion", optional)
   compile ("io.projectreactor.netty:reactor-netty:$reactorNettyVersion", optional)
 
   testCompile "org.codehaus.groovy:groovy-all:$groovyVersion"
   testCompile "org.spockframework:spock-core:$spockVersion"
   testCompile "com.rabbitmq:amqp-client:$amqpClientVersion"
+
+  jdkDependencyTestCompile "junit:junit:4.13"
+  jdkDependencyTestCompile "org.springframework:spring-web:$springVersion"
+  jdkDependencyTestCompile "com.fasterxml.jackson.core:jackson-databind:$jacksonVersion"
+
+  httpclientDependencyTestCompile "junit:junit:4.13"
+  httpclientDependencyTestCompile "org.springframework:spring-web:$springVersion"
+  httpclientDependencyTestCompile "org.apache.httpcomponents:httpclient:$commonsHttpClientVersion"
+  httpclientDependencyTestCompile "com.fasterxml.jackson.core:jackson-databind:$jacksonVersion"
+
+  okhttpDependencyTestCompile "junit:junit:4.13"
+  okhttpDependencyTestCompile "org.springframework:spring-web:$springVersion"
+  okhttpDependencyTestCompile "com.squareup.okhttp3:okhttp:$okHttpVersion"
+  okhttpDependencyTestCompile "com.fasterxml.jackson.core:jackson-databind:$jacksonVersion"
+
 }
 
 eclipse.project.natures += 'org.springframework.ide.eclipse.core.springnature'
@@ -90,6 +117,14 @@ test {
   // suppress all console output during testing unless running `gradle -i`
   logging.captureStandardOutput(LogLevel.INFO)
   maxHeapSize = "1024m"
+}
+
+httpClients.each { client ->
+  tasks.create(name: "${client}DependencyTest", type: Test) {
+    testClassesDirs = sourceSets["${client}DependencyTest"].output.classesDirs
+    classpath = sourceSets["${client}DependencyTest"].runtimeClasspath
+    test.dependsOn name
+  }
 }
 
 // force test runs even when there are no test changes,
