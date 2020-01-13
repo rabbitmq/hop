@@ -50,11 +50,6 @@ If you want to use the **blocking IO client**, add the following dependencies:
   <version>5.2.1.RELEASE</version>
 </dependency>
 <dependency>
-  <groupId>org.apache.httpcomponents</groupId>
-  <artifactId>httpclient</artifactId>
-  <version>4.5.10</version>
-</dependency>
-<dependency>
   <groupId>com.fasterxml.jackson.core</groupId>
   <artifactId>jackson-databind</artifactId>
   <version>2.10.1</version>
@@ -88,7 +83,6 @@ If you want to use the **blocking IO client**, add the following dependencies:
 ```groovy
 compile "com.rabbitmq:http-client:3.5.0.RELEASE"
 compile "org.springframework:spring-web:5.2.1.RELEASE"
-compile "org.apache.httpcomponents:httpclient:4.5.10"
 compile "com.fasterxml.jackson.core:jackson-databind:2.10.1"
 ```
 
@@ -110,14 +104,47 @@ a pair of credentials to be instantiated:
 
 ``` java
 import com.rabbitmq.http.client.Client;
+import com.rabbitmq.http.client.ClientParameters;
 
-Client c = new Client("http://127.0.0.1:15672/api/", "guest", "guest");
+Client c = new Client(
+    new ClientParameters().url("http://127.0.0.1:15672/api/").username("guest").password("guest")
+);
 ```
 
 ### HTTP Layer
 
-The blocking IO client uses [Apache HTTP Components](https://hc.apache.org/) by default, but also supports
-[OkHttp](https://square.github.io/okhttp/) and standard JDK HTTP facilities.
+The HTTP layer used by the `Client` is pluggable. The `Client(ClientParameters)` constructor
+uses standard JDK HTTP facilities by default, but [Apache HTTP Components](https://hc.apache.org/)
+and [OkHttp](https://square.github.io/okhttp/) are also supported.
+
+#### Apache HTTP Components
+
+To use Apache HTTP Components, use an `HttpComponentsRestTemplateConfigurator` instance when creating the client:
+
+```java
+Client client = new Client(
+    new ClientParameters().url("http://localhost:15672/api").username("guest").password("guest")
+     .restTemplateConfigurator(new HttpComponentsRestTemplateConfigurator())
+);
+```
+
+This requires to add Apache HTTP Components on the classpath.
+
+For Maven:
+
+```xml
+<dependency>
+  <groupId>org.apache.httpcomponents</groupId>
+  <artifactId>httpclient</artifactId>
+  <version>4.5.10</version>
+</dependency>
+```
+
+For Gradle:
+
+```groovy
+compile "org.apache.httpcomponents:httpclient:4.5.10"
+```
 
 #### OkHttp
 
@@ -130,7 +157,7 @@ Client client = new Client(
 );
 ```
 
-This requires to have OkHttp on the classpath. For this, replace the `httpclient` dependency above by `okhttp`.
+This requires to add OkHttp on the classpath.
 
 For Maven:
 
@@ -147,21 +174,6 @@ For Gradle:
 ```groovy
 compile "com.squareup.okhttp3:okhttp:3.14.4"
 ```
-
-#### Standard JDK HTTP Facilities
-
-To use standard JDK HTTP facilities (`HttpURLConnection`), use an `SimpleRestTemplateConfigurator`
-instance when creating the client:
-
-```java
-Client client = new Client(
-   new ClientParameters().url("http://localhost:15672/api").username("guest").password("guest")
-    .restTemplateConfigurator(new SimpleRestTemplateConfigurator())
-);
-```
-
-When using standard JDK HTTP facilities, the dependency on `httpclient` or `okhttp` mentioned above is no
-longer necessary and can be removed from the Maven or Gradle configuration.
 
 ### Getting Overview
 

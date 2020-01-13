@@ -18,30 +18,7 @@ package com.rabbitmq.http.client;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.DeserializationFeature;
-import com.rabbitmq.http.client.domain.AlivenessTestResult;
-import com.rabbitmq.http.client.domain.BindingInfo;
-import com.rabbitmq.http.client.domain.ChannelInfo;
-import com.rabbitmq.http.client.domain.ClusterId;
-import com.rabbitmq.http.client.domain.ConnectionInfo;
-import com.rabbitmq.http.client.domain.CurrentUserDetails;
-import com.rabbitmq.http.client.domain.Definitions;
-import com.rabbitmq.http.client.domain.ExchangeInfo;
-import com.rabbitmq.http.client.domain.InboundMessage;
-import com.rabbitmq.http.client.domain.NodeInfo;
-import com.rabbitmq.http.client.domain.OutboundMessage;
-import com.rabbitmq.http.client.domain.OverviewResponse;
-import com.rabbitmq.http.client.domain.PolicyInfo;
-import com.rabbitmq.http.client.domain.QueueInfo;
-import com.rabbitmq.http.client.domain.ShovelInfo;
-import com.rabbitmq.http.client.domain.ShovelStatus;
-import com.rabbitmq.http.client.domain.TopicPermissions;
-import com.rabbitmq.http.client.domain.UpstreamDetails;
-import com.rabbitmq.http.client.domain.UpstreamInfo;
-import com.rabbitmq.http.client.domain.UpstreamSetDetails;
-import com.rabbitmq.http.client.domain.UpstreamSetInfo;
-import com.rabbitmq.http.client.domain.UserInfo;
-import com.rabbitmq.http.client.domain.UserPermissions;
-import com.rabbitmq.http.client.domain.VhostInfo;
+import com.rabbitmq.http.client.domain.*;
 import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpEntity;
@@ -63,12 +40,7 @@ import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class Client {
 
@@ -81,11 +53,15 @@ public class Client {
 
   /**
    * Construct an instance with the provided url and credentials.
-   * @param url the url e.g. "http://localhost:15672/api/".
+   * <p>
+   * The instance will be using Apache HttpComponents HTTP Client to create requests.
+   *
+   * @param url      the url e.g. "http://localhost:15672/api/".
    * @param username the username.
    * @param password the password
    * @throws MalformedURLException for a badly formed URL.
-   * @throws URISyntaxException for a badly formed URL.
+   * @throws URISyntaxException    for a badly formed URL.
+   * @see HttpComponentsRestTemplateConfigurator
    */
   public Client(String url, String username, String password) throws MalformedURLException, URISyntaxException {
     this(new URL(url), username, password);
@@ -93,25 +69,33 @@ public class Client {
 
   /**
    * Construct an instance with the provided url and credentials.
-   * @param url the url e.g. "http://localhost:15672/api/".
-   * @param username the username.
-   * @param password the password
+   * <p>
+   * The instance will be using Apache HttpComponents HTTP Client to create requests.
+   *
+   * @param url          the url e.g. "http://localhost:15672/api/".
+   * @param username     the username.
+   * @param password     the password
    * @param configurator {@link HttpClientBuilderConfigurator} to use
    * @throws MalformedURLException for a badly formed URL.
-   * @throws URISyntaxException for a badly formed URL.
+   * @throws URISyntaxException    for a badly formed URL.
+   * @see HttpComponentsRestTemplateConfigurator
    */
   public Client(String url, String username, String password, HttpClientBuilderConfigurator configurator)
-      throws MalformedURLException, URISyntaxException {
+          throws MalformedURLException, URISyntaxException {
     this(new URL(url), username, password, configurator);
   }
 
   /**
    * Construct an instance with the provided url and credentials.
-   * @param url the url e.g. "http://localhost:15672/api/".
+   * <p>
+   * The instance will be using Apache HttpComponents HTTP Client to create requests.
+   *
+   * @param url      the url e.g. "http://localhost:15672/api/".
    * @param username the username.
    * @param password the password
    * @throws MalformedURLException for a badly formed URL.
-   * @throws URISyntaxException for a badly formed URL.
+   * @throws URISyntaxException    for a badly formed URL.
+   * @see HttpComponentsRestTemplateConfigurator
    */
   public Client(URL url, String username, String password) throws MalformedURLException, URISyntaxException {
     this(url, username, password, null, null);
@@ -119,30 +103,38 @@ public class Client {
 
   /**
    * Construct an instance with the provided url and credentials.
-   * @param url the url e.g. "http://localhost:15672/api/".
-   * @param username the username.
-   * @param password the password
+   * <p>
+   * The instance will be using Apache HttpComponents HTTP Client to create requests.
+   *
+   * @param url          the url e.g. "http://localhost:15672/api/".
+   * @param username     the username.
+   * @param password     the password
    * @param configurator {@link HttpClientBuilderConfigurator} to use
    * @throws MalformedURLException for a badly formed URL.
-   * @throws URISyntaxException for a badly formed URL.
+   * @throws URISyntaxException    for a badly formed URL.
+   * @see HttpComponentsRestTemplateConfigurator
    */
   public Client(URL url, String username, String password, HttpClientBuilderConfigurator configurator)
-      throws MalformedURLException, URISyntaxException {
+          throws MalformedURLException, URISyntaxException {
     this(url, username, password, null, null, configurator);
   }
 
   /**
    * Construct an instance with the provided url and credentials.
-   * @param url the url e.g. "http://localhost:15672/api/".
-   * @param username the username.
-   * @param password the password
+   * <p>
+   * The instance will be using Apache HttpComponents HTTP Client to create requests.
+   *
+   * @param url                        the url e.g. "http://localhost:15672/api/".
+   * @param username                   the username.
+   * @param password                   the password
    * @param sslConnectionSocketFactory ssl connection factory for http client
-   * @param sslContext ssl context for http client
+   * @param sslContext                 ssl context for http client
    * @throws MalformedURLException for a badly formed URL.
-   * @throws URISyntaxException for a badly formed URL.
+   * @throws URISyntaxException    for a badly formed URL.
+   * @see HttpComponentsRestTemplateConfigurator
    */
   private Client(URL url, String username, String password, SSLConnectionSocketFactory sslConnectionSocketFactory, SSLContext sslContext)
-      throws MalformedURLException, URISyntaxException {
+          throws MalformedURLException, URISyntaxException {
     this(new ClientParameters()
             .url(url).username(username).password(password).restTemplateConfigurator(
                     new HttpComponentsRestTemplateConfigurator(sslConnectionSocketFactory, sslContext)
@@ -152,12 +144,16 @@ public class Client {
 
   /**
    * Construct an instance with the provided url and credentials.
-   * @param url the url e.g. "http://localhost:15672/api/".
-   * @param username the username.
-   * @param password the password
+   * <p>
+   * The instance will be using Apache HttpComponents HTTP Client to create requests.
+   *
+   * @param url        the url e.g. "http://localhost:15672/api/".
+   * @param username   the username.
+   * @param password   the password
    * @param sslContext ssl context for http client
    * @throws MalformedURLException for a badly formed URL.
-   * @throws URISyntaxException for a badly formed URL.
+   * @throws URISyntaxException    for a badly formed URL.
+   * @see HttpComponentsRestTemplateConfigurator
    */
   public Client(URL url, String username, String password, SSLContext sslContext) throws MalformedURLException, URISyntaxException {
     this(url, username, password, null, sslContext);
@@ -165,12 +161,16 @@ public class Client {
 
   /**
    * Construct an instance with the provided url and credentials.
-   * @param url the url e.g. "http://localhost:15672/api/".
-   * @param username the username.
-   * @param password the password
+   * <p>
+   * The instance will be using Apache HttpComponents HTTP Client to create requests.
+   *
+   * @param url                        the url e.g. "http://localhost:15672/api/".
+   * @param username                   the username.
+   * @param password                   the password
    * @param sslConnectionSocketFactory ssl connection factory for http client
    * @throws MalformedURLException for a badly formed URL.
-   * @throws URISyntaxException for a badly formed URL.
+   * @throws URISyntaxException    for a badly formed URL.
+   * @see HttpComponentsRestTemplateConfigurator
    */
   private Client(URL url, String username, String password, SSLConnectionSocketFactory sslConnectionSocketFactory) throws MalformedURLException, URISyntaxException {
     this(url, username, password, sslConnectionSocketFactory, null);
@@ -178,9 +178,13 @@ public class Client {
 
   /**
    * Construct an instance with the provided url and credentials.
+   * <p>
+   * The instance will be using Apache HttpComponents HTTP Client to create requests.
+   *
    * @param url the url e.g. "https://guest:guest@localhost:15672/api/".
    * @throws MalformedURLException for a badly formed URL.
-   * @throws URISyntaxException for a badly formed URL.
+   * @throws URISyntaxException    for a badly formed URL.
+   * @see HttpComponentsRestTemplateConfigurator
    */
   public Client(String url) throws MalformedURLException, URISyntaxException {
     this(new ClientParameters().url(url).restTemplateConfigurator(new HttpComponentsRestTemplateConfigurator()));
@@ -188,10 +192,14 @@ public class Client {
 
   /**
    * Construct an instance with the provided url and credentials.
-   * @param url the url e.g. "https://guest:guest@localhost:15672/api/".
+   * <p>
+   * The instance will be using Apache HttpComponents HTTP Client to create requests.
+   *
+   * @param url          the url e.g. "https://guest:guest@localhost:15672/api/".
    * @param configurator {@link HttpClientBuilderConfigurator} to use
    * @throws MalformedURLException for a badly formed URL.
-   * @throws URISyntaxException for a badly formed URL.
+   * @throws URISyntaxException    for a badly formed URL.
+   * @see HttpComponentsRestTemplateConfigurator
    */
   public Client(String url, HttpClientBuilderConfigurator configurator) throws MalformedURLException, URISyntaxException {
     this(Utils.urlWithoutCredentials(url),
@@ -203,9 +211,13 @@ public class Client {
 
   /**
    * Construct an instance with the provided url and credentials.
+   * <p>
+   * The instance will be using Apache HttpComponents HTTP Client to create requests.
+   *
    * @param url the url e.g. "https://guest:guest@localhost:15672/api/".
    * @throws MalformedURLException for a badly formed URL.
-   * @throws URISyntaxException for a badly formed URL.
+   * @throws URISyntaxException    for a badly formed URL.
+   * @see HttpComponentsRestTemplateConfigurator
    */
   public Client(URL url) throws MalformedURLException, URISyntaxException {
     this(url, null, null);
@@ -217,10 +229,15 @@ public class Client {
   }
 
   /**
-   *  Construct an instance with the provided {@link ClientParameters}.
+   * Construct an instance with the provided {@link ClientParameters}.
+   * <p>
+   * The instance will be using the standard JDK facilities to create HTTP requests.
+   *
    * @param parameters the client parameters to use
    * @throws URISyntaxException
    * @throws MalformedURLException
+   * @see SimpleRestTemplateConfigurator
+   * @since 3.6.0
    */
   public Client(ClientParameters parameters) throws URISyntaxException, MalformedURLException {
     parameters.validate();
@@ -233,7 +250,7 @@ public class Client {
     RestTemplate restTemplate = new RestTemplate();
     restTemplate.setMessageConverters(getMessageConverters());
     RestTemplateConfigurator restTemplateConfigurator = parameters.getRestTemplateConfigurator() == null ?
-            new HttpComponentsRestTemplateConfigurator() :
+            new SimpleRestTemplateConfigurator() :
             parameters.getRestTemplateConfigurator();
     this.rt = restTemplateConfigurator.configure(new ClientCreationContext(restTemplate, parameters, this.rootUri));
   }

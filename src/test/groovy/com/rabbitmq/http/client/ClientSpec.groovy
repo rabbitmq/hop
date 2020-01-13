@@ -56,7 +56,8 @@ class ClientSpec extends Specification {
 
   static Client[] clients() {
     [
-            new Client(url(), DEFAULT_USERNAME, DEFAULT_PASSWORD),
+            new Client(new ClientParameters().url(url()).username(DEFAULT_USERNAME).password(DEFAULT_PASSWORD)
+                    .restTemplateConfigurator(new HttpComponentsRestTemplateConfigurator())),
             new Client(
                     new ClientParameters().url(url()).username(DEFAULT_USERNAME).password(DEFAULT_PASSWORD)
                             .restTemplateConfigurator(new OkHttpRestTemplateConfigurator())
@@ -72,7 +73,12 @@ class ClientSpec extends Specification {
 
   static Client[] clientsWithConfiguration() {
     [
-            new Client(url(), DEFAULT_USERNAME, DEFAULT_PASSWORD, { builder -> builder.setMaxConnTotal(8192) }),
+            new Client(
+                    new ClientParameters().url(url()).username(DEFAULT_USERNAME).password(DEFAULT_PASSWORD)
+                            .restTemplateConfigurator(
+                                    new HttpComponentsRestTemplateConfigurator({ builder -> builder.setMaxConnTotal(8192) })
+                            )
+            ),
             new Client(
                     new ClientParameters().url(url()).username(DEFAULT_USERNAME).password(DEFAULT_PASSWORD)
                             .restTemplateConfigurator(
@@ -90,7 +96,10 @@ class ClientSpec extends Specification {
 
   static Client[] clientsWithCredentialsInUrl() {
     [
-            new Client("http://" + DEFAULT_USERNAME + ":" + DEFAULT_PASSWORD + "@127.0.0.1:" + managementPort() + "/api/"),
+            new Client(
+                    new ClientParameters().url("http://" + DEFAULT_USERNAME + ":" + DEFAULT_PASSWORD + "@127.0.0.1:" + managementPort() + "/api/")
+                            .restTemplateConfigurator(new HttpComponentsRestTemplateConfigurator())
+            ),
             new Client(
                     new ClientParameters().url("http://" + DEFAULT_USERNAME + ":" + DEFAULT_PASSWORD + "@127.0.0.1:" + managementPort() + "/api/")
                             .restTemplateConfigurator(new OkHttpRestTemplateConfigurator())

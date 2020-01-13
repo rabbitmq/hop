@@ -27,7 +27,10 @@ public class HttpClientSmokeClientTest {
     public void should_connect_to_rabbit_using_http_client() throws MalformedURLException, URISyntaxException {
         String url = "http://" + DEFAULT_USERNAME + ":" + DEFAULT_PASSWORD + "@127.0.0.1:" + managementPort() + "/api/";
 
-        Client client = new Client(url);
+        Client client = new Client(new ClientParameters()
+                .url(url)
+                .restTemplateConfigurator(new SimpleRestTemplateConfigurator())
+        );
         List<VhostInfo> vhosts = client.getVhosts();
         assertThat(vhosts, not(emptyList()));
         assertThat(vhosts.get(0).getName(), equalTo("/"));
