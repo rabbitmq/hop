@@ -234,8 +234,8 @@ public class Client {
    * The instance will be using the standard JDK facilities to create HTTP requests.
    *
    * @param parameters the client parameters to use
-   * @throws URISyntaxException
-   * @throws MalformedURLException
+   * @throws URISyntaxException    for a badly formed URL.
+   * @throws MalformedURLException for a badly formed URL.
    * @see SimpleRestTemplateConfigurator
    * @since 3.6.0
    */

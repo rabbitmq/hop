@@ -56,7 +56,7 @@ public class ClientParameters {
      *
      * @param url the URL
      * @return this client parameters instance
-     * @throws MalformedURLException
+     * @throws MalformedURLException for a badly formed URL.
      */
     public ClientParameters url(String url) throws MalformedURLException {
         this.url = new URL(url);

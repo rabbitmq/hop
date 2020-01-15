@@ -63,7 +63,7 @@ public class ClientCreationContext {
     /**
      * The root URI of the management API.
      *
-     * @return
+     * @return the root URI
      */
     public URI getRootUri() {
         return rootUri;
