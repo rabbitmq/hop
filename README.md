@@ -28,13 +28,26 @@ This section will be updated as the project matures.
 
 ## Maven Artifacts
 
-### Stable
 
-[![Maven Central](https://maven-badges.herokuapp.com/maven-central/com.rabbitmq/http-client/badge.svg)](https://maven-badges.herokuapp.com/maven-central/com.rabbitmq/http-client)
+Milestones and release candidates are available on Spring Milestone repository. You need
+to add this repository explicitly to your dependency manager configuration file.
 
-Project artifacts are available from Maven Central and [repo.spring.io](https://repo.spring.io).
+### Maven
 
-#### Maven
+Add the Spring Milestone repository:
+
+```xml
+<repositories>
+  <repository>
+    <snapshots>
+      <enabled>false</enabled>
+    </snapshots>
+    <id>spring-milestone</id>
+    <name>spring-milestone</name>
+    <url>https://repo.spring.io/libs-milestone-local</url>
+  </repository>
+</repositories>
+```
 
 If you want to use the **blocking IO client**, add the following dependencies:
 
@@ -42,12 +55,12 @@ If you want to use the **blocking IO client**, add the following dependencies:
 <dependency>
   <groupId>com.rabbitmq</groupId>
   <artifactId>http-client</artifactId>
-  <version>3.5.0.RELEASE</version>
+  <version>3.6.0.RC1</version>
 </dependency>
 <dependency>
   <groupId>org.springframework</groupId>
   <artifactId>spring-web</artifactId>
-  <version>5.2.1.RELEASE</version>
+  <version>5.2.3.RELEASE</version>
 </dependency>
 <dependency>
   <groupId>com.fasterxml.jackson.core</groupId>
@@ -62,12 +75,12 @@ If you want to use the **reactive, non-blocking IO client**, add the following d
 <dependency>
   <groupId>com.rabbitmq</groupId>
   <artifactId>http-client</artifactId>
-  <version>3.5.0.RELEASE</version>
+  <version>3.6.0.RC1</version>
 </dependency>
 <dependency>
   <groupId>io.projectreactor.netty</groupId>
   <artifactId>reactor-netty</artifactId>
-  <version>0.9.1.RELEASE</version>
+  <version>0.9.3.RELEASE</version>
 </dependency>
 <dependency>
   <groupId>com.fasterxml.jackson.core</groupId>
@@ -76,21 +89,31 @@ If you want to use the **reactive, non-blocking IO client**, add the following d
 </dependency>
 ```
 
-#### Gradle
+### Gradle
+
+Add the Spring Milestone repository:
+
+```groovy
+repositories {
+    maven {
+        url  "https://repo.spring.io/libs-milestone-local"
+    }
+}
+```
 
 If you want to use the **blocking IO client**, add the following dependencies:
 
 ```groovy
-compile "com.rabbitmq:http-client:3.5.0.RELEASE"
-compile "org.springframework:spring-web:5.2.1.RELEASE"
+compile "com.rabbitmq:http-client:3.6.0.RC1"
+compile "org.springframework:spring-web:5.2.3.RELEASE"
 compile "com.fasterxml.jackson.core:jackson-databind:2.10.1"
 ```
 
 If you want to use the **reactive, non-blocking IO client**, add the following dependencies:
 
 ```groovy
-compile "com.rabbitmq:http-client:3.5.0.RELEASE"
-compile "io.projectreactor.netty:reactor-netty:0.9.1.RELEASE"
+compile "com.rabbitmq:http-client:3.6.0.RC1"
+compile "io.projectreactor.netty:reactor-netty:0.9.3.RELEASE"
 compile "com.fasterxml.jackson.core:jackson-databind:2.10.1"
 ```
 
