@@ -24,8 +24,8 @@ import org.springframework.web.client.RestTemplate;
  * This is typically used to configure the {@link org.springframework.http.client.ClientHttpRequestFactory}
  * to use, and thus the library to create HTTP requests.
  * <p>
- * Hop provides support for <a href="https://hc.apache.org/">Apache HttpComponents</a> (the default) and
- * <a href="https://square.github.io/okhttp/">OkHttp</a>.
+ * Hop provides support for <a href="https://hc.apache.org/">Apache HttpComponents</a> (the default),
+ * <a href="https://square.github.io/okhttp/">OkHttp</a>, and standard JDK HTTP facilities.
  *
  * @see HttpComponentsRestTemplateConfigurator
  * @see OkHttpRestTemplateConfigurator

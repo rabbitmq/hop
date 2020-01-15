@@ -79,6 +79,7 @@ public class OkHttpRestTemplateConfigurator implements RestTemplateConfigurator 
     public OkHttpRestTemplateConfigurator(SSLSocketFactory sslSocketFactory,
                                           X509TrustManager trustManager,
                                           OkHttpClientBuilderConfigurator configurator) {
+        Assert.notNull(configurator, "configurator is required; it must not be null");
         this.sslSocketFactory = sslSocketFactory;
         this.trustManager = trustManager;
         this.configurator = configurator;

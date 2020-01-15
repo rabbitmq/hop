@@ -56,34 +56,41 @@ class ClientSpec extends Specification {
 
   static Client[] clients() {
     [
-            new Client(url(), DEFAULT_USERNAME, DEFAULT_PASSWORD),
-            new Client(
-                    new ClientParameters().url(url()).username(DEFAULT_USERNAME).password(DEFAULT_PASSWORD)
-                            .restTemplateConfigurator(new OkHttpRestTemplateConfigurator())
-            )
-    ]
+            new HttpComponentsRestTemplateConfigurator(),
+            new OkHttpRestTemplateConfigurator(),
+            new SimpleRestTemplateConfigurator()
+    ].collect({ restTemplateConfigurator ->
+      new Client(
+              new ClientParameters().url(url()).username(DEFAULT_USERNAME).password(DEFAULT_PASSWORD)
+                      .restTemplateConfigurator(restTemplateConfigurator)
+      )
+    })
   }
 
   static Client[] clientsWithConfiguration() {
     [
-            new Client(url(), DEFAULT_USERNAME, DEFAULT_PASSWORD, { builder -> builder.setMaxConnTotal(8192) }),
-            new Client(
-                    new ClientParameters().url(url()).username(DEFAULT_USERNAME).password(DEFAULT_PASSWORD)
-                            .restTemplateConfigurator(
-                                    new OkHttpRestTemplateConfigurator({ builder -> builder.readTimeout(10, TimeUnit.SECONDS) })
-                            )
-            )
-    ]
+            new HttpComponentsRestTemplateConfigurator({ builder -> builder.setMaxConnTotal(8192) }),
+            new OkHttpRestTemplateConfigurator({ builder -> builder.readTimeout(10, TimeUnit.SECONDS) }),
+            new SimpleRestTemplateConfigurator({ connection -> connection.setConnectTimeout(60000) })
+    ].collect({ restTemplateConfigurator ->
+      new Client(
+              new ClientParameters().url(url()).username(DEFAULT_USERNAME).password(DEFAULT_PASSWORD)
+                      .restTemplateConfigurator(restTemplateConfigurator)
+      )
+    })
   }
 
   static Client[] clientsWithCredentialsInUrl() {
     [
-            new Client("http://" + DEFAULT_USERNAME + ":" + DEFAULT_PASSWORD + "@127.0.0.1:" + managementPort() + "/api/"),
-            new Client(
-                    new ClientParameters().url("http://" + DEFAULT_USERNAME + ":" + DEFAULT_PASSWORD + "@127.0.0.1:" + managementPort() + "/api/")
-                            .restTemplateConfigurator(new OkHttpRestTemplateConfigurator())
-            )
-    ]
+            new HttpComponentsRestTemplateConfigurator(),
+            new OkHttpRestTemplateConfigurator(),
+            new SimpleRestTemplateConfigurator()
+    ].collect({ restTemplateConfigurator ->
+      new Client(
+              new ClientParameters().url("http://" + DEFAULT_USERNAME + ":" + DEFAULT_PASSWORD + "@127.0.0.1:" + managementPort() + "/api/")
+                      .restTemplateConfigurator(restTemplateConfigurator)
+      )
+    })
   }
 
   def setup() {
@@ -2131,6 +2138,7 @@ class ClientSpec extends Specification {
     client << clients()
   }
 
+  @Unroll
   def "PUT /api/parameters/shovel ShovelDetails.sourcePrefetchCount not sent if not set"() {
     given: "mock RestTemplate"
     MockRestTemplate rt = new MockRestTemplate()
