@@ -55,7 +55,7 @@ If you want to use the **blocking IO client**, add the following dependencies:
 <dependency>
   <groupId>com.rabbitmq</groupId>
   <artifactId>http-client</artifactId>
-  <version>3.6.0.RC1</version>
+  <version>3.6.0.RC2</version>
 </dependency>
 <dependency>
   <groupId>org.springframework</groupId>
@@ -65,7 +65,7 @@ If you want to use the **blocking IO client**, add the following dependencies:
 <dependency>
   <groupId>com.fasterxml.jackson.core</groupId>
   <artifactId>jackson-databind</artifactId>
-  <version>2.10.1</version>
+  <version>2.10.2</version>
 </dependency>
 ```
 
@@ -75,17 +75,17 @@ If you want to use the **reactive, non-blocking IO client**, add the following d
 <dependency>
   <groupId>com.rabbitmq</groupId>
   <artifactId>http-client</artifactId>
-  <version>3.6.0.RC1</version>
+  <version>3.6.0.RC2</version>
 </dependency>
 <dependency>
   <groupId>io.projectreactor.netty</groupId>
   <artifactId>reactor-netty</artifactId>
-  <version>0.9.3.RELEASE</version>
+  <version>0.9.4.RELEASE</version>
 </dependency>
 <dependency>
   <groupId>com.fasterxml.jackson.core</groupId>
   <artifactId>jackson-databind</artifactId>
-  <version>2.10.1</version>
+  <version>2.10.2</version>
 </dependency>
 ```
 
@@ -104,17 +104,17 @@ repositories {
 If you want to use the **blocking IO client**, add the following dependencies:
 
 ```groovy
-compile "com.rabbitmq:http-client:3.6.0.RC1"
+compile "com.rabbitmq:http-client:3.6.0.RC2"
 compile "org.springframework:spring-web:5.2.3.RELEASE"
-compile "com.fasterxml.jackson.core:jackson-databind:2.10.1"
+compile "com.fasterxml.jackson.core:jackson-databind:2.10.2"
 ```
 
 If you want to use the **reactive, non-blocking IO client**, add the following dependencies:
 
 ```groovy
-compile "com.rabbitmq:http-client:3.6.0.RC1"
-compile "io.projectreactor.netty:reactor-netty:0.9.3.RELEASE"
-compile "com.fasterxml.jackson.core:jackson-databind:2.10.1"
+compile "com.rabbitmq:http-client:3.6.0.RC2"
+compile "io.projectreactor.netty:reactor-netty:0.9.4.RELEASE"
+compile "com.fasterxml.jackson.core:jackson-databind:2.10.2"
 ```
 
 ## Usage Guide
@@ -159,14 +159,14 @@ For Maven:
 <dependency>
   <groupId>org.apache.httpcomponents</groupId>
   <artifactId>httpclient</artifactId>
-  <version>4.5.10</version>
+  <version>4.5.11</version>
 </dependency>
 ```
 
 For Gradle:
 
 ```groovy
-compile "org.apache.httpcomponents:httpclient:4.5.10"
+compile "org.apache.httpcomponents:httpclient:4.5.11"
 ```
 
 #### OkHttp
@@ -188,14 +188,14 @@ For Maven:
 <dependency>
   <groupId>com.squareup.okhttp3</groupId>
   <artifactId>okhttp</artifactId>
-  <version>3.14.4</version>
+  <version>3.14.6</version>
 </dependency>
 ```
 
 For Gradle:
 
 ```groovy
-compile "com.squareup.okhttp3:okhttp:3.14.4"
+compile "com.squareup.okhttp3:okhttp:3.14.6"
 ```
 
 ### Getting Overview
