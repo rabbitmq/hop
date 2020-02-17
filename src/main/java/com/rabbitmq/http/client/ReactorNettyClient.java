@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2019 the original author or authors.
+ * Copyright 2018-2020 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,7 +29,6 @@ import io.netty.handler.codec.http.HttpHeaderValues;
 import io.netty.handler.codec.http.HttpHeaders;
 import io.netty.handler.codec.http.HttpMethod;
 import org.reactivestreams.Publisher;
-import org.springframework.util.StringUtils;
 import reactor.core.Exceptions;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -678,7 +677,7 @@ public class ReactorNettyClient {
      * @return HTTP response in a mono
      */
     public Mono<HttpResponse> declareUpstream(String vhost, String name, UpstreamDetails details) {
-        if (StringUtils.isEmpty(details.getUri())) {
+        if (isEmpty(details.getUri())) {
             throw new IllegalArgumentException("Upstream uri must not be null or empty");
         }
         UpstreamInfo body = new UpstreamInfo();
@@ -729,7 +728,7 @@ public class ReactorNettyClient {
      */
     public Mono<HttpResponse> declareUpstreamSet(String vhost, String name, List<UpstreamSetDetails> details) {
         for (UpstreamSetDetails item : details) {
-            if (StringUtils.isEmpty(item.getUpstream())) {
+            if (isEmpty(item.getUpstream())) {
                 throw new IllegalArgumentException("Each federation upstream set item must have a non-null and not " +
                         "empty upstream name");
             }
@@ -888,5 +887,9 @@ public class ReactorNettyClient {
 
     private String enc(String pathSegment) {
         return Utils.encode(pathSegment);
+    }
+
+    private static boolean isEmpty(String str) {
+        return (str == null || "".equals(str));
     }
 }
