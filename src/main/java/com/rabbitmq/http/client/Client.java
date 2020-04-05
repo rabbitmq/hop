@@ -44,8 +44,8 @@ import java.util.*;
 
 public class Client {
 
-  private final RestTemplate rt;
-  private final URI rootUri;
+  protected final RestTemplate rt;
+  protected final URI rootUri;
 
   //
   // API
