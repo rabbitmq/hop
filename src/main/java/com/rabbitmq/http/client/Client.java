@@ -33,6 +33,7 @@ import org.springframework.util.MultiValueMap;
 import org.springframework.util.StringUtils;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.web.util.UriComponentsBuilder;
 import org.springframework.web.util.UriUtils;
 
 import javax.net.ssl.SSLContext;
@@ -41,6 +42,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.*;
+import java.util.stream.Collectors;
 
 public class Client {
 
@@ -593,7 +595,12 @@ public class Client {
     this.deleteIgnoring404(uriWithPath("./queues/" + encodePathSegment(vhost) + "/" + encodePathSegment(name)));
   }
 
-    /**
+  public void deleteQueue(String vhost, String name, QueueDeleteInfo deleteInfo) {
+    this.deleteIgnoring404(uriWithPath("./queues/" + encodePathSegment(vhost) + "/" + encodePathSegment(name), deleteInfo.getAsQueryParams()));
+  }
+
+
+  /**
      * Get messages from a queue.
      *
      * <b>DO NOT USE THIS METHOD IN PRODUCTION</b>. Getting messages with the HTTP API
@@ -1188,6 +1195,12 @@ public class Client {
    */
   private URI uriWithPath(final String path) {
     return this.rootUri.resolve(path);
+  }
+
+  private URI uriWithPath(final String path, final MultiValueMap<String, String> queryParams) {
+    return UriComponentsBuilder.fromUri(uriWithPath(path))
+            .queryParams(queryParams)
+            .build().toUri();
   }
 
   private String encodePathSegment(final String pathSegment) {
