@@ -16,8 +16,8 @@
 
 package com.rabbitmq.http.client.domain;
 
-import org.springframework.util.LinkedMultiValueMap;
-import org.springframework.util.MultiValueMap;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 public class DeleteQueueParameters {
     private boolean ifEmpty;
@@ -36,15 +36,14 @@ public class DeleteQueueParameters {
         return ifUnused;
     }
 
-    public MultiValueMap<String, String> getAsQueryParams() {
-        MultiValueMap<String, String> params = new LinkedMultiValueMap<>();
+    public Map<String, String> getAsQueryParams() {
+        Map<String, String> params = new LinkedHashMap<>();
         if (ifEmpty) {
-            params.add("if-empty", "true");
+            params.put("if-empty", "true");
         }
         if (ifUnused) {
-            params.add("if-unused", "true");
+            params.put("if-unused", "true");
         }
-
         return params;
     }
 

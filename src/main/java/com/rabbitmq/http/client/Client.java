@@ -1197,11 +1197,15 @@ public class Client {
     return this.rootUri.resolve(path);
   }
 
-  private URI uriWithPath(final String path, final MultiValueMap<String, String> queryParams) {
+  private URI uriWithPath(final String path, final Map<String, String> queryParams) {
+    LinkedMultiValueMap<String, String> map = new LinkedMultiValueMap<>();
+    queryParams.entrySet()
+            .forEach(e -> map.add(e.getKey(), e.getValue()));
+
     DefaultUriBuilderFactory factory = new DefaultUriBuilderFactory();
     factory.setEncodingMode(DefaultUriBuilderFactory.EncodingMode.VALUES_ONLY);
     UriBuilder uriBuilder = factory.uriString(rootUri.resolve(path).toString());
-    uriBuilder.queryParams(queryParams);
+    uriBuilder.queryParams(map);
     return uriBuilder.build();
   }
 
