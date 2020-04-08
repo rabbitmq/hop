@@ -19,11 +19,11 @@ package com.rabbitmq.http.client.domain;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 
-public class QueueDeleteInfo {
+public class DeleteQueueParameters {
     private boolean ifEmpty;
     private boolean ifUnused;
 
-    public QueueDeleteInfo(boolean ifEmpty, boolean ifUnused) {
+    public DeleteQueueParameters(boolean ifEmpty, boolean ifUnused) {
         this.ifEmpty = ifEmpty;
         this.ifUnused = ifUnused;
     }

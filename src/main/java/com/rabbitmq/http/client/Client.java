@@ -33,7 +33,8 @@ import org.springframework.util.MultiValueMap;
 import org.springframework.util.StringUtils;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
-import org.springframework.web.util.UriComponentsBuilder;
+import org.springframework.web.util.DefaultUriBuilderFactory;
+import org.springframework.web.util.UriBuilder;
 import org.springframework.web.util.UriUtils;
 
 import javax.net.ssl.SSLContext;
@@ -42,7 +43,6 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.*;
-import java.util.stream.Collectors;
 
 public class Client {
 
@@ -595,7 +595,7 @@ public class Client {
     this.deleteIgnoring404(uriWithPath("./queues/" + encodePathSegment(vhost) + "/" + encodePathSegment(name)));
   }
 
-  public void deleteQueue(String vhost, String name, QueueDeleteInfo deleteInfo) {
+  public void deleteQueue(String vhost, String name, DeleteQueueParameters deleteInfo) {
     this.deleteIgnoring404(uriWithPath("./queues/" + encodePathSegment(vhost) + "/" + encodePathSegment(name), deleteInfo.getAsQueryParams()));
   }
 
@@ -1198,9 +1198,11 @@ public class Client {
   }
 
   private URI uriWithPath(final String path, final MultiValueMap<String, String> queryParams) {
-    return UriComponentsBuilder.fromUri(uriWithPath(path))
-            .queryParams(queryParams)
-            .build().toUri();
+    DefaultUriBuilderFactory factory = new DefaultUriBuilderFactory();
+    factory.setEncodingMode(DefaultUriBuilderFactory.EncodingMode.VALUES_ONLY);
+    UriBuilder uriBuilder = factory.uriString(rootUri.resolve(path).toString());
+    uriBuilder.queryParams(queryParams);
+    return uriBuilder.build();
   }
 
   private String encodePathSegment(final String pathSegment) {

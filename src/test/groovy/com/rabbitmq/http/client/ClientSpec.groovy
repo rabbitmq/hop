@@ -906,6 +906,32 @@ class ClientSpec extends Specification {
   }
 
   @Unroll
+  def "DELETE /api/queues/{vhost}/{name}?if-empty=true"() {
+    final String s = UUID.randomUUID().toString()
+    given: "queue ${s} in vhost /"
+    final v = "/"
+    client.declareQueue(v, s, new QueueInfo(false, false, false))
+
+    List<QueueInfo> xs = client.getQueues(v)
+    QueueInfo x = xs.find { (it.name == s) }
+    x != null
+    verifyQueueInfo(x)
+
+    and: "queue has a message"
+    client.publish(v, "amq.default", s, new OutboundMessage().payload("test"))
+
+    when: "client tries to delete queue ${s} in vhost /"
+    client.deleteQueue(v, s, new DeleteQueueParameters(true, false))
+
+    then: "an exception is thrown"
+    final e = thrown(HttpClientErrorException)
+    e.getStatusCode() == HttpStatus.BAD_REQUEST
+
+    where:
+    client << clients()
+  }
+
+  @Unroll
   def "GET /api/bindings"() {
     given: "3 queues bound to amq.fanout"
     final Connection conn = cf.newConnection()
