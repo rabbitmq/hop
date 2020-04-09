@@ -907,25 +907,28 @@ class ClientSpec extends Specification {
 
   @Unroll
   def "DELETE /api/queues/{vhost}/{name}?if-empty=true"() {
-    final String s = UUID.randomUUID().toString()
-    given: "queue ${s} in vhost /"
+    final String queue = UUID.randomUUID().toString()
+    given: "queue ${queue} in vhost /"
     final v = "/"
-    client.declareQueue(v, s, new QueueInfo(false, false, false))
+    client.declareQueue(v, queue, new QueueInfo(false, false, false))
 
     List<QueueInfo> xs = client.getQueues(v)
-    QueueInfo x = xs.find { (it.name == s) }
+    QueueInfo x = xs.find { (it.name == queue) }
     x != null
     verifyQueueInfo(x)
 
     and: "queue has a message"
-    client.publish(v, "amq.default", s, new OutboundMessage().payload("test"))
+    client.publish(v, "amq.default", queue, new OutboundMessage().payload("test"))
 
-    when: "client tries to delete queue ${s} in vhost /"
-    client.deleteQueue(v, s, new DeleteQueueParameters(true, false))
+    when: "client tries to delete queue ${queue} in vhost /"
+    client.deleteQueue(v, queue, new DeleteQueueParameters(true, false))
 
     then: "an exception is thrown"
     final e = thrown(HttpClientErrorException)
     e.getStatusCode() == HttpStatus.BAD_REQUEST
+
+    cleanup:
+    client.deleteQueue(v, queue)
 
     where:
     client << clients()

@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 the original author or authors.
+ * Copyright 2020 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,8 +20,8 @@ import java.util.LinkedHashMap;
 import java.util.Map;
 
 public class DeleteQueueParameters {
-    private boolean ifEmpty;
-    private boolean ifUnused;
+    private final boolean ifEmpty;
+    private final boolean ifUnused;
 
     public DeleteQueueParameters(boolean ifEmpty, boolean ifUnused) {
         this.ifEmpty = ifEmpty;
@@ -39,10 +39,10 @@ public class DeleteQueueParameters {
     public Map<String, String> getAsQueryParams() {
         Map<String, String> params = new LinkedHashMap<>();
         if (ifEmpty) {
-            params.put("if-empty", "true");
+            params.put("if-empty", Boolean.TRUE.toString());
         }
         if (ifUnused) {
-            params.put("if-unused", "true");
+            params.put("if-unused", Boolean.TRUE.toString());
         }
         return params;
     }

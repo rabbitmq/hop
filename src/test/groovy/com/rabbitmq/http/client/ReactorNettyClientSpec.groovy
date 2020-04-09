@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2019 the original author or authors.
+ * Copyright 2018-2020 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -61,6 +61,7 @@ import spock.lang.Specification
 import spock.lang.Unroll
 
 import java.nio.charset.Charset
+import java.time.Duration
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
@@ -1288,27 +1289,30 @@ class ReactorNettyClientSpec extends Specification {
     }
 
     def "DELETE /api/queues/{vhost}/{name}?if-empty=true"() {
-        final String s = UUID.randomUUID().toString()
-        given: "queue ${s} in vhost /"
+        final String queue = UUID.randomUUID().toString()
+        given: "queue ${queue} in vhost /"
         final v = "/"
-        client.declareQueue(v, s, new QueueInfo(false, false, false)).block()
+        client.declareQueue(v, queue, new QueueInfo(false, false, false)).block()
 
         Flux<QueueInfo> xs = client.getQueues(v)
-        QueueInfo x = xs.filter( { q -> q.name.equals(s) } ).blockFirst()
+        QueueInfo x = xs.filter( { q -> q.name.equals(queue) } ).blockFirst()
         x != null
         verifyQueueInfo(x)
 
         and: "queue has a message"
-        client.publish(v, "amq.default", s, new OutboundMessage().payload("test")).block()
+        client.publish(v, "amq.default", queue, new OutboundMessage().payload("test")).block()
 
-        when: "client tries to delete queue ${s} in vhost /"
-        def status = client.deleteQueue(v, s, new DeleteQueueParameters(true, false))
+        when: "client tries to delete queue ${queue} in vhost /"
+        def status = client.deleteQueue(v, queue, new DeleteQueueParameters(true, false))
                 .flatMap({ r -> Mono.just(r.status) })
                 .onErrorReturn({ t -> "Connection prematurely closed BEFORE response".equals(t.getMessage()) }, 500)
                 .block()
 
         then: "HTTP status is 400 BAD REQUEST"
         status == 400
+
+        cleanup:
+        client.deleteQueue(v, queue).block(Duration.ofSeconds(10))
     }
 
     def "GET /api/bindings"() {

@@ -29,7 +29,6 @@ import io.netty.handler.codec.http.HttpHeaderValues;
 import io.netty.handler.codec.http.HttpHeaders;
 import io.netty.handler.codec.http.HttpMethod;
 import org.reactivestreams.Publisher;
-import org.springframework.util.MultiValueMap;
 import reactor.core.Exceptions;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -874,13 +873,16 @@ public class ReactorNettyClient {
     }
 
     private Mono<HttpResponse> doDelete(Consumer<? super HttpHeaders> headerBuilder, Map<String, String> queryParams, String... pathSegments) {
-        String query = queryParams.entrySet().stream()
-                .map(e -> String.format("%s=%s", e.getKey(), enc(e.getValue())))
-                .collect(Collectors.joining("&", "?", ""));
+        String uri = uri(pathSegments);
+        if (queryParams != null && !queryParams.isEmpty()) {
+            uri += queryParams.entrySet().stream()
+                    .map(e -> String.format("%s=%s", e.getKey(), enc(e.getValue())))
+                    .collect(Collectors.joining("&", "?", ""));
+        }
         return client.headersWhen(authorizedHeader())
                 .headers(headerBuilder)
                 .delete()
-                .uri(uri(pathSegments) + query)
+                .uri(uri)
                 .response()
                 .doOnNext(applyResponseCallback())
                 .map(ReactorNettyClient::toHttpResponse);

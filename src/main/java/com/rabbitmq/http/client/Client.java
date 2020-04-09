@@ -1198,7 +1198,7 @@ public class Client {
   }
 
   private URI uriWithPath(final String path, final Map<String, String> queryParams) {
-    LinkedMultiValueMap<String, String> map = new LinkedMultiValueMap<>();
+    MultiValueMap<String, String> map = new LinkedMultiValueMap<>();
     queryParams.entrySet()
             .forEach(e -> map.add(e.getKey(), e.getValue()));
 
