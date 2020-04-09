@@ -33,6 +33,8 @@ import org.springframework.util.MultiValueMap;
 import org.springframework.util.StringUtils;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.web.util.DefaultUriBuilderFactory;
+import org.springframework.web.util.UriBuilder;
 import org.springframework.web.util.UriUtils;
 
 import javax.net.ssl.SSLContext;
@@ -593,7 +595,12 @@ public class Client {
     this.deleteIgnoring404(uriWithPath("./queues/" + encodePathSegment(vhost) + "/" + encodePathSegment(name)));
   }
 
-    /**
+  public void deleteQueue(String vhost, String name, DeleteQueueParameters deleteInfo) {
+    this.deleteIgnoring404(uriWithPath("./queues/" + encodePathSegment(vhost) + "/" + encodePathSegment(name), deleteInfo.getAsQueryParams()));
+  }
+
+
+  /**
      * Get messages from a queue.
      *
      * <b>DO NOT USE THIS METHOD IN PRODUCTION</b>. Getting messages with the HTTP API
@@ -1188,6 +1195,18 @@ public class Client {
    */
   private URI uriWithPath(final String path) {
     return this.rootUri.resolve(path);
+  }
+
+  private URI uriWithPath(final String path, final Map<String, String> queryParams) {
+    LinkedMultiValueMap<String, String> map = new LinkedMultiValueMap<>();
+    queryParams.entrySet()
+            .forEach(e -> map.add(e.getKey(), e.getValue()));
+
+    DefaultUriBuilderFactory factory = new DefaultUriBuilderFactory();
+    factory.setEncodingMode(DefaultUriBuilderFactory.EncodingMode.VALUES_ONLY);
+    UriBuilder uriBuilder = factory.uriString(rootUri.resolve(path).toString());
+    uriBuilder.queryParams(map);
+    return uriBuilder.build();
   }
 
   private String encodePathSegment(final String pathSegment) {

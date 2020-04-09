@@ -29,6 +29,7 @@ import io.netty.handler.codec.http.HttpHeaderValues;
 import io.netty.handler.codec.http.HttpHeaders;
 import io.netty.handler.codec.http.HttpMethod;
 import org.reactivestreams.Publisher;
+import org.springframework.util.MultiValueMap;
 import reactor.core.Exceptions;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -46,6 +47,7 @@ import java.util.function.BiFunction;
 import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
 
 /**
  * Reactive client based on Reactor Netty.
@@ -498,6 +500,10 @@ public class ReactorNettyClient {
         return doDelete("queues", enc(vhost), enc(name));
     }
 
+    public Mono<HttpResponse> deleteQueue(String vhost, String name, DeleteQueueParameters parameters) {
+        return doDelete(headers -> { }, parameters.getAsQueryParams(), "queues", enc(vhost), enc(name));
+    }
+
     /**
      * Get messages from a queue.
      *
@@ -867,14 +873,21 @@ public class ReactorNettyClient {
             .map(ReactorNettyClient::toHttpResponse);
     }
 
-    private Mono<HttpResponse> doDelete(Consumer<? super HttpHeaders> headerBuilder, String... pathSegments) {
+    private Mono<HttpResponse> doDelete(Consumer<? super HttpHeaders> headerBuilder, Map<String, String> queryParams, String... pathSegments) {
+        String query = queryParams.entrySet().stream()
+                .map(e -> String.format("%s=%s", e.getKey(), enc(e.getValue())))
+                .collect(Collectors.joining("&", "?", ""));
         return client.headersWhen(authorizedHeader())
-            .headers(headerBuilder)
-            .delete()
-            .uri(uri(pathSegments))
-            .response()
-            .doOnNext(applyResponseCallback())
-            .map(ReactorNettyClient::toHttpResponse);
+                .headers(headerBuilder)
+                .delete()
+                .uri(uri(pathSegments) + query)
+                .response()
+                .doOnNext(applyResponseCallback())
+                .map(ReactorNettyClient::toHttpResponse);
+    }
+
+    private Mono<HttpResponse> doDelete(Consumer<? super HttpHeaders> headerBuilder, String... pathSegments) {
+        return doDelete(headerBuilder, Collections.emptyMap(), pathSegments);
     }
 
     private Mono<HttpResponse> doDelete(String... pathSegments) {

@@ -31,6 +31,7 @@ import com.rabbitmq.http.client.domain.ChannelInfo
 import com.rabbitmq.http.client.domain.ClusterId
 import com.rabbitmq.http.client.domain.ConnectionInfo
 import com.rabbitmq.http.client.domain.Definitions
+import com.rabbitmq.http.client.domain.DeleteQueueParameters
 import com.rabbitmq.http.client.domain.ExchangeInfo
 import com.rabbitmq.http.client.domain.InboundMessage
 import com.rabbitmq.http.client.domain.OutboundMessage
@@ -50,11 +51,14 @@ import com.rabbitmq.http.client.domain.VhostInfo
 import groovy.json.JsonSlurper
 import io.netty.buffer.ByteBuf
 import io.netty.buffer.ByteBufOutputStream
+import org.springframework.http.HttpStatus
+import org.springframework.web.client.HttpClientErrorException
 import reactor.core.publisher.Flux
 import reactor.core.publisher.Mono
 import reactor.netty.http.client.HttpClient
 import spock.lang.IgnoreIf
 import spock.lang.Specification
+import spock.lang.Unroll
 
 import java.nio.charset.Charset
 import java.util.concurrent.CountDownLatch
@@ -1281,6 +1285,30 @@ class ReactorNettyClientSpec extends Specification {
 
         then: "${s} no longer exists"
         !xs.filter( { q -> q.name.equals(s) } ).hasElements().block()
+    }
+
+    def "DELETE /api/queues/{vhost}/{name}?if-empty=true"() {
+        final String s = UUID.randomUUID().toString()
+        given: "queue ${s} in vhost /"
+        final v = "/"
+        client.declareQueue(v, s, new QueueInfo(false, false, false)).block()
+
+        Flux<QueueInfo> xs = client.getQueues(v)
+        QueueInfo x = xs.filter( { q -> q.name.equals(s) } ).blockFirst()
+        x != null
+        verifyQueueInfo(x)
+
+        and: "queue has a message"
+        client.publish(v, "amq.default", s, new OutboundMessage().payload("test")).block()
+
+        when: "client tries to delete queue ${s} in vhost /"
+        def status = client.deleteQueue(v, s, new DeleteQueueParameters(true, false))
+                .flatMap({ r -> Mono.just(r.status) })
+                .onErrorReturn({ t -> "Connection prematurely closed BEFORE response".equals(t.getMessage()) }, 500)
+                .block()
+
+        then: "HTTP status is 400 BAD REQUEST"
+        status == 400
     }
 
     def "GET /api/bindings"() {
