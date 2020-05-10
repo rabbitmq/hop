@@ -26,7 +26,7 @@ public class BindingInfo {
   private String source;
   private String destination;
   @JsonProperty("destination_type")
-  private String destinationType;
+  private DestinationType destinationType;
   @JsonProperty("routing_key")
   private String routingKey;
   private Map<String, Object> arguments;
@@ -57,11 +57,11 @@ public class BindingInfo {
     this.destination = destination;
   }
 
-  public String getDestinationType() {
+  public DestinationType getDestinationType() {
     return destinationType;
   }
 
-  public void setDestinationType(String destinationType) {
+  public void setDestinationType(DestinationType destinationType) {
     this.destinationType = destinationType;
   }
 

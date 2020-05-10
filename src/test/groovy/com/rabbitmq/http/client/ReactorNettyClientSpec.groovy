@@ -32,6 +32,7 @@ import com.rabbitmq.http.client.domain.ClusterId
 import com.rabbitmq.http.client.domain.ConnectionInfo
 import com.rabbitmq.http.client.domain.Definitions
 import com.rabbitmq.http.client.domain.DeleteQueueParameters
+import com.rabbitmq.http.client.domain.DestinationType
 import com.rabbitmq.http.client.domain.ExchangeInfo
 import com.rabbitmq.http.client.domain.InboundMessage
 import com.rabbitmq.http.client.domain.OutboundMessage
@@ -1331,7 +1332,7 @@ class ReactorNettyClientSpec extends Specification {
         final Flux<BindingInfo> xs = client.getBindings()
 
         then: "amq.fanout bindings are listed"
-        xs.filter( { b -> b.destinationType.equals("queue") && b.source.equals(x) } )
+        xs.filter( { b -> b.destinationType == DestinationType.QUEUE && b.source == x } )
                 .toStream().count() >= 3
 
         cleanup:
@@ -1355,7 +1356,7 @@ class ReactorNettyClientSpec extends Specification {
         final Flux<BindingInfo> xs = client.getBindings("/")
 
         then: "amq.fanout bindings are listed"
-        xs.filter( { b -> b.destinationType.equals("queue") && b.source.equals(x) } )
+        xs.filter( { b -> b.destinationType == DestinationType.QUEUE && b.source == x } )
                 .count().block() >= 2
 
         cleanup:
@@ -1377,9 +1378,10 @@ class ReactorNettyClientSpec extends Specification {
         final Flux<BindingInfo> xs = client.getBindings("/")
 
         then: "the amq.fanout binding is listed"
-        xs.filter( { b -> b.destinationType.equals("queue") &&
-                b.source.equals(x) &&
-                b.destination.equals(q) } ).count().block() == 1
+        xs.filter( { b -> b.destinationType == DestinationType.QUEUE &&
+                b.source == x &&
+                b.destination == q
+        } ).count().block() == 1
 
         cleanup:
         ch.queueDelete(q)
@@ -1399,9 +1401,10 @@ class ReactorNettyClientSpec extends Specification {
         final Flux<BindingInfo> xs = client.getQueueBindings("/", q)
 
         then: "the amq.fanout binding is listed"
-        xs.filter( { b-> b.destinationType.equals("queue") &&
-                b.source.equals(x) &&
-                b.destination.equals(q) } ).count().block() == 1
+        xs.filter( { b-> b.destinationType == DestinationType.QUEUE &&
+                b.source == x &&
+                b.destination == q
+        } ).count().block() == 1
 
         cleanup:
         ch.queueDelete(q)
@@ -1423,9 +1426,9 @@ class ReactorNettyClientSpec extends Specification {
         then: "the amq.fanout binding is listed"
         final b = xs.blockFirst()
         xs.count().block() == 1
-        b.source.equals(x)
-        b.destination.equals(q)
-        b.destinationType.equals("queue")
+        b.source == x
+        b.destination == q
+        b.destinationType == DestinationType.QUEUE
 
         cleanup:
         ch.queueDelete(q)
@@ -1447,9 +1450,9 @@ class ReactorNettyClientSpec extends Specification {
         then: "the amq.topic binding is listed"
         final b = xs.blockFirst()
         xs.count().block() == 1
-        b.source.equals(s)
-        b.destination.equals(d)
-        b.destinationType.equals("exchange")
+        b.source == s
+        b.destination == d
+        b.destinationType == DestinationType.EXCHANGE
 
         cleanup:
         ch.exchangeDelete(d)
@@ -1471,13 +1474,13 @@ class ReactorNettyClientSpec extends Specification {
         then: "the amq.fanout binding is listed"
         final b = xs.blockFirst()
         xs.count().block() == 1
-        b.source.equals(s)
-        b.destination.equals(d)
-        b.destinationType.equals("exchange")
+        b.source == s
+        b.destination == d
+        b.destinationType == DestinationType.EXCHANGE
         b.arguments.containsKey("arg1")
-        b.arguments.arg1.equals("value1")
+        b.arguments.arg1 == "value1"
         b.arguments.containsKey("arg2")
-        b.arguments.arg2.equals("value2")
+        b.arguments.arg2 == "value2"
 
         cleanup:
         client.deleteExchange(v, d).block()
@@ -1497,13 +1500,13 @@ class ReactorNettyClientSpec extends Specification {
         then: "the amq.fanout binding is listed"
         final b = xs.blockFirst()
         xs.count().block() == 1
-        b.source.equals(x)
-        b.destination.equals(q)
-        b.destinationType.equals("queue")
+        b.source == x
+        b.destination == q
+        b.destinationType == DestinationType.QUEUE
         b.arguments.containsKey("arg1")
-        b.arguments.arg1.equals("value1")
+        b.arguments.arg1 == "value1"
         b.arguments.containsKey("arg2")
-        b.arguments.arg2.equals("value2")
+        b.arguments.arg2 == "value2"
 
         cleanup:
         client.deleteQueue(v, q).block()
@@ -1679,13 +1682,13 @@ class ReactorNettyClientSpec extends Specification {
         !d.getBindings().isEmpty()
         d.getBindings().size() >= 1
         BindingInfo b = d.getBindings().find {
-            it.source.equals("amq.fanout") && it.destination.equals("queue1") && it.destinationType.equals("queue")
+            it.source == "amq.fanout" && it.destination == "queue1" && it.destinationType == DestinationType.QUEUE
         }
         b != null
-        b.vhost.equals("/")
-        b.source.equals("amq.fanout")
-        b.destination.equals("queue1")
-        b.destinationType.equals("queue")
+        b.vhost == "/"
+        b.source == "amq.fanout"
+        b.destination == "queue1"
+        b.destinationType == DestinationType.QUEUE
 
         cleanup:
         client.deleteQueue("/","queue1").block()
@@ -1955,7 +1958,7 @@ class ReactorNettyClientSpec extends Specification {
 
         then: "there is a binding for hop.exchange1"
         final x = xs.filter( { b -> b.source == src &&
-                b.destinationType == "exchange" &&
+                b.destinationType == DestinationType.EXCHANGE &&
                 b.destination == dest
         } )
         x.hasElements().block()
@@ -1976,7 +1979,7 @@ class ReactorNettyClientSpec extends Specification {
         final xs = client.getExchangeBindingsBySource("/", "")
 
         then: "there is an automatic binding for hop.queue1"
-        final x = xs.filter( { b -> b.source == "" && b.destinationType == "queue" && b.destination == q } )
+        final x = xs.filter( { b -> b.source == "" && b.destinationType == DestinationType.QUEUE && b.destination == q } )
         x.hasElements().block()
 
         cleanup:
