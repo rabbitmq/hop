@@ -59,7 +59,7 @@ public class BindingInfo {
 
   public String getDestinationType() {
     if(destinationType != null) {
-      return destinationType.name();
+      return destinationType.name().toLowerCase();
     }
     return null;
   }
