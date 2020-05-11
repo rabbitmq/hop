@@ -637,7 +637,7 @@ class ClientSpec extends Specification {
     final xs = client.getBindingsBySource("/", "")
 
     then: "there is an automatic binding for hop.queue1"
-    final x = xs.find { it.source == "" && it.destinationType == DestinationType.QUEUE && it.destination == q }
+    final x = xs.find { it.source == "" && it.destinationType == "queue" && it.destination == q }
     x != null
 
     cleanup:
@@ -663,7 +663,7 @@ class ClientSpec extends Specification {
 
     then: "there is a binding for hop.exchange1"
     final x = xs.find { it.source == src &&
-        it.destinationType == DestinationType.EXCHANGE &&
+        it.destinationType == "exchange" &&
         it.destination == dest
     }
     x != null
@@ -951,7 +951,7 @@ class ClientSpec extends Specification {
     final List<BindingInfo> xs = client.getBindings()
 
     then: "amq.fanout bindings are listed"
-    xs.findAll { it.destinationType == DestinationType.QUEUE && it.source == x }
+    xs.findAll { it.destinationType == "queue" && it.source == x }
       .size() >= 3
 
     cleanup:
@@ -979,7 +979,7 @@ class ClientSpec extends Specification {
     final List<BindingInfo> xs = client.getBindings("/")
 
     then: "amq.fanout bindings are listed"
-    xs.findAll { it.destinationType == DestinationType.QUEUE && it.source == x }
+    xs.findAll { it.destinationType == "queue" && it.source == x }
       .size() >= 2
 
     cleanup:
@@ -1005,7 +1005,7 @@ class ClientSpec extends Specification {
     final List<BindingInfo> xs = client.getBindings("/")
 
     then: "the amq.fanout binding is listed"
-    xs.find { it.destinationType == DestinationType.QUEUE && it.source == x && it.destination == q }
+    xs.find { it.destinationType == "queue" && it.source == x && it.destination == q }
 
     cleanup:
     ch.queueDelete(q)
@@ -1029,7 +1029,7 @@ class ClientSpec extends Specification {
     final List<BindingInfo> xs = client.getQueueBindings("/", q)
 
     then: "the amq.fanout binding is listed"
-    xs.find { it.destinationType == DestinationType.QUEUE && it.source == x && it.destination == q }
+    xs.find { it.destinationType == "queue" && it.source == x && it.destination == q }
 
     cleanup:
     ch.queueDelete(q)
@@ -1057,7 +1057,7 @@ class ClientSpec extends Specification {
     xs.size() == 1
     b.source == x
     b.destination == q
-    b.destinationType == DestinationType.QUEUE
+    b.destinationType == "queue"
 
     cleanup:
     ch.queueDelete(q)
@@ -1085,7 +1085,7 @@ class ClientSpec extends Specification {
     xs.size() == 1
     b.source == s
     b.destination == d
-    b.destinationType == DestinationType.EXCHANGE
+    b.destinationType == "exchange"
 
     cleanup:
     ch.exchangeDelete(d)
@@ -1113,7 +1113,7 @@ class ClientSpec extends Specification {
     xs.size() == 1
     b.source == s
     b.destination == d
-    b.destinationType == DestinationType.EXCHANGE
+    b.destinationType == "exchange"
     b.arguments.size() == 2
     b.arguments.containsKey("arg1")
     b.arguments.arg1 == "value1"
@@ -1144,7 +1144,7 @@ class ClientSpec extends Specification {
     xs.size() == 1
     b.source == x
     b.destination == q
-    b.destinationType == DestinationType.QUEUE
+    b.destinationType == "queue"
     b.arguments.size() == 2
     b.arguments.containsKey("arg1")
     b.arguments.arg1 == "value1"
@@ -2152,13 +2152,13 @@ class ClientSpec extends Specification {
     !d.getBindings().isEmpty()
     d.getBindings().size() >= 1
     BindingInfo b = d.getBindings().find {
-      it.source == "amq.fanout" && it.destination == "queue1" && it.destinationType == DestinationType.QUEUE
+      it.source == "amq.fanout" && it.destination == "queue1" && it.destinationType == "queue"
     }
     b != null
     b.vhost == "/"
     b.source == "amq.fanout"
     b.destination == "queue1"
-    b.destinationType == DestinationType.QUEUE
+    b.destinationType == "queue"
 
     cleanup:
     client.deleteQueue("/","queue1")
