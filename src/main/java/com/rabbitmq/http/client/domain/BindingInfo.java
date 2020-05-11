@@ -57,13 +57,27 @@ public class BindingInfo {
     this.destination = destination;
   }
 
-  public DestinationType getDestinationType() {
+  public String getDestinationType() {
+    if(destinationType != null) {
+      return destinationType.name();
+    }
+    return null;
+  }
+
+  public void setDestinationType(DestinationType destinationType){
+    this.destinationType = destinationType;
+  }
+
+  public void setDestinationType(String destinationType) {
+    if(destinationType != null) {
+       this.destinationType = DestinationType.valueOf(destinationType.toUpperCase());
+    }
+  }
+
+  public DestinationType getDestinationTypeAsEnum(){
     return destinationType;
   }
 
-  public void setDestinationType(DestinationType destinationType) {
-    this.destinationType = destinationType;
-  }
 
   public String getRoutingKey() {
     return routingKey;
