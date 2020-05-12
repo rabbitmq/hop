@@ -26,7 +26,7 @@ public class BindingInfo {
   private String source;
   private String destination;
   @JsonProperty("destination_type")
-  private String destinationType;
+  private DestinationType destinationType;
   @JsonProperty("routing_key")
   private String routingKey;
   private Map<String, Object> arguments;
@@ -58,12 +58,26 @@ public class BindingInfo {
   }
 
   public String getDestinationType() {
-    return destinationType;
+    if(destinationType != null) {
+      return destinationType.name().toLowerCase();
+    }
+    return null;
+  }
+
+  public void setDestinationType(DestinationType destinationType){
+    this.destinationType = destinationType;
   }
 
   public void setDestinationType(String destinationType) {
-    this.destinationType = destinationType;
+    if(destinationType != null) {
+       this.destinationType = DestinationType.valueOf(destinationType.toUpperCase());
+    }
   }
+
+  public DestinationType getDestinationTypeAsEnum(){
+    return destinationType;
+  }
+
 
   public String getRoutingKey() {
     return routingKey;
