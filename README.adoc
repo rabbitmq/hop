@@ -29,11 +29,10 @@ is available. Note the original blocking IO client remains available.
 
 == Project Maturity
 
-This project is relatively young and not 100% feature complete but
-the key API operations are covered. The docs largely don't exist beyond this README.
-The API may change but radical changes are unlikely.
+This project is mature and covers all key RabbitMQ HTTP API endpoints.
 
-This section will be updated as the project matures.
+Meaningful breaking API changes are reflected in the version.
+User documentation is currently kept in this README.
 
 == Maven Artifacts
 
