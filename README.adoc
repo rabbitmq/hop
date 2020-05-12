@@ -1,0 +1,366 @@
+:rabbitmq-version: 3.8.3
+:hop-version: 3.6.1
+:spring-version: 5.2.3.RELEASE
+:jackson-version: 2.10.2
+:reactor-netty-version: 0.9.4.RELEASE
+:http-client-version: 4.5.11
+:okhttp-version: 3.14.6
+
+= Hop, Java Client for the RabbitMQ HTTP API
+
+image:https://travis-ci.org/rabbitmq/hop.svg?branch=master["Build Status", link="https://travis-ci.org/rabbitmq/hop"]
+
+Hop is a Java client for the
+https://raw.githack.com/rabbitmq/rabbitmq-management/v{rabbitmq-version}/priv/www/api/index.html[RabbitMQ HTTP API].
+
+
+== Polyglot
+
+Hop is designed to be easy to use from other JVM languages, primarily Groovy,
+Scala, and Kotlin.
+
+N.B. that Clojure already includes an HTTP API client as part of
+http://clojurerabbitmq.info[Langohr], and you should use Langohr instead.
+
+== Reactive
+
+As of Hop 2.1.0, a new reactive, non-blocking IO client based on https://projectreactor.io/[Reactor Netty]
+is available. Note the original blocking IO client remains available.
+
+== Project Maturity
+
+This project is relatively young and not 100% feature complete but
+the key API operations are covered. The docs largely don't exist beyond this README.
+The API may change but radical changes are unlikely.
+
+This section will be updated as the project matures.
+
+== Maven Artifacts
+
+image:https://maven-badges.herokuapp.com/maven-central/com.rabbitmq/http-client/badge.svg["Maven Central", link="https://maven-badges.herokuapp.com/maven-central/com.rabbitmq/http-client"]
+
+Project artifacts are available from Maven Central and https://repo.spring.io[repo.spring.io].
+
+=== Maven
+
+If you want to use the **blocking IO client**, add the following dependencies:
+
+.pom.xml
+[source,xml,subs="attributes,specialcharacters"]
+----
+<dependency>
+  <groupId>com.rabbitmq</groupId>
+  <artifactId>http-client</artifactId>
+  <version>{hop-version}</version>
+</dependency>
+<dependency>
+  <groupId>org.springframework</groupId>
+  <artifactId>spring-web</artifactId>
+  <version>{spring-version}</version>
+</dependency>
+<dependency>
+  <groupId>com.fasterxml.jackson.core</groupId>
+  <artifactId>jackson-databind</artifactId>
+  <version>{jackson-version}</version>
+</dependency>
+----
+
+If you want to use the **reactive, non-blocking IO client**, add the following dependencies:
+
+.pom.xml
+[source,xml,subs="attributes,specialcharacters"]
+----
+<dependency>
+  <groupId>com.rabbitmq</groupId>
+  <artifactId>http-client</artifactId>
+  <version>{hop-version}</version>
+</dependency>
+<dependency>
+  <groupId>io.projectreactor.netty</groupId>
+  <artifactId>reactor-netty</artifactId>
+  <version>{reactor-netty-version}</version>
+</dependency>
+<dependency>
+  <groupId>com.fasterxml.jackson.core</groupId>
+  <artifactId>jackson-databind</artifactId>
+  <version>{jackson-version}</version>
+</dependency>
+----
+
+=== Gradle
+
+If you want to use the **blocking IO client**, add the following dependencies:
+
+.build.gradle
+[source,groovy,subs="attributes,specialcharacters"]
+----
+compile "com.rabbitmq:http-client:{hop-version}"
+compile "org.springframework:spring-web:{spring-version}"
+compile "com.fasterxml.jackson.core:jackson-databind:{jackson-version}"
+----
+
+If you want to use the **reactive, non-blocking IO client**, add the following dependencies:
+
+.build.gradle
+[source,groovy,subs="attributes,specialcharacters"]
+----
+compile "com.rabbitmq:http-client:{hop-version}"
+compile "io.projectreactor.netty:reactor-netty:{reactor-netty-version}"
+compile "com.fasterxml.jackson.core:jackson-databind:{jackson-version}"
+----
+
+== Usage Guide
+
+=== Instantiating a Client
+
+Hop faithfully follows RabbitMQ HTTP API conventions in its API. You interact with the server
+using a single class, `Client`, which needs an API endpoint and
+a pair of credentials to be instantiated:
+
+[source,java]
+----
+import com.rabbitmq.http.client.Client;
+import com.rabbitmq.http.client.ClientParameters;
+
+Client c = new Client(
+  new ClientParameters()
+    .url("http://127.0.0.1:15672/api/")
+    .username("guest")
+    .password("guest")
+);
+----
+
+=== HTTP Layer
+
+The HTTP layer used by the `Client` is pluggable. The `Client(ClientParameters)` constructor
+uses standard JDK HTTP facilities by default, but
+https://hc.apache.org/[Apache HTTP Components] and https://square.github.io/okhttp/[OkHttp]
+are also supported.
+
+==== Apache HTTP Components
+
+To use Apache HTTP Components, use an `HttpComponentsRestTemplateConfigurator`
+instance when creating the client:
+
+[source,java]
+----
+Client client = new Client(
+    new ClientParameters().url("http://localhost:15672/api").username("guest").password("guest")
+     .restTemplateConfigurator(new HttpComponentsRestTemplateConfigurator())
+);
+----
+
+This requires to add Apache HTTP Components on the classpath.
+
+For Maven:
+
+.pom.xml
+[source,xml,subs="attributes,specialcharacters"]
+----
+<dependency>
+  <groupId>org.apache.httpcomponents</groupId>
+  <artifactId>httpclient</artifactId>
+  <version>{http-client-version}</version>
+</dependency>
+----
+
+For Gradle:
+
+.build.gradle
+[source,groovy,subs="attributes,specialcharacters"]
+----
+compile "org.apache.httpcomponents:httpclient:{http-client-version}"
+----
+
+==== OkHttp
+
+To use OkHttp, use an `OkHttpRestTemplateConfigurator` instance when creating the client:
+
+[source,java]
+----
+Client client = new Client(
+    new ClientParameters().url("http://localhost:15672/api").username("guest").password("guest")
+     .restTemplateConfigurator(new OkHttpRestTemplateConfigurator())
+);
+----
+
+This requires to add OkHttp on the classpath.
+
+For Maven:
+
+.pom.xml
+[source,xml,subs="attributes,specialcharacters"]
+----
+<dependency>
+  <groupId>com.squareup.okhttp3</groupId>
+  <artifactId>okhttp</artifactId>
+  <version>{okhttp-version}</version>
+</dependency>
+----
+
+For Gradle:
+
+.build.gradle
+[source,groovy,subs="attributes,specialcharacters"]
+----
+compile "com.squareup.okhttp3:okhttp:{okhttp-version}"
+----
+
+=== Getting Overview
+
+[source,java]
+----
+c.getOverview();
+----
+
+=== Node and Cluster Status
+
+[source,java]
+----
+// list cluster nodes
+c.getNodes();
+
+// get status and metrics of individual node
+c.getNode("rabbit@mercurio.local");
+----
+
+=== Operations on Connections
+
+[source,java]
+----
+// list client connections
+c.getConnections();
+
+// get status and metrics of individual connection
+c.getConnection("127.0.0.1:61779 -> 127.0.0.1:5672");
+
+// forcefully close connection
+c.closeConnection("127.0.0.1:61779 -> 127.0.0.1:5672");
+----
+
+=== Operations on Channels
+
+[source,java]
+----
+// list all channels
+c.getChannels();
+
+// list channels on individual connection
+c.getChannels("127.0.0.1:61779 -> 127.0.0.1:5672");
+
+// list detailed channel info
+c.getChannel("127.0.0.1:61779 -> 127.0.0.1:5672 (3)");
+----
+
+=== Operations on Vhosts
+
+[source,java]
+----
+// get status and metrics of individual vhost
+c.getVhost("/");
+----
+
+=== Managing Users
+
+TBD
+
+=== Managing Permissions
+
+TBD
+
+=== Operations on Exchanges
+
+TBD
+
+=== Operations on Queues
+
+[source,java]
+----
+// list all queues
+c.getQueues();
+
+// list all queues in a vhost
+c.getQueues();
+
+// declare a queue that's not durable, auto-delete,
+// and non-exclusive
+c.declareQueue("/", "queue1", new QueueInfo(false, true, false));
+
+// bind a queue
+c.bindQueue("/", "queue1", "amq.fanout", "routing-key");
+
+// delete a queue
+c.deleteQueue("/", "queue1");
+----
+
+=== Operations on Bindings
+
+[source,java]
+----
+// list bindings where exchange "an.exchange" is source
+// (other things are bound to it)
+c.getBindingsBySource("/", "an.exchange");
+
+// list bindings where exchange "an.exchange" is destination
+// (it is bound to other exchanges)
+c.getBindingsByDestination("/", "an.exchange");
+----
+
+== Running Tests
+
+To run the suite against a specific RabbitMQ node, export `HOP_RABBITMQCTL`
+and `HOP_RABBITMQ_PLUGINS` to point at `rabbitmqctl` and `rabbitmq-plugins`
+from the installation.
+
+Then set up the node that is assumed to be running:
+
+```sh
+./bin/before_build.sh
+```
+
+This will enable several plugins used by the test suite and configure the node
+to use a much shorter event refresh interval so that HTTP API reflects system state
+changes with less of a delay.
+
+To run the tests:
+
+```sh
+./gradlew check
+```
+
+The test suite assumes RabbitMQ is running locally with
+stock settings and a few plugins are enabled:
+
+* `rabbitmq_management` (listening on port 15672)
+* `rabbitmq_shovel_management`
+* `rabbitmq_federation_management`
+
+To run the suite against a specific RabbitMQ node, export `HOP_RABBITMQCTL`
+and `HOP_RABBITMQ_PLUGINS`
+to point at `rabbitmqctl` and `rabbitmq-plugins` from the installation.
+
+The test suite can use a different port than 15672 by specifying it with the
+`rabbitmq.management.port` system property:
+
+``` sh
+./gradlew check -Drabbitmq.management.port=15673
+```
+
+== Versioning
+
+This library uses https://semver.org/[semantic versioning].
+
+== Support
+
+See the https://www.rabbitmq.com/java-versions.html[RabbitMQ Java libraries support page]
+for the support timeline of this library.
+
+== License
+
+https://www.apache.org/licenses/LICENSE-2.0.html[Apache 2.0].
+
+
+== Copyright
+
+Michael Klishin, 2014-2016.
+Pivotal Software Inc., 2014-current.
