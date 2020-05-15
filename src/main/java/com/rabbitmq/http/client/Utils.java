@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2019 the original author or authors.
+ * Copyright 2018-2020 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,16 +16,22 @@
 
 package com.rabbitmq.http.client;
 
+import com.fasterxml.jackson.core.JsonParser;
+import com.fasterxml.jackson.databind.DeserializationContext;
+import com.fasterxml.jackson.databind.JsonDeserializer;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.deser.std.StdDeserializer;
 import com.rabbitmq.http.client.domain.OutboundMessage;
+import com.rabbitmq.http.client.domain.VhostLimits;
 import org.springframework.util.StringUtils;
 
+import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLDecoder;
 import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
-import java.nio.charset.StandardCharsets;
 import java.util.BitSet;
 import java.util.Collections;
 import java.util.HashMap;
@@ -37,6 +43,49 @@ import java.util.Map;
 class Utils {
 
     private static final Charset CHARSET_UTF8 = Charset.forName("UTF-8");
+
+    public static final JsonDeserializer<VhostLimits> VHOST_LIMITS_JSON_DESERIALIZER = new VhostLimitsDeserializer();
+
+    private static class VhostLimitsDeserializer extends StdDeserializer<VhostLimits> {
+
+        private static final long serialVersionUID = -1881403692606830843L;
+
+        public static final String VHOST_FIELD = "vhost";
+        public static final String VALUE_FIELD = "value";
+        public static final String MAX_QUEUES_FIELD = "max-queues";
+        public static final String MAX_CONNECTIONS_FIELD = "max-connections";
+
+        private VhostLimitsDeserializer() {
+            super(VhostLimits.class);
+        }
+
+        @Override
+        public VhostLimits deserialize(JsonParser jp, DeserializationContext ctxt) throws IOException {
+            JsonNode node = jp.getCodec().readTree(jp);
+            if (node.isArray()) {
+                if (node.isEmpty()) {
+                    return null;
+                }
+                node = node.get(0);
+            }
+            JsonNode value = node.get(VALUE_FIELD);
+            return new VhostLimits(getVhost(node), getLimit(value, MAX_QUEUES_FIELD), getLimit(value, MAX_CONNECTIONS_FIELD));
+        }
+
+        private String getVhost(JsonNode node) {
+            return node.get(VHOST_FIELD).asText();
+        }
+
+        private int getLimit(JsonNode value, String name) {
+            JsonNode limit = value.get(name);
+            if (limit == null) {
+                return -1;
+            } else {
+                return limit.asInt(-1);
+            }
+        }
+
+    }
 
     static Map<String, Object> bodyForPublish(String routingKey, OutboundMessage outboundMessage) {
         if (routingKey == null) {
@@ -150,42 +199,48 @@ class Utils {
     /**
      * Unreserved characters, i.e. alphanumeric, plus: {@code _ - ! . ~ ' ( ) *}
      * <p>
-     *  This list is the same as the {@code unreserved} list in
-     *  <a href="https://www.ietf.org/rfc/rfc2396.txt">RFC 2396</a>
+     * This list is the same as the {@code unreserved} list in
+     * <a href="https://www.ietf.org/rfc/rfc2396.txt">RFC 2396</a>
      */
-    private static final BitSet UNRESERVED   = new BitSet(256);
+    private static final BitSet UNRESERVED = new BitSet(256);
     /**
      * Punctuation characters: , ; : $ & + =
      * <p>
      * These are the additional characters allowed by userinfo.
      */
-    private static final BitSet PUNCT        = new BitSet(256);
-    /** Characters which are safe to use in userinfo,
-     * i.e. {@link #UNRESERVED} plus {@link #PUNCT}uation */
-    private static final BitSet USERINFO     = new BitSet(256);
-    /** Characters which are safe to use in a path,
-     * i.e. {@link #UNRESERVED} plus {@link #PUNCT}uation plus / @ */
-    private static final BitSet PATHSAFE     = new BitSet(256);
-    /** Characters which are safe to use in a query or a fragment,
-     * i.e. {@link #RESERVED} plus {@link #UNRESERVED} */
-    private static final BitSet URIC     = new BitSet(256);
+    private static final BitSet PUNCT = new BitSet(256);
+    /**
+     * Characters which are safe to use in userinfo,
+     * i.e. {@link #UNRESERVED} plus {@link #PUNCT}uation
+     */
+    private static final BitSet USERINFO = new BitSet(256);
+    /**
+     * Characters which are safe to use in a path,
+     * i.e. {@link #UNRESERVED} plus {@link #PUNCT}uation plus / @
+     */
+    private static final BitSet PATHSAFE = new BitSet(256);
+    /**
+     * Characters which are safe to use in a query or a fragment,
+     * i.e. {@link #RESERVED} plus {@link #UNRESERVED}
+     */
+    private static final BitSet URIC = new BitSet(256);
 
     /**
      * Reserved characters, i.e. {@code ;/?:@&=+$,[]}
      * <p>
-     *  This list is the same as the {@code reserved} list in
-     *  <a href="https://www.ietf.org/rfc/rfc2396.txt">RFC 2396</a>
-     *  as augmented by
-     *  <a href="https://www.ietf.org/rfc/rfc2732.txt">RFC 2732</a>
+     * This list is the same as the {@code reserved} list in
+     * <a href="https://www.ietf.org/rfc/rfc2396.txt">RFC 2396</a>
+     * as augmented by
+     * <a href="https://www.ietf.org/rfc/rfc2732.txt">RFC 2732</a>
      */
-    private static final BitSet RESERVED     = new BitSet(256);
+    private static final BitSet RESERVED = new BitSet(256);
 
 
     /**
      * Safe characters for x-www-form-urlencoded data, as per java.net.URLEncoder and browser behaviour,
      * i.e. alphanumeric plus {@code "-", "_", ".", "*"}
      */
-    private static final BitSet URLENCODER   = new BitSet(256);
+    private static final BitSet URLENCODER = new BitSet(256);
 
     static {
         // unreserved chars

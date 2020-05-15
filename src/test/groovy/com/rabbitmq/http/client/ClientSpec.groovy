@@ -2544,6 +2544,172 @@ class ClientSpec extends Specification {
     client << clients()
   }
 
+  @Unroll
+  def "GET /api/vhost-limits"() {
+    given: "several virtual hosts with limits"
+    final vhost1 = "virtual-host-with-limits-1"
+    final vhost2 = "virtual-host-with-limits-2"
+    client.createVhost(vhost1)
+    client.createVhost(vhost2)
+    client.limitMaxNumberOfQueues(vhost1, 100)
+    client.limitMaxNumberOfConnections(vhost1, 10)
+    client.limitMaxNumberOfQueues(vhost2, 200)
+    client.limitMaxNumberOfConnections(vhost2, 20)
+    client.limitMaxNumberOfQueues("/", 300)
+    client.limitMaxNumberOfConnections("/", 30)
+
+    when: "client tries to look up limits"
+    final limits = client.getVhostLimits()
+
+    then: "limits match the definitions"
+    limits.size() == 3
+    def limits1 = limits.find { it.vhost == vhost1}
+    limits1.maxQueues == 100
+    limits1.maxConnections == 10
+    def limits2 = limits.find { it.vhost == vhost2}
+    limits2.maxQueues == 200
+    limits2.maxConnections == 20
+    def limits3 = limits.find { it.vhost == "/"}
+    limits3.maxQueues == 300
+    limits3.maxConnections == 30
+
+    cleanup:
+    client.deleteVhost(vhost1)
+    client.deleteVhost(vhost2)
+    client.clearMaxNumberOfQueues("/")
+    client.clearMaxNumberOfConnections("/")
+
+    where:
+    client << clients()
+  }
+
+  @Unroll
+  def "GET /api/vhost-limits/{vhost}"() {
+    given: "a virtual host with limits"
+    final vhost = "virtual-host-with-limits"
+    client.createVhost(vhost)
+    client.limitMaxNumberOfQueues(vhost, 100)
+    client.limitMaxNumberOfConnections(vhost, 10)
+
+    when: "client tries to look up limits for this virtual host"
+    final limits = client.getVhostLimits(vhost)
+
+    then: "limits match the definitions"
+    limits.maxQueues == 100
+    limits.maxConnections == 10
+
+    cleanup:
+    client.deleteVhost(vhost)
+
+    where:
+    client << clients()
+  }
+
+  @Unroll
+  def "GET /api/vhost-limits/{vhost} vhost with no limits"() {
+    given: "a virtual host without limits"
+    final vhost = "virtual-host-without-limits"
+    client.createVhost(vhost)
+
+    when: "client tries to look up limits for this virtual host"
+    final limits = client.getVhostLimits(vhost)
+
+    then: "limits are set to -1"
+    limits.maxQueues == -1
+    limits.maxConnections == -1
+
+    cleanup:
+    client.deleteVhost(vhost)
+
+    where:
+    client << clients()
+  }
+
+  @Unroll
+  def "GET /api/vhost-limits/{vhost} with non-existing vhost"() {
+    given: "a virtual host that does not exist"
+    final vhost = "virtual-host-that-does-not-exist"
+
+    when: "client tries to look up limits for this virtual host"
+    final limits = client.getVhostLimits(vhost)
+
+    then: "limits are null"
+    limits == null
+
+    cleanup:
+    client.deleteVhost(vhost)
+
+    where:
+    client << clients()
+  }
+
+  @Unroll
+  def "DELETE /api/vhost-limits/{vhost}/max-queues"() {
+    given: "a virtual host with max queues limit"
+    final vhost = "virtual-host-max-queues-limit"
+    client.createVhost(vhost)
+    client.limitMaxNumberOfQueues(vhost, 42)
+
+    when: "client clears the limit"
+    client.clearMaxNumberOfQueues(vhost)
+
+    then: "limit is then looked up with value -1"
+    client.getVhostLimits(vhost).maxQueues == -1
+    client.getVhostLimits(vhost).maxConnections == -1
+
+    cleanup:
+    client.deleteVhost(vhost)
+
+    where:
+    client << clients()
+  }
+
+  @Unroll
+  def "DELETE /api/vhost-limits/{vhost}/max-connections"() {
+    given: "a virtual host with max connections limit"
+    final vhost = "virtual-host-max-connections-limit"
+    client.createVhost(vhost)
+    client.limitMaxNumberOfConnections(vhost, 42)
+
+    when: "client clears the limit"
+    client.clearMaxNumberOfConnections(vhost)
+
+    then: "limit is then looked up with value -1"
+    client.getVhostLimits(vhost).maxConnections == -1
+    client.getVhostLimits(vhost).maxQueues == -1
+
+    cleanup:
+    client.deleteVhost(vhost)
+
+    where:
+    client << clients()
+  }
+
+  @Unroll
+  def "DELETE /api/vhost-limits/{vhost} with only one limit"() {
+    given: "a virtual host with max queues and connections limits"
+    final vhost = "virtual-host-max-queues-connections-limits"
+    client.createVhost(vhost)
+    client.limitMaxNumberOfQueues(vhost, 314)
+    client.limitMaxNumberOfConnections(vhost, 42)
+
+    when: "client clears one of the limits"
+    client.clearMaxNumberOfQueues(vhost)
+
+    then: "the cleared limit is then returned as -1"
+    println client.getVhostLimits(vhost)
+    client.getVhostLimits(vhost).maxQueues == -1
+
+    then: "the other limit is left as-is"
+    client.getVhostLimits(vhost).maxConnections == 42
+
+    cleanup:
+    client.deleteVhost(vhost)
+
+    where:
+    client << clients()
+  }
+
   protected static boolean awaitOn(CountDownLatch latch) {
     latch.await(10, TimeUnit.SECONDS)
   }
