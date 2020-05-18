@@ -2576,8 +2576,8 @@ class ClientSpec extends Specification {
     cleanup:
     client.deleteVhost(vhost1)
     client.deleteVhost(vhost2)
-    client.clearMaxNumberOfQueues("/")
-    client.clearMaxNumberOfConnections("/")
+    client.clearMaxQueuesLimit("/")
+    client.clearMaxConnectionsLimit("/")
 
     where:
     client << clients()
@@ -2668,7 +2668,7 @@ class ClientSpec extends Specification {
     client.limitMaxNumberOfQueues(vhost, 42)
 
     when: "client clears the limit"
-    client.clearMaxNumberOfQueues(vhost)
+    client.clearMaxQueuesLimit(vhost)
 
     then: "limit is then looked up with value -1"
     client.getVhostLimits(vhost).maxQueues == -1
@@ -2689,7 +2689,7 @@ class ClientSpec extends Specification {
     client.limitMaxNumberOfConnections(vhost, 42)
 
     when: "client clears the limit"
-    client.clearMaxNumberOfConnections(vhost)
+    client.clearMaxConnectionsLimit(vhost)
 
     then: "limit is then looked up with value -1"
     client.getVhostLimits(vhost).maxConnections == -1
@@ -2711,7 +2711,7 @@ class ClientSpec extends Specification {
     client.limitMaxNumberOfConnections(vhost, 42)
 
     when: "client clears one of the limits"
-    client.clearMaxNumberOfQueues(vhost)
+    client.clearMaxQueuesLimit(vhost)
 
     then: "the cleared limit is then returned as -1"
     client.getVhostLimits(vhost).maxQueues == -1

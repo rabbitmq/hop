@@ -832,24 +832,24 @@ public class ReactorNettyClient {
     }
 
     /**
-     * Removes the connection limit for a virtual host.
+     * Clears the connection limit for a virtual host.
      *
      * @param vhost the virtual host
      * @return HTTP response in a mono
      * @since 3.7.0
      */
-    public Mono<HttpResponse> clearMaxNumberOfConnections(String vhost) {
+    public Mono<HttpResponse> clearMaxConnectionsLimit(String vhost) {
         return doDelete("vhost-limits", enc(vhost), "max-connections");
     }
 
     /**
-     * Removes the queues limit for a virtual host.
+     * Clears the queue limit for a virtual host.
      *
      * @param vhost the virtual host
      * @return HTTP response in a mono
      * @since 3.7.0
      */
-    public Mono<HttpResponse> clearMaxNumberOfQueues(String vhost) {
+    public Mono<HttpResponse> clearMaxQueuesLimit(String vhost) {
         return doDelete("vhost-limits", enc(vhost), "max-queues");
     }
 

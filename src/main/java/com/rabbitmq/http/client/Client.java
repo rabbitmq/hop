@@ -1232,23 +1232,23 @@ public class Client {
   }
 
   /**
-   * Removes the connection limit for a virtual host.
+   * Clears the connection limit for a virtual host.
    *
    * @param vhost the virtual host
    * @since 3.7.0
    */
-  public void clearMaxNumberOfConnections(String vhost) {
+  public void clearMaxConnectionsLimit(String vhost) {
     final URI uri = uriWithPath("./vhost-limits/" + encodePathSegment(vhost) + "/max-connections");
     this.deleteIgnoring404(uri);
   }
 
   /**
-   * Removes the queues limit for a virtual host.
+   * Clears the queue limit for a virtual host.
    *
    * @param vhost the virtual host
    * @since 3.7.0
    */
-  public void clearMaxNumberOfQueues(String vhost) {
+  public void clearMaxQueuesLimit(String vhost) {
     final URI uri = uriWithPath("./vhost-limits/" + encodePathSegment(vhost) + "/max-queues");
     this.deleteIgnoring404(uri);
   }

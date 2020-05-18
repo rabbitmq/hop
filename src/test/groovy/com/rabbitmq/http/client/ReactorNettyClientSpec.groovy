@@ -2182,8 +2182,8 @@ class ReactorNettyClientSpec extends Specification {
         cleanup:
         client.deleteVhost(vhost1).block()
         client.deleteVhost(vhost2).block()
-        client.clearMaxNumberOfQueues("/").block()
-        client.clearMaxNumberOfConnections("/").block()
+        client.clearMaxQueuesLimit("/").block()
+        client.clearMaxConnectionsLimit("/").block()
     }
 
     def "GET /api/vhost-limits without limits on any host"() {
@@ -2255,7 +2255,7 @@ class ReactorNettyClientSpec extends Specification {
         client.limitMaxNumberOfQueues(vhost, 42).block()
 
         when: "client clears the limit"
-        client.clearMaxNumberOfQueues(vhost).block()
+        client.clearMaxQueuesLimit(vhost).block()
 
         then: "limit is then looked up with value -1"
         client.getVhostLimits(vhost).block().maxQueues == -1
@@ -2272,7 +2272,7 @@ class ReactorNettyClientSpec extends Specification {
         client.limitMaxNumberOfConnections(vhost, 42).block()
 
         when: "client clears the limit"
-        client.clearMaxNumberOfConnections(vhost).block()
+        client.clearMaxConnectionsLimit(vhost).block()
 
         then: "limit is then looked up with value -1"
         client.getVhostLimits(vhost).block().maxConnections == -1
@@ -2290,7 +2290,7 @@ class ReactorNettyClientSpec extends Specification {
         client.limitMaxNumberOfConnections(vhost, 42).block()
 
         when: "client clears one of the limits"
-        client.clearMaxNumberOfQueues(vhost).block()
+        client.clearMaxQueuesLimit(vhost).block()
 
         then: "the cleared limit is then returned as -1"
         client.getVhostLimits(vhost).block().maxQueues == -1
