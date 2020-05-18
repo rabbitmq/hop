@@ -1194,7 +1194,7 @@ public class Client {
     final URI uri = uriWithPath("./vhost-limits/" + encodePathSegment(vhost));
     try {
       VhostLimits limits = this.rt.getForObject(uri, VhostLimits.class);
-      if (limits == null) {
+      if (limits == null || limits.getVhost() == null) {
         limits = new VhostLimits(vhost, -1, -1);
       }
       return limits;

@@ -2697,7 +2697,6 @@ class ClientSpec extends Specification {
     client.clearMaxNumberOfQueues(vhost)
 
     then: "the cleared limit is then returned as -1"
-    println client.getVhostLimits(vhost)
     client.getVhostLimits(vhost).maxQueues == -1
 
     then: "the other limit is left as-is"

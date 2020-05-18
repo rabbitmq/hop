@@ -20,6 +20,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.MapperFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.rabbitmq.http.client.domain.*;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufOutputStream;
@@ -58,7 +59,8 @@ import java.util.stream.Collectors;
  * </li>
  * <li>
  * {@link ObjectMapper}: <code>DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES</code> and
- * <code>MapperFeature.DEFAULT_VIEW_INCLUSION</code> are disabled.
+ * <code>MapperFeature.DEFAULT_VIEW_INCLUSION</code> are disabled. {@link Utils#VHOST_LIMITS_JSON_DESERIALIZER}
+ * set up.
  * </li>
  * <li><code>Mono&lt;String&gt; token</code>: basic HTTP authentication used for the
  * <code>authorization</code> header.
@@ -75,7 +77,7 @@ import java.util.stream.Collectors;
 public class ReactorNettyClient {
 
     private static final Consumer<HttpHeaders> JSON_HEADER = headers ->
-        headers.set(HttpHeaderNames.CONTENT_TYPE, HttpHeaderValues.APPLICATION_JSON);
+            headers.set(HttpHeaderNames.CONTENT_TYPE, HttpHeaderValues.APPLICATION_JSON);
     private final ObjectMapper objectMapper;
     private final HttpClient client;
     private final Mono<String> token;
@@ -100,7 +102,7 @@ public class ReactorNettyClient {
         objectMapper = options.objectMapper() == null ? createDefaultObjectMapper() : options.objectMapper().get();
 
         client = options.client() == null ?
-            HttpClient.create().baseUrl(url) : options.client().get();
+                HttpClient.create().baseUrl(url) : options.client().get();
 
         this.token = options.token() == null ? createBasicAuthenticationToken(username, password) : options.token();
 
@@ -116,7 +118,7 @@ public class ReactorNettyClient {
             };
         } else {
             this.responseCallback = response ->
-                options.onResponseCallback().accept(new HttpEndpoint(response.uri(), response.method().name()), toHttpResponse(response));
+                    options.onResponseCallback().accept(new HttpEndpoint(response.uri(), response.method().name()), toHttpResponse(response));
         }
         this.byteBufSupplier = options.byteBufSupplier() == null ?
                 () -> PooledByteBufAllocator.DEFAULT.buffer() :
@@ -137,6 +139,9 @@ public class ReactorNettyClient {
         objectMapper.enable(DeserializationFeature.ACCEPT_EMPTY_ARRAY_AS_NULL_OBJECT);
         objectMapper.disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
         objectMapper.disable(MapperFeature.DEFAULT_VIEW_INCLUSION);
+        SimpleModule module = new SimpleModule();
+        module.addDeserializer(VhostLimits.class, Utils.VHOST_LIMITS_JSON_DESERIALIZER);
+        objectMapper.registerModule(module);
         return objectMapper;
     }
 
@@ -227,7 +232,7 @@ public class ReactorNettyClient {
      * @return response wrapped in {@link Mono}
      * @since 3.4.0
      */
-    public Mono<HttpResponse> createVhost(String name, boolean tracing, String description, String ... tags) {
+    public Mono<HttpResponse> createVhost(String name, boolean tracing, String description, String... tags) {
         Map<String, Object> body = new HashMap<String, Object>();
         body.put("tracing", tracing);
 
@@ -251,7 +256,7 @@ public class ReactorNettyClient {
      * @return response wrapped in {@link Mono}
      * @since 3.4.0
      */
-    public Mono<HttpResponse> createVhost(String name, String description, String ... tags) {
+    public Mono<HttpResponse> createVhost(String name, String description, String... tags) {
         return createVhost(name, false, description, tags);
     }
 
@@ -309,7 +314,7 @@ public class ReactorNettyClient {
         }
         if (password == null) {
             throw new IllegalArgumentException("password cannot be null or empty. If you need to create a user that "
-                + "will only authenticate using an x509 certificate, use createUserWithPasswordHash with a blank hash.");
+                    + "will only authenticate using an x509 certificate, use createUserWithPasswordHash with a blank hash.");
         }
         Map<String, Object> body = new HashMap<String, Object>();
         body.put("password", new String(password));
@@ -424,9 +429,9 @@ public class ReactorNettyClient {
      * Use this method for test or development code only.
      * In production, use AMQP 0-9-1 or any other messaging protocol that uses a long-lived connection.
      *
-     * @param vhost the virtual host to use
-     * @param exchange the target exchange
-     * @param routingKey the routing key to use
+     * @param vhost           the virtual host to use
+     * @param exchange        the target exchange
+     * @param routingKey      the routing key to use
      * @param outboundMessage the message to publish
      * @return true if message has been routed to at least a queue, false otherwise
      * @since 3.4.0
@@ -466,7 +471,7 @@ public class ReactorNettyClient {
         return doPut(Collections.singletonMap("name", name), "cluster-name");
     }
 
-    @SuppressWarnings({ "unchecked", "rawtypes" })
+    @SuppressWarnings({"unchecked", "rawtypes"})
     public Flux<Map> getExtensions() {
         return doGetFlux(Map.class, "extensions");
     }
@@ -500,7 +505,8 @@ public class ReactorNettyClient {
     }
 
     public Mono<HttpResponse> deleteQueue(String vhost, String name, DeleteQueueParameters parameters) {
-        return doDelete(headers -> { }, parameters.getAsQueryParams(), "queues", enc(vhost), enc(name));
+        return doDelete(headers -> {
+        }, parameters.getAsQueryParams(), "queues", enc(vhost), enc(name));
     }
 
     /**
@@ -651,7 +657,7 @@ public class ReactorNettyClient {
 
     public Mono<HttpResponse> declareShovel(String vhost, ShovelInfo info) {
         Map<String, Object> props = info.getDetails().getPublishProperties();
-        if(props != null && props.isEmpty()) {
+        if (props != null && props.isEmpty()) {
             throw new IllegalArgumentException("Shovel publish properties must be a non-empty map or null");
         }
         return doPut(info, "parameters", "shovel", enc(vhost), enc(info.getName()));
@@ -767,7 +773,7 @@ public class ReactorNettyClient {
     }
 
     /**
-     * Returns a ist of upstream sets
+     * Returns a list of upstream sets
      *
      * @param vhost Virtual host from where to get upstreams.
      * @return flux of upstream set info
@@ -776,12 +782,83 @@ public class ReactorNettyClient {
         return doGetFlux(UpstreamSetInfo.class, "parameters", "federation-upstream-set", enc(vhost));
     }
 
+    /**
+     * Returns the limits (max queues and connections) for all virtual hosts.
+     *
+     * @return flux of the limits
+     * @since 3.7.0
+     */
+    public Flux<VhostLimits> getVhostLimits() {
+        return doGetFlux(VhostLimits.class, "vhost-limits");
+    }
+
+    /**
+     * Returns the limits (max queues and connections) for a given virtual host.
+     *
+     * @param vhost the virtual host
+     * @return flux of the limits for this virtual host
+     * @since 3.7.0
+     */
+    public Mono<VhostLimits> getVhostLimits(String vhost) {
+        return doGetMono(VhostLimits.class, "vhost-limits", enc(vhost))
+                .map(limits -> limits.getVhost() == null ?
+                        new VhostLimits(vhost, -1, -1) : limits);
+    }
+
+    /**
+     * Sets the max number (limit) of connections for a virtual host.
+     *
+     * @param vhost the virtual host
+     * @param limit the max number of connections allowed
+     * @return HTTP response in a mono
+     * @since 3.7.0
+     */
+    public Mono<HttpResponse> limitMaxNumberOfConnections(String vhost, int limit) {
+        return doPut(Collections.singletonMap("value", limit),
+                "vhost-limits", enc(vhost), "max-connections");
+    }
+
+    /**
+     * Sets the max number (limit) of queues for a virtual host.
+     *
+     * @param vhost the virtual host
+     * @param limit the max number of queues allowed
+     * @return HTTP response in a mono
+     * @since 3.7.0
+     */
+    public Mono<HttpResponse> limitMaxNumberOfQueues(String vhost, int limit) {
+        return doPut(Collections.singletonMap("value", limit),
+                "vhost-limits", enc(vhost), "max-queues");
+    }
+
+    /**
+     * Removes the connection limit for a virtual host.
+     *
+     * @param vhost the virtual host
+     * @return HTTP response in a mono
+     * @since 3.7.0
+     */
+    public Mono<HttpResponse> clearMaxNumberOfConnections(String vhost) {
+        return doDelete("vhost-limits", enc(vhost), "max-connections");
+    }
+
+    /**
+     * Removes the queues limit for a virtual host.
+     *
+     * @param vhost the virtual host
+     * @return HTTP response in a mono
+     * @since 3.7.0
+     */
+    public Mono<HttpResponse> clearMaxNumberOfQueues(String vhost) {
+        return doDelete("vhost-limits", enc(vhost), "max-queues");
+    }
+
     private <T> Mono<T> doGetMono(Class<T> type, String... pathSegments) {
         return Mono.from(client
-            .headersWhen(authorizedHeader())
-            .get()
-            .uri(uri(pathSegments))
-            .response(decode(type)));
+                .headersWhen(authorizedHeader())
+                .get()
+                .uri(uri(pathSegments))
+                .response(decode(type)));
     }
 
     protected <T> BiFunction<? super HttpClientResponse, ? super ByteBufFlux, Publisher<T>> decode(Class<T> type) {
@@ -816,13 +893,13 @@ public class ReactorNettyClient {
 
     private Mono<HttpResponse> doPost(Object body, String... pathSegments) {
         return client.headersWhen(authorizedHeader())
-            .headers(JSON_HEADER)
-            .post()
-            .uri(uri(pathSegments))
-            .send(bodyPublisher(body))
-            .response()
-            .doOnNext(applyResponseCallback())
-            .map(ReactorNettyClient::toHttpResponse);
+                .headers(JSON_HEADER)
+                .post()
+                .uri(uri(pathSegments))
+                .send(bodyPublisher(body))
+                .response()
+                .doOnNext(applyResponseCallback())
+                .map(ReactorNettyClient::toHttpResponse);
     }
 
     private <T> Mono<T> doPostMono(Object body, Class<T> type, String... pathSegments) {
@@ -845,12 +922,13 @@ public class ReactorNettyClient {
 
     private Mono<HttpResponse> doPut(Object body, String... pathSegments) {
         return client.headersWhen(authorizedHeader())
-            .put()
-            .uri(uri(pathSegments))
-            .send(bodyPublisher(body))
-            .response()
-            .doOnNext(applyResponseCallback())
-            .map(ReactorNettyClient::toHttpResponse);
+                .headers(JSON_HEADER)
+                .put()
+                .uri(uri(pathSegments))
+                .send(bodyPublisher(body))
+                .response()
+                .doOnNext(applyResponseCallback())
+                .map(ReactorNettyClient::toHttpResponse);
     }
 
     private Mono<ByteBuf> bodyPublisher(Object body) {
@@ -864,12 +942,12 @@ public class ReactorNettyClient {
 
     private Mono<HttpResponse> doPut(String... pathSegments) {
         return client.headersWhen(authorizedHeader())
-            .headers(JSON_HEADER)
-            .put()
-            .uri(uri(pathSegments))
-            .response()
-            .doOnNext(applyResponseCallback())
-            .map(ReactorNettyClient::toHttpResponse);
+                .headers(JSON_HEADER)
+                .put()
+                .uri(uri(pathSegments))
+                .response()
+                .doOnNext(applyResponseCallback())
+                .map(ReactorNettyClient::toHttpResponse);
     }
 
     private Mono<HttpResponse> doDelete(Consumer<? super HttpHeaders> headerBuilder, Map<String, String> queryParams, String... pathSegments) {
@@ -893,7 +971,8 @@ public class ReactorNettyClient {
     }
 
     private Mono<HttpResponse> doDelete(String... pathSegments) {
-        return doDelete(headers -> { }, pathSegments);
+        return doDelete(headers -> {
+        }, pathSegments);
     }
 
     private String uri(String... pathSegments) {

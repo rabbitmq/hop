@@ -64,7 +64,7 @@ class Utils {
             JsonNode node = jp.getCodec().readTree(jp);
             if (node.isArray()) {
                 if (node.isEmpty()) {
-                    return null;
+                    return new VhostLimits(null, -1, -1);
                 }
                 node = node.get(0);
             }
