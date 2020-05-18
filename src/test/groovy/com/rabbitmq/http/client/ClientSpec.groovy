@@ -2584,6 +2584,23 @@ class ClientSpec extends Specification {
   }
 
   @Unroll
+  def "GET /api/vhost-limits without limits on any host"() {
+    given: "the default configuration"
+
+    when: "client tries to look up limits"
+    final limits = client.getVhostLimits()
+
+    then: "it should return one row for the default virtual host"
+    limits.size() == 1
+    def limits1 = limits.find { it.vhost == "/"}
+    limits1.maxQueues == -1
+    limits1.maxConnections == -1
+
+    where:
+    client << clients()
+  }
+
+  @Unroll
   def "GET /api/vhost-limits/{vhost}"() {
     given: "a virtual host with limits"
     final vhost = "virtual-host-with-limits"
