@@ -108,6 +108,39 @@ compile "io.projectreactor.netty:reactor-netty:{reactor-netty-version}"
 compile "com.fasterxml.jackson.core:jackson-databind:{jackson-version}"
 ----
 
+=== Milestones and Release Candidates
+
+Milestones and release candidates are available on the Spring Milestone Repository:
+
+Maven:
+
+.pom.xml
+[source,xml,subs="attributes,specialcharacters"]
+----
+<repositories>
+  <repository>
+    <snapshots>
+      <enabled>false</enabled>
+    </snapshots>
+    <id>spring-milestone</id>
+    <name>spring-milestone</name>
+    <url>https://repo.spring.io/libs-milestone-local</url>
+  </repository>
+</repositories>
+----
+
+Gradle:
+
+.build.gradle
+[source,groovy,subs="attributes,specialcharacters"]
+----
+repositories {
+  maven {
+    url "https://repo.spring.io/libs-milestone-local"
+  }
+}
+----
+
 == Usage Guide
 
 === Instantiating a Client
