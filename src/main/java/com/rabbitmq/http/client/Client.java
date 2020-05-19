@@ -1162,7 +1162,7 @@ public class Client {
   }
 
   /**
-   * Returns a ist of upstream sets
+   * Returns a list of upstream sets.
    *
    * @param vhost Virtual host from where to get upstreams.
    * @return upstream set info
@@ -1170,6 +1170,87 @@ public class Client {
   public List<UpstreamSetInfo> getUpstreamSets(String vhost) {
     return getParameters(vhost, "federation-upstream-set", new ParameterizedTypeReference<List<UpstreamSetInfo>>() {
     });
+  }
+
+  /**
+   * Returns the limits (max queues and connections) for all virtual hosts.
+   *
+   * @return the limits
+   * @since 3.7.0
+   */
+  public List<VhostLimits> getVhostLimits() {
+    final URI uri = uriWithPath("./vhost-limits/");
+    return asListOrNull(getForObjectReturningNullOn404(uri, VhostLimits[].class));
+  }
+
+  /**
+   * Returns the limits (max queues and connections) for a given virtual host.
+   *
+   * @param vhost the virtual host
+   * @return the limits for this virtual host
+   * @since 3.7.0
+   */
+  public VhostLimits getVhostLimits(String vhost) {
+    final URI uri = uriWithPath("./vhost-limits/" + encodePathSegment(vhost));
+    try {
+      VhostLimits limits = this.rt.getForObject(uri, VhostLimits.class);
+      if (limits == null || limits.getVhost() == null) {
+        limits = new VhostLimits(vhost, -1, -1);
+      }
+      return limits;
+    } catch (final HttpClientErrorException ce) {
+      if (ce.getStatusCode() == HttpStatus.NOT_FOUND) {
+        return null;
+      } else {
+        throw ce;
+      }
+    }
+  }
+
+  /**
+   * Sets the max number (limit) of connections for a virtual host.
+   *
+   * @param vhost the virtual host
+   * @param limit the max number of connections allowed
+   * @since 3.7.0
+   */
+  public void limitMaxNumberOfConnections(String vhost, int limit) {
+    final URI uri = uriWithPath("./vhost-limits/" + encodePathSegment(vhost) + "/max-connections");
+    this.rt.put(uri, Collections.singletonMap("value", limit));
+  }
+
+  /**
+   * Sets the max number (limit) of queues for a virtual host.
+   *
+   * @param vhost the virtual host
+   * @param limit the max number of queues allowed
+   * @since 3.7.0
+   */
+  public void limitMaxNumberOfQueues(String vhost, int limit) {
+    final URI uri = uriWithPath("./vhost-limits/" + encodePathSegment(vhost) + "/max-queues");
+    this.rt.put(uri, Collections.singletonMap("value", limit));
+  }
+
+  /**
+   * Clears the connection limit for a virtual host.
+   *
+   * @param vhost the virtual host
+   * @since 3.7.0
+   */
+  public void clearMaxConnectionsLimit(String vhost) {
+    final URI uri = uriWithPath("./vhost-limits/" + encodePathSegment(vhost) + "/max-connections");
+    this.deleteIgnoring404(uri);
+  }
+
+  /**
+   * Clears the queue limit for a virtual host.
+   *
+   * @param vhost the virtual host
+   * @since 3.7.0
+   */
+  public void clearMaxQueuesLimit(String vhost) {
+    final URI uri = uriWithPath("./vhost-limits/" + encodePathSegment(vhost) + "/max-queues");
+    this.deleteIgnoring404(uri);
   }
 
   private <T> List<T> getParameters(String component, final ParameterizedTypeReference<List<T>> responseType) {
@@ -1218,7 +1299,8 @@ public class Client {
     final Jackson2ObjectMapperBuilder bldr = Jackson2ObjectMapperBuilder
         .json()
         .serializationInclusion(JsonInclude.Include.NON_NULL)
-        .featuresToEnable(DeserializationFeature.ACCEPT_EMPTY_ARRAY_AS_NULL_OBJECT);
+        .featuresToEnable(DeserializationFeature.ACCEPT_EMPTY_ARRAY_AS_NULL_OBJECT)
+        .deserializerByType(VhostLimits.class, Utils.VHOST_LIMITS_JSON_DESERIALIZER);
     xs.add(new MappingJackson2HttpMessageConverter(bldr.build()));
     return xs;
   }
