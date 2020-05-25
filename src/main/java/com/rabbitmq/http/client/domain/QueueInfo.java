@@ -104,35 +104,35 @@ public class QueueInfo {
   private String idleSince;
 
   @JsonProperty("disk_reads")
-  private long diskReads;
+  private Long diskReads = null;
   @JsonProperty("disk_writes")
-  private long diskWrites;
+  private Long diskWrites = null;
   @JsonProperty("memory")
-  private long memoryUsed;
+  private Long memoryUsed = null;
   @JsonProperty("message_bytes")
-  private long messageBytes;
+  private Long messageBytes = null;
   @JsonProperty("message_bytes_persistent")
-  private long messageBytesPersistent;
+  private Long messageBytesPersistent = null;
   @JsonProperty("message_bytes_ram")
-  private long messageBytesRAM;
+  private Long messageBytesRAM = null;
   @JsonProperty("message_bytes_ready")
-  private long messageBytesReady;
+  private Long messageBytesReady = null;
   @JsonProperty("message_bytes_unacknowledged")
-  private long messageBytesUnacknowledged;
+  private Long messageBytesUnacknowledged = null;
   @JsonProperty("messages")
-  private long totalMessages;
+  private Long totalMessages = null;
   @JsonProperty("message_stats")
   private MessageStats messageStats;
   @JsonProperty("messages_persistent")
-  private long totalPersistentMessages;
+  private Long totalPersistentMessages = null;
   @JsonProperty("messages_ram")
-  private long totalTransientMessages;
+  private Long totalTransientMessages = null;
   @JsonProperty("messages_ready")
-  private long messagesReady;
+  private Long messagesReady = null;
   @JsonProperty("messages_ready_details")
   private RateDetails messagesReadyDetails;
   @JsonProperty("messages_unacknowledged")
-  private long messagesUnacknowledged;
+  private Long messagesUnacknowledged = null;
   @JsonProperty("messages_unacknowledged_details")
   private RateDetails messagesUnacknowledgedDetails;
   @JsonProperty("owner_pid_details")
@@ -141,11 +141,11 @@ public class QueueInfo {
   // TODO: recoverable_slaves
 
   @JsonProperty("consumers")
-  private long consumerCount;
+  private Long consumerCount = null;
   // ignored due to rabbitmq/rabbitmq-management#26
   @JsonIgnore
   @JsonProperty("consumer_utilisation")
-  private long consumerUtilisation;
+  private Long consumerUtilisation = null;
 
   // TODO: should we expose backing_queue_status,
   //       which is an implementation detail?
@@ -259,75 +259,75 @@ public class QueueInfo {
     this.idleSince = idleSince;
   }
 
-  public long getDiskReads() {
+  public Long getDiskReads() {
     return diskReads;
   }
 
-  public void setDiskReads(long diskReads) {
+  public void setDiskReads(Long diskReads) {
     this.diskReads = diskReads;
   }
 
-  public long getDiskWrites() {
+  public Long getDiskWrites() {
     return diskWrites;
   }
 
-  public void setDiskWrites(long diskWrites) {
+  public void setDiskWrites(Long diskWrites) {
     this.diskWrites = diskWrites;
   }
 
-  public long getMemoryUsed() {
+  public Long getMemoryUsed() {
     return memoryUsed;
   }
 
-  public void setMemoryUsed(long memoryUsed) {
+  public void setMemoryUsed(Long memoryUsed) {
     this.memoryUsed = memoryUsed;
   }
 
-  public long getMessageBytes() {
+  public Long getMessageBytes() {
     return messageBytes;
   }
 
-  public void setMessageBytes(long messageBytes) {
+  public void setMessageBytes(Long messageBytes) {
     this.messageBytes = messageBytes;
   }
 
-  public long getMessageBytesPersistent() {
+  public Long getMessageBytesPersistent() {
     return messageBytesPersistent;
   }
 
-  public void setMessageBytesPersistent(long messageBytesPersistent) {
+  public void setMessageBytesPersistent(Long messageBytesPersistent) {
     this.messageBytesPersistent = messageBytesPersistent;
   }
 
-  public long getMessageBytesRAM() {
+  public Long getMessageBytesRAM() {
     return messageBytesRAM;
   }
 
-  public void setMessageBytesRAM(long messageBytesRAM) {
+  public void setMessageBytesRAM(Long messageBytesRAM) {
     this.messageBytesRAM = messageBytesRAM;
   }
 
-  public long getMessageBytesReady() {
+  public Long getMessageBytesReady() {
     return messageBytesReady;
   }
 
-  public void setMessageBytesReady(long messageBytesReady) {
+  public void setMessageBytesReady(Long messageBytesReady) {
     this.messageBytesReady = messageBytesReady;
   }
 
-  public long getMessageBytesUnacknowledged() {
+  public Long getMessageBytesUnacknowledged() {
     return messageBytesUnacknowledged;
   }
 
-  public void setMessageBytesUnacknowledged(long messageBytesUnacknowledged) {
+  public void setMessageBytesUnacknowledged(Long messageBytesUnacknowledged) {
     this.messageBytesUnacknowledged = messageBytesUnacknowledged;
   }
 
-  public long getTotalMessages() {
+  public Long getTotalMessages() {
     return totalMessages;
   }
 
-  public void setTotalMessages(long totalMessages) {
+  public void setTotalMessages(Long totalMessages) {
     this.totalMessages = totalMessages;
   }
 
@@ -339,27 +339,27 @@ public class QueueInfo {
     this.messageStats = messageStats;
   }
 
-  public long getTotalPersistentMessages() {
+  public Long getTotalPersistentMessages() {
     return totalPersistentMessages;
   }
 
-  public void setTotalPersistentMessages(long totalPersistentMessages) {
+  public void setTotalPersistentMessages(Long totalPersistentMessages) {
     this.totalPersistentMessages = totalPersistentMessages;
   }
 
-  public long getTotalTransientMessages() {
+  public Long getTotalTransientMessages() {
     return totalTransientMessages;
   }
 
-  public void setTotalTransientMessages(long totalTransientMessages) {
+  public void setTotalTransientMessages(Long totalTransientMessages) {
     this.totalTransientMessages = totalTransientMessages;
   }
 
-  public long getMessagesReady() {
+  public Long getMessagesReady() {
     return messagesReady;
   }
 
-  public void setMessagesReady(long messagesReady) {
+  public void setMessagesReady(Long messagesReady) {
     this.messagesReady = messagesReady;
   }
 
@@ -371,11 +371,11 @@ public class QueueInfo {
     this.messagesReadyDetails = messagesReadyDetails;
   }
 
-  public long getMessagesUnacknowledged() {
+  public Long getMessagesUnacknowledged() {
     return messagesUnacknowledged;
   }
 
-  public void setMessagesUnacknowledged(long messagesUnacknowledged) {
+  public void setMessagesUnacknowledged(Long messagesUnacknowledged) {
     this.messagesUnacknowledged = messagesUnacknowledged;
   }
 
@@ -387,19 +387,19 @@ public class QueueInfo {
     this.messagesUnacknowledgedDetails = messagesUnacknowledgedDetails;
   }
 
-  public long getConsumerCount() {
+  public Long getConsumerCount() {
     return consumerCount;
   }
 
-  public void setConsumerCount(long consumerCount) {
+  public void setConsumerCount(Long consumerCount) {
     this.consumerCount = consumerCount;
   }
 
-  public long getConsumerUtilisation() {
+  public Long getConsumerUtilisation() {
     return consumerUtilisation;
   }
 
-  public void setConsumerUtilisation(long consumerUtilisation) {
+  public void setConsumerUtilisation(Long consumerUtilisation) {
     this.consumerUtilisation = consumerUtilisation;
   }
 
