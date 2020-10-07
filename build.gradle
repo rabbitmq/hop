@@ -32,10 +32,10 @@ compileTestJava {
 
 ext {
   amqpClientVersion='5.9.0'
-  commonsHttpClientVersion = '4.5.12'
+  commonsHttpClientVersion = '4.5.13'
   okHttpVersion = '3.14.9'
   groovyVersion = '2.4.19'
-  jacksonVersion = '2.11.2'
+  jacksonVersion = '2.11.3'
   spockVersion = "1.3-groovy-2.4"
   reactorVersion = "3.3.10.RELEASE"
   reactorNettyVersion = '0.9.12.RELEASE'
