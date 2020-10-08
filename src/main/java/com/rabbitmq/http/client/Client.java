@@ -18,6 +18,7 @@ package com.rabbitmq.http.client;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.rabbitmq.http.client.domain.*;
 import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
 import org.springframework.core.ParameterizedTypeReference;
@@ -1296,13 +1297,17 @@ public class Client {
 
   private List<HttpMessageConverter<?>> getMessageConverters() {
     List<HttpMessageConverter<?>> xs = new ArrayList<HttpMessageConverter<?>>();
-    final Jackson2ObjectMapperBuilder bldr = Jackson2ObjectMapperBuilder
+    xs.add(new MappingJackson2HttpMessageConverter(createDefaultObjectMapper()));
+    return xs;
+  }
+
+  static ObjectMapper createDefaultObjectMapper() {
+    return Jackson2ObjectMapperBuilder
         .json()
         .serializationInclusion(JsonInclude.Include.NON_NULL)
         .featuresToEnable(DeserializationFeature.ACCEPT_EMPTY_ARRAY_AS_NULL_OBJECT)
-        .deserializerByType(VhostLimits.class, Utils.VHOST_LIMITS_JSON_DESERIALIZER);
-    xs.add(new MappingJackson2HttpMessageConverter(bldr.build()));
-    return xs;
+        .deserializerByType(VhostLimits.class, Utils.VHOST_LIMITS_JSON_DESERIALIZER)
+        .build();
   }
 
   private <T> T getForObjectReturningNullOn404(final URI uri, final Class<T> klass) {

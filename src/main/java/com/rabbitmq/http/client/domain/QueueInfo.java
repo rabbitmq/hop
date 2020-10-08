@@ -104,35 +104,35 @@ public class QueueInfo {
   private String idleSince;
 
   @JsonProperty("disk_reads")
-  private long diskReads;
+  private long diskReads = -1;
   @JsonProperty("disk_writes")
-  private long diskWrites;
+  private long diskWrites = -1;
   @JsonProperty("memory")
-  private long memoryUsed;
+  private long memoryUsed = -1;
   @JsonProperty("message_bytes")
-  private long messageBytes;
+  private long messageBytes = -1;
   @JsonProperty("message_bytes_persistent")
-  private long messageBytesPersistent;
+  private long messageBytesPersistent = -1;
   @JsonProperty("message_bytes_ram")
-  private long messageBytesRAM;
+  private long messageBytesRAM = -1;
   @JsonProperty("message_bytes_ready")
-  private long messageBytesReady;
+  private long messageBytesReady = -1;
   @JsonProperty("message_bytes_unacknowledged")
-  private long messageBytesUnacknowledged;
+  private long messageBytesUnacknowledged = -1;
   @JsonProperty("messages")
-  private long totalMessages;
+  private long totalMessages = -1;
   @JsonProperty("message_stats")
   private MessageStats messageStats;
   @JsonProperty("messages_persistent")
-  private long totalPersistentMessages;
+  private long totalPersistentMessages = -1;
   @JsonProperty("messages_ram")
-  private long totalTransientMessages;
+  private long totalTransientMessages = -1;
   @JsonProperty("messages_ready")
-  private long messagesReady;
+  private long messagesReady = -1;
   @JsonProperty("messages_ready_details")
   private RateDetails messagesReadyDetails;
   @JsonProperty("messages_unacknowledged")
-  private long messagesUnacknowledged;
+  private long messagesUnacknowledged = -1;
   @JsonProperty("messages_unacknowledged_details")
   private RateDetails messagesUnacknowledgedDetails;
   @JsonProperty("owner_pid_details")
