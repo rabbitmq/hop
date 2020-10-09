@@ -52,6 +52,35 @@ class JsonMappingSpec extends Specification {
     mapper << mappers()
   }
 
+  @Unroll
+  def "fields for classic HA queue should be mapped correctly"() {
+    when: "JSON document for classic HA queue has details on nodes"
+    def q = Client.createDefaultObjectMapper().readValue(JSON_CLASSIC_HA_QUEUE, QueueInfo.class)
+
+    then: "the Java object should be filled accordingly"
+    q.type == "classic"
+    q.recoverableMirrors == ["rabbit-3@host3", "rabbit-2@host2"]
+    q.mirrorNodes == ["rabbit-3@host3", "rabbit-2@host2"]
+    q.synchronisedMirrorNodes == ["rabbit-3@host3", "rabbit-2@host2"]
+
+    where:
+    mapper << mappers()
+  }
+
+  @Unroll
+  def "fields for quorum queue should be mapped correctly"() {
+    when: "JSON document for quorum queue has details on nodes"
+    def q = Client.createDefaultObjectMapper().readValue(JSON_QUORUM_QUEUE, QueueInfo.class)
+
+    then: "the Java object should be filled accordingly"
+    q.type == "quorum"
+    q.leaderNode == "rabbit-1@host1"
+    q.memberNodes == ["rabbit-3@host3", "rabbit-2@host2", "rabbit-1@host1"]
+
+    where:
+    mapper << mappers()
+  }
+
   static final String JSON_QUEUE_NO_READY_MESSAGES =
           "   {\n" +
           "      \"arguments\":{\n" +
@@ -214,5 +243,49 @@ class JsonMappingSpec extends Specification {
                   "      \"type\":\"classic\",\n" +
                   "      \"vhost\":\"vh1\"\n" +
                   "   }\n"
+
+  static final String JSON_CLASSIC_HA_QUEUE = "{\n" +
+          "  \"name\": \"ha-classic\",\n" +
+          "  \"node\": \"rabbit-1@host1\",\n" +
+          "  \"policy\": \"ha\",\n" +
+          "  \"recoverable_slaves\": [\n" +
+          "    \"rabbit-3@host3\",\n" +
+          "    \"rabbit-2@host2\"\n" +
+          "  ],\n" +
+          "  \"slave_nodes\": [\n" +
+          "    \"rabbit-3@host3\",\n" +
+          "    \"rabbit-2@host2\"\n" +
+          "  ],\n" +
+          "  \"state\": \"running\",\n" +
+          "  \"synchronised_slave_nodes\": [\n" +
+          "    \"rabbit-3@host3\",\n" +
+          "    \"rabbit-2@host2\"\n" +
+          "  ],\n" +
+          "  \"type\": \"classic\",\n" +
+          "  \"vhost\": \"/\"\n" +
+          "}"
+
+  static final String JSON_QUORUM_QUEUE = "{\n" +
+          "  \"leader\": \"rabbit-1@host1\",\n" +
+          "  \"members\": [\n" +
+          "    \"rabbit-3@host3\",\n" +
+          "    \"rabbit-2@host2\",\n" +
+          "    \"rabbit-1@host1\"\n" +
+          "  ],\n" +
+          "  \"name\": \"quorum-queue\",\n" +
+          "  \"node\": \"rabbit-1@host1\",\n" +
+          "  \"online\": [\n" +
+          "    \"rabbit-3@host3\",\n" +
+          "    \"rabbit-2@host2\",\n" +
+          "    \"rabbit-1@host1\"\n" +
+          "  ],\n" +
+          "  \"open_files\": {\n" +
+          "    \"rabbit-1@host1\": 0,\n" +
+          "    \"rabbit-2@host2\": 0,\n" +
+          "    \"rabbit-3@host3\": 0\n" +
+          "  },\n" +
+          "  \"type\": \"quorum\",\n" +
+          "  \"vhost\": \"/\"\n" +
+          "}"
 
 }

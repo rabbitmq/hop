@@ -155,11 +155,28 @@ public class QueueInfo {
   @JsonProperty("single_active_consumer_tag")
   private String singleActiveConsumerTag;
 
+  @JsonProperty("type")
+  private String type;
+
+  // for classic HA queues
+  @JsonProperty("recoverable_slaves")
+  private List<String> recoverableMirrors;
+  @JsonProperty("slave_nodes")
+  private List<String> mirrorNodes;
+  @JsonProperty("synchronised_slave_nodes")
+  private List<String> synchronisedMirrorNodes;
+
+  // for quorum queues
+  @JsonProperty("leader")
+  private String leaderNode;
+  @JsonProperty("members")
+  private List<String> memberNodes;
+
   public QueueInfo() {
   }
 
   public QueueInfo(boolean durable, boolean exclusive, boolean autoDelete) {
-    this(durable, exclusive, autoDelete, new HashMap<String, Object>());
+    this(durable, exclusive, autoDelete, new HashMap<>());
   }
 
   public QueueInfo(boolean durable, boolean exclusive, boolean autoDelete, Map<String, Object> arguments) {
@@ -423,6 +440,54 @@ public class QueueInfo {
     this.singleActiveConsumerTag = singleActiveConsumerTag;
   }
 
+  public String getType() {
+    return type;
+  }
+
+  public void setType(String type) {
+    this.type = type;
+  }
+
+  public List<String> getRecoverableMirrors() {
+    return recoverableMirrors;
+  }
+
+  public void setRecoverableMirrors(List<String> recoverableMirrors) {
+    this.recoverableMirrors = recoverableMirrors;
+  }
+
+  public List<String> getMirrorNodes() {
+    return mirrorNodes;
+  }
+
+  public void setMirrorNodes(List<String> mirrorNodes) {
+    this.mirrorNodes = mirrorNodes;
+  }
+
+  public List<String> getSynchronisedMirrorNodes() {
+    return synchronisedMirrorNodes;
+  }
+
+  public void setSynchronisedMirrorNodes(List<String> synchronisedMirrorNodes) {
+    this.synchronisedMirrorNodes = synchronisedMirrorNodes;
+  }
+
+  public String getLeaderNode() {
+    return leaderNode;
+  }
+
+  public void setLeaderNode(String leaderNode) {
+    this.leaderNode = leaderNode;
+  }
+
+  public List<String> getMemberNodes() {
+    return memberNodes;
+  }
+
+  public void setMemberNodes(List<String> memberNodes) {
+    this.memberNodes = memberNodes;
+  }
+
   @Override
   public String toString() {
     return "QueueInfo{" +
@@ -455,6 +520,7 @@ public class QueueInfo {
         ", messagesUnacknowledgedDetails=" + messagesUnacknowledgedDetails +
         ", consumerCount=" + consumerCount +
         ", singleActiveConsumerTag=" + singleActiveConsumerTag +
+        ", type=" + type +
         '}';
   }
 }
