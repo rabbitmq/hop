@@ -8,7 +8,7 @@ jdk:
 notifications:
   email:
     - michael@rabbitmq.com
-    - acogoluegnes@pivotal.io
+    - acogoluegnes@vmware.com
 addons:
   apt:
     sources:
