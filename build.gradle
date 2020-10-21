@@ -75,30 +75,30 @@ dependencyManagement {
 }
 
 dependencies {
-  compile ("org.springframework:spring-web:$springVersion", optional)
-  compile ("org.apache.httpcomponents:httpclient:$commonsHttpClientVersion", optional)
-  compile ("com.squareup.okhttp3:okhttp:$okHttpVersion", optional)
-  compile ("com.fasterxml.jackson.core:jackson-databind:$jacksonVersion")
-  compile ("io.projectreactor:reactor-core:$reactorVersion", optional)
-  compile ("io.projectreactor.netty:reactor-netty:$reactorNettyVersion", optional)
+  implementation ("org.springframework:spring-web:$springVersion", optional)
+  implementation ("org.apache.httpcomponents:httpclient:$commonsHttpClientVersion", optional)
+  implementation ("com.squareup.okhttp3:okhttp:$okHttpVersion", optional)
+  implementation ("com.fasterxml.jackson.core:jackson-databind:$jacksonVersion")
+  implementation ("io.projectreactor:reactor-core:$reactorVersion", optional)
+  implementation ("io.projectreactor.netty:reactor-netty:$reactorNettyVersion", optional)
 
-  testCompile "org.codehaus.groovy:groovy-all:$groovyVersion"
-  testCompile "org.spockframework:spock-core:$spockVersion"
-  testCompile "com.rabbitmq:amqp-client:$amqpClientVersion"
+  testImplementation "org.codehaus.groovy:groovy-all:$groovyVersion"
+  testImplementation "org.spockframework:spock-core:$spockVersion"
+  testImplementation "com.rabbitmq:amqp-client:$amqpClientVersion"
 
-  jdkDependencyTestCompile "junit:junit:4.13"
-  jdkDependencyTestCompile "org.springframework:spring-web:$springVersion"
-  jdkDependencyTestCompile "com.fasterxml.jackson.core:jackson-databind:$jacksonVersion"
+  jdkDependencyTestImplementation "junit:junit:4.13"
+  jdkDependencyTestImplementation "org.springframework:spring-web:$springVersion"
+  jdkDependencyTestImplementation "com.fasterxml.jackson.core:jackson-databind:$jacksonVersion"
 
-  httpclientDependencyTestCompile "junit:junit:4.13"
-  httpclientDependencyTestCompile "org.springframework:spring-web:$springVersion"
-  httpclientDependencyTestCompile "org.apache.httpcomponents:httpclient:$commonsHttpClientVersion"
-  httpclientDependencyTestCompile "com.fasterxml.jackson.core:jackson-databind:$jacksonVersion"
+  httpclientDependencyTestImplementation "junit:junit:4.13"
+  httpclientDependencyTestImplementation "org.springframework:spring-web:$springVersion"
+  httpclientDependencyTestImplementation "org.apache.httpcomponents:httpclient:$commonsHttpClientVersion"
+  httpclientDependencyTestImplementation "com.fasterxml.jackson.core:jackson-databind:$jacksonVersion"
 
-  okhttpDependencyTestCompile "junit:junit:4.13"
-  okhttpDependencyTestCompile "org.springframework:spring-web:$springVersion"
-  okhttpDependencyTestCompile "com.squareup.okhttp3:okhttp:$okHttpVersion"
-  okhttpDependencyTestCompile "com.fasterxml.jackson.core:jackson-databind:$jacksonVersion"
+  okhttpDependencyTestImplementation "junit:junit:4.13"
+  okhttpDependencyTestImplementation "org.springframework:spring-web:$springVersion"
+  okhttpDependencyTestImplementation "com.squareup.okhttp3:okhttp:$okHttpVersion"
+  okhttpDependencyTestImplementation "com.fasterxml.jackson.core:jackson-databind:$jacksonVersion"
 
 }
 
@@ -251,6 +251,6 @@ task dist(dependsOn: assemble) {
 jar {
   manifest {
     attributes("Automatic-Module-Name": "com.rabbitmq.http.client",
-            "Implementation-Version": version)
+               "Implementation-Version": archiveVersion)
   }
 }
