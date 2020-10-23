@@ -31,7 +31,7 @@ compileTestJava {
 }
 
 ext {
-  amqpClientVersion='5.9.0'
+  amqpClientVersion='5.10.0'
   commonsHttpClientVersion = '4.5.13'
   okHttpVersion = '3.14.9'
   groovyVersion = '2.4.19'
