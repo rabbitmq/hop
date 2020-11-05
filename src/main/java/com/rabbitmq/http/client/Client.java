@@ -1077,7 +1077,7 @@ public class Client {
    * @param details upstream arguments
    */
   public void declareUpstream(String vhost, String name, UpstreamDetails details) {
-    if (StringUtils.isEmpty(details.getUri())) {
+    if (StringUtils.hasLength(details.getUri())) {
       throw new IllegalArgumentException("Upstream uri must not be null or empty");
     }
     final URI uri = uriWithPath("./parameters/federation-upstream/"
@@ -1128,7 +1128,7 @@ public class Client {
    */
   public void declareUpstreamSet(String vhost, String name, List<UpstreamSetDetails> details) {
     for (UpstreamSetDetails item : details) {
-      if (StringUtils.isEmpty(item.getUpstream())) {
+      if (StringUtils.hasLength(item.getUpstream())) {
         throw new IllegalArgumentException("Each federation upstream set item must have a non-null and not " +
                 "empty upstream name");
       }
