@@ -86,16 +86,16 @@ dependencies {
   testImplementation "org.spockframework:spock-core:$spockVersion"
   testImplementation "com.rabbitmq:amqp-client:$amqpClientVersion"
 
-  jdkDependencyTestImplementation "junit:junit:4.13"
+  jdkDependencyTestImplementation "junit:junit:4.13.1"
   jdkDependencyTestImplementation "org.springframework:spring-web:$springVersion"
   jdkDependencyTestImplementation "com.fasterxml.jackson.core:jackson-databind:$jacksonVersion"
 
-  httpclientDependencyTestImplementation "junit:junit:4.13"
+  httpclientDependencyTestImplementation "junit:junit:4.13.1"
   httpclientDependencyTestImplementation "org.springframework:spring-web:$springVersion"
   httpclientDependencyTestImplementation "org.apache.httpcomponents:httpclient:$commonsHttpClientVersion"
   httpclientDependencyTestImplementation "com.fasterxml.jackson.core:jackson-databind:$jacksonVersion"
 
-  okhttpDependencyTestImplementation "junit:junit:4.13"
+  okhttpDependencyTestImplementation "junit:junit:4.13.1"
   okhttpDependencyTestImplementation "org.springframework:spring-web:$springVersion"
   okhttpDependencyTestImplementation "com.squareup.okhttp3:okhttp:$okHttpVersion"
   okhttpDependencyTestImplementation "com.fasterxml.jackson.core:jackson-databind:$jacksonVersion"
