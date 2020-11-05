@@ -1,8 +1,8 @@
 @GrabResolver(name = 'spring-staging', root = 'https://repo.spring.io/libs-staging-local/')
 @Grab(group = 'com.rabbitmq', module = 'http-client', version = "${version}")
-@Grab(group = 'org.springframework', module = 'spring-web', version = "5.1.9.RELEASE")
-@Grab(group = 'org.apache.httpcomponents', module = 'httpclient', version = "4.5.9")
-@Grab(group = 'org.slf4j', module = 'slf4j-simple', version = '1.7.28')
+@Grab(group = 'org.springframework', module = 'spring-web', version = "5.3.0")
+@Grab(group = 'org.apache.httpcomponents', module = 'httpclient', version = "4.5.13")
+@Grab(group = 'org.slf4j', module = 'slf4j-simple', version = '1.7.30')
 
 import com.rabbitmq.http.client.Client
 import org.slf4j.LoggerFactory
