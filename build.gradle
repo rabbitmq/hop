@@ -55,18 +55,6 @@ ext {
                   "https://fasterxml.github.io/jackson-databind/javadoc/2.9/"] as String[]
 }
 
-def httpClients = ['jdk', 'httpclient', 'okhttp']
-
-sourceSets {
-  httpClients.each { client ->
-    sourceSets.create("${client}DependencyTest") {
-      java.srcDirs = ["src/integration-test/${client}/java"]
-      compileClasspath += main.output
-      runtimeClasspath += main.output
-    }
-  }
-}
-
 dependencyManagement {
   resolutionStrategy {
     cacheChangingModulesFor 0, 'seconds'
@@ -86,20 +74,6 @@ dependencies {
   testImplementation "org.spockframework:spock-core:$spockVersion"
   testImplementation "com.rabbitmq:amqp-client:$amqpClientVersion"
 
-  jdkDependencyTestImplementation "junit:junit:4.13.1"
-  jdkDependencyTestImplementation "org.springframework:spring-web:$springVersion"
-  jdkDependencyTestImplementation "com.fasterxml.jackson.core:jackson-databind:$jacksonVersion"
-
-  httpclientDependencyTestImplementation "junit:junit:4.13.1"
-  httpclientDependencyTestImplementation "org.springframework:spring-web:$springVersion"
-  httpclientDependencyTestImplementation "org.apache.httpcomponents:httpclient:$commonsHttpClientVersion"
-  httpclientDependencyTestImplementation "com.fasterxml.jackson.core:jackson-databind:$jacksonVersion"
-
-  okhttpDependencyTestImplementation "junit:junit:4.13.1"
-  okhttpDependencyTestImplementation "org.springframework:spring-web:$springVersion"
-  okhttpDependencyTestImplementation "com.squareup.okhttp3:okhttp:$okHttpVersion"
-  okhttpDependencyTestImplementation "com.fasterxml.jackson.core:jackson-databind:$jacksonVersion"
-
 }
 
 eclipse.project.natures += 'org.springframework.ide.eclipse.core.springnature'
@@ -117,14 +91,6 @@ test {
   // suppress all console output during testing unless running `gradle -i`
   logging.captureStandardOutput(LogLevel.INFO)
   maxHeapSize = "1024m"
-}
-
-httpClients.each { client ->
-  tasks.create(name: "${client}DependencyTest", type: Test) {
-    testClassesDirs = sourceSets["${client}DependencyTest"].output.classesDirs
-    classpath = sourceSets["${client}DependencyTest"].runtimeClasspath
-    test.dependsOn name
-  }
 }
 
 // force test runs even when there are no test changes,
