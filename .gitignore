@@ -10,7 +10,6 @@ gradle-app.setting
 *~
 *#
 ~*
-pom.xml
 .project
 .classpath
 .settings

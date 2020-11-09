@@ -1233,7 +1233,7 @@ class ReactorNettyClientSpec extends Specification {
         Flux<PolicyInfo> ps = client.getPolicies(v)
 
         then: "hop.test is listed"
-        PolicyInfo p = ps.filter( { p -> p.name.equals(s) } ).blockFirst()
+        PolicyInfo p = ps.filter( { it.name.equals(s) } ).blockFirst()
         p != null
         p.vhost.equals(v)
         p.name.equals(s)
@@ -1750,7 +1750,7 @@ class ReactorNettyClientSpec extends Specification {
 
         then: "shovel definitions are returned"
         shovels.hasElements().block()
-        ShovelInfo s = shovels.filter( { s -> s.name.equals("shovel1") } ).blockFirst()
+        ShovelInfo s = shovels.filter( { it.name.equals("shovel1") } ).blockFirst()
         s != null
         s.name.equals("shovel1")
         s.virtualHost.equals("/")
@@ -1786,7 +1786,7 @@ class ReactorNettyClientSpec extends Specification {
 
         then: "shovel definitions are returned"
         shovels.hasElements().block()
-        ShovelInfo s = shovels.filter( { s -> s.name.equals("shovel1") } ).blockFirst()
+        ShovelInfo s = shovels.filter( { it.name.equals("shovel1") } ).blockFirst()
         s != null
         s.name.equals("shovel1")
         s.virtualHost.equals("/")
@@ -1836,13 +1836,13 @@ class ReactorNettyClientSpec extends Specification {
 
         then: "shovels status are returned"
         shovels.hasElements().block()
-        ShovelStatus s = shovels.filter( { s -> s.name.equals(shovelName) } ).blockFirst()
+        ShovelStatus s = shovels.filter( { it.name.equals(shovelName) } ).blockFirst()
         s != null
         s.name == shovelName
         s.virtualHost == "/"
         s.type == "dynamic"
         waitAtMostUntilTrue(30, {
-            ShovelStatus shovelStatus = client.getShovelsStatus().filter( { status -> status.name.equals(shovelName) } ).blockFirst()
+            ShovelStatus shovelStatus = client.getShovelsStatus().filter( { it.name.equals(shovelName) } ).blockFirst()
             shovelStatus.state == "running"
         })
         ShovelStatus status = client.getShovelsStatus().filter( { it -> it.name.equals(shovelName) } ).blockFirst()
