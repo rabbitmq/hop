@@ -49,7 +49,7 @@ class ClientSpec extends Specification {
   private final ConnectionFactory cf = initializeConnectionFactory()
 
   protected static ConnectionFactory initializeConnectionFactory() {
-    final cf = new ConnectionFactory()
+    def cf = new ConnectionFactory()
     cf.setAutomaticRecoveryEnabled(false)
     cf
   }
@@ -140,8 +140,8 @@ class ClientSpec extends Specification {
   @Unroll
   def "GET /api/overview"() {
     when: "client requests GET /api/overview"
-    final conn = openConnection()
-    final ch = conn.createChannel()
+    def conn = openConnection()
+    def ch = conn.createChannel()
     1000.times { ch.basicPublish("", "", null, null) }
 
     def res = client.getOverview()
@@ -151,18 +151,18 @@ class ClientSpec extends Specification {
     res.getNode().startsWith("rabbit@")
     res.getErlangVersion() != null
 
-    final msgStats = res.getMessageStats()
+    def msgStats = res.getMessageStats()
     msgStats.basicPublish >= 0
     msgStats.publisherConfirm >= 0
     msgStats.basicDeliver >= 0
     msgStats.basicReturn >= 0
 
-    final qTotals = res.getQueueTotals()
+    def qTotals = res.getQueueTotals()
     qTotals.messages >= 0
     qTotals.messagesReady >= 0
     qTotals.messagesUnacknowledged >= 0
 
-    final oTotals = res.getObjectTotals()
+    def oTotals = res.getObjectTotals()
     oTotals.connections >= 0
     oTotals.channels >= 0
     oTotals.exchanges >= 0
@@ -189,8 +189,8 @@ class ClientSpec extends Specification {
   @Unroll
   def "GET /api/nodes"() {
     when: "client retrieves a list of cluster nodes"
-    final res = client.getNodes()
-    final node = res.first()
+    def res = client.getNodes()
+    def node = res.first()
 
     then: "the list is returned"
     res.size() >= 1
@@ -205,8 +205,8 @@ class ClientSpec extends Specification {
     when: "a user-provided HTTP builder configurator is set"
 
     and: "client retrieves a list of cluster nodes"
-    final res = client.getNodes()
-    final node = res.first()
+    def res = client.getNodes()
+    def node = res.first()
 
     then: "the list is returned"
     // this number has no particular meaning
@@ -224,8 +224,8 @@ class ClientSpec extends Specification {
     when: "credentials are provided in the URL"
 
     and: "retrieves a list of cluster nodes"
-    final res = client.getNodes()
-    final node = res.first()
+    def res = client.getNodes()
+    def node = res.first()
 
     then: "client connects successfully and the list is returned"
     res.size() >= 1
@@ -238,9 +238,9 @@ class ClientSpec extends Specification {
   @Unroll
   def "GET /api/nodes/{name}"() {
     when: "client retrieves a list of cluster nodes"
-    final res = client.getNodes()
-    final name = res.first().name
-    final node = client.getNode(name)
+    def res = client.getNodes()
+    def name = res.first().name
+    def node = client.getNode(name)
 
     then: "the list is returned"
     res.size() >= 1
@@ -253,12 +253,12 @@ class ClientSpec extends Specification {
   @Unroll
   def "GET /api/connections"(Client client) {
     given: "an open RabbitMQ client connection"
-    final conn = openConnection()
+    def conn = openConnection()
 
     when: "client retrieves a list of connections"
 
-    final ConnectionInfo[] res = awaitEventPropagation({ client.getConnections() }) as ConnectionInfo[]
-    final fst = res.first()
+    def ConnectionInfo[] res = awaitEventPropagation({ client.getConnections() }) as ConnectionInfo[]
+    def fst = res.first()
 
     then: "the list is returned"
     res.size() >= 1
@@ -274,12 +274,12 @@ class ClientSpec extends Specification {
   @Unroll
   def "GET /api/connections/{name}"(Client client) {
     given: "an open RabbitMQ client connection"
-    final conn = openConnection()
+    def conn = openConnection()
 
     when: "client retrieves connection info with the correct name"
 
-    final ConnectionInfo[] xs = awaitEventPropagation({ client.getConnections() }) as ConnectionInfo[]
-    final x = client.getConnection(xs.first().name)
+    def ConnectionInfo[] xs = awaitEventPropagation({ client.getConnections() }) as ConnectionInfo[]
+    def x = client.getConnection(xs.first().name)
 
     then: "the info is returned"
     verifyConnectionInfo(x)
@@ -294,8 +294,8 @@ class ClientSpec extends Specification {
   @Unroll
   def "GET /api/connections/{name} with client-provided name"(Client client) {
     given: "an open RabbitMQ client connection with client-provided name"
-    final s = UUID.randomUUID().toString()
-    final conn = openConnection(s)
+    def s = UUID.randomUUID().toString()
+    def conn = openConnection(s)
 
     when: "client retrieves connection info with the correct name"
 
@@ -304,7 +304,7 @@ class ClientSpec extends Specification {
     xs = xs.findAll({
       (it.clientProperties.connectionName == s)
     })
-    final x = client.getConnection(xs.first().name)
+    def x = client.getConnection(xs.first().name)
 
     then: "the info is returned"
     verifyConnectionInfo(x)
@@ -320,9 +320,9 @@ class ClientSpec extends Specification {
   @Unroll
   def "DELETE /api/connections/{name}"(Client client) {
     given: "an open RabbitMQ client connection"
-    final latch = new CountDownLatch(1)
-    final s = UUID.randomUUID().toString()
-    final conn = openConnection(s)
+    def latch = new CountDownLatch(1)
+    def s = UUID.randomUUID().toString()
+    def conn = openConnection(s)
     conn.addShutdownListener({ e -> latch.countDown()})
     assert conn.isOpen()
 
@@ -353,9 +353,9 @@ class ClientSpec extends Specification {
   @Unroll
   def "DELETE /api/connections/{name} with a user-provided reason"(Client client) {
     given: "an open RabbitMQ client connection"
-    final latch = new CountDownLatch(1)
-    final s = UUID.randomUUID().toString()
-    final conn = openConnection(s)
+    def latch = new CountDownLatch(1)
+    def s = UUID.randomUUID().toString()
+    def conn = openConnection(s)
     conn.addShutdownListener({e -> latch.countDown()})
     assert conn.isOpen()
 
@@ -386,9 +386,9 @@ class ClientSpec extends Specification {
   @Unroll
   def "GET /api/channels"(Client client) {
     given: "an open RabbitMQ client connection with 1 channel"
-    final s = UUID.randomUUID().toString()
-    final conn = openConnection(s)
-    final ch = conn.createChannel()
+    def s = UUID.randomUUID().toString()
+    def conn = openConnection(s)
+    def ch = conn.createChannel()
 
     when: "client lists channels"
 
@@ -402,7 +402,7 @@ class ClientSpec extends Specification {
     // channel name starts with the connection name
     // e.g. 127.0.0.1:42590 -> 127.0.0.1:5672 (1)
     chs = chs.findAll({ it.name.startsWith(cn) })
-    final chi = chs.first()
+    def chi = chs.first()
 
     then: "the list is returned"
     verifyChannelInfo(chi, ch)
@@ -419,9 +419,9 @@ class ClientSpec extends Specification {
   @Unroll
   def "GET /api/connections/{name}/channels/"(Client client) {
     given: "an open RabbitMQ client connection with 1 channel"
-    final s = UUID.randomUUID().toString()
-    final conn = openConnection(s)
-    final ch = conn.createChannel()
+    def s = UUID.randomUUID().toString()
+    def conn = openConnection(s)
+    def ch = conn.createChannel()
 
     when: "client lists channels on that connection"
 
@@ -432,8 +432,8 @@ class ClientSpec extends Specification {
     })
     def cn = xs.first().name
 
-    final ChannelInfo[] chs = awaitEventPropagation({ client.getChannels(cn) }) as ChannelInfo[]
-    final chi = chs.first()
+    def ChannelInfo[] chs = awaitEventPropagation({ client.getChannels(cn) }) as ChannelInfo[]
+    def chi = chs.first()
 
     then: "the list is returned"
     verifyChannelInfo(chi, ch)
@@ -450,9 +450,9 @@ class ClientSpec extends Specification {
   @Unroll
   def "GET /api/channels/{name}"(Client client) {
     given: "an open RabbitMQ client connection with 1 channel"
-    final s = UUID.randomUUID().toString()
-    final conn = openConnection(s)
-    final ch = conn.createChannel()
+    def s = UUID.randomUUID().toString()
+    def conn = openConnection(s)
+    def ch = conn.createChannel()
 
     when: "client retrieves channel info"
 
@@ -462,8 +462,8 @@ class ClientSpec extends Specification {
       (it.clientProperties.connectionName == s)
     })
     def cn = xs.first().name
-    final ChannelInfo[] chs = awaitEventPropagation({ client.getChannels(cn) }) as ChannelInfo[]
-    final chi = client.getChannel(chs.first().name)
+    def ChannelInfo[] chs = awaitEventPropagation({ client.getChannels(cn) }) as ChannelInfo[]
+    def chi = client.getChannel(chs.first().name)
 
     then: "the info is returned"
     verifyChannelInfo(chi, ch)
@@ -480,8 +480,8 @@ class ClientSpec extends Specification {
   @Unroll
   def "GET /api/exchanges"() {
     when: "client retrieves the list of exchanges across all vhosts"
-    final xs = client.getExchanges()
-    final x = xs.first()
+    def xs = client.getExchanges()
+    def x = xs.first()
 
     then: "the list is returned"
     verifyExchangeInfo(x)
@@ -493,10 +493,10 @@ class ClientSpec extends Specification {
   @Unroll
   def "GET /api/exchanges/{vhost} when vhost exists"() {
     when: "client retrieves the list of exchanges in a particular vhost"
-    final xs = client.getExchanges("/")
+    def xs = client.getExchanges("/")
 
     then: "the list is returned"
-    final x = xs.find { (it.name == "amq.fanout") }
+    def x = xs.find { (it.name == "amq.fanout") }
     verifyExchangeInfo(x)
 
     where:
@@ -506,11 +506,11 @@ class ClientSpec extends Specification {
   @Unroll
   def "GET /api/exchanges/{vhost} when vhost DOES NOT exist"() {
     given: "vhost lolwut does not exist"
-    final v = "lolwut"
+    def v = "lolwut"
     client.deleteVhost(v)
 
     when: "client retrieves the list of exchanges in that vhost"
-    final xs = client.getExchanges(v)
+    def xs = client.getExchanges(v)
 
     then: "null is returned"
     xs == null
@@ -522,10 +522,10 @@ class ClientSpec extends Specification {
   @Unroll
   def "GET /api/exchanges/{vhost}/{name} when both vhost and exchange exist"() {
     when: "client retrieves exchange amq.fanout in vhost /"
-    final xs = client.getExchange("/", "amq.fanout")
+    def xs = client.getExchange("/", "amq.fanout")
 
     then: "exchange info is returned"
-    final ExchangeInfo x = (ExchangeInfo)xs.find { it.name == "amq.fanout" && it.vhost == "/" }
+    def ExchangeInfo x = (ExchangeInfo)xs.find { it.name == "amq.fanout" && it.vhost == "/" }
     verifyExchangeInfo(x)
 
     where:
@@ -535,8 +535,8 @@ class ClientSpec extends Specification {
   @Unroll
   def "PUT /api/exchanges/{vhost}/{name} when vhost exists"() {
     given: "fanout exchange hop.test in vhost /"
-    final v = "/"
-    final s = "hop.test"
+    def v = "/"
+    def s = "hop.test"
     client.declareExchange(v, s, new ExchangeInfo("fanout", false, false))
 
     when: "client lists exchanges in vhost /"
@@ -557,8 +557,8 @@ class ClientSpec extends Specification {
   @Unroll
   def "DELETE /api/exchanges/{vhost}/{name}"() {
     given: "fanout exchange hop.test in vhost /"
-    final v = "/"
-    final s = "hop.test"
+    def v = "/"
+    def s = "hop.test"
     client.declareExchange(v, s, new ExchangeInfo("fanout", false, false))
 
     List<ExchangeInfo> xs = client.getExchanges(v)
@@ -582,15 +582,15 @@ class ClientSpec extends Specification {
   @Unroll
   def "POST /api/exchanges/{vhost}/{name}/publish"() {
     given: "a queue named hop.publish and a consumer on this queue"
-    final v = "/"
-    final conn = openConnection()
-    final ch = conn.createChannel()
-    final q = "hop.publish"
+    def v = "/"
+    def conn = openConnection()
+    def ch = conn.createChannel()
+    def q = "hop.publish"
     ch.queueDeclare(q, false, false, false, null)
     ch.queueBind(q, "amq.direct", q)
-    final latch = new CountDownLatch(1)
-    final payloadReference = new AtomicReference<String>()
-    final propertiesReference = new AtomicReference<AMQP.BasicProperties>()
+    def latch = new CountDownLatch(1)
+    def payloadReference = new AtomicReference<String>()
+    def propertiesReference = new AtomicReference<AMQP.BasicProperties>()
     ch.basicConsume(q, true, {ctag, message ->
       payloadReference.set(new String(message.getBody()))
       propertiesReference.set(message.getProperties())
@@ -598,12 +598,12 @@ class ClientSpec extends Specification {
     }, { ctag -> } as CancelCallback)
 
     when: "client publishes a message to the queue"
-    final properties = new HashMap()
+    def properties = new HashMap()
     properties.put("delivery_mode", 1)
     properties.put("content_type", "text/plain")
     properties.put("priority", 5)
     properties.put("headers", Collections.singletonMap("header1", "value1"))
-    final routed = client.publish(v, "amq.direct", q,
+    def routed = client.publish(v, "amq.direct", q,
             new OutboundMessage().payload("Hello world!").utf8Encoded().properties(properties))
 
     then: "the message is routed to the queue and consumed"
@@ -628,16 +628,16 @@ class ClientSpec extends Specification {
   @Unroll
   def "GET /api/exchanges/{vhost}/{name}/bindings/source"() {
     given: "a queue named hop.queue1"
-    final conn = openConnection()
-    final ch = conn.createChannel()
-    final q = "hop.queue1"
+    def conn = openConnection()
+    def ch = conn.createChannel()
+    def q = "hop.queue1"
     ch.queueDeclare(q, false, false, false, null)
 
     when: "client lists bindings of default exchange"
-    final xs = client.getBindingsBySource("/", "")
+    def xs = client.getBindingsBySource("/", "")
 
     then: "there is an automatic binding for hop.queue1"
-    final x = xs.find { it.source == "" && it.destinationType == "queue" && it.destination == q }
+    def x = xs.find { it.source == "" && it.destinationType == "queue" && it.destination == q }
     x != null
 
     cleanup:
@@ -651,18 +651,18 @@ class ClientSpec extends Specification {
   @Unroll
   def "GET /api/exchanges/{vhost}/{name}/bindings/destination"() {
     given: "an exchange named hop.exchange1 which is bound to amq.fanout"
-    final conn = openConnection()
-    final ch = conn.createChannel()
-    final src = "amq.fanout"
-    final dest = "hop.exchange1"
+    def conn = openConnection()
+    def ch = conn.createChannel()
+    def src = "amq.fanout"
+    def dest = "hop.exchange1"
     ch.exchangeDeclare(dest, "fanout")
     ch.exchangeBind(dest, src, "")
 
     when: "client lists bindings of amq.fanout"
-    final xs = client.getExchangeBindingsByDestination("/", dest)
+    def xs = client.getExchangeBindingsByDestination("/", dest)
 
     then: "there is a binding for hop.exchange1"
-    final x = xs.find { it.source == src &&
+    def x = xs.find { it.source == src &&
         it.destinationType == "exchange" &&
         it.destination == dest
     }
@@ -679,15 +679,15 @@ class ClientSpec extends Specification {
   @Unroll
   def "GET /api/queues"() {
     given: "at least one queue was declared"
-    final Connection conn = cf.newConnection()
-    final Channel ch = conn.createChannel()
-    final String q = ch.queueDeclare().queue
+    def Connection conn = cf.newConnection()
+    def Channel ch = conn.createChannel()
+    def String q = ch.queueDeclare().queue
 
     when: "client lists queues"
-    final xs = client.getQueues()
+    def xs = client.getQueues()
 
     then: "a list of queues is returned"
-    final x = xs.first()
+    def x = xs.first()
     verifyQueueInfo(x)
 
     cleanup:
@@ -701,15 +701,15 @@ class ClientSpec extends Specification {
   @Unroll
   def "GET /api/queues/{vhost} when vhost exists"() {
     given: "at least one queue was declared in vhost /"
-    final Connection conn = cf.newConnection()
-    final Channel ch = conn.createChannel()
-    final String q = ch.queueDeclare().queue
+    def Connection conn = cf.newConnection()
+    def Channel ch = conn.createChannel()
+    def String q = ch.queueDeclare().queue
 
     when: "client lists queues"
-    final xs = client.getQueues("/")
+    def xs = client.getQueues("/")
 
     then: "a list of queues is returned"
-    final x = xs.first()
+    def x = xs.first()
     verifyQueueInfo(x)
 
     cleanup:
@@ -723,11 +723,11 @@ class ClientSpec extends Specification {
   @Unroll
   def "GET /api/queues/{vhost} when vhost DOES NOT exist"() {
     given: "vhost lolwut DOES not exist"
-    final v = "lolwut"
+    def v = "lolwut"
     client.deleteVhost(v)
 
     when: "client lists queues"
-    final xs = client.getQueues(v)
+    def xs = client.getQueues(v)
 
     then: "null is returned"
     xs == null
@@ -739,12 +739,12 @@ class ClientSpec extends Specification {
   @Unroll
   def "GET /api/queues/{vhost}/{name} when both vhost and queue exist"() {
     given: "a queue was declared in vhost /"
-    final Connection conn = cf.newConnection()
-    final Channel ch = conn.createChannel()
-    final String q = ch.queueDeclare().queue
+    def Connection conn = cf.newConnection()
+    def Channel ch = conn.createChannel()
+    def String q = ch.queueDeclare().queue
 
     when: "client fetches info of the queue"
-    final x = client.getQueue("/", q)
+    def x = client.getQueue("/", q)
 
     then: "the info is returned"
     x.vhost == "/"
@@ -762,14 +762,14 @@ class ClientSpec extends Specification {
   @Unroll
   def "GET /api/queues/{vhost}/{name} with an exclusive queue"() {
     given: "an exclusive queue named hop.q1.exclusive"
-    final Connection conn = cf.newConnection()
-    final Channel ch = conn.createChannel()
+    def Connection conn = cf.newConnection()
+    def Channel ch = conn.createChannel()
     String s = "hop.q1.exclusive"
     ch.queueDelete(s)
-    final String q = ch.queueDeclare(s, false, true, false, null).queue
+    def String q = ch.queueDeclare(s, false, true, false, null).queue
 
     when: "client fetches info of the queue"
-    final x = client.getQueue("/", q)
+    def x = client.getQueue("/", q)
 
     then: "the queue is exclusive according to the response"
     x.exclusive
@@ -785,13 +785,13 @@ class ClientSpec extends Specification {
   @Unroll
   def "GET /api/queues/{vhost}/{name} when queue DOES NOT exist"() {
     given: "queue lolwut does not exist in vhost /"
-    final Connection conn = cf.newConnection()
-    final Channel ch = conn.createChannel()
-    final String q = "lolwut"
+    def Connection conn = cf.newConnection()
+    def Channel ch = conn.createChannel()
+    def String q = "lolwut"
     ch.queueDelete(q)
 
     when: "client fetches info of the queue"
-    final x = client.getQueue("/", q)
+    def x = client.getQueue("/", q)
 
     then: "null is returned"
     x == null
@@ -807,10 +807,10 @@ class ClientSpec extends Specification {
   @Unroll
   def "PUT /api/queues/{vhost}/{name} when vhost exists"() {
     given: "vhost /"
-    final v = "/"
+    def v = "/"
 
     when: "client declares a queue hop.test"
-    final s = "hop.test"
+    def s = "hop.test"
     client.declareQueue(v, s, new QueueInfo(false, false, false))
 
     and: "client lists queues in vhost /"
@@ -835,12 +835,12 @@ class ClientSpec extends Specification {
   @Unroll
   def "PUT /api/policies/{vhost}/{name}"() {
     given: "vhost / and definition"
-    final v = "/"
-    final d = new HashMap<String, Object>()
+    def v = "/"
+    def d = new HashMap<String, Object>()
     d.put("ha-mode", "all")
 
     when: "client declares a policy hop.test"
-    final s = "hop.test"
+    def s = "hop.test"
     client.declarePolicy(v, s, new PolicyInfo(".*", 1, null, d))
 
     and: "client lists policies in vhost /"
@@ -865,15 +865,15 @@ class ClientSpec extends Specification {
   @Unroll
   def "PUT /api/queues/{vhost}/{name} when vhost DOES NOT exist"() {
     given: "vhost lolwut which does not exist"
-    final v = "lolwut"
+    def v = "lolwut"
     client.deleteVhost(v)
 
     when: "client declares a queue hop.test"
-    final s = "hop.test"
+    def s = "hop.test"
     client.declareQueue(v, s, new QueueInfo(false, false, false))
 
     then: "an exception is thrown"
-    final e = thrown(HttpClientErrorException)
+    def e = thrown(HttpClientErrorException)
     e.getStatusCode() == HttpStatus.NOT_FOUND
 
     where:
@@ -882,9 +882,9 @@ class ClientSpec extends Specification {
 
   @Unroll
   def "DELETE /api/queues/{vhost}/{name}"() {
-    final String s = UUID.randomUUID().toString()
+    def String s = UUID.randomUUID().toString()
     given: "queue ${s} in vhost /"
-    final v = "/"
+    def v = "/"
     client.declareQueue(v, s, new QueueInfo(false, false, false))
 
     List<QueueInfo> xs = client.getQueues(v)
@@ -907,9 +907,9 @@ class ClientSpec extends Specification {
 
   @Unroll
   def "DELETE /api/queues/{vhost}/{name}?if-empty=true"() {
-    final String queue = UUID.randomUUID().toString()
+    def String queue = UUID.randomUUID().toString()
     given: "queue ${queue} in vhost /"
-    final v = "/"
+    def v = "/"
     client.declareQueue(v, queue, new QueueInfo(false, false, false))
 
     List<QueueInfo> xs = client.getQueues(v)
@@ -924,7 +924,7 @@ class ClientSpec extends Specification {
     client.deleteQueue(v, queue, new DeleteQueueParameters(true, false))
 
     then: "an exception is thrown"
-    final e = thrown(HttpClientErrorException)
+    def e = thrown(HttpClientErrorException)
     e.getStatusCode() == HttpStatus.BAD_REQUEST
 
     cleanup:
@@ -937,18 +937,18 @@ class ClientSpec extends Specification {
   @Unroll
   def "GET /api/bindings"() {
     given: "3 queues bound to amq.fanout"
-    final Connection conn = cf.newConnection()
-    final Channel ch = conn.createChannel()
-    final String x  = 'amq.fanout'
-    final String q1 = ch.queueDeclare().queue
-    final String q2 = ch.queueDeclare().queue
-    final String q3 = ch.queueDeclare().queue
+    def Connection conn = cf.newConnection()
+    def Channel ch = conn.createChannel()
+    def String x  = 'amq.fanout'
+    def String q1 = ch.queueDeclare().queue
+    def String q2 = ch.queueDeclare().queue
+    def String q3 = ch.queueDeclare().queue
     ch.queueBind(q1, x, "")
     ch.queueBind(q2, x, "")
     ch.queueBind(q3, x, "")
 
     when: "all queue bindings are listed"
-    final List<BindingInfo> xs = client.getBindings()
+    def List<BindingInfo> xs = client.getBindings()
 
     then: "amq.fanout bindings are listed"
     xs.findAll { it.destinationType == "queue" && it.source == x }
@@ -967,16 +967,16 @@ class ClientSpec extends Specification {
   @Unroll
   def "GET /api/bindings/{vhost}"() {
     given: "2 queues bound to amq.topic in vhost /"
-    final Connection conn = cf.newConnection()
-    final Channel ch = conn.createChannel()
-    final String x  = 'amq.topic'
-    final String q1 = ch.queueDeclare().queue
-    final String q2 = ch.queueDeclare().queue
+    def Connection conn = cf.newConnection()
+    def Channel ch = conn.createChannel()
+    def String x  = 'amq.topic'
+    def String q1 = ch.queueDeclare().queue
+    def String q2 = ch.queueDeclare().queue
     ch.queueBind(q1, x, "hop.*")
     ch.queueBind(q2, x, "api.test.#")
 
     when: "all queue bindings are listed"
-    final List<BindingInfo> xs = client.getBindings("/")
+    def List<BindingInfo> xs = client.getBindings("/")
 
     then: "amq.fanout bindings are listed"
     xs.findAll { it.destinationType == "queue" && it.source == x }
@@ -994,15 +994,15 @@ class ClientSpec extends Specification {
   @Unroll
   def "GET /api/bindings/{vhost} example 2"() {
     given: "queues hop.test bound to amq.topic in vhost /"
-    final Connection conn = cf.newConnection()
-    final Channel ch = conn.createChannel()
-    final String x  = 'amq.topic'
-    final String q  = "hop.test"
+    def Connection conn = cf.newConnection()
+    def Channel ch = conn.createChannel()
+    def String x  = 'amq.topic'
+    def String q  = "hop.test"
     ch.queueDeclare(q, false, false, false, null)
     ch.queueBind(q, x, "hop.*")
 
     when: "all queue bindings are listed"
-    final List<BindingInfo> xs = client.getBindings("/")
+    def List<BindingInfo> xs = client.getBindings("/")
 
     then: "the amq.fanout binding is listed"
     xs.find { it.destinationType == "queue" && it.source == x && it.destination == q }
@@ -1018,15 +1018,15 @@ class ClientSpec extends Specification {
   @Unroll
   def "GET /api/queues/{vhost}/{name}/bindings"() {
     given: "queues hop.test bound to amq.topic in vhost /"
-    final Connection conn = cf.newConnection()
-    final Channel ch = conn.createChannel()
-    final String x  = 'amq.topic'
-    final String q  = "hop.test"
+    def Connection conn = cf.newConnection()
+    def Channel ch = conn.createChannel()
+    def String x  = 'amq.topic'
+    def String q  = "hop.test"
     ch.queueDeclare(q, false, false, false, null)
     ch.queueBind(q, x, "hop.*")
 
     when: "all queue bindings are listed"
-    final List<BindingInfo> xs = client.getQueueBindings("/", q)
+    def List<BindingInfo> xs = client.getQueueBindings("/", q)
 
     then: "the amq.fanout binding is listed"
     xs.find { it.destinationType == "queue" && it.source == x && it.destination == q }
@@ -1042,18 +1042,18 @@ class ClientSpec extends Specification {
   @Unroll
   def "GET /api/bindings/{vhost}/e/:exchange/q/:queue"() {
     given: "queues hop.test bound to amq.topic in vhost /"
-    final Connection conn = cf.newConnection()
-    final Channel ch = conn.createChannel()
-    final String x  = 'amq.topic'
-    final String q  = "hop.test"
+    def Connection conn = cf.newConnection()
+    def Channel ch = conn.createChannel()
+    def String x  = 'amq.topic'
+    def String q  = "hop.test"
     ch.queueDeclare(q, false, false, false, null)
     ch.queueBind(q, x, "hop.*")
 
     when: "bindings between hop.test and amq.topic are listed"
-    final List<BindingInfo> xs = client.getQueueBindingsBetween("/", x, q)
+    def List<BindingInfo> xs = client.getQueueBindingsBetween("/", x, q)
 
     then: "the amq.fanout binding is listed"
-    final b = xs.find()
+    def b = xs.find()
     xs.size() == 1
     b.source == x
     b.destination == q
@@ -1070,18 +1070,18 @@ class ClientSpec extends Specification {
   @Unroll
   def "GET /api/bindings/{vhost}/e/:source/e/:destination"() {
     given: "fanout exchange hop.test bound to amq.fanout in vhost /"
-    final Connection conn = cf.newConnection()
-    final Channel ch = conn.createChannel()
-    final String s  = 'amq.fanout'
-    final String d  = "hop.test"
+    def Connection conn = cf.newConnection()
+    def Channel ch = conn.createChannel()
+    def String s  = 'amq.fanout'
+    def String d  = "hop.test"
     ch.exchangeDeclare(d, "fanout", false)
     ch.exchangeBind(d, s, "")
 
     when: "bindings between hop.test and amq.topic are listed"
-    final List<BindingInfo> xs = client.getExchangeBindingsBetween("/", s, d)
+    def List<BindingInfo> xs = client.getExchangeBindingsBetween("/", s, d)
 
     then: "the amq.topic binding is listed"
-    final b = xs.find()
+    def b = xs.find()
     xs.size() == 1
     b.source == s
     b.destination == d
@@ -1098,18 +1098,18 @@ class ClientSpec extends Specification {
   @Unroll
   def "POST /api/bindings/{vhost}/e/:source/e/:destination"() {
     given: "fanout hop.test bound to amq.fanout in vhost /"
-    final v = "/"
-    final String s  = 'amq.fanout'
-    final String d  = "hop.test"
+    def v = "/"
+    def String s  = 'amq.fanout'
+    def String d  = "hop.test"
     client.deleteExchange(v, d)
     client.declareExchange(v, d, new ExchangeInfo("fanout", false, false))
     client.bindExchange(v, d, s, "", [arg1: 'value1', arg2: 'value2'])
 
     when: "bindings between hop.test and amq.fanout are listed"
-    final List<BindingInfo> xs = client.getExchangeBindingsBetween(v, s, d)
+    def List<BindingInfo> xs = client.getExchangeBindingsBetween(v, s, d)
 
     then: "the amq.fanout binding is listed"
-    final b = xs.find()
+    def b = xs.find()
     xs.size() == 1
     b.source == s
     b.destination == d
@@ -1130,17 +1130,17 @@ class ClientSpec extends Specification {
   @Unroll
   def "POST /api/bindings/{vhost}/e/:exchange/q/:queue"() {
     given: "queues hop.test bound to amq.topic in vhost /"
-    final v = "/"
-    final String x  = 'amq.topic'
-    final String q  = "hop.test"
+    def v = "/"
+    def String x  = 'amq.topic'
+    def String q  = "hop.test"
     client.declareQueue(v, q, new QueueInfo(false, false, false))
     client.bindQueue(v, q, x, "", [arg1: 'value1', arg2: 'value2'])
 
     when: "bindings between hop.test and amq.topic are listed"
-    final List<BindingInfo> xs = client.getQueueBindingsBetween(v, x, q)
+    def List<BindingInfo> xs = client.getQueueBindingsBetween(v, x, q)
 
     then: "the amq.fanout binding is listed"
-    final b = xs.find()
+    def b = xs.find()
     xs.size() == 1
     b.source == x
     b.destination == q
@@ -1169,14 +1169,14 @@ class ClientSpec extends Specification {
   @Unroll
   def "POST /api/queues/{vhost}/:exchange/get"() {
     given: "a queue named hop.get and some messages in this queue"
-    final v = "/"
-    final conn = openConnection()
-    final ch = conn.createChannel()
-    final q = "hop.get"
+    def v = "/"
+    def conn = openConnection()
+    def ch = conn.createChannel()
+    def q = "hop.get"
     ch.queueDeclare(q, false, false, false, null)
     ch.confirmSelect()
-    final messageCount = 5
-    final properties = new AMQP.BasicProperties.Builder()
+    def messageCount = 5
+    def properties = new AMQP.BasicProperties.Builder()
             .contentType("text/plain").deliveryMode(1).priority(5)
             .headers(Collections.singletonMap("header1", "value1"))
             .build()
@@ -1186,11 +1186,11 @@ class ClientSpec extends Specification {
     ch.waitForConfirms(5_000)
 
     when: "client GETs from this queue"
-    final List<InboundMessage> messages = client.get(v, q, messageCount, GetAckMode.NACK_REQUEUE_TRUE, GetEncoding.AUTO, -1)
+    def List<InboundMessage> messages = client.get(v, q, messageCount, GetAckMode.NACK_REQUEUE_TRUE, GetEncoding.AUTO, -1)
 
     then: "the messages are returned"
     messages.size() == messageCount
-    final message = messages.get(0)
+    def message = messages.get(0)
     message.payload.startsWith("payload")
     message.payloadBytes == "payload".size() + 1
     !message.redelivered
@@ -1216,17 +1216,17 @@ class ClientSpec extends Specification {
   @Unroll
   def "POST /api/queues/{vhost}/:exchange/get for one message"() {
     given: "a queue named hop.get and a message in this queue"
-    final v = "/"
-    final conn = openConnection()
-    final ch = conn.createChannel()
-    final q = "hop.get"
+    def v = "/"
+    def conn = openConnection()
+    def ch = conn.createChannel()
+    def q = "hop.get"
     ch.queueDeclare(q, false, false, false, null)
     ch.confirmSelect()
     ch.basicPublish("", q, null, "payload".getBytes(Charset.forName("UTF-8")))
     ch.waitForConfirms(5_000)
 
     when: "client GETs from this queue"
-    final message = client.get(v, q)
+    def message = client.get(v, q)
 
     then: "the messages are returned"
     message.payload == "payload"
@@ -1246,23 +1246,23 @@ class ClientSpec extends Specification {
   @Unroll
   def "DELETE /api/queues/{vhost}/{name}/contents"() {
     given: "queue hop.test with 10 messages"
-    final Connection conn = cf.newConnection()
-    final Channel ch = conn.createChannel()
-    final q = "hop.test"
+    def Connection conn = cf.newConnection()
+    def Channel ch = conn.createChannel()
+    def q = "hop.test"
     ch.queueDelete(q)
     ch.queueDeclare(q, false, false, false, null)
     ch.queueBind(q, "amq.fanout", "")
     ch.confirmSelect()
     100.times { ch.basicPublish("amq.fanout", "", null, "msg".getBytes()) }
     assert ch.waitForConfirms()
-    final qi1 = ch.queueDeclarePassive(q)
+    def qi1 = ch.queueDeclarePassive(q)
     qi1.messageCount == 100
 
     when: "client purges the queue"
     client.purgeQueue("/", q)
 
     then: "the queue becomes empty"
-    final qi2 = ch.queueDeclarePassive(q)
+    def qi2 = ch.queueDeclarePassive(q)
     qi2.messageCount == 0
 
     cleanup:
@@ -1280,8 +1280,8 @@ class ClientSpec extends Specification {
   @Unroll
   def "GET /api/vhosts"() {
     when: "client retrieves a list of vhosts"
-    final vhs = client.getVhosts()
-    final vhi = vhs.first()
+    def vhs = client.getVhosts()
+    def vhi = vhs.first()
 
     then: "the info is returned"
     verifyVhost(vhi, client.getOverview().getServerVersion())
@@ -1293,7 +1293,7 @@ class ClientSpec extends Specification {
   @Unroll
   def "GET /api/vhosts/{name}"() {
     when: "client retrieves vhost info"
-    final vhi = client.getVhost("/")
+    def vhi = client.getVhost("/")
 
     then: "the info is returned"
     verifyVhost(vhi, client.getOverview().getServerVersion())
@@ -1307,7 +1307,7 @@ class ClientSpec extends Specification {
     when:
     "client creates a vhost named $name"
     client.createVhost(name)
-    final vhi = client.getVhost(name)
+    def vhi = client.getVhost(name)
 
     then: "the vhost is created"
     vhi.name == name
@@ -1347,10 +1347,10 @@ class ClientSpec extends Specification {
   def "PUT /api/vhosts/{name} with metadata"() {
     if (!isVersion38orLater()) return
     when: "client creates a vhost with metadata"
-    final vhost = "vhost-with-metadata"
+    def vhost = "vhost-with-metadata"
     client.deleteVhost(vhost)
     client.createVhost(vhost, true, "vhost description", "production", "application1", "realm1")
-    final vhi = client.getVhost(vhost)
+    def vhi = client.getVhost(vhost)
 
     then: "the vhost is created"
     vhi.name == vhost
@@ -1371,7 +1371,7 @@ class ClientSpec extends Specification {
   @Unroll
   def "DELETE /api/vhosts/{name} when vhost exists"() {
     given: "a vhost named hop-test-to-be-deleted"
-    final s = "hop-test-to-be-deleted"
+    def s = "hop-test-to-be-deleted"
     client.createVhost(s)
 
     when: "the vhost is deleted"
@@ -1387,7 +1387,7 @@ class ClientSpec extends Specification {
   @Unroll
   def "DELETE /api/vhosts/{name} when vhost DOES NOT exist"() {
     given: "no vhost named hop-test-to-be-deleted"
-    final s = "hop-test-to-be-deleted"
+    def s = "hop-test-to-be-deleted"
     client.deleteVhost(s)
 
     when: "the vhost is deleted"
@@ -1403,8 +1403,8 @@ class ClientSpec extends Specification {
   @Unroll
   def "GET /api/vhosts/{name}/permissions when vhost exists"() {
     when: "permissions for vhost / are listed"
-    final s = "/"
-    final xs = client.getPermissionsIn(s)
+    def s = "/"
+    def xs = client.getPermissionsIn(s)
 
     then: "they include permissions for the guest user"
     UserPermissions x = xs.find { (it.user == "guest") }
@@ -1417,8 +1417,8 @@ class ClientSpec extends Specification {
   @Unroll
   def "GET /api/vhosts/{name}/permissions when vhost DOES NOT exist"() {
     when: "permissions for vhost trololowut are listed"
-    final s = "trololowut"
-    final xs = client.getPermissionsIn(s)
+    def s = "trololowut"
+    def xs = client.getPermissionsIn(s)
 
     then: "method returns null"
     xs == null
@@ -1431,8 +1431,8 @@ class ClientSpec extends Specification {
   def "GET /api/vhosts/{name}/topic-permissions when vhost exists"() {
     if (!isVersion37orLater()) return
     when: "topic-permissions for vhost / are listed"
-    final s = "/"
-    final xs = client.getTopicPermissionsIn(s)
+    def s = "/"
+    def xs = client.getTopicPermissionsIn(s)
 
     then: "they include topic permissions for the guest user"
     TopicPermissions x = xs.find { (it.user == "guest") }
@@ -1447,8 +1447,8 @@ class ClientSpec extends Specification {
   def "GET /api/vhosts/{name}/topic-permissions when vhost DOES NOT exist"() {
     if (!isVersion37orLater()) return
     when: "topic permissions for vhost trololowut are listed"
-    final s = "trololowut"
-    final xs = client.getTopicPermissionsIn(s)
+    def s = "trololowut"
+    def xs = client.getTopicPermissionsIn(s)
 
     then: "method returns null"
     xs == null
@@ -1460,11 +1460,11 @@ class ClientSpec extends Specification {
   @Unroll
   def "GET /api/users"() {
     when: "users are listed"
-    final xs = client.getUsers()
-    final version = client.getOverview().getServerVersion()
+    def xs = client.getUsers()
+    def version = client.getOverview().getServerVersion()
 
     then: "a list of users is returned"
-    final x = xs.find { (it.name == "guest") }
+    def x = xs.find { (it.name == "guest") }
     x.name == "guest"
     x.passwordHash != null
     isVersion36orLater(version) ? x.hashingAlgorithm != null : x.hashingAlgorithm == null
@@ -1477,8 +1477,8 @@ class ClientSpec extends Specification {
   @Unroll
   def "GET /api/users/{name} when user exists"() {
     when: "user guest if fetched"
-    final x = client.getUser("guest")
-    final version = client.getOverview().getServerVersion()
+    def x = client.getUser("guest")
+    def version = client.getOverview().getServerVersion()
 
     then: "user info returned"
     x.name == "guest"
@@ -1493,7 +1493,7 @@ class ClientSpec extends Specification {
   @Unroll
   def "GET /api/users/{name} when user DOES NOT exist"() {
     when: "user lolwut if fetched"
-    final x = client.getUser("lolwut")
+    def x = client.getUser("lolwut")
 
     then: "null is returned"
     x == null
@@ -1505,7 +1505,7 @@ class ClientSpec extends Specification {
   @Unroll
   def "PUT /api/users/{name} updates user tags"() {
     given: "user alt-user"
-    final u = "alt-user"
+    def u = "alt-user"
     client.deleteUser(u)
     client.createUser(u, u.toCharArray(), Arrays.asList("original", "management"))
     awaitEventPropagation()
@@ -1515,7 +1515,7 @@ class ClientSpec extends Specification {
     awaitEventPropagation()
 
     and: "alt-user info is reloaded"
-    final x = client.getUser(u)
+    def x = client.getUser(u)
 
     then: "alt-user has new tags"
     x.tags.contains("updated")
@@ -1528,7 +1528,7 @@ class ClientSpec extends Specification {
   @Unroll
   def "DELETE /api/users/{name}"() {
     given: "user alt-user"
-    final u = "alt-user"
+    def u = "alt-user"
     client.deleteUser(u)
     client.createUser(u, u.toCharArray(), Arrays.asList("original", "management"))
     awaitEventPropagation()
@@ -1538,7 +1538,7 @@ class ClientSpec extends Specification {
     awaitEventPropagation()
 
     and: "alt-user info is reloaded"
-    final x = client.getUser(u)
+    def x = client.getUser(u)
 
     then: "deleted user is gone"
     x == null
@@ -1550,8 +1550,8 @@ class ClientSpec extends Specification {
   @Unroll
   def "GET /api/users/{name}/permissions when user exists"() {
     when: "permissions for user guest are listed"
-    final s = "guest"
-    final xs = client.getPermissionsOf(s)
+    def s = "guest"
+    def xs = client.getPermissionsOf(s)
 
     then: "they include permissions for the / vhost"
     UserPermissions x = xs.find { (it.vhost == "/") }
@@ -1564,8 +1564,8 @@ class ClientSpec extends Specification {
   @Unroll
   def "GET /api/users/{name}/permissions when user DOES NOT exist"() {
     when: "permissions for user trololowut are listed"
-    final s = "trololowut"
-    final xs = client.getPermissionsOf(s)
+    def s = "trololowut"
+    def xs = client.getPermissionsOf(s)
 
     then: "method returns null"
     xs == null
@@ -1578,8 +1578,8 @@ class ClientSpec extends Specification {
   def "GET /api/users/{name}/topic-permissions when user exists"() {
     if (!isVersion37orLater()) return
     when: "topic permissions for user guest are listed"
-    final s = "guest"
-    final xs = client.getTopicPermissionsOf(s)
+    def s = "guest"
+    def xs = client.getTopicPermissionsOf(s)
 
     then: "they include topic permissions for the / vhost"
     TopicPermissions x = xs.find { (it.vhost == "/") }
@@ -1594,8 +1594,8 @@ class ClientSpec extends Specification {
   def "GET /api/users/{name}/topic-permissions when user DOES NOT exist"() {
     if (!isVersion37orLater()) return
     when: "topic permissions for user trololowut are listed"
-    final s = "trololowut"
-    final xs = client.getTopicPermissionsOf(s)
+    def s = "trololowut"
+    def xs = client.getTopicPermissionsOf(s)
 
     then: "method returns null"
     xs == null
@@ -1607,10 +1607,10 @@ class ClientSpec extends Specification {
   @Unroll
   def "PUT /api/users/{name} with a blank password hash"() {
     given: "user alt-user with a blank password hash"
-    final u = "alt-user"
+    def u = "alt-user"
     // blank password hash means only authentication using alternative
     // authentication mechanisms such as x509 certificates is possible. MK.
-    final h = ""
+    def h = ""
     client.deleteUser(u)
     client.createUserWithPasswordHash(u, h.toCharArray(), Arrays.asList("original", "management"))
     client.updatePermissions("/", u, new UserPermissions(".*", ".*", ".*"))
@@ -1632,7 +1632,7 @@ class ClientSpec extends Specification {
   @Unroll
   def "GET /api/whoami"() {
     when: "client retrieves active name authentication details"
-    final res = client.whoAmI()
+    def res = client.whoAmI()
 
     then: "the details are returned"
     res.name == DEFAULT_USERNAME
@@ -1645,11 +1645,11 @@ class ClientSpec extends Specification {
   @Unroll
   def "GET /api/permissions"() {
     when: "all permissions are listed"
-    final s = "guest"
-    final xs = client.getPermissions()
+    def s = "guest"
+    def xs = client.getPermissions()
 
     then: "they include permissions for user guest in vhost /"
-    final UserPermissions x = xs.find { it.vhost == "/" && it.user == s }
+    def UserPermissions x = xs.find { it.vhost == "/" && it.user == s }
     x.read == ".*"
 
     where:
@@ -1659,9 +1659,9 @@ class ClientSpec extends Specification {
   @Unroll
   def "GET /api/permissions/{vhost}/:user when both vhost and user exist"() {
     when: "permissions of user guest in vhost / are listed"
-    final u = "guest"
-    final v = "/"
-    final UserPermissions x = client.getPermissions(v, u)
+    def u = "guest"
+    def v = "/"
+    def UserPermissions x = client.getPermissions(v, u)
 
     then: "a single permissions object is returned"
     x.read == ".*"
@@ -1673,9 +1673,9 @@ class ClientSpec extends Specification {
   @Unroll
   def "GET /api/permissions/{vhost}/:user when vhost DOES NOT exist"() {
     when: "permissions of user guest in vhost lolwut are listed"
-    final u = "guest"
-    final v = "lolwut"
-    final UserPermissions x = client.getPermissions(v, u)
+    def u = "guest"
+    def v = "lolwut"
+    def UserPermissions x = client.getPermissions(v, u)
 
     then: "null is returned"
     x == null
@@ -1687,9 +1687,9 @@ class ClientSpec extends Specification {
   @Unroll
   def "GET /api/permissions/{vhost}/:user when username DOES NOT exist"() {
     when: "permissions of user lolwut in vhost / are lispermted"
-    final u = "lolwut"
-    final v = "/"
-    final UserPermissions x = client.getPermissions(v, u)
+    def u = "lolwut"
+    def v = "/"
+    def UserPermissions x = client.getPermissions(v, u)
 
     then: "null is returned"
     x == null
@@ -1701,17 +1701,17 @@ class ClientSpec extends Specification {
   @Unroll
   def "PUT /api/permissions/{vhost}/:user when both user and vhost exist"() {
     given: "vhost hop-vhost1 exists"
-    final v = "hop-vhost1"
+    def v = "hop-vhost1"
     client.createVhost(v)
     and: "user hop-user1 exists"
-    final u = "hop-user1"
+    def u = "hop-user1"
     client.createUser(u, "test".toCharArray(), Arrays.asList("management", "http", "policymaker"))
 
     when: "permissions of user guest in vhost / are updated"
     client.updatePermissions(v, u, new UserPermissions("read", "write", "configure"))
 
     and: "permissions are reloaded"
-    final UserPermissions x = client.getPermissions(v, u)
+    def UserPermissions x = client.getPermissions(v, u)
 
     then: "a single permissions object is returned"
     x.read == "read"
@@ -1729,17 +1729,17 @@ class ClientSpec extends Specification {
   @Unroll
   def "PUT /api/permissions/{vhost}/:user when vhost DOES NOT exist"() {
     given: "vhost hop-vhost1 DOES NOT exist"
-    final v = "hop-vhost1"
+    def v = "hop-vhost1"
     client.deleteVhost(v)
     and: "user hop-user1 exists"
-    final u = "hop-user1"
+    def u = "hop-user1"
     client.createUser(u, "test".toCharArray(), Arrays.asList("management", "http", "policymaker"))
 
     when: "permissions of user guest in vhost / are updated"
     client.updatePermissions(v, u, new UserPermissions("read", "write", "configure"))
 
     then: "an exception is thrown"
-    final e = thrown(HttpClientErrorException)
+    def e = thrown(HttpClientErrorException)
     e.getStatusCode() == HttpStatus.BAD_REQUEST
 
     cleanup:
@@ -1752,22 +1752,22 @@ class ClientSpec extends Specification {
   @Unroll
   def "DELETE /api/permissions/{vhost}/:user when both vhost and username exist"() {
     given: "vhost hop-vhost1 exists"
-    final v = "hop-vhost1"
+    def v = "hop-vhost1"
     client.createVhost(v)
     and: "user hop-user1 exists"
-    final u = "hop-user1"
+    def u = "hop-user1"
     client.createUser(u, "test".toCharArray(), Arrays.asList("management", "http", "policymaker"))
 
     and: "permissions of user guest in vhost / are set"
     client.updatePermissions(v, u, new UserPermissions("read", "write", "configure"))
-    final UserPermissions x = client.getPermissions(v, u)
+    def UserPermissions x = client.getPermissions(v, u)
     x.read == "read"
 
     when: "permissions are cleared"
     client.clearPermissions(v, u)
 
     then: "no permissions are returned on reload"
-    final UserPermissions y = client.getPermissions(v, u)
+    def UserPermissions y = client.getPermissions(v, u)
     y == null
 
     cleanup:
@@ -1782,11 +1782,11 @@ class ClientSpec extends Specification {
   def "GET /api/topic-permissions"() {
     if (!isVersion37orLater()) return
     when: "all topic permissions are listed"
-    final s = "guest"
-    final xs = client.getTopicPermissions()
+    def s = "guest"
+    def xs = client.getTopicPermissions()
 
     then: "they include topic permissions for user guest in vhost /"
-    final TopicPermissions x = xs.find { it.vhost == "/" && it.user == s }
+    def TopicPermissions x = xs.find { it.vhost == "/" && it.user == s }
     x.exchange == "amq.topic"
     x.read == ".*"
 
@@ -1798,12 +1798,12 @@ class ClientSpec extends Specification {
   def "GET /api/topic-permissions/{vhost}/:user when both vhost and user exist"() {
     if (!isVersion37orLater()) return
     when: "topic permissions of user guest in vhost / are listed"
-    final u = "guest"
-    final v = "/"
-    final xs = client.getTopicPermissions(v, u)
+    def u = "guest"
+    def v = "/"
+    def xs = client.getTopicPermissions(v, u)
 
     then: "a list of topic permissions objects is returned"
-    final TopicPermissions x = xs.find { it.vhost == v && it.user == u }
+    def TopicPermissions x = xs.find { it.vhost == v && it.user == u }
     x.exchange == "amq.topic"
     x.read == ".*"
 
@@ -1815,9 +1815,9 @@ class ClientSpec extends Specification {
   def "GET /api/topic-permissions/{vhost}/:user when vhost DOES NOT exist"() {
     if (!isVersion37orLater()) return
     when: "topic permissions of user guest in vhost lolwut are listed"
-    final u = "guest"
-    final v = "lolwut"
-    final xs = client.getTopicPermissions(v, u)
+    def u = "guest"
+    def v = "lolwut"
+    def xs = client.getTopicPermissions(v, u)
 
     then: "null is returned"
     xs == null
@@ -1830,9 +1830,9 @@ class ClientSpec extends Specification {
   def "GET /api/topic-permissions/{vhost}/:user when username DOES NOT exist"() {
     if (!isVersion37orLater()) return
     when: "topic permissions of user lolwut in vhost / are listed"
-    final u = "lolwut"
-    final v = "/"
-    final xs = client.getTopicPermissions(v, u)
+    def u = "lolwut"
+    def v = "/"
+    def xs = client.getTopicPermissions(v, u)
 
     then: "null is returned"
     xs == null
@@ -1844,10 +1844,10 @@ class ClientSpec extends Specification {
   @Unroll
   def "PUT /api/topic-permissions/{vhost}/:user when both user and vhost exist"() {
     given: "vhost hop-vhost1 exists"
-    final v = "hop-vhost1"
+    def v = "hop-vhost1"
     client.createVhost(v)
     and: "user hop-user1 exists"
-    final u = "hop-user1"
+    def u = "hop-user1"
     client.createUser(u, "test".toCharArray(), Arrays.asList("management", "http", "policymaker"))
 
     if (!isVersion37orLater()) return
@@ -1856,7 +1856,7 @@ class ClientSpec extends Specification {
     client.updateTopicPermissions(v, u, new TopicPermissions("amq.topic", "read", "write"))
 
     and: "topic permissions are reloaded"
-    final xs = client.getTopicPermissions(v, u)
+    def xs = client.getTopicPermissions(v, u)
 
     then: "a list with a single topiic permissions object is returned"
     xs.size() == 1
@@ -1875,10 +1875,10 @@ class ClientSpec extends Specification {
   @Unroll
   def "PUT /api/topic-permissions/{vhost}/:user when vhost DOES NOT exist"() {
     given: "vhost hop-vhost1 DOES NOT exist"
-    final v = "hop-vhost1"
+    def v = "hop-vhost1"
     client.deleteVhost(v)
     and: "user hop-user1 exists"
-    final u = "hop-user1"
+    def u = "hop-user1"
     client.createUser(u, "test".toCharArray(), Arrays.asList("management", "http", "policymaker"))
 
     if (!isVersion37orLater()) return
@@ -1887,7 +1887,7 @@ class ClientSpec extends Specification {
     client.updateTopicPermissions(v, u, new TopicPermissions("amq.topic", "read", "write"))
 
     then: "an exception is thrown"
-    final e = thrown(HttpClientErrorException)
+    def e = thrown(HttpClientErrorException)
     e.getStatusCode() == HttpStatus.BAD_REQUEST
 
     cleanup:
@@ -1900,24 +1900,24 @@ class ClientSpec extends Specification {
   @Unroll
   def "DELETE /api/topic-permissions/{vhost}/:user when both vhost and username exist"() {
     given: "vhost hop-vhost1 exists"
-    final v = "hop-vhost1"
+    def v = "hop-vhost1"
     client.createVhost(v)
     and: "user hop-user1 exists"
-    final u = "hop-user1"
+    def u = "hop-user1"
     client.createUser(u, "test".toCharArray(), Arrays.asList("management", "http", "policymaker"))
 
     if (!isVersion37orLater()) return
 
     and: "topic permissions of user guest in vhost / are set"
     client.updateTopicPermissions(v, u, new TopicPermissions("amq.topic", "read", "write"))
-    final xs = client.getTopicPermissions(v, u)
+    def xs = client.getTopicPermissions(v, u)
     xs.size() == 1
 
     when: "topic permissions are cleared"
     client.clearTopicPermissions(v, u)
 
     then: "no topic permissions are returned on reload"
-    final ys = client.getTopicPermissions(v, u)
+    def ys = client.getTopicPermissions(v, u)
     ys == null
 
     cleanup:
@@ -1935,10 +1935,10 @@ class ClientSpec extends Specification {
   @Unroll
   def "GET /api/policies"(Client client) {
     given: "at least one policy was declared"
-    final v = "/"
-    final s = "hop.test"
-    final d = new HashMap<String, Object>()
-    final p = ".*"
+    def v = "/"
+    def s = "hop.test"
+    def d = new HashMap<String, Object>()
+    def p = ".*"
     d.put("ha-mode", "all")
     client.declarePolicy(v, s, new PolicyInfo(p, 0, null, d))
 
@@ -1946,7 +1946,7 @@ class ClientSpec extends Specification {
     PolicyInfo[] xs = awaitEventPropagation({ client.getPolicies() }) as PolicyInfo[]
 
     then: "a list of policies is returned"
-    final x = xs.first()
+    def x = xs.first()
     verifyPolicyInfo(x)
 
     cleanup:
@@ -1959,10 +1959,10 @@ class ClientSpec extends Specification {
   @Unroll
   def "GET /api/policies/{vhost} when vhost exists"(Client client) {
     given: "at least one policy was declared in vhost /"
-    final v = "/"
-    final s = "hop.test"
-    final d = new HashMap<String, Object>()
-    final p = ".*"
+    def v = "/"
+    def s = "hop.test"
+    def d = new HashMap<String, Object>()
+    def p = ".*"
     d.put("ha-mode", "all")
     client.declarePolicy(v, s, new PolicyInfo(p, 0, null, d))
 
@@ -1970,7 +1970,7 @@ class ClientSpec extends Specification {
     PolicyInfo[] xs = awaitEventPropagation({ client.getPolicies("/") }) as PolicyInfo[]
 
     then: "a list of queues is returned"
-    final x = xs.first()
+    def x = xs.first()
     verifyPolicyInfo(x)
 
     cleanup:
@@ -1983,11 +1983,11 @@ class ClientSpec extends Specification {
   @Unroll
   def "GET /api/policies/{vhost} when vhost DOES NOT exists"(Client client) {
     given: "vhost lolwut DOES not exist"
-    final v = "lolwut"
+    def v = "lolwut"
     client.deleteVhost(v)
 
     when: "client lists policies"
-    final xs = awaitEventPropagation({ client.getPolicies(v) })
+    def xs = awaitEventPropagation({ client.getPolicies(v) })
 
     then: "null is returned"
     xs == null
@@ -1999,7 +1999,7 @@ class ClientSpec extends Specification {
   @Unroll
   def "GET /api/aliveness-test/{vhost}"() {
     when: "client performs aliveness check for the / vhost"
-    final hasSucceeded = client.alivenessTest("/")
+    def hasSucceeded = client.alivenessTest("/")
 
     then: "the check succeeds"
     hasSucceeded
@@ -2011,7 +2011,7 @@ class ClientSpec extends Specification {
   @Unroll
   def "GET /api/cluster-name"() {
     when: "client fetches cluster name"
-    final ClusterId s = client.getClusterName()
+    def ClusterId s = client.getClusterName()
 
     then: "cluster name is returned"
     s.getName() != null
@@ -2023,13 +2023,13 @@ class ClientSpec extends Specification {
   @Unroll
   def "PUT /api/cluster-name"() {
     given: "cluster name"
-    final String s = client.getClusterName().name
+    def String s = client.getClusterName().name
 
     when: "cluster name is set to rabbit@warren"
     client.setClusterName("rabbit@warren")
 
     and: "cluster name is reloaded"
-    final String x = client.getClusterName().name
+    def String x = client.getClusterName().name
 
     then: "the name is updated"
     x == "rabbit@warren"
@@ -2235,7 +2235,7 @@ class ClientSpec extends Specification {
     value.setDestinationAddTimestampHeader(true)
     client.declareShovel("/", new ShovelInfo("shovel1", value))
     when: "client requests the shovels"
-    final shovels = awaitEventPropagation { client.getShovels() }
+    def shovels = awaitEventPropagation { client.getShovels() }
 
     then: "shovel definitions are returned"
     !shovels.isEmpty()
@@ -2276,7 +2276,7 @@ class ClientSpec extends Specification {
     value.setDestinationAddTimestampHeader(true)
     client.declareShovel("/", new ShovelInfo("shovel2", value))
     when: "client requests the shovels"
-    final shovels = awaitEventPropagation { client.getShovels() }
+    def shovels = awaitEventPropagation { client.getShovels() }
 
     then: "shovel definitions are returned"
     !shovels.isEmpty()
@@ -2333,11 +2333,11 @@ class ClientSpec extends Specification {
     ShovelDetails value = new ShovelDetails("amqp://localhost:5672/vh1", "amqp://localhost:5672/vh2", 30, true, null)
     value.setSourceQueue("queue1")
     value.setDestinationExchange("exchange1")
-    final shovelName = "shovel2"
+    def shovelName = "shovel2"
     client.declareShovel("/", new ShovelInfo(shovelName, value))
 
     when: "client requests the shovels status"
-    final shovels = awaitEventPropagation { client.getShovelsStatus() }
+    def shovels = awaitEventPropagation { client.getShovelsStatus() }
 
     then: "shovels status are returned"
     !shovels.isEmpty()
@@ -2366,15 +2366,15 @@ class ClientSpec extends Specification {
   @Unroll
   def "GET /api/parameters/federation-upstream declare and get at root vhost with non-null ack mode"(Client client) {
     given: "an upstream with non-null ack mode"
-    final vhost = "/"
-    final upstreamName = "upstream1"
+    def vhost = "/"
+    def upstreamName = "upstream1"
     UpstreamDetails upstreamDetails = new UpstreamDetails()
     upstreamDetails.setUri("amqp://localhost:5672")
     upstreamDetails.setAckMode(AckMode.ON_CONFIRM)
     client.declareUpstream(vhost, upstreamName, upstreamDetails)
 
     when: "client requests the upstreams"
-    final upstreams = awaitEventPropagation { client.getUpstreams() }
+    def upstreams = awaitEventPropagation { client.getUpstreams() }
 
     then: "list of upstreams that contains the new upstream is returned and ack mode is correctly retrieved"
     verifyUpstreamDefinitions(vhost, upstreams, upstreamName)
@@ -2391,12 +2391,12 @@ class ClientSpec extends Specification {
   @Unroll
   def "GET /api/parameters/federation-upstream declare and get at root vhost"(Client client) {
     given: "an upstream"
-    final vhost = "/"
-    final upstreamName = "upstream1"
+    def vhost = "/"
+    def upstreamName = "upstream1"
     declareUpstream(client, vhost, upstreamName)
 
     when: "client requests the upstreams"
-    final upstreams = awaitEventPropagation { client.getUpstreams() }
+    def upstreams = awaitEventPropagation { client.getUpstreams() }
 
     then: "list of upstreams that contains the new upstream is returned"
     verifyUpstreamDefinitions(vhost, upstreams, upstreamName)
@@ -2411,13 +2411,13 @@ class ClientSpec extends Specification {
   @Unroll
   def "GET /api/parameters/federation-upstream declare and get at non-root vhost"(Client client) {
     given: "an upstream"
-    final vhost = "foo"
-    final upstreamName = "upstream2"
+    def vhost = "foo"
+    def upstreamName = "upstream2"
     client.createVhost(vhost)
     declareUpstream(client, vhost, upstreamName)
 
     when: "client requests the upstreams"
-    final upstreams = awaitEventPropagation { client.getUpstreams(vhost) }
+    def upstreams = awaitEventPropagation { client.getUpstreams(vhost) }
 
     then: "list of upstreams that contains the new upstream is returned"
     verifyUpstreamDefinitions(vhost, upstreams, upstreamName)
@@ -2448,8 +2448,8 @@ class ClientSpec extends Specification {
   @Unroll
   def "DELETE /api/parameters/federation-upstream/{vhost}/{name}"(Client client) {
     given: "upstream upstream4 in vhost /"
-    final vhost = "/"
-    final upstreamName = "upstream4"
+    def vhost = "/"
+    def upstreamName = "upstream4"
     declareUpstream(client, vhost, upstreamName)
 
     List<UpstreamInfo> upstreams = awaitEventPropagation { client.getUpstreams() } as List<UpstreamInfo>
@@ -2471,20 +2471,20 @@ class ClientSpec extends Specification {
   @Unroll
   def "GET /api/parameters/federation-upstream-set declare and get"(Client client) {
     given: "an upstream set with two upstreams"
-    final vhost = "/"
-    final upstreamSetName = "upstream-set-1"
-    final upstreamA = "A"
-    final upstreamB = "B"
-    final policyName = "federation-policy"
+    def vhost = "/"
+    def upstreamSetName = "upstream-set-1"
+    def upstreamA = "A"
+    def upstreamB = "B"
+    def policyName = "federation-policy"
     declareUpstream(client, vhost, upstreamA)
     declareUpstream(client, vhost, upstreamB)
-    final d1 = new UpstreamSetDetails()
+    def d1 = new UpstreamSetDetails()
     d1.setUpstream(upstreamA)
     d1.setExchange("exchangeA")
-    final d2 = new UpstreamSetDetails()
+    def d2 = new UpstreamSetDetails()
     d2.setUpstream(upstreamB)
     d2.setExchange("exchangeB")
-    final detailsSet = new ArrayList()
+    def detailsSet = new ArrayList()
     detailsSet.add(d1)
     detailsSet.add(d2)
     client.declareUpstreamSet(vhost, upstreamSetName, detailsSet)
@@ -2496,7 +2496,7 @@ class ClientSpec extends Specification {
     client.declarePolicy(vhost, policyName, p)
 
     when: "client requests the upstream set list"
-    final upstreamSets = awaitEventPropagation { client.getUpstreamSets() }
+    def upstreamSets = awaitEventPropagation { client.getUpstreamSets() }
 
     then: "upstream set with two upstreams is returned"
     !upstreamSets.isEmpty()
@@ -2530,8 +2530,8 @@ class ClientSpec extends Specification {
   @Unroll
   def "PUT /api/parameters/federation-upstream-set without upstreams"() {
     given: "an Upstream without upstream uri"
-    final upstreamSetDetails = new UpstreamSetDetails()
-    final detailsSet = new ArrayList()
+    def upstreamSetDetails = new UpstreamSetDetails()
+    def detailsSet = new ArrayList()
     detailsSet.add(upstreamSetDetails)
 
     when: "client tries to declare an Upstream"
@@ -2547,8 +2547,8 @@ class ClientSpec extends Specification {
   @Unroll
   def "GET /api/vhost-limits"() {
     given: "several virtual hosts with limits"
-    final vhost1 = "virtual-host-with-limits-1"
-    final vhost2 = "virtual-host-with-limits-2"
+    def vhost1 = "virtual-host-with-limits-1"
+    def vhost2 = "virtual-host-with-limits-2"
     client.createVhost(vhost1)
     client.createVhost(vhost2)
     client.limitMaxNumberOfQueues(vhost1, 100)
@@ -2559,7 +2559,7 @@ class ClientSpec extends Specification {
     client.limitMaxNumberOfConnections("/", 30)
 
     when: "client tries to look up limits"
-    final limits = client.getVhostLimits()
+    def limits = client.getVhostLimits()
 
     then: "limits match the definitions"
     limits.size() == 3
@@ -2588,7 +2588,7 @@ class ClientSpec extends Specification {
     given: "the default configuration"
 
     when: "client tries to look up limits"
-    final limits = client.getVhostLimits()
+    def limits = client.getVhostLimits()
 
     then: "it should return one row for the default virtual host"
     limits.size() == 1
@@ -2603,13 +2603,13 @@ class ClientSpec extends Specification {
   @Unroll
   def "GET /api/vhost-limits/{vhost}"() {
     given: "a virtual host with limits"
-    final vhost = "virtual-host-with-limits"
+    def vhost = "virtual-host-with-limits"
     client.createVhost(vhost)
     client.limitMaxNumberOfQueues(vhost, 100)
     client.limitMaxNumberOfConnections(vhost, 10)
 
     when: "client tries to look up limits for this virtual host"
-    final limits = client.getVhostLimits(vhost)
+    def limits = client.getVhostLimits(vhost)
 
     then: "limits match the definitions"
     limits.maxQueues == 100
@@ -2625,11 +2625,11 @@ class ClientSpec extends Specification {
   @Unroll
   def "GET /api/vhost-limits/{vhost} vhost with no limits"() {
     given: "a virtual host without limits"
-    final vhost = "virtual-host-without-limits"
+    def vhost = "virtual-host-without-limits"
     client.createVhost(vhost)
 
     when: "client tries to look up limits for this virtual host"
-    final limits = client.getVhostLimits(vhost)
+    def limits = client.getVhostLimits(vhost)
 
     then: "limits are set to -1"
     limits.maxQueues == -1
@@ -2645,10 +2645,10 @@ class ClientSpec extends Specification {
   @Unroll
   def "GET /api/vhost-limits/{vhost} with non-existing vhost"() {
     given: "a virtual host that does not exist"
-    final vhost = "virtual-host-that-does-not-exist"
+    def vhost = "virtual-host-that-does-not-exist"
 
     when: "client tries to look up limits for this virtual host"
-    final limits = client.getVhostLimits(vhost)
+    def limits = client.getVhostLimits(vhost)
 
     then: "limits are null"
     limits == null
@@ -2663,7 +2663,7 @@ class ClientSpec extends Specification {
   @Unroll
   def "DELETE /api/vhost-limits/{vhost}/max-queues"() {
     given: "a virtual host with max queues limit"
-    final vhost = "virtual-host-max-queues-limit"
+    def vhost = "virtual-host-max-queues-limit"
     client.createVhost(vhost)
     client.limitMaxNumberOfQueues(vhost, 42)
 
@@ -2684,7 +2684,7 @@ class ClientSpec extends Specification {
   @Unroll
   def "DELETE /api/vhost-limits/{vhost}/max-connections"() {
     given: "a virtual host with max connections limit"
-    final vhost = "virtual-host-max-connections-limit"
+    def vhost = "virtual-host-max-connections-limit"
     client.createVhost(vhost)
     client.limitMaxNumberOfConnections(vhost, 42)
 
@@ -2705,7 +2705,7 @@ class ClientSpec extends Specification {
   @Unroll
   def "DELETE /api/vhost-limits/{vhost} with only one limit"() {
     given: "a virtual host with max queues and connections limits"
-    final vhost = "virtual-host-max-queues-connections-limits"
+    def vhost = "virtual-host-max-queues-connections-limits"
     client.createVhost(vhost)
     client.limitMaxNumberOfQueues(vhost, 314)
     client.limitMaxNumberOfConnections(vhost, 42)
@@ -2759,7 +2759,7 @@ class ClientSpec extends Specification {
 
   @SuppressWarnings("GrMethodMayBeStatic")
   protected Connection openConnection(String username, String password) {
-    final cf = new ConnectionFactory()
+    def cf = new ConnectionFactory()
     cf.setUsername(username)
     cf.setPassword(password)
     cf.newConnection()

@@ -78,7 +78,7 @@ class ReactorNettyClientSpec extends Specification {
     private final ConnectionFactory cf = initializeConnectionFactory()
 
     protected static ConnectionFactory initializeConnectionFactory() {
-        final cf = new ConnectionFactory()
+        def cf = new ConnectionFactory()
         cf.setAutomaticRecoveryEnabled(false)
         cf
     }
@@ -107,8 +107,8 @@ class ReactorNettyClientSpec extends Specification {
 
     def "GET /api/overview"() {
         when: "client requests GET /api/overview"
-        final conn = openConnection()
-        final ch = conn.createChannel()
+        def conn = openConnection()
+        def ch = conn.createChannel()
         1000.times { ch.basicPublish("", "", null, null) }
 
         def res = client.getOverview().block()
@@ -118,18 +118,18 @@ class ReactorNettyClientSpec extends Specification {
         res.getNode().startsWith("rabbit@")
         res.getErlangVersion() != null
 
-        final msgStats = res.getMessageStats()
+        def msgStats = res.getMessageStats()
         msgStats.basicPublish >= 0
         msgStats.publisherConfirm >= 0
         msgStats.basicDeliver >= 0
         msgStats.basicReturn >= 0
 
-        final qTotals = res.getQueueTotals()
+        def qTotals = res.getQueueTotals()
         qTotals.messages >= 0
         qTotals.messagesReady >= 0
         qTotals.messagesUnacknowledged >= 0
 
-        final oTotals = res.getObjectTotals()
+        def oTotals = res.getObjectTotals()
         oTotals.connections >= 0
         oTotals.channels >= 0
         oTotals.exchanges >= 0
@@ -175,8 +175,8 @@ class ReactorNettyClientSpec extends Specification {
 
     def "GET /api/nodes"() {
         when: "client retrieves a list of cluster nodes"
-        final res = client.getNodes()
-        final node = res.blockFirst()
+        def res = client.getNodes()
+        def node = res.blockFirst()
 
         then: "the list is returned"
         res.count().block() >= 1
@@ -185,9 +185,9 @@ class ReactorNettyClientSpec extends Specification {
 
     def "GET /api/nodes/{name}"() {
         when: "client retrieves a list of cluster nodes"
-        final res = client.getNodes()
-        final name = res.blockFirst().name
-        final node = client.getNode(name).block()
+        def res = client.getNodes()
+        def name = res.blockFirst().name
+        def node = client.getNode(name).block()
 
         then: "the list is returned"
         res.count().block() >= 1
@@ -196,12 +196,12 @@ class ReactorNettyClientSpec extends Specification {
 
     def "GET /api/connections"() {
         given: "an open RabbitMQ client connection"
-        final conn = openConnection()
+        def conn = openConnection()
 
         when: "client retrieves a list of connections"
 
-        final res = awaitEventPropagation({ client.getConnections() })
-        final fst = res.blockFirst()
+        def res = awaitEventPropagation({ client.getConnections() })
+        def fst = res.blockFirst()
 
         then: "the list is returned"
         res.count().block() >= 1
@@ -213,12 +213,12 @@ class ReactorNettyClientSpec extends Specification {
 
     def "GET /api/connections/{name}"() {
         given: "an open RabbitMQ client connection"
-        final conn = openConnection()
+        def conn = openConnection()
 
         when: "client retrieves connection info with the correct name"
 
-        final xs = awaitEventPropagation({ client.getConnections() })
-        final x = client.getConnection(xs.blockFirst().name)
+        def xs = awaitEventPropagation({ client.getConnections() })
+        def x = client.getConnection(xs.blockFirst().name)
 
         then: "the info is returned"
         verifyConnectionInfo(x.block())
@@ -229,14 +229,14 @@ class ReactorNettyClientSpec extends Specification {
 
     def "GET /api/connections/{name} with client-provided name"() {
         given: "an open RabbitMQ client connection with client-provided name"
-        final s = "client-name"
-        final conn = openConnection(s)
+        def s = "client-name"
+        def conn = openConnection(s)
 
         when: "client retrieves connection info with the correct name"
 
-        final xs = awaitEventPropagation({ client.getConnections() })
+        def xs = awaitEventPropagation({ client.getConnections() })
 
-        final x = client.getConnection(
+        def x = client.getConnection(
                 xs.filter( { c -> c.clientProperties.connectionName == s } )
                         .blockFirst().name)
 
@@ -250,9 +250,9 @@ class ReactorNettyClientSpec extends Specification {
 
     def "DELETE /api/connections/{name}"() {
         given: "an open RabbitMQ client connection"
-        final latch = new CountDownLatch(1)
-        final s = "client-name"
-        final conn = openConnection(s)
+        def latch = new CountDownLatch(1)
+        def s = "client-name"
+        def conn = openConnection(s)
 
         conn.addShutdownListener({ e -> latch.countDown() })
 
@@ -260,8 +260,8 @@ class ReactorNettyClientSpec extends Specification {
 
         when: "client closes the connection"
 
-        final xs = awaitEventPropagation({ client.getConnections() })
-        final x = client.getConnection(
+        def xs = awaitEventPropagation({ client.getConnections() })
+        def x = client.getConnection(
                 xs.filter( { c -> c.clientProperties.connectionName == s } )
                         .blockFirst().name)
         client.closeConnection(x.block().name).block()
@@ -280,10 +280,10 @@ class ReactorNettyClientSpec extends Specification {
 
     def "DELETE /api/connections/{name} with a user-provided reason"() {
         given: "an open RabbitMQ client connection"
-        final latch = new CountDownLatch(1)
-        final s = "client-name"
-        final conn = openConnection(s)
-        final closingMessage = new AtomicReference<String>();
+        def latch = new CountDownLatch(1)
+        def s = "client-name"
+        def conn = openConnection(s)
+        def closingMessage = new AtomicReference<String>();
         conn.addShutdownListener({ e ->
             closingMessage.set(e.getMessage())
             latch.countDown()
@@ -292,11 +292,11 @@ class ReactorNettyClientSpec extends Specification {
 
         when: "client closes the connection"
 
-        final xs = awaitEventPropagation({ client.getConnections() })
-        final x = client.getConnection(
+        def xs = awaitEventPropagation({ client.getConnections() })
+        def x = client.getConnection(
                 xs.filter( { c -> c.clientProperties.connectionName == s } )
                         .blockFirst().name)
-        final reason = "because reasons!"
+        def reason = "because reasons!"
         client.closeConnection(x.block().name, reason).block()
 
         and: "some time passes"
@@ -314,14 +314,14 @@ class ReactorNettyClientSpec extends Specification {
 
     def "GET /api/channels"() {
         given: "an open RabbitMQ client connection with 1 channel"
-        final conn = openConnection()
-        final ch = conn.createChannel()
+        def conn = openConnection()
+        def ch = conn.createChannel()
 
         when: "client lists channels"
 
         awaitEventPropagation({ client.getConnections() })
-        final chs = awaitEventPropagation({ client.getChannels() })
-        final chi = chs.blockFirst()
+        def chs = awaitEventPropagation({ client.getChannels() })
+        def chi = chs.blockFirst()
 
         then: "the list is returned"
         verifyChannelInfo(chi, ch)
@@ -334,9 +334,9 @@ class ReactorNettyClientSpec extends Specification {
 
     def "GET /api/connections/{name}/channels/"() {
         given: "an open RabbitMQ client connection with 1 channel"
-        final s = UUID.randomUUID().toString()
-        final conn = openConnection(s)
-        final ch = conn.createChannel()
+        def s = UUID.randomUUID().toString()
+        def conn = openConnection(s)
+        def ch = conn.createChannel()
 
         when: "client lists channels on that connection"
         def xs = awaitEventPropagation({ client.getConnections() })
@@ -346,8 +346,8 @@ class ReactorNettyClientSpec extends Specification {
         })
         def cn = xs.first().name
 
-        final chs = awaitEventPropagation({ client.getChannels(cn) })
-        final chi = chs.blockFirst()
+        def chs = awaitEventPropagation({ client.getChannels(cn) })
+        def chi = chs.blockFirst()
 
         then: "the list is returned"
         verifyChannelInfo(chi, ch)
@@ -360,9 +360,9 @@ class ReactorNettyClientSpec extends Specification {
 
     def "GET /api/channels/{name}"() {
         given: "an open RabbitMQ client connection with 1 channel"
-        final s = UUID.randomUUID().toString()
-        final conn = openConnection(s)
-        final ch = conn.createChannel()
+        def s = UUID.randomUUID().toString()
+        def conn = openConnection(s)
+        def ch = conn.createChannel()
 
         when: "client retrieves channel info"
 
@@ -372,9 +372,9 @@ class ReactorNettyClientSpec extends Specification {
             it.clientProperties.connectionName.equals(s)
         })
         def cn = xs.first().name
-        final chs = awaitEventPropagation({ client.getChannels(cn) }).blockFirst()
+        def chs = awaitEventPropagation({ client.getChannels(cn) }).blockFirst()
 
-        final chi = client.getChannel(chs.name).block()
+        def chi = client.getChannel(chs.name).block()
 
         then: "the info is returned"
         verifyChannelInfo(chi, ch)
@@ -387,8 +387,8 @@ class ReactorNettyClientSpec extends Specification {
 
     def "GET /api/vhosts"() {
         when: "client retrieves a list of vhosts"
-        final vhs = client.getVhosts()
-        final vhi = vhs.blockFirst()
+        def vhs = client.getVhosts()
+        def vhi = vhs.blockFirst()
 
         then: "the info is returned"
         verifyVhost(vhi, client.getOverview().block().getServerVersion())
@@ -396,7 +396,7 @@ class ReactorNettyClientSpec extends Specification {
 
     def "GET /api/vhosts/{name}"() {
         when: "client retrieves vhost info"
-        final vhi = client.getVhost("/").block()
+        def vhi = client.getVhost("/").block()
 
         then: "the info is returned"
         verifyVhost(vhi, client.getOverview().block().getServerVersion())
@@ -408,7 +408,7 @@ class ReactorNettyClientSpec extends Specification {
         "client creates a vhost named $name"
         client.createVhost(name).block()
 
-        final vhi = client.getVhost(name).block()
+        def vhi = client.getVhost(name).block()
 
         then: "the vhost is created"
         vhi.name == name
@@ -439,11 +439,11 @@ class ReactorNettyClientSpec extends Specification {
     def "PUT /api/vhosts/{name} with metadata"() {
         if (!isVersion38orLater()) return
         when: "client creates a vhost with metadata"
-        final vhost = "vhost-with-metadata"
+        def vhost = "vhost-with-metadata"
         client.deleteVhost(vhost).block()
         client.createVhost(vhost, true, "vhost description", "production", "application1", "realm1").block()
 
-        final vhi = client.getVhost(vhost).block()
+        def vhi = client.getVhost(vhost).block()
 
         then: "the vhost is created"
         vhi.name == vhost
@@ -460,7 +460,7 @@ class ReactorNettyClientSpec extends Specification {
 
     def "DELETE /api/vhosts/{name} when vhost exists"() {
         given: "a vhost named hop-test-to-be-deleted"
-        final s = "hop-test-to-be-deleted"
+        def s = "hop-test-to-be-deleted"
         client.createVhost(s).block()
 
         when: "the vhost is deleted"
@@ -474,13 +474,13 @@ class ReactorNettyClientSpec extends Specification {
 
     def "GET /api/vhosts/{name} when vhost exists and response callback is custom"() {
         given: "a vhost with a random name and custom response callback"
-        final s = UUID.randomUUID().toString()
-        final called = new AtomicBoolean(false)
-        final options = new ReactorNettyClientOptions()
+        def s = UUID.randomUUID().toString()
+        def called = new AtomicBoolean(false)
+        def options = new ReactorNettyClientOptions()
                 .onResponseCallback({ request, response ->
             called.getAndSet(true)
         })
-        final c = newLocalhostNodeClient(options)
+        def c = newLocalhostNodeClient(options)
 
         when: "the client tries to retrieve the vhost infos"
         def vhost = c.getVhost(s)
@@ -492,10 +492,10 @@ class ReactorNettyClientSpec extends Specification {
 
     def "DELETE /api/vhosts/{name} when vhost DOES NOT exist"() {
         given: "no vhost named hop-test-to-be-deleted"
-        final s = "hop-test-to-be-deleted"
+        def s = "hop-test-to-be-deleted"
 
         when: "the vhost is deleted"
-        final response = client.deleteVhost(s).block()
+        def response = client.deleteVhost(s).block()
 
         then: "the response is 404"
         response.status == 404
@@ -503,8 +503,8 @@ class ReactorNettyClientSpec extends Specification {
 
     def "GET /api/vhosts/{name}/permissions when vhost exists"() {
         when: "permissions for vhost / are listed"
-        final s = "/"
-        final xs = client.getPermissionsIn(s)
+        def s = "/"
+        def xs = client.getPermissionsIn(s)
 
         then: "they include permissions for the guest user"
         UserPermissions x = xs.filter({ perm -> perm.user.equals("guest")}).blockFirst()
@@ -513,7 +513,7 @@ class ReactorNettyClientSpec extends Specification {
 
     def "GET /api/vhosts/{name}/permissions when vhost DOES NOT exist"() {
         when: "permissions for vhost trololowut are listed"
-        final s = "trololowut"
+        def s = "trololowut"
         client.getPermissionsIn(s).blockFirst()
 
         then: "flux throws an exception"
@@ -524,8 +524,8 @@ class ReactorNettyClientSpec extends Specification {
     def "GET /api/vhosts/{name}/topic-permissions when vhost exists"() {
         if (!isVersion37orLater()) return
         when: "topic permissions for vhost / are listed"
-        final s = "/"
-        final xs = client.getTopicPermissionsIn(s)
+        def s = "/"
+        def xs = client.getTopicPermissionsIn(s)
 
         then: "they include topic permissions for the guest user"
         TopicPermissions x = xs.filter({ perm -> perm.user.equals("guest")}).blockFirst()
@@ -536,7 +536,7 @@ class ReactorNettyClientSpec extends Specification {
     def "GET /api/vhosts/{name}/topic-permissions when vhost DOES NOT exist"() {
         if (!isVersion37orLater()) return
         when: "permissions for vhost trololowut are listed"
-        final s = "trololowut"
+        def s = "trololowut"
         client.getTopicPermissionsIn(s).blockFirst()
 
         then: "flux throws an exception"
@@ -546,11 +546,11 @@ class ReactorNettyClientSpec extends Specification {
 
     def "GET /api/users"() {
         when: "users are listed"
-        final xs = client.getUsers()
-        final version = client.getOverview().block().getServerVersion()
+        def xs = client.getUsers()
+        def version = client.getOverview().block().getServerVersion()
 
         then: "a list of users is returned"
-        final x = xs.filter( {user -> user.name.equals("guest")} ).blockFirst()
+        def x = xs.filter( {user -> user.name.equals("guest")} ).blockFirst()
         x.name == "guest"
         x.passwordHash != null
         isVersion36orLater(version) ? x.hashingAlgorithm != null : x.hashingAlgorithm == null
@@ -559,8 +559,8 @@ class ReactorNettyClientSpec extends Specification {
 
     def "GET /api/users/{name} when user exists"() {
         when: "user guest if fetched"
-        final x = client.getUser("guest").block()
-        final version = client.getOverview().block().getServerVersion()
+        def x = client.getUser("guest").block()
+        def version = client.getOverview().block().getServerVersion()
 
         then: "user info returned"
         x.name == "guest"
@@ -580,7 +580,7 @@ class ReactorNettyClientSpec extends Specification {
 
     def "PUT /api/users/{name} updates user tags"() {
         given: "user alt-user"
-        final u = "alt-user"
+        def u = "alt-user"
         client.deleteUser(u).subscribe( { r -> return } , { e -> return})
         client.createUser(u, u.toCharArray(), Arrays.asList("original", "management")).block()
         awaitEventPropagation()
@@ -590,7 +590,7 @@ class ReactorNettyClientSpec extends Specification {
         awaitEventPropagation()
 
         and: "alt-user info is reloaded"
-        final x = client.getUser(u).block()
+        def x = client.getUser(u).block()
 
         then: "alt-user has new tags"
         x.tags.contains("updated")
@@ -599,7 +599,7 @@ class ReactorNettyClientSpec extends Specification {
 
     def "DELETE /api/users/{name}"() {
         given: "user alt-user"
-        final u = "alt-user"
+        def u = "alt-user"
         client.deleteUser(u).subscribe( { r -> return } , { e -> return})
         client.createUser(u, u.toCharArray(), Arrays.asList("original", "management")).block()
         awaitEventPropagation()
@@ -618,8 +618,8 @@ class ReactorNettyClientSpec extends Specification {
 
     def "GET /api/users/{name}/permissions when user exists"() {
         when: "permissions for user guest are listed"
-        final s = "guest"
-        final xs = client.getPermissionsOf(s)
+        def s = "guest"
+        def xs = client.getPermissionsOf(s)
 
         then: "they include permissions for the guest user"
         UserPermissions x = xs.filter( { perm -> perm.user.equals("guest")}).blockFirst()
@@ -628,7 +628,7 @@ class ReactorNettyClientSpec extends Specification {
 
     def "GET /api/users/{name}/permissions when user DOES NOT exist"() {
         when: "permissions for user trololowut are listed"
-        final s = "trololowut"
+        def s = "trololowut"
         client.getPermissionsOf(s).blockFirst()
 
         then: "mono throws exception"
@@ -639,8 +639,8 @@ class ReactorNettyClientSpec extends Specification {
     def "GET /api/users/{name}/topic-permissions when user exists"() {
         if (!isVersion37orLater()) return
         when: "topic permissions for user guest are listed"
-        final s = "guest"
-        final xs = client.getTopicPermissionsOf(s)
+        def s = "guest"
+        def xs = client.getTopicPermissionsOf(s)
 
         then: "they include topic permissions for the guest user"
         TopicPermissions x = xs.filter( { perm -> perm.user.equals("guest")}).blockFirst()
@@ -651,7 +651,7 @@ class ReactorNettyClientSpec extends Specification {
     def "GET /api/users/{name}/topic-permissions when user DOES NOT exist"() {
         if (!isVersion37orLater()) return
         when: "permissions for user trololowut are listed"
-        final s = "trololowut"
+        def s = "trololowut"
         client.getTopicPermissionsOf(s).blockFirst()
 
         then: "mono throws exception"
@@ -661,10 +661,10 @@ class ReactorNettyClientSpec extends Specification {
 
     def "PUT /api/users/{name} with a blank password hash"() {
         given: "user alt-user with a blank password hash"
-        final u = "alt-user"
+        def u = "alt-user"
         // blank password hash means only authentication using alternative
         // authentication mechanisms such as x509 certificates is possible. MK.
-        final h = ""
+        def h = ""
         client.deleteUser(u).subscribe( { r -> return } , { e -> return})
         client.createUserWithPasswordHash(u, h.toCharArray(), Arrays.asList("original", "management")).block()
         client.updatePermissions("/", u, new UserPermissions(".*", ".*", ".*"))
@@ -685,8 +685,8 @@ class ReactorNettyClientSpec extends Specification {
 
     def "GET /api/exchanges"() {
         when: "client retrieves the list of exchanges across all vhosts"
-        final xs = client.getExchanges()
-        final x = xs.blockFirst()
+        def xs = client.getExchanges()
+        def x = xs.blockFirst()
 
         then: "the list is returned"
         verifyExchangeInfo(x)
@@ -694,7 +694,7 @@ class ReactorNettyClientSpec extends Specification {
 
     def "GET /api/whoami"() {
         when: "client retrieves active name authentication details"
-        final res = client.whoAmI().block()
+        def res = client.whoAmI().block()
 
         then: "the details are returned"
         res.name == DEFAULT_USERNAME
@@ -703,11 +703,11 @@ class ReactorNettyClientSpec extends Specification {
 
     def "GET /api/permissions"() {
         when: "all permissions are listed"
-        final s = "guest"
-        final xs = client.getPermissions()
+        def s = "guest"
+        def xs = client.getPermissions()
 
         then: "they include permissions for user guest in vhost /"
-        final UserPermissions x = xs
+        def UserPermissions x = xs
                 .filter( { perm -> perm.vhost.equals("/") && perm.user.equals(s)})
                 .blockFirst()
         x.read == ".*"
@@ -715,9 +715,9 @@ class ReactorNettyClientSpec extends Specification {
 
     def "GET /api/permissions/{vhost}/:user when both vhost and user exist"() {
         when: "permissions of user guest in vhost / are listed"
-        final u = "guest"
-        final v = "/"
-        final UserPermissions x = client.getPermissions(v, u).block()
+        def u = "guest"
+        def v = "/"
+        def UserPermissions x = client.getPermissions(v, u).block()
 
         then: "a single permissions object is returned"
         x.read == ".*"
@@ -726,11 +726,11 @@ class ReactorNettyClientSpec extends Specification {
     def "GET /api/topic-permissions"() {
         if (!isVersion37orLater()) return
         when: "all topic permissions are listed"
-        final s = "guest"
-        final xs = client.getTopicPermissions()
+        def s = "guest"
+        def xs = client.getTopicPermissions()
 
         then: "they include topic permissions for user guest in vhost /"
-        final TopicPermissions x = xs
+        def TopicPermissions x = xs
                 .filter( { perm -> perm.vhost.equals("/") && perm.user.equals(s)})
                 .blockFirst()
         x.exchange == "amq.topic"
@@ -740,12 +740,12 @@ class ReactorNettyClientSpec extends Specification {
     def "GET /api/topic-permissions/{vhost}/:user when both vhost and user exist"() {
         if (!isVersion37orLater()) return
         when: "topic permissions of user guest in vhost / are listed"
-        final u = "guest"
-        final v = "/"
-        final xs = client.getTopicPermissions(v, u)
+        def u = "guest"
+        def v = "/"
+        def xs = client.getTopicPermissions(v, u)
 
         then: "a list of permissions objects is returned"
-        final TopicPermissions x = xs
+        def TopicPermissions x = xs
                 .filter( { perm -> perm.vhost.equals(v) && perm.user.equals(u)})
                 .blockFirst()
         x.exchange == "amq.topic"
@@ -754,17 +754,17 @@ class ReactorNettyClientSpec extends Specification {
 
     def "GET /api/exchanges/{vhost} when vhost exists"() {
         when: "client retrieves the list of exchanges in a particular vhost"
-        final xs = client.getExchanges("/")
+        def xs = client.getExchanges("/")
 
         then: "the list is returned"
-        final x = xs.filter( { e -> e.name == "amq.fanout" } )
+        def x = xs.filter( { e -> e.name == "amq.fanout" } )
         verifyExchangeInfo(x.blockFirst())
     }
 
     def "GET /api/permissions/{vhost}/:user when vhost DOES NOT exist"() {
         when: "permissions of user guest in vhost lolwut are listed"
-        final u = "guest"
-        final v = "lolwut"
+        def u = "guest"
+        def v = "lolwut"
         client.getPermissions(v, u).block()
 
 
@@ -775,8 +775,8 @@ class ReactorNettyClientSpec extends Specification {
 
     def "GET /api/permissions/{vhost}/:user when username DOES NOT exist"() {
         when: "permissions of user lolwut in vhost / are listed"
-        final u = "lolwut"
-        final v = "/"
+        def u = "lolwut"
+        def v = "/"
         client.getPermissions(v, u).block()
 
         then: "mono throws exception"
@@ -786,17 +786,17 @@ class ReactorNettyClientSpec extends Specification {
 
     def "PUT /api/permissions/{vhost}/:user when both user and vhost exist"() {
         given: "vhost hop-vhost1 exists"
-        final v = "hop-vhost1"
+        def v = "hop-vhost1"
         client.createVhost(v).block()
         and: "user hop-user1 exists"
-        final u = "hop-user1"
+        def u = "hop-user1"
         client.createUser(u, "test".toCharArray(), Arrays.asList("management", "http", "policymaker")).block()
 
         when: "permissions of user guest in vhost / are updated"
         client.updatePermissions(v, u, new UserPermissions("read", "write", "configure")).block()
 
         and: "permissions are reloaded"
-        final UserPermissions x = client.getPermissions(v, u).block()
+        def UserPermissions x = client.getPermissions(v, u).block()
 
         then: "a single permissions object is returned"
         x.read == "read"
@@ -810,10 +810,10 @@ class ReactorNettyClientSpec extends Specification {
 
     def "PUT /api/permissions/{vhost}/:user when vhost DOES NOT exist"() {
         given: "vhost hop-vhost1 DOES NOT exist"
-        final v = "hop-vhost1"
+        def v = "hop-vhost1"
         client.deleteVhost(v).block()
         and: "user hop-user1 exists"
-        final u = "hop-user1"
+        def u = "hop-user1"
         client.createUser(u, "test".toCharArray(), Arrays.asList("management", "http", "policymaker")).block()
 
         when: "permissions of user guest in vhost / are updated"
@@ -834,15 +834,15 @@ class ReactorNettyClientSpec extends Specification {
 
     def "DELETE /api/permissions/{vhost}/:user when both vhost and username exist"() {
         given: "vhost hop-vhost1 exists"
-        final v = "hop-vhost1"
+        def v = "hop-vhost1"
         client.createVhost(v).block()
         and: "user hop-user1 exists"
-        final u = "hop-user1"
+        def u = "hop-user1"
         client.createUser(u, "test".toCharArray(), Arrays.asList("management", "http", "policymaker")).block()
 
         and: "permissions of user guest in vhost / are set"
         client.updatePermissions(v, u, new UserPermissions("read", "write", "configure")).block()
-        final UserPermissions x = client.getPermissions(v, u).block()
+        def UserPermissions x = client.getPermissions(v, u).block()
         x.read == "read"
 
         when: "permissions are cleared"
@@ -862,8 +862,8 @@ class ReactorNettyClientSpec extends Specification {
     def "GET /api/topic-permissions/{vhost}/:user when vhost DOES NOT exist"() {
         if (!isVersion37orLater()) return
         when: "topic permissions of user guest in vhost lolwut are listed"
-        final u = "guest"
-        final v = "lolwut"
+        def u = "guest"
+        def v = "lolwut"
         client.getTopicPermissions(v, u).blockFirst()
 
         then: "mono throws exception"
@@ -874,8 +874,8 @@ class ReactorNettyClientSpec extends Specification {
     def "GET /api/topic-permissions/{vhost}/:user when username DOES NOT exist"() {
         if (!isVersion37orLater()) return
         when: "topic permissions of user lolwut in vhost / are listed"
-        final u = "lolwut"
-        final v = "/"
+        def u = "lolwut"
+        def v = "/"
         client.getTopicPermissions(v, u).blockFirst()
 
         then: "mono throws exception"
@@ -885,10 +885,10 @@ class ReactorNettyClientSpec extends Specification {
 
     def "PUT /api/topic-permissions/{vhost}/:user when both user and vhost exist"() {
         given: "vhost hop-vhost1 exists"
-        final v = "hop-vhost1"
+        def v = "hop-vhost1"
         client.createVhost(v).block()
         and: "user hop-user1 exists"
-        final u = "hop-user1"
+        def u = "hop-user1"
         client.createUser(u, "test".toCharArray(), Arrays.asList("management", "http", "policymaker")).block()
 
         if (!isVersion37orLater()) return
@@ -897,7 +897,7 @@ class ReactorNettyClientSpec extends Specification {
         client.updateTopicPermissions(v, u, new TopicPermissions("amq.topic", "read", "write")).block()
 
         and: "permissions are reloaded"
-        final TopicPermissions x = client.getTopicPermissions(v, u).blockFirst()
+        def TopicPermissions x = client.getTopicPermissions(v, u).blockFirst()
 
         then: "a list with a single topic permissions object is returned"
         x.exchange == "amq.topic"
@@ -911,10 +911,10 @@ class ReactorNettyClientSpec extends Specification {
 
     def "PUT /api/topic-permissions/{vhost}/:user when vhost DOES NOT exist"() {
         given: "vhost hop-vhost1 DOES NOT exist"
-        final v = "hop-vhost1"
+        def v = "hop-vhost1"
         client.deleteVhost(v).block()
         and: "user hop-user1 exists"
-        final u = "hop-user1"
+        def u = "hop-user1"
         client.createUser(u, "test".toCharArray(), Arrays.asList("management", "http", "policymaker")).block()
 
         if (!isVersion37orLater()) return
@@ -938,17 +938,17 @@ class ReactorNettyClientSpec extends Specification {
 
     def "DELETE /api/topic-permissions/{vhost}/:user when both vhost and username exist"() {
         given: "vhost hop-vhost1 exists"
-        final v = "hop-vhost1"
+        def v = "hop-vhost1"
         client.createVhost(v).block()
         and: "user hop-user1 exists"
-        final u = "hop-user1"
+        def u = "hop-user1"
         client.createUser(u, "test".toCharArray(), Arrays.asList("management", "http", "policymaker")).block()
 
         if (!isVersion37orLater()) return
 
         and: "permissions of user guest in vhost / are set"
         client.updateTopicPermissions(v, u, new TopicPermissions("amq.topic", "read", "write")).block()
-        final TopicPermissions x = client.getTopicPermissions(v, u).blockFirst()
+        def TopicPermissions x = client.getTopicPermissions(v, u).blockFirst()
         x.exchange == "amq.topic"
         x.read == "read"
 
@@ -972,18 +972,18 @@ class ReactorNettyClientSpec extends Specification {
 
     def "GET /api/policies"() {
         given: "at least one policy was declared"
-        final v = "/"
-        final s = "hop.test"
-        final d = new HashMap<String, Object>()
-        final p = ".*"
+        def v = "/"
+        def s = "hop.test"
+        def d = new HashMap<String, Object>()
+        def p = ".*"
         d.put("ha-mode", "all")
         client.declarePolicy(v, s, new PolicyInfo(p, 0, null, d)).block()
 
         when: "client lists policies"
-        final xs = awaitEventPropagation({ client.getPolicies() })
+        def xs = awaitEventPropagation({ client.getPolicies() })
 
         then: "a list of policies is returned"
-        final x = xs.blockFirst()
+        def x = xs.blockFirst()
         verifyPolicyInfo(x)
 
         cleanup:
@@ -992,18 +992,18 @@ class ReactorNettyClientSpec extends Specification {
 
     def "GET /api/policies/{vhost} when vhost exists"() {
         given: "at least one policy was declared in vhost /"
-        final v = "/"
-        final s = "hop.test"
-        final d = new HashMap<String, Object>()
-        final p = ".*"
+        def v = "/"
+        def s = "hop.test"
+        def d = new HashMap<String, Object>()
+        def p = ".*"
         d.put("ha-mode", "all")
         client.declarePolicy(v, s, new PolicyInfo(p, 0, null, d)).block()
 
         when: "client lists policies"
-        final xs = awaitEventPropagation({ client.getPolicies("/") })
+        def xs = awaitEventPropagation({ client.getPolicies("/") })
 
         then: "a list of queues is returned"
-        final x = xs.blockFirst()
+        def x = xs.blockFirst()
         verifyPolicyInfo(x)
 
         cleanup:
@@ -1012,7 +1012,7 @@ class ReactorNettyClientSpec extends Specification {
 
     def "GET /api/policies/{vhost} when vhost DOES NOT exists"() {
         given: "vhost lolwut DOES not exist"
-        final v = "lolwut"
+        def v = "lolwut"
         client.deleteVhost(v).block()
 
         when: "client lists policies"
@@ -1025,7 +1025,7 @@ class ReactorNettyClientSpec extends Specification {
 
     def "GET /api/aliveness-test/{vhost}"() {
         when: "client performs aliveness check for the / vhost"
-        final hasSucceeded = client.alivenessTest("/").block().isSuccessful()
+        def hasSucceeded = client.alivenessTest("/").block().isSuccessful()
 
         then: "the check succeeds"
         hasSucceeded
@@ -1033,7 +1033,7 @@ class ReactorNettyClientSpec extends Specification {
 
     def "GET /api/cluster-name"() {
         when: "client fetches cluster name"
-        final ClusterId s = client.getClusterName().block()
+        def ClusterId s = client.getClusterName().block()
 
         then: "cluster name is returned"
         s.getName() != null
@@ -1041,13 +1041,13 @@ class ReactorNettyClientSpec extends Specification {
 
     def "PUT /api/cluster-name"() {
         given: "cluster name"
-        final String s = client.getClusterName().block().name
+        def String s = client.getClusterName().block().name
 
         when: "cluster name is set to rabbit@warren"
         client.setClusterName("rabbit@warren").block()
 
         and: "cluster name is reloaded"
-        final String x = client.getClusterName().block().name
+        def String x = client.getClusterName().block().name
 
         then: "the name is updated"
         x.equals("rabbit@warren")
@@ -1091,15 +1091,15 @@ class ReactorNettyClientSpec extends Specification {
 
     def "GET /api/queues"() {
         given: "at least one queue was declared"
-        final Connection conn = cf.newConnection()
-        final Channel ch = conn.createChannel()
-        final String q = ch.queueDeclare().queue
+        def Connection conn = cf.newConnection()
+        def Channel ch = conn.createChannel()
+        def String q = ch.queueDeclare().queue
 
         when: "client lists queues"
-        final xs = client.getQueues()
+        def xs = client.getQueues()
 
         then: "a list of queues is returned"
-        final x = xs.blockFirst()
+        def x = xs.blockFirst()
         verifyQueueInfo(x)
 
         cleanup:
@@ -1109,15 +1109,15 @@ class ReactorNettyClientSpec extends Specification {
 
     def "GET /api/queues/{vhost} when vhost exists"() {
         given: "at least one queue was declared in vhost /"
-        final Connection conn = cf.newConnection()
-        final Channel ch = conn.createChannel()
-        final String q = ch.queueDeclare().queue
+        def Connection conn = cf.newConnection()
+        def Channel ch = conn.createChannel()
+        def String q = ch.queueDeclare().queue
 
         when: "client lists queues"
-        final xs = client.getQueues("/")
+        def xs = client.getQueues("/")
 
         then: "a list of queues is returned"
-        final x = xs.blockFirst()
+        def x = xs.blockFirst()
         verifyQueueInfo(x)
 
         cleanup:
@@ -1127,7 +1127,7 @@ class ReactorNettyClientSpec extends Specification {
 
     def "GET /api/queues/{vhost} when vhost DOES NOT exist"() {
         given: "vhost lolwut DOES not exist"
-        final v = "lolwut"
+        def v = "lolwut"
         client.deleteVhost(v).block()
 
         when: "client lists queues"
@@ -1140,12 +1140,12 @@ class ReactorNettyClientSpec extends Specification {
 
     def "GET /api/queues/{vhost}/{name} when both vhost and queue exist"() {
         given: "a queue was declared in vhost /"
-        final Connection conn = cf.newConnection()
-        final Channel ch = conn.createChannel()
-        final String q = ch.queueDeclare().queue
+        def Connection conn = cf.newConnection()
+        def Channel ch = conn.createChannel()
+        def String q = ch.queueDeclare().queue
 
         when: "client fetches info of the queue"
-        final x = client.getQueue("/", q).block()
+        def x = client.getQueue("/", q).block()
 
         then: "the info is returned"
         x.vhost == "/"
@@ -1159,14 +1159,14 @@ class ReactorNettyClientSpec extends Specification {
 
     def "GET /api/queues/{vhost}/{name} with an exclusive queue"() {
         given: "an exclusive queue named hop.q1.exclusive"
-        final Connection conn = cf.newConnection()
-        final Channel ch = conn.createChannel()
+        def Connection conn = cf.newConnection()
+        def Channel ch = conn.createChannel()
         String s = "hop.q1.exclusive"
         ch.queueDelete(s)
-        final String q = ch.queueDeclare(s, false, true, false, null).queue
+        def String q = ch.queueDeclare(s, false, true, false, null).queue
 
         when: "client fetches info of the queue"
-        final x = client.getQueue("/", q).block()
+        def x = client.getQueue("/", q).block()
 
         then: "the queue is exclusive according to the response"
         x.exclusive
@@ -1178,9 +1178,9 @@ class ReactorNettyClientSpec extends Specification {
 
     def "GET /api/queues/{vhost}/{name} when queue DOES NOT exist"() {
         given: "queue lolwut does not exist in vhost /"
-        final Connection conn = cf.newConnection()
-        final Channel ch = conn.createChannel()
-        final String q = "lolwut"
+        def Connection conn = cf.newConnection()
+        def Channel ch = conn.createChannel()
+        def String q = "lolwut"
         ch.queueDelete(q)
 
         when: "client fetches info of the queue"
@@ -1197,10 +1197,10 @@ class ReactorNettyClientSpec extends Specification {
 
     def "PUT /api/queues/{vhost}/{name} when vhost exists"() {
         given: "vhost /"
-        final v = "/"
+        def v = "/"
 
         when: "client declares a queue hop.test"
-        final s = "hop.test"
+        def s = "hop.test"
         client.declareQueue(v, s, new QueueInfo(false, false, false)).block()
 
         and: "client lists queues in vhost /"
@@ -1221,12 +1221,12 @@ class ReactorNettyClientSpec extends Specification {
 
     def "PUT /api/policies/{vhost}/{name}"() {
         given: "vhost / and definition"
-        final v = "/"
-        final d = new HashMap<String, Object>()
+        def v = "/"
+        def d = new HashMap<String, Object>()
         d.put("ha-mode", "all")
 
         when: "client declares a policy hop.test"
-        final s = "hop.test"
+        def s = "hop.test"
         client.declarePolicy(v, s, new PolicyInfo(".*", 1, null, d)).block()
 
         and: "client lists policies in vhost /"
@@ -1247,11 +1247,11 @@ class ReactorNettyClientSpec extends Specification {
 
     def "PUT /api/queues/{vhost}/{name} when vhost DOES NOT exist"() {
         given: "vhost lolwut which does not exist"
-        final v = "lolwut"
+        def v = "lolwut"
         client.deleteVhost(v).block()
 
         when: "client declares a queue hop.test"
-        final s = "hop.test"
+        def s = "hop.test"
         // throws an exception for RabbitMQ 3.7.4+
         // because of the way Cowboy 2.2.2 handles chunked transfer-encoding
         // so we handle both 404 and the error
@@ -1265,9 +1265,9 @@ class ReactorNettyClientSpec extends Specification {
     }
 
     def "DELETE /api/queues/{vhost}/{name}"() {
-        final String s = UUID.randomUUID().toString()
+        def String s = UUID.randomUUID().toString()
         given: "queue ${s} in vhost /"
-        final v = "/"
+        def v = "/"
         client.declareQueue(v, s, new QueueInfo(false, false, false)).block()
 
         Flux<QueueInfo> xs = client.getQueues(v)
@@ -1286,9 +1286,9 @@ class ReactorNettyClientSpec extends Specification {
     }
 
     def "DELETE /api/queues/{vhost}/{name}?if-empty=true"() {
-        final String queue = UUID.randomUUID().toString()
+        def String queue = UUID.randomUUID().toString()
         given: "queue ${queue} in vhost /"
-        final v = "/"
+        def v = "/"
         client.declareQueue(v, queue, new QueueInfo(false, false, false)).block()
 
         Flux<QueueInfo> xs = client.getQueues(v)
@@ -1314,18 +1314,18 @@ class ReactorNettyClientSpec extends Specification {
 
     def "GET /api/bindings"() {
         given: "3 queues bound to amq.fanout"
-        final Connection conn = cf.newConnection()
-        final Channel ch = conn.createChannel()
-        final String x  = 'amq.fanout'
-        final String q1 = ch.queueDeclare().queue
-        final String q2 = ch.queueDeclare().queue
-        final String q3 = ch.queueDeclare().queue
+        def Connection conn = cf.newConnection()
+        def Channel ch = conn.createChannel()
+        def String x  = 'amq.fanout'
+        def String q1 = ch.queueDeclare().queue
+        def String q2 = ch.queueDeclare().queue
+        def String q3 = ch.queueDeclare().queue
         ch.queueBind(q1, x, "")
         ch.queueBind(q2, x, "")
         ch.queueBind(q3, x, "")
 
         when: "all queue bindings are listed"
-        final Flux<BindingInfo> xs = client.getBindings()
+        def Flux<BindingInfo> xs = client.getBindings()
 
         then: "amq.fanout bindings are listed"
         xs.filter( { b -> b.destinationType.equals("queue") && b.source.equals(x) } )
@@ -1340,16 +1340,16 @@ class ReactorNettyClientSpec extends Specification {
 
     def "GET /api/bindings/{vhost}"() {
         given: "2 queues bound to amq.topic in vhost /"
-        final Connection conn = cf.newConnection()
-        final Channel ch = conn.createChannel()
-        final String x  = 'amq.topic'
-        final String q1 = ch.queueDeclare().queue
-        final String q2 = ch.queueDeclare().queue
+        def Connection conn = cf.newConnection()
+        def Channel ch = conn.createChannel()
+        def String x  = 'amq.topic'
+        def String q1 = ch.queueDeclare().queue
+        def String q2 = ch.queueDeclare().queue
         ch.queueBind(q1, x, "hop.*")
         ch.queueBind(q2, x, "api.test.#")
 
         when: "all queue bindings are listed"
-        final Flux<BindingInfo> xs = client.getBindings("/")
+        def Flux<BindingInfo> xs = client.getBindings("/")
 
         then: "amq.fanout bindings are listed"
         xs.filter( { b -> b.destinationType.equals("queue") && b.source.equals(x) } )
@@ -1363,15 +1363,15 @@ class ReactorNettyClientSpec extends Specification {
 
     def "GET /api/bindings/{vhost} example 2"() {
         given: "queues hop.test bound to amq.topic in vhost /"
-        final Connection conn = cf.newConnection()
-        final Channel ch = conn.createChannel()
-        final String x  = 'amq.topic'
-        final String q  = "hop.test"
+        def Connection conn = cf.newConnection()
+        def Channel ch = conn.createChannel()
+        def String x  = 'amq.topic'
+        def String q  = "hop.test"
         ch.queueDeclare(q, false, false, false, null)
         ch.queueBind(q, x, "hop.*")
 
         when: "all queue bindings are listed"
-        final Flux<BindingInfo> xs = client.getBindings("/")
+        def Flux<BindingInfo> xs = client.getBindings("/")
 
         then: "the amq.fanout binding is listed"
         xs.filter( { b -> b.destinationType.equals("queue") &&
@@ -1385,15 +1385,15 @@ class ReactorNettyClientSpec extends Specification {
 
     def "GET /api/queues/{vhost}/{name}/bindings"() {
         given: "queues hop.test bound to amq.topic in vhost /"
-        final Connection conn = cf.newConnection()
-        final Channel ch = conn.createChannel()
-        final String x  = 'amq.topic'
-        final String q  = "hop.test"
+        def Connection conn = cf.newConnection()
+        def Channel ch = conn.createChannel()
+        def String x  = 'amq.topic'
+        def String q  = "hop.test"
         ch.queueDeclare(q, false, false, false, null)
         ch.queueBind(q, x, "hop.*")
 
         when: "all queue bindings are listed"
-        final Flux<BindingInfo> xs = client.getQueueBindings("/", q)
+        def Flux<BindingInfo> xs = client.getQueueBindings("/", q)
 
         then: "the amq.fanout binding is listed"
         xs.filter( { b-> b.destinationType.equals("queue") &&
@@ -1407,18 +1407,18 @@ class ReactorNettyClientSpec extends Specification {
 
     def "GET /api/bindings/{vhost}/e/:exchange/q/:queue"() {
         given: "queues hop.test bound to amq.topic in vhost /"
-        final Connection conn = cf.newConnection()
-        final Channel ch = conn.createChannel()
-        final String x  = 'amq.topic'
-        final String q  = "hop.test"
+        def Connection conn = cf.newConnection()
+        def Channel ch = conn.createChannel()
+        def String x  = 'amq.topic'
+        def String q  = "hop.test"
         ch.queueDeclare(q, false, false, false, null)
         ch.queueBind(q, x, "hop.*")
 
         when: "bindings between hop.test and amq.topic are listed"
-        final Flux<BindingInfo> xs = client.getQueueBindingsBetween("/", x, q)
+        def Flux<BindingInfo> xs = client.getQueueBindingsBetween("/", x, q)
 
         then: "the amq.fanout binding is listed"
-        final b = xs.blockFirst()
+        def b = xs.blockFirst()
         xs.count().block() == 1
         b.source.equals(x)
         b.destination.equals(q)
@@ -1431,18 +1431,18 @@ class ReactorNettyClientSpec extends Specification {
 
     def "GET /api/bindings/{vhost}/e/:source/e/:destination"() {
         given: "fanout exchange hop.test bound to amq.fanout in vhost /"
-        final Connection conn = cf.newConnection()
-        final Channel ch = conn.createChannel()
-        final String s  = 'amq.fanout'
-        final String d  = "hop.test"
+        def Connection conn = cf.newConnection()
+        def Channel ch = conn.createChannel()
+        def String s  = 'amq.fanout'
+        def String d  = "hop.test"
         ch.exchangeDeclare(d, "fanout", false)
         ch.exchangeBind(d, s, "")
 
         when: "bindings between hop.test and amq.topic are listed"
-        final Flux<BindingInfo> xs = client.getExchangeBindingsBetween("/", s, d)
+        def Flux<BindingInfo> xs = client.getExchangeBindingsBetween("/", s, d)
 
         then: "the amq.topic binding is listed"
-        final b = xs.blockFirst()
+        def b = xs.blockFirst()
         xs.count().block() == 1
         b.source.equals(s)
         b.destination.equals(d)
@@ -1455,18 +1455,18 @@ class ReactorNettyClientSpec extends Specification {
 
     def "POST /api/bindings/{vhost}/e/:source/e/:destination"() {
         given: "fanout hop.test bound to amq.fanout in vhost /"
-        final v = "/"
-        final String s  = 'amq.fanout'
-        final String d  = "hop.test"
+        def v = "/"
+        def String s  = 'amq.fanout'
+        def String d  = "hop.test"
         client.deleteExchange(v, d).block()
         client.declareExchange(v, d, new ExchangeInfo("fanout", false, false)).block()
         client.bindExchange(v, d, s, "", [arg1: 'value1', arg2: 'value2']).block()
 
         when: "bindings between hop.test and amq.fanout are listed"
-        final Flux<BindingInfo> xs = client.getExchangeBindingsBetween(v, s, d)
+        def Flux<BindingInfo> xs = client.getExchangeBindingsBetween(v, s, d)
 
         then: "the amq.fanout binding is listed"
-        final b = xs.blockFirst()
+        def b = xs.blockFirst()
         xs.count().block() == 1
         b.source.equals(s)
         b.destination.equals(d)
@@ -1482,17 +1482,17 @@ class ReactorNettyClientSpec extends Specification {
 
     def "POST /api/bindings/{vhost}/e/:exchange/q/:queue"() {
         given: "queues hop.test bound to amq.topic in vhost /"
-        final v = "/"
-        final String x  = 'amq.topic'
-        final String q  = "hop.test"
+        def v = "/"
+        def String x  = 'amq.topic'
+        def String q  = "hop.test"
         client.declareQueue(v, q, new QueueInfo(false, false, false)).block()
         client.bindQueue(v, q, x, "", [arg1: 'value1', arg2: 'value2']).block()
 
         when: "bindings between hop.test and amq.topic are listed"
-        final Flux<BindingInfo> xs = client.getQueueBindingsBetween(v, x, q)
+        def Flux<BindingInfo> xs = client.getQueueBindingsBetween(v, x, q)
 
         then: "the amq.fanout binding is listed"
-        final b = xs.blockFirst()
+        def b = xs.blockFirst()
         xs.count().block() == 1
         b.source.equals(x)
         b.destination.equals(q)
@@ -1516,14 +1516,14 @@ class ReactorNettyClientSpec extends Specification {
 
     def "POST /api/queues/{vhost}/:exchange/get"() {
         given: "a queue named hop.get and some messages in this queue"
-        final v = "/"
-        final conn = openConnection()
-        final ch = conn.createChannel()
-        final q = "hop.get"
+        def v = "/"
+        def conn = openConnection()
+        def ch = conn.createChannel()
+        def q = "hop.get"
         ch.queueDeclare(q, false, false, false, null)
         ch.confirmSelect()
-        final messageCount = 5
-        final properties = new AMQP.BasicProperties.Builder()
+        def messageCount = 5
+        def properties = new AMQP.BasicProperties.Builder()
                 .contentType("text/plain").deliveryMode(1).priority(5)
                 .headers(Collections.singletonMap("header1", "value1"))
                 .build()
@@ -1533,13 +1533,13 @@ class ReactorNettyClientSpec extends Specification {
         ch.waitForConfirms(5_000)
 
         when: "client GETs from this queue"
-        final Flux<InboundMessage> messages = client.get(v, q, messageCount, GetAckMode.NACK_REQUEUE_TRUE, GetEncoding.AUTO, -1)
+        def Flux<InboundMessage> messages = client.get(v, q, messageCount, GetAckMode.NACK_REQUEUE_TRUE, GetEncoding.AUTO, -1)
             .cache() // we cache the flux to avoid sending the requests several times when counting, getting the first message, etc.
                      // no doing would result in redelivered = true
 
         then: "the messages are returned"
         messages.count().block() == messageCount
-        final message = messages.blockFirst()
+        def message = messages.blockFirst()
         message.payload.startsWith("payload")
         message.payloadBytes == "payload".size() + 1
         !message.redelivered
@@ -1561,17 +1561,17 @@ class ReactorNettyClientSpec extends Specification {
 
     def "POST /api/queues/{vhost}/:exchange/get for one message"() {
         given: "a queue named hop.get and a message in this queue"
-        final v = "/"
-        final conn = openConnection()
-        final ch = conn.createChannel()
-        final q = "hop.get"
+        def v = "/"
+        def conn = openConnection()
+        def ch = conn.createChannel()
+        def q = "hop.get"
         ch.queueDeclare(q, false, false, false, null)
         ch.confirmSelect()
         ch.basicPublish("", q, null, "payload".getBytes(Charset.forName("UTF-8")))
         ch.waitForConfirms(5_000)
 
         when: "client GETs from this queue"
-        final message = client.get(v, q).block()
+        def message = client.get(v, q).block()
 
         then: "the messages are returned"
         message.payload == "payload"
@@ -1587,23 +1587,23 @@ class ReactorNettyClientSpec extends Specification {
 
     def "DELETE /api/queues/{vhost}/{name}/contents"() {
         given: "queue hop.test with 10 messages"
-        final Connection conn = cf.newConnection()
-        final Channel ch = conn.createChannel()
-        final q = "hop.test"
+        def Connection conn = cf.newConnection()
+        def Channel ch = conn.createChannel()
+        def q = "hop.test"
         ch.queueDelete(q)
         ch.queueDeclare(q, false, false, false, null)
         ch.queueBind(q, "amq.fanout", "")
         ch.confirmSelect()
         100.times { ch.basicPublish("amq.fanout", "", null, "msg".getBytes()) }
         assert ch.waitForConfirms()
-        final qi1 = ch.queueDeclarePassive(q)
+        def qi1 = ch.queueDeclarePassive(q)
         qi1.messageCount == 100
 
         when: "client purges the queue"
         client.purgeQueue("/", q).block()
 
         then: "the queue becomes empty"
-        final qi2 = ch.queueDeclarePassive(q)
+        def qi2 = ch.queueDeclarePassive(q)
         qi2.messageCount == 0
 
         cleanup:
@@ -1746,7 +1746,7 @@ class ReactorNettyClientSpec extends Specification {
         value.setDestinationAddTimestampHeader(true)
         client.declareShovel("/", new ShovelInfo("shovel1", value)).block()
         when: "client requests the shovels"
-        final shovels = awaitEventPropagation { client.getShovels() }
+        def shovels = awaitEventPropagation { client.getShovels() }
 
         then: "shovel definitions are returned"
         shovels.hasElements().block()
@@ -1782,7 +1782,7 @@ class ReactorNettyClientSpec extends Specification {
         value.setDestinationAddTimestampHeader(true)
         client.declareShovel("/", new ShovelInfo("shovel1", value)).block()
         when: "client requests the shovels"
-        final shovels = awaitEventPropagation { client.getShovels() }
+        def shovels = awaitEventPropagation { client.getShovels() }
 
         then: "shovel definitions are returned"
         shovels.hasElements().block()
@@ -1829,10 +1829,10 @@ class ReactorNettyClientSpec extends Specification {
         ShovelDetails value = new ShovelDetails("amqp://localhost:5672/vh1", "amqp://localhost:5672/vh2", 30, true, null);
         value.setSourceQueue("queue1");
         value.setDestinationExchange("exchange1");
-        final shovelName = "shovel2"
+        def shovelName = "shovel2"
         client.declareShovel("/", new ShovelInfo(shovelName, value)).block()
         when: "client requests the shovels status"
-        final shovels = awaitEventPropagation { client.getShovelsStatus() }
+        def shovels = awaitEventPropagation { client.getShovelsStatus() }
 
         then: "shovels status are returned"
         shovels.hasElements().block()
@@ -1856,12 +1856,12 @@ class ReactorNettyClientSpec extends Specification {
 
     def "DELETE /api/exchanges/{vhost}/{name}"() {
         given: "fanout exchange hop.test in vhost /"
-        final v = "/"
-        final s = "hop.test"
+        def v = "/"
+        def s = "hop.test"
         client.declareExchange(v, s, new ExchangeInfo("fanout", false, false)).block()
 
-        final xs = client.getExchanges(v)
-        final x = xs.filter( { e -> e.name == s } )
+        def xs = client.getExchanges(v)
+        def x = xs.filter( { e -> e.name == s } )
         verifyExchangeInfo(x.blockFirst())
 
         when: "client deletes exchange hop.test in vhost /"
@@ -1876,15 +1876,15 @@ class ReactorNettyClientSpec extends Specification {
 
     def "POST /api/exchanges/{vhost}/{name}/publish"() {
         given: "a queue named hop.publish and a consumer on this queue"
-        final v = "/"
-        final conn = openConnection()
-        final ch = conn.createChannel()
-        final q = "hop.publish"
+        def v = "/"
+        def conn = openConnection()
+        def ch = conn.createChannel()
+        def q = "hop.publish"
         ch.queueDeclare(q, false, false, false, null)
         ch.queueBind(q, "amq.direct", q)
-        final latch = new CountDownLatch(1)
-        final payloadReference = new AtomicReference<String>()
-        final propertiesReference = new AtomicReference<AMQP.BasicProperties>()
+        def latch = new CountDownLatch(1)
+        def payloadReference = new AtomicReference<String>()
+        def propertiesReference = new AtomicReference<AMQP.BasicProperties>()
         ch.basicConsume(q, true, {ctag, message ->
             payloadReference.set(new String(message.getBody()))
             propertiesReference.set(message.getProperties())
@@ -1892,12 +1892,12 @@ class ReactorNettyClientSpec extends Specification {
         }, (CancelCallback) { ctag -> })
 
         when: "client publishes a message to the queue"
-        final properties = new HashMap()
+        def properties = new HashMap()
         properties.put("delivery_mode", 1)
         properties.put("content_type", "text/plain")
         properties.put("priority", 5)
         properties.put("headers", Collections.singletonMap("header1", "value1"))
-        final routed = client.publish(v, "amq.direct", q,
+        def routed = client.publish(v, "amq.direct", q,
                 new OutboundMessage().payload("Hello world!").utf8Encoded().properties(properties)).block()
 
         then: "the message is routed to the queue and consumed"
@@ -1918,7 +1918,7 @@ class ReactorNettyClientSpec extends Specification {
 
     def "GET /api/exchanges/{vhost} when vhost DOES NOT exist"() {
         given: "vhost lolwut does not exist"
-        final v = "lolwut"
+        def v = "lolwut"
         client.deleteVhost(v).block()
 
         when: "client retrieves the list of exchanges in that vhost"
@@ -1931,27 +1931,27 @@ class ReactorNettyClientSpec extends Specification {
 
     def "GET /api/exchanges/{vhost}/{name} when both vhost and exchange exist"() {
         when: "client retrieves exchange amq.fanout in vhost /"
-        final xs = client.getExchange("/", "amq.fanout")
+        def xs = client.getExchange("/", "amq.fanout")
 
         then: "exchange info is returned"
-        final x = xs.filter( { e -> e.name == "amq.fanout" && e.vhost == "/" })
+        def x = xs.filter( { e -> e.name == "amq.fanout" && e.vhost == "/" })
         verifyExchangeInfo(x.block())
     }
 
     def "GET /api/exchanges/{vhost}/{name}/bindings/destination"() {
         given: "an exchange named hop.exchange1 which is bound to amq.fanout"
-        final conn = openConnection()
-        final ch = conn.createChannel()
-        final src = "amq.fanout"
-        final dest = "hop.exchange1"
+        def conn = openConnection()
+        def ch = conn.createChannel()
+        def src = "amq.fanout"
+        def dest = "hop.exchange1"
         ch.exchangeDeclare(dest, "fanout")
         ch.exchangeBind(dest, src, "")
 
         when: "client lists bindings of amq.fanout"
-        final xs = client.getExchangeBindingsByDestination("/", dest)
+        def xs = client.getExchangeBindingsByDestination("/", dest)
 
         then: "there is a binding for hop.exchange1"
-        final x = xs.filter( { b -> b.source == src &&
+        def x = xs.filter( { b -> b.source == src &&
                 b.destinationType == "exchange" &&
                 b.destination == dest
         } )
@@ -1964,16 +1964,16 @@ class ReactorNettyClientSpec extends Specification {
 
     def "GET /api/exchanges/{vhost}/{name}/bindings/source"() {
         given: "a queue named hop.queue1"
-        final conn = openConnection()
-        final ch = conn.createChannel()
-        final q = "hop.queue1"
+        def conn = openConnection()
+        def ch = conn.createChannel()
+        def q = "hop.queue1"
         ch.queueDeclare(q, false, false, false, null)
 
         when: "client lists bindings of default exchange"
-        final xs = client.getExchangeBindingsBySource("/", "")
+        def xs = client.getExchangeBindingsBySource("/", "")
 
         then: "there is an automatic binding for hop.queue1"
-        final x = xs.filter( { b -> b.source == "" && b.destinationType == "queue" && b.destination == q } )
+        def x = xs.filter( { b -> b.source == "" && b.destinationType == "queue" && b.destination == q } )
         x.hasElements().block()
 
         cleanup:
@@ -1983,15 +1983,15 @@ class ReactorNettyClientSpec extends Specification {
 
     def "PUT /api/exchanges/{vhost}/{name} when vhost exists"() {
         given: "fanout exchange hop.test in vhost /"
-        final v = "/"
-        final s = "hop.test"
+        def v = "/"
+        def s = "hop.test"
         client.declareExchange(v, s, new ExchangeInfo("fanout", false, false)).block()
 
         when: "client lists exchanges in vhost /"
-        final xs = client.getExchanges(v)
+        def xs = client.getExchanges(v)
 
         then: "hop.test is listed"
-        final x = xs.filter( { e -> e.name == s } )
+        def x = xs.filter( { e -> e.name == s } )
         verifyExchangeInfo(x.blockFirst())
 
         cleanup:
@@ -2000,15 +2000,15 @@ class ReactorNettyClientSpec extends Specification {
 
     def "GET /api/parameters/federation-upstream declare and get at root vhost with non-null ack mode"() {
         given: "an upstream"
-        final vhost = "/"
-        final upstreamName = "upstream1"
+        def vhost = "/"
+        def upstreamName = "upstream1"
         UpstreamDetails upstreamDetails = new UpstreamDetails()
         upstreamDetails.setUri("amqp://localhost:5672")
         upstreamDetails.setAckMode(AckMode.ON_CONFIRM)
         client.declareUpstream(vhost, upstreamName, upstreamDetails).block()
 
         when: "client requests the upstreams"
-        final upstreams = awaitEventPropagation { client.getUpstreams() }
+        def upstreams = awaitEventPropagation { client.getUpstreams() }
 
         then: "list of upstreams that contains the new upstream is returned and ack mode is correctly retrieved"
         verifyUpstreamDefinitions(vhost, upstreams, upstreamName)
@@ -2021,12 +2021,12 @@ class ReactorNettyClientSpec extends Specification {
 
     def "GET /api/parameters/federation-upstream declare and get at root vhost"() {
         given: "an upstream"
-        final vhost = "/"
-        final upstreamName = "upstream1"
+        def vhost = "/"
+        def upstreamName = "upstream1"
         declareUpstream(client, vhost, upstreamName)
 
         when: "client requests the upstreams"
-        final upstreams = awaitEventPropagation { client.getUpstreams() }
+        def upstreams = awaitEventPropagation { client.getUpstreams() }
 
         then: "list of upstreams that contains the new upstream is returned"
         verifyUpstreamDefinitions(vhost, upstreams, upstreamName)
@@ -2037,13 +2037,13 @@ class ReactorNettyClientSpec extends Specification {
 
     def "GET /api/parameters/federation-upstream declare and get at non-root vhost"() {
         given: "an upstream"
-        final vhost = "foo"
-        final upstreamName = "upstream2"
+        def vhost = "foo"
+        def upstreamName = "upstream2"
         client.createVhost(vhost).block()
         declareUpstream(client, vhost, upstreamName)
 
         when: "client requests the upstreams"
-        final upstreams = awaitEventPropagation { client.getUpstreams(vhost) }
+        def upstreams = awaitEventPropagation { client.getUpstreams(vhost) }
 
         then: "list of upstreams that contains the new upstream is returned"
         verifyUpstreamDefinitions(vhost, upstreams, upstreamName)
@@ -2066,8 +2066,8 @@ class ReactorNettyClientSpec extends Specification {
 
     def "DELETE /api/parameters/federation-upstream/{vhost}/{name}"() {
         given: "upstream upstream4 in vhost /"
-        final vhost = "/"
-        final upstreamName = "upstream4"
+        def vhost = "/"
+        def upstreamName = "upstream4"
         declareUpstream(client, vhost, upstreamName)
 
         def upstreams = awaitEventPropagation { client.getUpstreams() }
@@ -2085,20 +2085,20 @@ class ReactorNettyClientSpec extends Specification {
 
     def "GET /api/parameters/federation-upstream-set declare and get"() {
         given: "an upstream set with two upstreams"
-        final vhost = "/"
-        final upstreamSetName = "upstream-set-1"
-        final upstreamA = "A"
-        final upstreamB = "B"
-        final policyName = "federation-policy"
+        def vhost = "/"
+        def upstreamSetName = "upstream-set-1"
+        def upstreamA = "A"
+        def upstreamB = "B"
+        def policyName = "federation-policy"
         declareUpstream(client, vhost, upstreamA)
         declareUpstream(client, vhost, upstreamB)
-        final d1 = new UpstreamSetDetails()
+        def d1 = new UpstreamSetDetails()
         d1.setUpstream(upstreamA)
         d1.setExchange("amq.direct")
-        final d2 = new UpstreamSetDetails()
+        def d2 = new UpstreamSetDetails()
         d2.setUpstream(upstreamB)
         d2.setExchange("amq.fanout")
-        final detailsSet = new ArrayList()
+        def detailsSet = new ArrayList()
         detailsSet.add(d1)
         detailsSet.add(d2)
         client.declareUpstreamSet(vhost, upstreamSetName, detailsSet).block()
@@ -2140,8 +2140,8 @@ class ReactorNettyClientSpec extends Specification {
 
     def "PUT /api/parameters/federation-upstream-set without upstreams"() {
         given: "an Upstream without upstream uri"
-        final upstreamSetDetails = new UpstreamSetDetails()
-        final detailsSet = new ArrayList()
+        def upstreamSetDetails = new UpstreamSetDetails()
+        def detailsSet = new ArrayList()
         detailsSet.add(upstreamSetDetails)
 
         when: "client tries to declare an Upstream"
@@ -2153,8 +2153,8 @@ class ReactorNettyClientSpec extends Specification {
 
     def "GET /api/vhost-limits"() {
         given: "several virtual hosts with limits"
-        final vhost1 = "virtual-host-with-limits-1"
-        final vhost2 = "virtual-host-with-limits-2"
+        def vhost1 = "virtual-host-with-limits-1"
+        def vhost2 = "virtual-host-with-limits-2"
         client.createVhost(vhost1).block()
         client.createVhost(vhost2).block()
         client.limitMaxNumberOfQueues(vhost1, 100).block()
@@ -2165,7 +2165,7 @@ class ReactorNettyClientSpec extends Specification {
         client.limitMaxNumberOfConnections("/", 30).block()
 
         when: "client tries to look up limits"
-        final limits = client.getVhostLimits().collectList().block()
+        def limits = client.getVhostLimits().collectList().block()
 
         then: "limits match the definitions"
         limits.size() == 3
@@ -2190,7 +2190,7 @@ class ReactorNettyClientSpec extends Specification {
         given: "the default configuration"
 
         when: "client tries to look up limits"
-        final limits = client.getVhostLimits().collectList().block()
+        def limits = client.getVhostLimits().collectList().block()
 
         then: "it should return one row for the default virtual host"
         limits.size() == 1
@@ -2201,13 +2201,13 @@ class ReactorNettyClientSpec extends Specification {
 
     def "GET /api/vhost-limits/{vhost}"() {
         given: "a virtual host with limits"
-        final vhost = "virtual-host-with-limits"
+        def vhost = "virtual-host-with-limits"
         client.createVhost(vhost).block()
         client.limitMaxNumberOfQueues(vhost, 100).block()
         client.limitMaxNumberOfConnections(vhost, 10).block()
 
         when: "client tries to look up limits for this virtual host"
-        final limits = client.getVhostLimits(vhost).block()
+        def limits = client.getVhostLimits(vhost).block()
 
         then: "limits match the definitions"
         limits.maxQueues == 100
@@ -2219,11 +2219,11 @@ class ReactorNettyClientSpec extends Specification {
 
     def "GET /api/vhost-limits/{vhost} vhost with no limits"() {
         given: "a virtual host without limits"
-        final vhost = "virtual-host-without-limits"
+        def vhost = "virtual-host-without-limits"
         client.createVhost(vhost).block()
 
         when: "client tries to look up limits for this virtual host"
-        final limits = client.getVhostLimits(vhost).block()
+        def limits = client.getVhostLimits(vhost).block()
 
         then: "limits are set to -1"
         limits.maxQueues == -1
@@ -2235,7 +2235,7 @@ class ReactorNettyClientSpec extends Specification {
 
     def "GET /api/vhost-limits/{vhost} with non-existing vhost"() {
         given: "a virtual host that does not exist"
-        final vhost = "virtual-host-that-does-not-exist"
+        def vhost = "virtual-host-that-does-not-exist"
 
         when: "client tries to look up limits for this virtual host"
         client.getVhostLimits(vhost).block()
@@ -2250,7 +2250,7 @@ class ReactorNettyClientSpec extends Specification {
 
     def "DELETE /api/vhost-limits/{vhost}/max-queues"() {
         given: "a virtual host with max queues limit"
-        final vhost = "virtual-host-max-queues-limit"
+        def vhost = "virtual-host-max-queues-limit"
         client.createVhost(vhost).block()
         client.limitMaxNumberOfQueues(vhost, 42).block()
 
@@ -2267,7 +2267,7 @@ class ReactorNettyClientSpec extends Specification {
 
     def "DELETE /api/vhost-limits/{vhost}/max-connections"() {
         given: "a virtual host with max connections limit"
-        final vhost = "virtual-host-max-connections-limit"
+        def vhost = "virtual-host-max-connections-limit"
         client.createVhost(vhost).block()
         client.limitMaxNumberOfConnections(vhost, 42).block()
 
@@ -2284,7 +2284,7 @@ class ReactorNettyClientSpec extends Specification {
 
     def "DELETE /api/vhost-limits/{vhost} with only one limit"() {
         given: "a virtual host with max queues and connections limits"
-        final vhost = "virtual-host-max-queues-connections-limits"
+        def vhost = "virtual-host-max-queues-connections-limits"
         client.createVhost(vhost).block()
         client.limitMaxNumberOfQueues(vhost, 314).block()
         client.limitMaxNumberOfConnections(vhost, 42).block()
@@ -2311,7 +2311,7 @@ class ReactorNettyClientSpec extends Specification {
     }
 
     protected Connection openConnection(String username, String password) {
-        final cf = new ConnectionFactory()
+        def cf = new ConnectionFactory()
         cf.setUsername(username)
         cf.setPassword(password)
         cf.newConnection()

@@ -9,15 +9,12 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
-import org.junit.Assert;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
+import java.util.stream.Stream;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 
-@RunWith(Parameterized.class)
 public class HttpLayerTest {
-
-  @Parameterized.Parameter public TestConfiguration testConfiguration;
 
   static ClassLoader isolatedClassLoader(List<String> toFilter) {
     String classpath = System.getProperty("java.class.path");
@@ -52,21 +49,20 @@ public class HttpLayerTest {
         : Integer.valueOf(System.getProperty("rabbitmq.management.port"));
   }
 
-  @Parameterized.Parameters
-  public static Object[] testConfigurations() {
-    return new Object[] {
-      new TestConfiguration(OkHttpSmokeApplication.class, Arrays.asList("httpclient"), false),
-      new TestConfiguration(HttpComponentsSmokeApplication.class, Arrays.asList("okhttp"), false),
-      new TestConfiguration(
-          JdkSmokeApplication.class, Arrays.asList("okhttp", "httpclient"), false),
-      new TestConfiguration(OkHttpSmokeApplication.class, Arrays.asList("okhttp"), true),
-      new TestConfiguration(
-          HttpComponentsSmokeApplication.class, Arrays.asList("httpclient"), true),
-    };
+  static Stream<TestConfiguration> httpLayer() {
+    return Stream.of(
+        new TestConfiguration(OkHttpSmokeApplication.class, Arrays.asList("httpclient"), false),
+        new TestConfiguration(HttpComponentsSmokeApplication.class, Arrays.asList("okhttp"), false),
+        new TestConfiguration(
+            JdkSmokeApplication.class, Arrays.asList("okhttp", "httpclient"), false),
+        new TestConfiguration(OkHttpSmokeApplication.class, Arrays.asList("okhttp"), true),
+        new TestConfiguration(
+            HttpComponentsSmokeApplication.class, Arrays.asList("httpclient"), true));
   }
 
-  @Test
-  public void httpLayer() throws Exception {
+  @ParameterizedTest
+  @MethodSource
+  void httpLayer(TestConfiguration testConfiguration) throws Exception {
     ClassLoader classLoader = isolatedClassLoader(testConfiguration.toFilter);
 
     Class<?> testClass = classLoader.loadClass(testConfiguration.testClass.getName());
@@ -74,7 +70,7 @@ public class HttpLayerTest {
     if (testConfiguration.shouldFail) {
       try {
         testMethod.invoke(null);
-        Assert.fail();
+        Assertions.fail();
       } catch (Exception e) {
         // OK
       }
