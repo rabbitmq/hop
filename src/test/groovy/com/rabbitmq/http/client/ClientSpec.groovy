@@ -2055,7 +2055,7 @@ class ClientSpec extends Specification {
   }
 
   @Unroll
-  def "GET /api/definitions (version, vhosts, users, permissions, topic permissions)"() {
+  def "GET /api/definitions (version, vhosts, permissions, topic permissions)"() {
     when: "client requests the definitions"
     Definitions d = client.getDefinitions()
 
@@ -2067,9 +2067,6 @@ class ClientSpec extends Specification {
     !d.getVhosts().isEmpty()
     d.getVhosts().get(0).getName() != null
     !d.getVhosts().get(0).getName().isEmpty()
-    !d.getUsers().isEmpty()
-    d.getUsers().get(0).getName() != null
-    !d.getUsers().get(0).getName().isEmpty()
     !d.getPermissions().isEmpty()
     d.getPermissions().get(0).getUser() != null
     !d.getPermissions().get(0).getUser().isEmpty()
@@ -2077,6 +2074,21 @@ class ClientSpec extends Specification {
       d.getTopicPermissions().get(0).getUser() != null
       !d.getTopicPermissions().get(0).getUser().isEmpty()
     }
+
+    where:
+    client << clients()
+  }
+
+  @Unroll
+  def "GET /api/definitions (users)"() {
+    when: "client requests the definitions"
+    Definitions d = client.getDefinitions()
+
+    then: "user definitions are returned"
+    !d.getUsers().isEmpty()
+    !d.getUsers().get(0).getTags().isEmpty()
+    d.getUsers().get(0).getName() != null
+    !d.getUsers().get(0).getName().isEmpty()
 
     where:
     client << clients()

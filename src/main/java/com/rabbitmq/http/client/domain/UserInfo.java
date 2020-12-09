@@ -58,7 +58,7 @@ public class UserInfo {
     return tags;
   }
 
-  @JsonIgnore
+  @JsonProperty("tags")
   public void setTags(List<String> tags) {
     this.tags = tags;
   }
