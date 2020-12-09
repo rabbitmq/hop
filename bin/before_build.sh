@@ -3,6 +3,12 @@
 CTL=${HOP_RABBITMQCTL:="sudo rabbitmqctl"}
 PLUGINS=${HOP_RABBITMQ_PLUGINS:="sudo rabbitmq-plugins"}
 
+case $CTL in
+        DOCKER*)
+          PLUGINS="docker exec ${CTL##*:} rabbitmq-plugins"
+          CTL="docker exec ${CTL##*:} rabbitmqctl";;
+esac
+
 $PLUGINS enable rabbitmq_management
 
 sleep 3

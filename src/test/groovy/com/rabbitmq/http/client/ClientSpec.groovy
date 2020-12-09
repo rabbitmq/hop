@@ -2733,7 +2733,6 @@ class ClientSpec extends Specification {
   protected static void verifyConnectionInfo(ConnectionInfo info) {
     assert info.port == ConnectionFactory.DEFAULT_AMQP_PORT
     assert !info.usesTLS
-    assert info.peerHost == info.host
   }
 
   protected static void verifyChannelInfo(ChannelInfo chi, Channel ch) {
