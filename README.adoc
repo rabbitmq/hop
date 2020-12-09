@@ -359,7 +359,7 @@ changes with less of a delay.
 To run the tests:
 
 ```sh
-./gradlew check
+./mvnw test
 ```
 
 The test suite assumes RabbitMQ is running locally with
@@ -377,7 +377,7 @@ The test suite can use a different port than 15672 by specifying it with the
 `rabbitmq.management.port` system property:
 
 ``` sh
-./gradlew check -Drabbitmq.management.port=15673
+./mvnw test -Drabbitmq.management.port=15673
 ```
 
 == Versioning
