@@ -18,8 +18,12 @@ package com.rabbitmq.http.client
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.rabbitmq.http.client.domain.QueueInfo
+import com.rabbitmq.http.client.domain.UserInfo
 import spock.lang.Specification
 import spock.lang.Unroll
+
+import java.nio.file.Files
+import java.nio.file.Paths
 
 
 class JsonMappingSpec extends Specification {
@@ -79,6 +83,37 @@ class JsonMappingSpec extends Specification {
 
     where:
     mapper << mappers()
+  }
+
+  @Unroll
+  def "User object with a tag array (RabbitMQ 3.9.0+)"() {
+    when: "User object with a tag array"
+    def s = readJSONDocumentResource("json/user_with_tags_as_an_array.json")
+    def u = mapper.readValue(s, UserInfo.class)
+
+    then: "the field value should be an array in the Java object"
+    u.tags == ["administrator"]
+
+    where:
+    mapper << mappers()
+  }
+
+  @Unroll
+  def "User object with a comman-separated tag list (versions prior to 3.9.0)"() {
+    when: "User object with a comma-separate tag list"
+    def s = readJSONDocumentResource("json/user_with_tags_as_a_comma_separated_list.json")
+    def u = mapper.readValue(s, UserInfo.class)
+
+    then: "the field value should be an array in the Java object"
+    u.tags == ["administrator", "impersonator"]
+
+    where:
+    mapper << mappers()
+  }
+
+  def String readJSONDocumentResource(String name) {
+    def resource = UserInfo.getClassLoader().getResource(name)
+    return new String(Files.readAllBytes(Paths.get(resource.toURI())))
   }
 
   static final String JSON_QUEUE_NO_READY_MESSAGES =
@@ -287,5 +322,4 @@ class JsonMappingSpec extends Specification {
           "  \"type\": \"quorum\",\n" +
           "  \"vhost\": \"/\"\n" +
           "}"
-
 }

@@ -22,6 +22,8 @@ import com.fasterxml.jackson.databind.MapperFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.rabbitmq.http.client.domain.*;
+import com.rabbitmq.http.client.json.UserInfoDeserializer;
+import com.rabbitmq.http.client.json.VhostLimitsDeserializer;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufOutputStream;
 import io.netty.buffer.PooledByteBufAllocator;
@@ -140,7 +142,8 @@ public class ReactorNettyClient {
         objectMapper.disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
         objectMapper.disable(MapperFeature.DEFAULT_VIEW_INCLUSION);
         SimpleModule module = new SimpleModule();
-        module.addDeserializer(VhostLimits.class, Utils.VHOST_LIMITS_JSON_DESERIALIZER);
+        module.addDeserializer(VhostLimits.class, VhostLimitsDeserializer.INSTANCE)
+              .addDeserializer(UserInfo.class, UserInfoDeserializer.INSTANCE);
         objectMapper.registerModule(module);
         return objectMapper;
     }

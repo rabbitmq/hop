@@ -30,6 +30,13 @@ public class UserInfo {
   private String hashingAlgorithm;
   private List<String> tags;
 
+  public UserInfo(String name, String passwordHash, String hashingAlgorithm, List<String> tags) {
+    this.name = name;
+    this.passwordHash = passwordHash;
+    this.hashingAlgorithm = hashingAlgorithm;
+    this.tags = tags;
+  }
+
   public String getName() {
     return name;
   }
