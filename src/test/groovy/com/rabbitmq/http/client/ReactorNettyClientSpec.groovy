@@ -486,7 +486,7 @@ class ReactorNettyClientSpec extends Specification {
         def vhost = c.getVhost(s)
 
         then: "the result is empty and the response handling code has been called"
-        vhost.hasElement().block() == false
+        !vhost.hasElement().block()
         waitAtMostUntilTrue(5, { called.get()})
     }
 
@@ -707,7 +707,7 @@ class ReactorNettyClientSpec extends Specification {
         def xs = client.getPermissions()
 
         then: "they include permissions for user guest in vhost /"
-        def UserPermissions x = xs
+        UserPermissions x = xs
                 .filter( { perm -> perm.vhost.equals("/") && perm.user.equals(s)})
                 .blockFirst()
         x.read == ".*"
@@ -717,7 +717,7 @@ class ReactorNettyClientSpec extends Specification {
         when: "permissions of user guest in vhost / are listed"
         def u = "guest"
         def v = "/"
-        def UserPermissions x = client.getPermissions(v, u).block()
+        UserPermissions x = client.getPermissions(v, u).block()
 
         then: "a single permissions object is returned"
         x.read == ".*"
@@ -730,7 +730,7 @@ class ReactorNettyClientSpec extends Specification {
         def xs = client.getTopicPermissions()
 
         then: "they include topic permissions for user guest in vhost /"
-        def TopicPermissions x = xs
+        TopicPermissions x = xs
                 .filter( { perm -> perm.vhost.equals("/") && perm.user.equals(s)})
                 .blockFirst()
         x.exchange == "amq.topic"
@@ -745,7 +745,7 @@ class ReactorNettyClientSpec extends Specification {
         def xs = client.getTopicPermissions(v, u)
 
         then: "a list of permissions objects is returned"
-        def TopicPermissions x = xs
+        TopicPermissions x = xs
                 .filter( { perm -> perm.vhost.equals(v) && perm.user.equals(u)})
                 .blockFirst()
         x.exchange == "amq.topic"
@@ -796,7 +796,7 @@ class ReactorNettyClientSpec extends Specification {
         client.updatePermissions(v, u, new UserPermissions("read", "write", "configure")).block()
 
         and: "permissions are reloaded"
-        def UserPermissions x = client.getPermissions(v, u).block()
+        UserPermissions x = client.getPermissions(v, u).block()
 
         then: "a single permissions object is returned"
         x.read == "read"
@@ -822,7 +822,7 @@ class ReactorNettyClientSpec extends Specification {
         // so we handle both 404 and the error
         def status = client.updatePermissions(v, u, new UserPermissions("read", "write", "configure"))
                 .flatMap({ r -> Mono.just(r.status) })
-                .onErrorReturn({ t -> "Connection prematurely closed BEFORE response".equals(t.getMessage()) }, 500)
+                .onErrorReturn({ t -> ("Connection prematurely closed BEFORE response" == t.getMessage()) }, 500)
                 .block()
 
         then: "HTTP status is 400 BAD REQUEST or exception is thrown"
@@ -842,7 +842,7 @@ class ReactorNettyClientSpec extends Specification {
 
         and: "permissions of user guest in vhost / are set"
         client.updatePermissions(v, u, new UserPermissions("read", "write", "configure")).block()
-        def UserPermissions x = client.getPermissions(v, u).block()
+        UserPermissions x = client.getPermissions(v, u).block()
         x.read == "read"
 
         when: "permissions are cleared"
@@ -897,7 +897,7 @@ class ReactorNettyClientSpec extends Specification {
         client.updateTopicPermissions(v, u, new TopicPermissions("amq.topic", "read", "write")).block()
 
         and: "permissions are reloaded"
-        def TopicPermissions x = client.getTopicPermissions(v, u).blockFirst()
+        TopicPermissions x = client.getTopicPermissions(v, u).blockFirst()
 
         then: "a list with a single topic permissions object is returned"
         x.exchange == "amq.topic"
@@ -926,7 +926,7 @@ class ReactorNettyClientSpec extends Specification {
         def status = client.updateTopicPermissions(v, u, new TopicPermissions("amq.topic", "read", "write"))
                 .flatMap({ r -> Mono.just(r.status) })
 
-                .onErrorReturn({ t -> "Connection prematurely closed BEFORE response".equals(t.getMessage()) }, 500)
+                .onErrorReturn({ t -> ("Connection prematurely closed BEFORE response" == t.getMessage()) }, 500)
                 .block()
 
         then: "HTTP status is 400 BAD REQUEST or exception is thrown"
@@ -948,7 +948,7 @@ class ReactorNettyClientSpec extends Specification {
 
         and: "permissions of user guest in vhost / are set"
         client.updateTopicPermissions(v, u, new TopicPermissions("amq.topic", "read", "write")).block()
-        def TopicPermissions x = client.getTopicPermissions(v, u).blockFirst()
+        TopicPermissions x = client.getTopicPermissions(v, u).blockFirst()
         x.exchange == "amq.topic"
         x.read == "read"
 
@@ -1033,7 +1033,7 @@ class ReactorNettyClientSpec extends Specification {
 
     def "GET /api/cluster-name"() {
         when: "client fetches cluster name"
-        def ClusterId s = client.getClusterName().block()
+        ClusterId s = client.getClusterName().block()
 
         then: "cluster name is returned"
         s.getName() != null
@@ -1041,16 +1041,16 @@ class ReactorNettyClientSpec extends Specification {
 
     def "PUT /api/cluster-name"() {
         given: "cluster name"
-        def String s = client.getClusterName().block().name
+        String s = client.getClusterName().block().name
 
         when: "cluster name is set to rabbit@warren"
         client.setClusterName("rabbit@warren").block()
 
         and: "cluster name is reloaded"
-        def String x = client.getClusterName().block().name
+        String x = client.getClusterName().block().name
 
         then: "the name is updated"
-        x.equals("rabbit@warren")
+        x == "rabbit@warren"
 
         cleanup:
         client.setClusterName(s).block()
@@ -1091,9 +1091,9 @@ class ReactorNettyClientSpec extends Specification {
 
     def "GET /api/queues"() {
         given: "at least one queue was declared"
-        def Connection conn = cf.newConnection()
-        def Channel ch = conn.createChannel()
-        def String q = ch.queueDeclare().queue
+        Connection conn = cf.newConnection()
+        Channel ch = conn.createChannel()
+        String q = ch.queueDeclare().queue
 
         when: "client lists queues"
         def xs = client.getQueues()
@@ -1109,9 +1109,9 @@ class ReactorNettyClientSpec extends Specification {
 
     def "GET /api/queues/{vhost} when vhost exists"() {
         given: "at least one queue was declared in vhost /"
-        def Connection conn = cf.newConnection()
-        def Channel ch = conn.createChannel()
-        def String q = ch.queueDeclare().queue
+        Connection conn = cf.newConnection()
+        Channel ch = conn.createChannel()
+        String q = ch.queueDeclare().queue
 
         when: "client lists queues"
         def xs = client.getQueues("/")
@@ -1140,9 +1140,9 @@ class ReactorNettyClientSpec extends Specification {
 
     def "GET /api/queues/{vhost}/{name} when both vhost and queue exist"() {
         given: "a queue was declared in vhost /"
-        def Connection conn = cf.newConnection()
-        def Channel ch = conn.createChannel()
-        def String q = ch.queueDeclare().queue
+        Connection conn = cf.newConnection()
+        Channel ch = conn.createChannel()
+        String q = ch.queueDeclare().queue
 
         when: "client fetches info of the queue"
         def x = client.getQueue("/", q).block()
@@ -1159,11 +1159,11 @@ class ReactorNettyClientSpec extends Specification {
 
     def "GET /api/queues/{vhost}/{name} with an exclusive queue"() {
         given: "an exclusive queue named hop.q1.exclusive"
-        def Connection conn = cf.newConnection()
-        def Channel ch = conn.createChannel()
+        Connection conn = cf.newConnection()
+        Channel ch = conn.createChannel()
         String s = "hop.q1.exclusive"
         ch.queueDelete(s)
-        def String q = ch.queueDeclare(s, false, true, false, null).queue
+        String q = ch.queueDeclare(s, false, true, false, null).queue
 
         when: "client fetches info of the queue"
         def x = client.getQueue("/", q).block()
@@ -1178,9 +1178,9 @@ class ReactorNettyClientSpec extends Specification {
 
     def "GET /api/queues/{vhost}/{name} when queue DOES NOT exist"() {
         given: "queue lolwut does not exist in vhost /"
-        def Connection conn = cf.newConnection()
-        def Channel ch = conn.createChannel()
-        def String q = "lolwut"
+        Connection conn = cf.newConnection()
+        Channel ch = conn.createChannel()
+        String q = "lolwut"
         ch.queueDelete(q)
 
         when: "client fetches info of the queue"
@@ -1257,7 +1257,7 @@ class ReactorNettyClientSpec extends Specification {
         // so we handle both 404 and the error
         def status = client.declareQueue(v, s, new QueueInfo(false, false, false))
                 .flatMap({ r -> Mono.just(r.status) })
-                .onErrorReturn({ t -> "Connection prematurely closed BEFORE response".equals(t.getMessage()) }, 500)
+                .onErrorReturn({ t -> ("Connection prematurely closed BEFORE response" == t.getMessage()) }, 500)
                 .block()
 
         then: "status code is 404 or exception is thrown"
@@ -1265,7 +1265,7 @@ class ReactorNettyClientSpec extends Specification {
     }
 
     def "DELETE /api/queues/{vhost}/{name}"() {
-        def String s = UUID.randomUUID().toString()
+        String s = UUID.randomUUID().toString()
         given: "queue ${s} in vhost /"
         def v = "/"
         client.declareQueue(v, s, new QueueInfo(false, false, false)).block()
@@ -1286,7 +1286,7 @@ class ReactorNettyClientSpec extends Specification {
     }
 
     def "DELETE /api/queues/{vhost}/{name}?if-empty=true"() {
-        def String queue = UUID.randomUUID().toString()
+        String queue = UUID.randomUUID().toString()
         given: "queue ${queue} in vhost /"
         def v = "/"
         client.declareQueue(v, queue, new QueueInfo(false, false, false)).block()
@@ -1302,7 +1302,7 @@ class ReactorNettyClientSpec extends Specification {
         when: "client tries to delete queue ${queue} in vhost /"
         def status = client.deleteQueue(v, queue, new DeleteQueueParameters(true, false))
                 .flatMap({ r -> Mono.just(r.status) })
-                .onErrorReturn({ t -> "Connection prematurely closed BEFORE response".equals(t.getMessage()) }, 500)
+                .onErrorReturn({ t -> ("Connection prematurely closed BEFORE response" == t.getMessage()) }, 500)
                 .block()
 
         then: "HTTP status is 400 BAD REQUEST"
@@ -1314,18 +1314,18 @@ class ReactorNettyClientSpec extends Specification {
 
     def "GET /api/bindings"() {
         given: "3 queues bound to amq.fanout"
-        def Connection conn = cf.newConnection()
-        def Channel ch = conn.createChannel()
-        def String x  = 'amq.fanout'
-        def String q1 = ch.queueDeclare().queue
-        def String q2 = ch.queueDeclare().queue
-        def String q3 = ch.queueDeclare().queue
+        Connection conn = cf.newConnection()
+        Channel ch = conn.createChannel()
+        String x  = 'amq.fanout'
+        String q1 = ch.queueDeclare().queue
+        String q2 = ch.queueDeclare().queue
+        String q3 = ch.queueDeclare().queue
         ch.queueBind(q1, x, "")
         ch.queueBind(q2, x, "")
         ch.queueBind(q3, x, "")
 
         when: "all queue bindings are listed"
-        def Flux<BindingInfo> xs = client.getBindings()
+        Flux<BindingInfo> xs = client.getBindings()
 
         then: "amq.fanout bindings are listed"
         xs.filter( { b -> b.destinationType.equals("queue") && b.source.equals(x) } )
@@ -1340,16 +1340,16 @@ class ReactorNettyClientSpec extends Specification {
 
     def "GET /api/bindings/{vhost}"() {
         given: "2 queues bound to amq.topic in vhost /"
-        def Connection conn = cf.newConnection()
-        def Channel ch = conn.createChannel()
-        def String x  = 'amq.topic'
-        def String q1 = ch.queueDeclare().queue
-        def String q2 = ch.queueDeclare().queue
+        Connection conn = cf.newConnection()
+        Channel ch = conn.createChannel()
+        String x  = 'amq.topic'
+        String q1 = ch.queueDeclare().queue
+        String q2 = ch.queueDeclare().queue
         ch.queueBind(q1, x, "hop.*")
         ch.queueBind(q2, x, "api.test.#")
 
         when: "all queue bindings are listed"
-        def Flux<BindingInfo> xs = client.getBindings("/")
+        Flux<BindingInfo> xs = client.getBindings("/")
 
         then: "amq.fanout bindings are listed"
         xs.filter( { b -> b.destinationType.equals("queue") && b.source.equals(x) } )
@@ -1363,15 +1363,15 @@ class ReactorNettyClientSpec extends Specification {
 
     def "GET /api/bindings/{vhost} example 2"() {
         given: "queues hop.test bound to amq.topic in vhost /"
-        def Connection conn = cf.newConnection()
-        def Channel ch = conn.createChannel()
-        def String x  = 'amq.topic'
-        def String q  = "hop.test"
+        Connection conn = cf.newConnection()
+        Channel ch = conn.createChannel()
+        String x  = 'amq.topic'
+        String q  = "hop.test"
         ch.queueDeclare(q, false, false, false, null)
         ch.queueBind(q, x, "hop.*")
 
         when: "all queue bindings are listed"
-        def Flux<BindingInfo> xs = client.getBindings("/")
+        Flux<BindingInfo> xs = client.getBindings("/")
 
         then: "the amq.fanout binding is listed"
         xs.filter( { b -> b.destinationType.equals("queue") &&
@@ -1385,15 +1385,15 @@ class ReactorNettyClientSpec extends Specification {
 
     def "GET /api/queues/{vhost}/{name}/bindings"() {
         given: "queues hop.test bound to amq.topic in vhost /"
-        def Connection conn = cf.newConnection()
-        def Channel ch = conn.createChannel()
-        def String x  = 'amq.topic'
-        def String q  = "hop.test"
+        Connection conn = cf.newConnection()
+        Channel ch = conn.createChannel()
+        String x  = 'amq.topic'
+        String q  = "hop.test"
         ch.queueDeclare(q, false, false, false, null)
         ch.queueBind(q, x, "hop.*")
 
         when: "all queue bindings are listed"
-        def Flux<BindingInfo> xs = client.getQueueBindings("/", q)
+        Flux<BindingInfo> xs = client.getQueueBindings("/", q)
 
         then: "the amq.fanout binding is listed"
         xs.filter( { b-> b.destinationType.equals("queue") &&
@@ -1407,15 +1407,15 @@ class ReactorNettyClientSpec extends Specification {
 
     def "GET /api/bindings/{vhost}/e/:exchange/q/:queue"() {
         given: "queues hop.test bound to amq.topic in vhost /"
-        def Connection conn = cf.newConnection()
-        def Channel ch = conn.createChannel()
-        def String x  = 'amq.topic'
-        def String q  = "hop.test"
+        Connection conn = cf.newConnection()
+        Channel ch = conn.createChannel()
+        String x  = 'amq.topic'
+        String q  = "hop.test"
         ch.queueDeclare(q, false, false, false, null)
         ch.queueBind(q, x, "hop.*")
 
         when: "bindings between hop.test and amq.topic are listed"
-        def Flux<BindingInfo> xs = client.getQueueBindingsBetween("/", x, q)
+        Flux<BindingInfo> xs = client.getQueueBindingsBetween("/", x, q)
 
         then: "the amq.fanout binding is listed"
         def b = xs.blockFirst()
@@ -1431,15 +1431,15 @@ class ReactorNettyClientSpec extends Specification {
 
     def "GET /api/bindings/{vhost}/e/:source/e/:destination"() {
         given: "fanout exchange hop.test bound to amq.fanout in vhost /"
-        def Connection conn = cf.newConnection()
-        def Channel ch = conn.createChannel()
-        def String s  = 'amq.fanout'
-        def String d  = "hop.test"
+        Connection conn = cf.newConnection()
+        Channel ch = conn.createChannel()
+        String s  = 'amq.fanout'
+        String d  = "hop.test"
         ch.exchangeDeclare(d, "fanout", false)
         ch.exchangeBind(d, s, "")
 
         when: "bindings between hop.test and amq.topic are listed"
-        def Flux<BindingInfo> xs = client.getExchangeBindingsBetween("/", s, d)
+        Flux<BindingInfo> xs = client.getExchangeBindingsBetween("/", s, d)
 
         then: "the amq.topic binding is listed"
         def b = xs.blockFirst()
@@ -1456,14 +1456,14 @@ class ReactorNettyClientSpec extends Specification {
     def "POST /api/bindings/{vhost}/e/:source/e/:destination"() {
         given: "fanout hop.test bound to amq.fanout in vhost /"
         def v = "/"
-        def String s  = 'amq.fanout'
-        def String d  = "hop.test"
+        String s  = 'amq.fanout'
+        String d  = "hop.test"
         client.deleteExchange(v, d).block()
         client.declareExchange(v, d, new ExchangeInfo("fanout", false, false)).block()
         client.bindExchange(v, d, s, "", [arg1: 'value1', arg2: 'value2']).block()
 
         when: "bindings between hop.test and amq.fanout are listed"
-        def Flux<BindingInfo> xs = client.getExchangeBindingsBetween(v, s, d)
+        Flux<BindingInfo> xs = client.getExchangeBindingsBetween(v, s, d)
 
         then: "the amq.fanout binding is listed"
         def b = xs.blockFirst()
@@ -1483,13 +1483,13 @@ class ReactorNettyClientSpec extends Specification {
     def "POST /api/bindings/{vhost}/e/:exchange/q/:queue"() {
         given: "queues hop.test bound to amq.topic in vhost /"
         def v = "/"
-        def String x  = 'amq.topic'
-        def String q  = "hop.test"
+        String x  = 'amq.topic'
+        String q  = "hop.test"
         client.declareQueue(v, q, new QueueInfo(false, false, false)).block()
         client.bindQueue(v, q, x, "", [arg1: 'value1', arg2: 'value2']).block()
 
         when: "bindings between hop.test and amq.topic are listed"
-        def Flux<BindingInfo> xs = client.getQueueBindingsBetween(v, x, q)
+        Flux<BindingInfo> xs = client.getQueueBindingsBetween(v, x, q)
 
         then: "the amq.fanout binding is listed"
         def b = xs.blockFirst()
@@ -1533,7 +1533,7 @@ class ReactorNettyClientSpec extends Specification {
         ch.waitForConfirms(5_000)
 
         when: "client GETs from this queue"
-        def Flux<InboundMessage> messages = client.get(v, q, messageCount, GetAckMode.NACK_REQUEUE_TRUE, GetEncoding.AUTO, -1)
+        Flux<InboundMessage> messages = client.get(v, q, messageCount, GetAckMode.NACK_REQUEUE_TRUE, GetEncoding.AUTO, -1)
             .cache() // we cache the flux to avoid sending the requests several times when counting, getting the first message, etc.
                      // no doing would result in redelivered = true
 
@@ -1587,8 +1587,8 @@ class ReactorNettyClientSpec extends Specification {
 
     def "DELETE /api/queues/{vhost}/{name}/contents"() {
         given: "queue hop.test with 10 messages"
-        def Connection conn = cf.newConnection()
-        def Channel ch = conn.createChannel()
+        Connection conn = cf.newConnection()
+        Channel ch = conn.createChannel()
         def q = "hop.test"
         ch.queueDelete(q)
         ch.queueDeclare(q, false, false, false, null)

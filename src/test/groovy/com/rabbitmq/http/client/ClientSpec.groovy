@@ -19,6 +19,7 @@ package com.rabbitmq.http.client
 import com.rabbitmq.client.*
 import com.rabbitmq.http.client.domain.*
 import groovy.json.JsonSlurper
+import org.apache.http.HttpRequest
 import org.apache.http.HttpRequestInterceptor
 import org.apache.http.auth.AuthScope
 import org.apache.http.client.protocol.HttpClientContext
@@ -102,7 +103,7 @@ class ClientSpec extends Specification {
   }
 
   static String url() {
-    return "http://127.0.0.1:" + managementPort() + "/api/";
+    return "http://127.0.0.1:" + managementPort() + "/api/"
   }
 
   static int managementPort() {
@@ -117,8 +118,8 @@ class ClientSpec extends Specification {
     def localClient = new Client("http://test+user:test%40password@localhost:" + managementPort() + "/api/", { builder ->
       builder.addInterceptorLast(new HttpRequestInterceptor() {
         @Override
-        void process(org.apache.http.HttpRequest request, HttpContext context) throws org.apache.http.HttpException, IOException {
-          HttpClientContext httpCtx = (HttpContext) context
+        void process(HttpRequest request, HttpContext context) throws org.apache.http.HttpException, IOException {
+          HttpClientContext httpCtx = (HttpContext) context as HttpClientContext
           def credentials = httpCtx.getCredentialsProvider().getCredentials(new AuthScope(AuthScope.ANY_HOST, AuthScope.ANY_PORT))
           usernamePassword.set(credentials.getUserPrincipal().name + ":" + credentials.getPassword())
         }
@@ -129,7 +130,7 @@ class ClientSpec extends Specification {
 
     try {
       localClient.getOverview()
-    } catch (Exception e) {
+    } catch (Exception ignored) {
       // OK
     }
 
@@ -257,7 +258,7 @@ class ClientSpec extends Specification {
 
     when: "client retrieves a list of connections"
 
-    def ConnectionInfo[] res = awaitEventPropagation({ client.getConnections() }) as ConnectionInfo[]
+    ConnectionInfo[] res = awaitEventPropagation({ client.getConnections() }) as ConnectionInfo[]
     def fst = res.first()
 
     then: "the list is returned"
@@ -278,7 +279,7 @@ class ClientSpec extends Specification {
 
     when: "client retrieves connection info with the correct name"
 
-    def ConnectionInfo[] xs = awaitEventPropagation({ client.getConnections() }) as ConnectionInfo[]
+    ConnectionInfo[] xs = awaitEventPropagation({ client.getConnections() }) as ConnectionInfo[]
     def x = client.getConnection(xs.first().name)
 
     then: "the info is returned"
@@ -432,7 +433,7 @@ class ClientSpec extends Specification {
     })
     def cn = xs.first().name
 
-    def ChannelInfo[] chs = awaitEventPropagation({ client.getChannels(cn) }) as ChannelInfo[]
+    ChannelInfo[] chs = awaitEventPropagation({ client.getChannels(cn) }) as ChannelInfo[]
     def chi = chs.first()
 
     then: "the list is returned"
@@ -462,7 +463,7 @@ class ClientSpec extends Specification {
       (it.clientProperties.connectionName == s)
     })
     def cn = xs.first().name
-    def ChannelInfo[] chs = awaitEventPropagation({ client.getChannels(cn) }) as ChannelInfo[]
+    ChannelInfo[] chs = awaitEventPropagation({ client.getChannels(cn) }) as ChannelInfo[]
     def chi = client.getChannel(chs.first().name)
 
     then: "the info is returned"
@@ -525,7 +526,7 @@ class ClientSpec extends Specification {
     def xs = client.getExchange("/", "amq.fanout")
 
     then: "exchange info is returned"
-    def ExchangeInfo x = (ExchangeInfo)xs.find { it.name == "amq.fanout" && it.vhost == "/" }
+    ExchangeInfo x = (ExchangeInfo)xs.find { it.name == "amq.fanout" && it.vhost == "/" }
     verifyExchangeInfo(x)
 
     where:
@@ -679,9 +680,9 @@ class ClientSpec extends Specification {
   @Unroll
   def "GET /api/queues"() {
     given: "at least one queue was declared"
-    def Connection conn = cf.newConnection()
-    def Channel ch = conn.createChannel()
-    def String q = ch.queueDeclare().queue
+    Connection conn = cf.newConnection()
+    Channel ch = conn.createChannel()
+    String q = ch.queueDeclare().queue
 
     when: "client lists queues"
     def xs = client.getQueues()
@@ -701,9 +702,9 @@ class ClientSpec extends Specification {
   @Unroll
   def "GET /api/queues/{vhost} when vhost exists"() {
     given: "at least one queue was declared in vhost /"
-    def Connection conn = cf.newConnection()
-    def Channel ch = conn.createChannel()
-    def String q = ch.queueDeclare().queue
+    Connection conn = cf.newConnection()
+    Channel ch = conn.createChannel()
+    String q = ch.queueDeclare().queue
 
     when: "client lists queues"
     def xs = client.getQueues("/")
@@ -739,9 +740,9 @@ class ClientSpec extends Specification {
   @Unroll
   def "GET /api/queues/{vhost}/{name} when both vhost and queue exist"() {
     given: "a queue was declared in vhost /"
-    def Connection conn = cf.newConnection()
-    def Channel ch = conn.createChannel()
-    def String q = ch.queueDeclare().queue
+    Connection conn = cf.newConnection()
+    Channel ch = conn.createChannel()
+    String q = ch.queueDeclare().queue
 
     when: "client fetches info of the queue"
     def x = client.getQueue("/", q)
@@ -762,11 +763,11 @@ class ClientSpec extends Specification {
   @Unroll
   def "GET /api/queues/{vhost}/{name} with an exclusive queue"() {
     given: "an exclusive queue named hop.q1.exclusive"
-    def Connection conn = cf.newConnection()
-    def Channel ch = conn.createChannel()
+    Connection conn = cf.newConnection()
+    Channel ch = conn.createChannel()
     String s = "hop.q1.exclusive"
     ch.queueDelete(s)
-    def String q = ch.queueDeclare(s, false, true, false, null).queue
+    String q = ch.queueDeclare(s, false, true, false, null).queue
 
     when: "client fetches info of the queue"
     def x = client.getQueue("/", q)
