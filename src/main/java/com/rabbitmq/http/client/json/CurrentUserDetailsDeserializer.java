@@ -20,7 +20,6 @@ public class CurrentUserDetailsDeserializer extends StdDeserializer<CurrentUserD
 
     public static final String USERNAME_FIELD = "name";
     public static final String TAGS_FIELD = "tags";
-    public static final String AUTH_BACKEND_FIELD = "auth_backend";
 
     private CurrentUserDetailsDeserializer() {
         super(UserInfo.class);
@@ -30,15 +29,11 @@ public class CurrentUserDetailsDeserializer extends StdDeserializer<CurrentUserD
     public CurrentUserDetails deserialize(JsonParser jp, DeserializationContext ctxt) throws IOException {
         JsonNode node = jp.getCodec().readTree(jp);
 
-        return new CurrentUserDetails(getUsername(node), getTags(node), getAuthBackend(node));
+        return new CurrentUserDetails(getUsername(node), getTags(node));
     }
 
     private String getUsername(JsonNode node) {
         return node.get(USERNAME_FIELD).asText();
-    }
-
-    private String getAuthBackend(JsonNode node) {
-        return node.get(AUTH_BACKEND_FIELD).asText();
     }
 
     private List<String> getTags(JsonNode node) {

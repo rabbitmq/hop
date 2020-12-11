@@ -25,13 +25,10 @@ import java.util.List;
 public class CurrentUserDetails {
   private String name;
   private List<String> tags;
-  @JsonProperty("auth_backend")
-  private String authBackend;
 
-  public CurrentUserDetails(String name, List<String> tags, String authBackend) {
+  public CurrentUserDetails(String name, List<String> tags) {
     this.name = name;
     this.tags = tags;
-    this.authBackend = authBackend;
   }
 
   public String getName() {
@@ -56,20 +53,11 @@ public class CurrentUserDetails {
     this.tags = Arrays.asList(tags.split(","));
   }
 
-  public String getAuthBackend() {
-    return authBackend;
-  }
-
-  public void setAuthBackend(String authBackend) {
-    this.authBackend = authBackend;
-  }
-
   @Override
   public String toString() {
     return "CurrentUserDetails{" +
         "name='" + name + '\'' +
         ", tags='" + tags + '\'' +
-        ", authBackend='" + authBackend + '\'' +
         '}';
   }
 }
