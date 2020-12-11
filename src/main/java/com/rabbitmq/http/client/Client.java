@@ -20,6 +20,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.rabbitmq.http.client.domain.*;
+import com.rabbitmq.http.client.json.CurrentUserDetailsDeserializer;
 import com.rabbitmq.http.client.json.UserInfoDeserializer;
 import com.rabbitmq.http.client.json.VhostLimitsDeserializer;
 import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
@@ -1310,6 +1311,7 @@ public class Client {
         .featuresToEnable(DeserializationFeature.ACCEPT_EMPTY_ARRAY_AS_NULL_OBJECT)
         .deserializerByType(VhostLimits.class, VhostLimitsDeserializer.INSTANCE)
         .deserializerByType(UserInfo.class, UserInfoDeserializer.INSTANCE)
+        .deserializerByType(CurrentUserDetails.class, CurrentUserDetailsDeserializer.INSTANCE)
         .build();
   }
 

@@ -698,7 +698,7 @@ class ReactorNettyClientSpec extends Specification {
 
         then: "the details are returned"
         res.name == DEFAULT_USERNAME
-        res.tags ==~ /administrator/
+        res.tags.contains("administrator")
     }
 
     def "GET /api/permissions"() {
