@@ -98,7 +98,6 @@ class ClientSpec extends Specification {
     def c = new Client(url(), DEFAULT_USERNAME, DEFAULT_PASSWORD)
     c.getConnections().each { c.closeConnection(it.getName())}
     awaitAllConnectionsClosed(c)
-    c.getConnections().each { println(it.getName())}
     brokerVersion = c.getOverview().getServerVersion()
   }
 

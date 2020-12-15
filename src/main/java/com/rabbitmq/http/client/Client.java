@@ -20,9 +20,6 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.rabbitmq.http.client.domain.*;
-import com.rabbitmq.http.client.json.CurrentUserDetailsDeserializer;
-import com.rabbitmq.http.client.json.UserInfoDeserializer;
-import com.rabbitmq.http.client.json.VhostLimitsDeserializer;
 import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpEntity;
@@ -1309,9 +1306,9 @@ public class Client {
         .json()
         .serializationInclusion(JsonInclude.Include.NON_NULL)
         .featuresToEnable(DeserializationFeature.ACCEPT_EMPTY_ARRAY_AS_NULL_OBJECT)
-        .deserializerByType(VhostLimits.class, VhostLimitsDeserializer.INSTANCE)
-        .deserializerByType(UserInfo.class, UserInfoDeserializer.INSTANCE)
-        .deserializerByType(CurrentUserDetails.class, CurrentUserDetailsDeserializer.INSTANCE)
+        .deserializerByType(VhostLimits.class, JsonUtils.VHOST_LIMITS_DESERIALIZER_INSTANCE)
+        .deserializerByType(UserInfo.class, JsonUtils.USER_INFO_DESERIALIZER_INSTANCE)
+        .deserializerByType(CurrentUserDetails.class, JsonUtils.CURRENT_USER_DETAILS_DESERIALIZER_INSTANCE)
         .build();
   }
 

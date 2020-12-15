@@ -16,16 +16,9 @@
 
 package com.rabbitmq.http.client;
 
-import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.databind.DeserializationContext;
-import com.fasterxml.jackson.databind.JsonDeserializer;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.deser.std.StdDeserializer;
 import com.rabbitmq.http.client.domain.OutboundMessage;
-import com.rabbitmq.http.client.domain.VhostLimits;
 import org.springframework.util.StringUtils;
 
-import java.io.IOException;
 import java.io.UnsupportedEncodingException;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -40,7 +33,9 @@ import java.util.Map;
 /**
  *
  */
-class Utils {
+final class Utils {
+
+    private Utils() { }
 
     private static final Charset CHARSET_UTF8 = Charset.forName("UTF-8");
 
