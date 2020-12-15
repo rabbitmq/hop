@@ -18,12 +18,18 @@ package com.rabbitmq.http.client.domain;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import java.util.Arrays;
+import java.util.List;
+
 @SuppressWarnings("unused")
 public class CurrentUserDetails {
   private String name;
-  private String tags;
-  @JsonProperty("auth_backend")
-  private String authBackend;
+  private List<String> tags;
+
+  public CurrentUserDetails(String name, List<String> tags) {
+    this.name = name;
+    this.tags = tags;
+  }
 
   public String getName() {
     return name;
@@ -33,20 +39,18 @@ public class CurrentUserDetails {
     this.name = name;
   }
 
-  public String getTags() {
+  public List<String> getTags() {
     return tags;
   }
 
-  public void setTags(String tags) {
+  @JsonProperty("tags")
+  public void setTags(List<String> tags) {
     this.tags = tags;
   }
 
-  public String getAuthBackend() {
-    return authBackend;
-  }
-
-  public void setAuthBackend(String authBackend) {
-    this.authBackend = authBackend;
+  @JsonProperty("tags")
+  public void setTags(String tags) {
+    this.tags = Arrays.asList(tags.split(","));
   }
 
   @Override
@@ -54,7 +58,6 @@ public class CurrentUserDetails {
     return "CurrentUserDetails{" +
         "name='" + name + '\'' +
         ", tags='" + tags + '\'' +
-        ", authBackend='" + authBackend + '\'' +
         '}';
   }
 }

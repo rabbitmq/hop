@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 the original author or authors.
+ * Copyright 2019-2020 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,9 +18,9 @@ package com.rabbitmq.http.client
 
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.rabbitmq.http.client.domain.QueueInfo
+import com.rabbitmq.http.client.domain.UserInfo
 import spock.lang.Specification
 import spock.lang.Unroll
-
 
 class JsonMappingSpec extends Specification {
 
@@ -80,6 +80,81 @@ class JsonMappingSpec extends Specification {
     where:
     mapper << mappers()
   }
+
+  @Unroll
+  def "user tags should be deserialized from array (RabbitMQ 3.9+) or string (prior to RabbitMQ 3.9)"() {
+    when: "JSON document for user with user tags as array or as string"
+    def u = mapper.readValue(json, UserInfo.class)
+
+    then: "the Java object should be filled accordingly"
+    u.tags == ["monitoring", "management"]
+
+    where:
+    mapper << mappers() + mappers()
+    json << [
+            JSON_USER_WITH_USER_TAGS_AS_ARRAY, JSON_USER_WITH_USER_TAGS_AS_STRING,
+            JSON_USER_WITH_USER_TAGS_AS_STRING, JSON_USER_WITH_USER_TAGS_AS_ARRAY,
+
+    ]
+  }
+
+  @Unroll
+  def "user tags should be deserialized from empty array (RabbitMQ 3.9) or empty string (prior to RabbitMQ 3.9)"() {
+    when: "JSON document for user with user tags as empty array or as empty string"
+    def u = mapper.readValue(json, UserInfo.class)
+
+    then: "the user tags list of Java object is empty"
+    u.tags == []
+
+    where:
+    mapper << mappers() + mappers()
+    json << [
+            JSON_USER_WITH_USER_TAGS_AS_EMPTY_ARRAY, JSON_USER_WITH_USER_TAGS_AS_EMPTY_STRING,
+            JSON_USER_WITH_USER_TAGS_AS_EMPTY_STRING, JSON_USER_WITH_USER_TAGS_AS_EMPTY_ARRAY,
+
+    ]
+  }
+
+  // RabbitMQ 3.9+
+  static final String JSON_USER_WITH_USER_TAGS_AS_ARRAY =
+          "{\n" +
+                  "      \"name\": \"user-management\",\n" +
+                  "      \"password_hash\": \"z9+SFmbi/MyQuz11Xwr5dgb5s6/tw00GIQR4NNYZWMDrQu3E\",\n" +
+                  "      \"hashing_algorithm\": \"rabbit_password_hashing_sha256\",\n" +
+                  "      \"tags\": [\n" +
+                  "        \"monitoring\",\n" +
+                  "        \"management\"\n" +
+                  "      ],\n" +
+                  "      \"limits\": {}\n" +
+                  "    }"
+
+  // RabbitMQ 3.8-
+  static final String JSON_USER_WITH_USER_TAGS_AS_STRING =
+          "{\n" +
+                  "      \"name\": \"user-management\",\n" +
+                  "      \"password_hash\": \"AEejMbwFJBmSqG+OUd1hT1wvuLmOoJQ02xkzYzLsDe3iY1HQ\",\n" +
+                  "      \"hashing_algorithm\": \"rabbit_password_hashing_sha256\",\n" +
+                  "      \"tags\": \"monitoring,management\"\n" +
+                  "    }"
+
+  // RabbitMQ 3.9+
+  static final String JSON_USER_WITH_USER_TAGS_AS_EMPTY_ARRAY =
+          "{\n" +
+                  "      \"name\": \"user-management\",\n" +
+                  "      \"password_hash\": \"z9+SFmbi/MyQuz11Xwr5dgb5s6/tw00GIQR4NNYZWMDrQu3E\",\n" +
+                  "      \"hashing_algorithm\": \"rabbit_password_hashing_sha256\",\n" +
+                  "      \"tags\": [],\n" +
+                  "      \"limits\": {}\n" +
+                  "    }"
+
+  // RabbitMQ 3.8-
+  static final String JSON_USER_WITH_USER_TAGS_AS_EMPTY_STRING =
+          "{\n" +
+                  "      \"name\": \"user-management\",\n" +
+                  "      \"password_hash\": \"AEejMbwFJBmSqG+OUd1hT1wvuLmOoJQ02xkzYzLsDe3iY1HQ\",\n" +
+                  "      \"hashing_algorithm\": \"rabbit_password_hashing_sha256\",\n" +
+                  "      \"tags\": \"\"\n" +
+                  "    }"
 
   static final String JSON_QUEUE_NO_READY_MESSAGES =
           "   {\n" +
@@ -287,5 +362,4 @@ class JsonMappingSpec extends Specification {
           "  \"type\": \"quorum\",\n" +
           "  \"vhost\": \"/\"\n" +
           "}"
-
 }

@@ -1306,7 +1306,9 @@ public class Client {
         .json()
         .serializationInclusion(JsonInclude.Include.NON_NULL)
         .featuresToEnable(DeserializationFeature.ACCEPT_EMPTY_ARRAY_AS_NULL_OBJECT)
-        .deserializerByType(VhostLimits.class, Utils.VHOST_LIMITS_JSON_DESERIALIZER)
+        .deserializerByType(VhostLimits.class, JsonUtils.VHOST_LIMITS_DESERIALIZER_INSTANCE)
+        .deserializerByType(UserInfo.class, JsonUtils.USER_INFO_DESERIALIZER_INSTANCE)
+        .deserializerByType(CurrentUserDetails.class, JsonUtils.CURRENT_USER_DETAILS_DESERIALIZER_INSTANCE)
         .build();
   }
 
