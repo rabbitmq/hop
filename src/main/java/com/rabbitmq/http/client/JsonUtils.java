@@ -84,6 +84,7 @@ final class JsonUtils {
 
   private abstract static class UserDeserializer<T> extends StdDeserializer<T> {
 
+    private static final long serialVersionUID = 3473030985825959020L;
     protected static final String USERNAME_FIELD = "name";
     protected static final String TAGS_FIELD = "tags";
 
