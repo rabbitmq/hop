@@ -1,4 +1,4 @@
-@GrabResolver(name = 'rabbitmq-bintray', root = 'https://dl.bintray.com/rabbitmq/maven')
+@GrabResolver(name = 'ossrh-staging', root = 'https://oss.sonatype.org/content/groups/staging/')
 @GrabResolver(name = 'rabbitmq-packagecloud-milestones', root = 'https://packagecloud.io/rabbitmq/maven-milestones/maven2')
 @Grab(group = 'com.rabbitmq', module = 'http-client', version = "${version}")
 @Grab(group = 'org.springframework', module = 'spring-web', version = "5.3.0")
