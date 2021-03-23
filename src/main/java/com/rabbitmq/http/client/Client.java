@@ -20,6 +20,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.rabbitmq.http.client.domain.*;
+import org.apache.http.client.utils.URIBuilder;
 import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpEntity;
@@ -576,6 +577,12 @@ public class Client {
   public QueueInfo getQueue(String vhost, String name) {
     final URI uri = uriWithPath("./queues/" + encodePathSegment(vhost) + "/" + encodePathSegment(name));
     return this.getForObjectReturningNullOn404(uri, QueueInfo.class);
+  }
+
+  public QueuePagination getQueues(QueryParameters queryParameters) {
+    final URI uri = uriWithPath("./queues/", queryParameters);
+    return (queryParameters.pagination().hasAny()) ? this.rt.getForObject(uri, QueuePagination.class) :
+        new QueuePagination(this.rt.getForObject(uri, QueueInfo[].class));
   }
 
   public void declarePolicy(String vhost, String name, PolicyInfo info) {
@@ -1277,6 +1284,13 @@ public class Client {
    */
   private URI uriWithPath(final String path) {
     return this.rootUri.resolve(path);
+  }
+  private URI uriWithPath(final String path, QueryParameters queryParameters) {
+    try {
+      return queryParameters.appendToURI(new URIBuilder(rootUri.resolve(path))).build();
+    } catch (URISyntaxException e) {
+      throw new RuntimeException(e);
+    }
   }
 
   private URI uriWithPath(final String path, final Map<String, String> queryParams) {

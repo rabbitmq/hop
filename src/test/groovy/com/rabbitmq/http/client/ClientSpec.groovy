@@ -832,6 +832,7 @@ class ClientSpec extends Specification {
     client << clients()
   }
 
+
   @Unroll
   def "PUT /api/policies/{vhost}/{name}"() {
     given: "vhost / and definition"
