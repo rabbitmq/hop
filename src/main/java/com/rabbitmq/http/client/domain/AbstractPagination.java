@@ -40,6 +40,7 @@ public abstract class AbstractPagination {
         itemCount = totalItems;
         totalCount = totalItems;
         pageCount = 1;
+        page = 1;
         pageSize = totalItems;
         filteredCount = totalItems;
     }
