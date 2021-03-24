@@ -699,6 +699,29 @@ class ClientSpec extends Specification {
   }
 
   @Unroll
+  def "GET /api/queues with paging"() {
+    given: "at least one queue was declared"
+    Connection conn = cf.newConnection()
+    Channel ch = conn.createChannel()
+    String q = ch.queueDeclare().queue
+
+    when: "client lists queues"
+    def queryParameters = new QueryParameters().pagination().setPageSize(10).query();
+    def pagedXs = client.getQueues(queryParameters)
+
+    then: "a list of paged queues is returned"
+    def x = pagedXs.itemsAsList.first();
+    verifyQueueInfo(x)
+
+    cleanup:
+    ch.queueDelete(q)
+    conn.close()
+
+    where:
+    client << clients()
+  }
+
+  @Unroll
   def "GET /api/queues/{vhost} when vhost exists"() {
     given: "at least one queue was declared in vhost /"
     Connection conn = cf.newConnection()
@@ -831,6 +854,7 @@ class ClientSpec extends Specification {
     where:
     client << clients()
   }
+
 
   @Unroll
   def "PUT /api/policies/{vhost}/{name}"() {
@@ -2811,6 +2835,11 @@ class ClientSpec extends Specification {
     assert x.durable != null
     assert x.exclusive != null
     assert x.autoDelete != null
+  }
+  protected static void verifyQueuePagination(QueuePagination x, int expectedPage, int expectedPageCount) {
+    assert x.page == expectedPage
+    assert x.pageCount == expectedPageCount
+    assert x.itemCount == x.items.length
   }
 
   static boolean isVersion36orLater(String currentVersion) {
