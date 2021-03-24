@@ -36,4 +36,7 @@ $PLUGINS enable rabbitmq_shovel_management
 $PLUGINS enable rabbitmq_federation
 $PLUGINS enable rabbitmq_federation_management
 
+# So that virtual host descriptions are available
+$CTL enable_feature_flag all
+
 true
