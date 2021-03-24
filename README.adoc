@@ -5,6 +5,7 @@
 :reactor-netty-version: 1.0.0
 :http-client-version: 4.5.13
 :okhttp-version: 3.14.9
+:httpclient-version: 4.5.13
 
 = Hop, Java Client for the RabbitMQ HTTP API
 
@@ -62,6 +63,11 @@ If you want to use the **blocking IO client**, add the following dependencies:
   <artifactId>jackson-databind</artifactId>
   <version>{jackson-version}</version>
 </dependency>
+<dependency>
+  <groupId>org.apache.httpcomponents</groupId>
+  <artifactId>httpclient</artifactId>
+  <version>{httpclient-version}</version>
+</dependency>
 ----
 
 If you want to use the **reactive, non-blocking IO client**, add the following dependencies:
@@ -95,6 +101,7 @@ If you want to use the **blocking IO client**, add the following dependencies:
 ----
 compile "com.rabbitmq:http-client:{hop-version}"
 compile "org.springframework:spring-web:{spring-version}"
+compile "org.apache.httpcomponents:httpclient:{httpclient-version}"
 compile "com.fasterxml.jackson.core:jackson-databind:{jackson-version}"
 ----
 
@@ -184,27 +191,6 @@ Client client = new Client(
 );
 ----
 
-This requires to add Apache HTTP Components on the classpath.
-
-For Maven:
-
-.pom.xml
-[source,xml,subs="attributes,specialcharacters"]
-----
-<dependency>
-  <groupId>org.apache.httpcomponents</groupId>
-  <artifactId>httpclient</artifactId>
-  <version>{http-client-version}</version>
-</dependency>
-----
-
-For Gradle:
-
-.build.gradle
-[source,groovy,subs="attributes,specialcharacters"]
-----
-compile "org.apache.httpcomponents:httpclient:{http-client-version}"
-----
 
 ==== OkHttp
 
