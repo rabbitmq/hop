@@ -1,6 +1,8 @@
 package com.rabbitmq.http.client.domain;
 
+import java.util.Arrays;
 import java.util.Collection;
+import java.util.List;
 
 public class QueuePagination extends AbstractPagination {
     private QueueInfo[] items;
@@ -16,6 +18,10 @@ public class QueuePagination extends AbstractPagination {
 
     public QueueInfo[] getItems() {
         return items;
+    }
+
+    public List<QueueInfo> getItemsAsList() {
+        return Arrays.asList(items);
     }
 
     public void setItems(QueueInfo[] items) {

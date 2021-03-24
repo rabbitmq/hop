@@ -318,6 +318,19 @@ public class Client {
   }
 
   /**
+   * Retrieves state and metrics information for all client connections across the cluster
+   * using query parameters
+   *
+   * @param queryParameters
+   * @return list of connections across the cluster
+   */
+  public ConnectionPagination getConnections(QueryParameters queryParameters) {
+    final URI uri = uriWithPath("./connections/", queryParameters);
+    return (queryParameters.pagination().hasAny()) ? this.rt.getForObject(uri, ConnectionPagination.class) :
+            new ConnectionPagination(this.rt.getForObject(uri, ConnectionInfo[].class));
+  }
+
+  /**
    * Retrieves state and metrics information for individual client connection.
    *
    * @param name connection name
@@ -363,6 +376,19 @@ public class Client {
   public List<ChannelInfo> getChannels() {
     final URI uri = uriWithPath("./channels/");
     return Arrays.asList(this.rt.getForObject(uri, ChannelInfo[].class));
+  }
+
+  /**
+   * Retrieves state and metrics information for all channels across the cluster.
+   * using query parameters
+   *
+   * @param queryParameters
+   * @return list of channels across the cluster
+   */
+  public ChannelPagination getChannels(QueryParameters queryParameters) {
+    final URI uri = uriWithPath("./channels/", queryParameters);
+    return (queryParameters.pagination().hasAny()) ? this.rt.getForObject(uri, ChannelPagination.class) :
+            new ChannelPagination(this.rt.getForObject(uri, ChannelInfo[].class));
   }
 
   /**
@@ -505,6 +531,12 @@ public class Client {
   public List<ExchangeInfo> getExchanges() {
     final URI uri = uriWithPath("./exchanges/");
     return Arrays.asList(this.rt.getForObject(uri, ExchangeInfo[].class));
+  }
+
+  public ExchangePagination getExchanges(QueryParameters queryParameters) {
+    final URI uri = uriWithPath("./exchange/", queryParameters);
+    return (queryParameters.pagination().hasAny()) ? this.rt.getForObject(uri, ExchangePagination.class) :
+            new ExchangePagination(this.rt.getForObject(uri, ExchangeInfo[].class));
   }
 
   public List<ExchangeInfo> getExchanges(String vhost) {
