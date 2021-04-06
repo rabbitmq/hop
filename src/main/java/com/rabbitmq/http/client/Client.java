@@ -534,7 +534,7 @@ public class Client {
   }
 
   public ExchangePagination getExchanges(QueryParameters queryParameters) {
-    final URI uri = uriWithPath("./exchange/", queryParameters);
+    final URI uri = uriWithPath("./exchanges/", queryParameters);
     return (queryParameters.pagination().hasAny()) ? this.rt.getForObject(uri, ExchangePagination.class) :
             new ExchangePagination(this.rt.getForObject(uri, ExchangeInfo[].class));
   }
@@ -543,6 +543,12 @@ public class Client {
     final URI uri = uriWithPath("./exchanges/" + encodePathSegment(vhost));
     final ExchangeInfo[] result = this.getForObjectReturningNullOn404(uri, ExchangeInfo[].class);
     return asListOrNull(result);
+  }
+
+  public ExchangePagination getExchanges(String vhost, QueryParameters queryParameters) {
+    final URI uri = uriWithPath("./exchanges/" + encodePathSegment(vhost), queryParameters);
+    return (queryParameters.pagination().hasAny()) ? this.rt.getForObject(uri, ExchangePagination.class) :
+            new ExchangePagination(this.rt.getForObject(uri, ExchangeInfo[].class));
   }
 
   public ExchangeInfo getExchange(String vhost, String name) {
@@ -604,6 +610,12 @@ public class Client {
     final URI uri = uriWithPath("./queues/" + encodePathSegment(vhost));
     final QueueInfo[] result = this.getForObjectReturningNullOn404(uri, QueueInfo[].class);
     return asListOrNull(result);
+  }
+
+  public QueuePagination getQueues(String vhost, QueryParameters queryParameters) {
+    final URI uri = uriWithPath("./queues/" + encodePathSegment(vhost), queryParameters);
+    return (queryParameters.pagination().hasAny()) ? this.rt.getForObject(uri, QueuePagination.class) :
+            new QueuePagination(this.rt.getForObject(uri, QueueInfo[].class));
   }
 
   public QueueInfo getQueue(String vhost, String name) {
