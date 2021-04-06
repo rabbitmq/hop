@@ -491,6 +491,23 @@ class ClientSpec extends Specification {
   }
 
   @Unroll
+  def "GET /api/exchanges with paging"() {
+    given: "at least one exchange was declared"
+    Connection conn = cf.newConnection()
+
+    when: "client lists exchanges"
+    def queryParameters = new QueryParameters().pagination().setPageSize(10).query();
+    def pagedXs = client.getExchanges("/", queryParameters)
+
+    then: "a list of paged exchanges is returned"
+    def x = pagedXs.itemsAsList.find { (it.name == "amq.fanout") }
+    verifyExchangeInfo(x)
+
+    where:
+    client << clients()
+  }
+
+  @Unroll
   def "GET /api/exchanges/{vhost} when vhost exists"() {
     when: "client retrieves the list of exchanges in a particular vhost"
     def xs = client.getExchanges("/")
