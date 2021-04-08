@@ -19,8 +19,12 @@ package com.rabbitmq.http.client.domain;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Set;
+import java.util.function.BiFunction;
+import java.util.function.BinaryOperator;
 import org.apache.http.client.utils.URIBuilder;
 
 public class QueryParameters {
@@ -58,17 +62,23 @@ public class QueryParameters {
     return parameters.isEmpty();
   }
 
-  public URIBuilder appendToURI(URIBuilder builder) {
-    parameters.forEach(
-        (name, value) -> {
+  public Map<String, String> parameters() {
+    return parameters.entrySet().stream().reduce(new LinkedHashMap<>(),
+        (BiFunction<Map<String, String>, Entry<String, Object>, Map<String, String>>) (acc, entry) -> {
+          String name = entry.getKey();
+          Object value = entry.getValue();
           @SuppressWarnings("unchecked")
           String valueAsString =
               value instanceof Collection
                   ? String.join(",", (Iterable<String>) value)
                   : String.valueOf(value);
-          builder.addParameter(name, valueAsString);
-        });
-    return builder;
+          acc.put(name, valueAsString);
+          return acc;
+        }, (map1, map2) -> {
+          map1.putAll(map2);
+          return map1;
+        }
+    );
   }
 
   public class Columns {

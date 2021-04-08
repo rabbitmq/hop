@@ -17,6 +17,7 @@
 package com.rabbitmq.http.client;
 
 import com.rabbitmq.http.client.domain.OutboundMessage;
+import java.net.URLEncoder;
 import org.springframework.util.StringUtils;
 
 import java.io.UnsupportedEncodingException;
@@ -140,6 +141,14 @@ final class Utils {
             }
         }
         return buf.toString();
+    }
+
+    static String encodeHttpParameter(String value) {
+        try {
+            return URLEncoder.encode(value, CHARSET_UTF8.name());
+        } catch (UnsupportedEncodingException e) {
+          throw new IllegalStateException("Unknown charset for encoding", e);
+        }
     }
 
     static String encode(String content) {

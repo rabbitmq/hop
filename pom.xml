@@ -75,6 +75,7 @@
       <groupId>org.apache.httpcomponents</groupId>
       <artifactId>httpclient</artifactId>
       <version>${httpclient.version}</version>
+      <optional>true</optional>
     </dependency>
     <dependency>
       <groupId>com.squareup.okhttp3</groupId>

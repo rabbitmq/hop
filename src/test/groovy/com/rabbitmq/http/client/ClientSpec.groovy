@@ -562,7 +562,6 @@ class ClientSpec extends Specification {
   @Unroll
   def "GET /api/exchanges with paging"() {
     given: "at least one exchange was declared"
-    Connection conn = cf.newConnection()
 
     when: "client lists exchanges"
     def queryParameters = new QueryParameters().pagination().pageSize(10).query();
@@ -797,7 +796,7 @@ class ClientSpec extends Specification {
 
     when: "client lists queues"
     def queryParameters = new QueryParameters()
-            .name("queue-for-paging-test-*", true)
+            .name("^queue-for-paging-test-*", true)
             .pagination()
             .pageSize(10)
             .query()
@@ -833,7 +832,7 @@ class ClientSpec extends Specification {
 
     when: "client gets first page and then second page"
     def queryParameters = new QueryParameters()
-            .name("queue-for-paging-and-navigating-test-*", true)
+            .name("^queue-for-paging-and-navigating-test-*", true)
             .pagination()
             .pageSize(10)
             .query()

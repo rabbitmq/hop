@@ -20,8 +20,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.rabbitmq.http.client.domain.*;
-import java.lang.reflect.Type;
-import org.apache.http.client.utils.URIBuilder;
+import java.util.stream.Collectors;
 import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpEntity;
@@ -1349,10 +1348,13 @@ public class Client {
     return this.rootUri.resolve(path);
   }
   private URI uriWithPath(final String path, QueryParameters queryParameters) {
-    try {
-      return queryParameters.appendToURI(new URIBuilder(rootUri.resolve(path))).build();
-    } catch (URISyntaxException e) {
-      throw new RuntimeException(e);
+    Map<String, String> parameters = queryParameters.parameters();
+    if (parameters.isEmpty()) {
+      return uriWithPath(path);
+    } else {
+      String parametersString = parameters.entrySet().stream().map(entry ->
+          entry.getKey() + "=" + Utils.encodeHttpParameter(entry.getValue())).collect(Collectors.joining("&"));
+      return this.rootUri.resolve(path + "?" + parametersString);
     }
   }
 
