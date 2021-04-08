@@ -1,5 +1,5 @@
 /*
- * Copyright 2015-2020 the original author or authors.
+ * Copyright 2015-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.rabbitmq.http.client.domain.*;
+import java.lang.reflect.Type;
 import org.apache.http.client.utils.URIBuilder;
 import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
 import org.springframework.core.ParameterizedTypeReference;
@@ -324,10 +325,13 @@ public class Client {
    * @param queryParameters
    * @return list of connections across the cluster
    */
-  public ConnectionPagination getConnections(QueryParameters queryParameters) {
+  @SuppressWarnings("unchecked")
+  public Page<ConnectionInfo> getConnections(QueryParameters queryParameters) {
     final URI uri = uriWithPath("./connections/", queryParameters);
-    return (queryParameters.pagination().hasAny()) ? this.rt.getForObject(uri, ConnectionPagination.class) :
-            new ConnectionPagination(this.rt.getForObject(uri, ConnectionInfo[].class));
+    ParameterizedTypeReference<Page<ConnectionInfo>> type = new ParameterizedTypeReference<Page<ConnectionInfo>>() {
+    };
+    return (queryParameters.pagination().hasAny()) ? this.rt.exchange(uri, HttpMethod.GET, null, type).getBody() :
+        new Page(this.rt.getForObject(uri, ConnectionInfo[].class));
   }
 
   /**
@@ -385,10 +389,13 @@ public class Client {
    * @param queryParameters
    * @return list of channels across the cluster
    */
-  public ChannelPagination getChannels(QueryParameters queryParameters) {
+  @SuppressWarnings("unchecked")
+  public Page<ChannelInfo> getChannels(QueryParameters queryParameters) {
     final URI uri = uriWithPath("./channels/", queryParameters);
-    return (queryParameters.pagination().hasAny()) ? this.rt.getForObject(uri, ChannelPagination.class) :
-            new ChannelPagination(this.rt.getForObject(uri, ChannelInfo[].class));
+    ParameterizedTypeReference<Page<ChannelInfo>> type = new ParameterizedTypeReference<Page<ChannelInfo>>() {
+    };
+    return (queryParameters.pagination().hasAny()) ? this.rt.exchange(uri, HttpMethod.GET, null, type).getBody() :
+        new Page(this.rt.getForObject(uri, ChannelInfo[].class));
   }
 
   /**
@@ -533,10 +540,13 @@ public class Client {
     return Arrays.asList(this.rt.getForObject(uri, ExchangeInfo[].class));
   }
 
-  public ExchangePagination getExchanges(QueryParameters queryParameters) {
+  @SuppressWarnings("unchecked")
+  public Page<ExchangeInfo> getExchanges(QueryParameters queryParameters) {
     final URI uri = uriWithPath("./exchanges/", queryParameters);
-    return (queryParameters.pagination().hasAny()) ? this.rt.getForObject(uri, ExchangePagination.class) :
-            new ExchangePagination(this.rt.getForObject(uri, ExchangeInfo[].class));
+    ParameterizedTypeReference<Page<ExchangeInfo>> type = new ParameterizedTypeReference<Page<ExchangeInfo>>() {
+    };
+    return (queryParameters.pagination().hasAny()) ? this.rt.exchange(uri, HttpMethod.GET, null, type).getBody() :
+        new Page(this.rt.getForObject(uri, ExchangeInfo[].class));
   }
 
   public List<ExchangeInfo> getExchanges(String vhost) {
@@ -545,10 +555,13 @@ public class Client {
     return asListOrNull(result);
   }
 
-  public ExchangePagination getExchanges(String vhost, QueryParameters queryParameters) {
+  @SuppressWarnings("unchecked")
+  public Page<ExchangeInfo> getExchanges(String vhost, QueryParameters queryParameters) {
     final URI uri = uriWithPath("./exchanges/" + encodePathSegment(vhost), queryParameters);
-    return (queryParameters.pagination().hasAny()) ? this.rt.getForObject(uri, ExchangePagination.class) :
-            new ExchangePagination(this.rt.getForObject(uri, ExchangeInfo[].class));
+    ParameterizedTypeReference<Page<ExchangeInfo>> type = new ParameterizedTypeReference<Page<ExchangeInfo>>() {
+    };
+    return (queryParameters.pagination().hasAny()) ? this.rt.exchange(uri, HttpMethod.GET, null, type).getBody() :
+        new Page(this.rt.getForObject(uri, ExchangeInfo[].class));
   }
 
   public ExchangeInfo getExchange(String vhost, String name) {
@@ -612,10 +625,13 @@ public class Client {
     return asListOrNull(result);
   }
 
-  public QueuePagination getQueues(String vhost, QueryParameters queryParameters) {
+  @SuppressWarnings("unchecked")
+  public Page<QueueInfo> getQueues(String vhost, QueryParameters queryParameters) {
     final URI uri = uriWithPath("./queues/" + encodePathSegment(vhost), queryParameters);
-    return (queryParameters.pagination().hasAny()) ? this.rt.getForObject(uri, QueuePagination.class) :
-            new QueuePagination(this.rt.getForObject(uri, QueueInfo[].class));
+    ParameterizedTypeReference<Page<QueueInfo>> type = new ParameterizedTypeReference<Page<QueueInfo>>() {
+    };
+    return (queryParameters.pagination().hasAny()) ? this.rt.exchange(uri, HttpMethod.GET, null, type).getBody() :
+        new Page(this.rt.getForObject(uri, QueueInfo[].class));
   }
 
   public QueueInfo getQueue(String vhost, String name) {
@@ -623,10 +639,13 @@ public class Client {
     return this.getForObjectReturningNullOn404(uri, QueueInfo.class);
   }
 
-  public QueuePagination getQueues(QueryParameters queryParameters) {
+  @SuppressWarnings("unchecked")
+  public Page<QueueInfo> getQueues(QueryParameters queryParameters) {
     final URI uri = uriWithPath("./queues/", queryParameters);
-    return (queryParameters.pagination().hasAny()) ? this.rt.getForObject(uri, QueuePagination.class) :
-        new QueuePagination(this.rt.getForObject(uri, QueueInfo[].class));
+    ParameterizedTypeReference<Page<QueueInfo>> type = new ParameterizedTypeReference<Page<QueueInfo>>() {
+    };
+    return (queryParameters.pagination().hasAny()) ? this.rt.exchange(uri, HttpMethod.GET, null, type).getBody() :
+        new Page(this.rt.getForObject(uri, QueueInfo[].class));
   }
 
   public void declarePolicy(String vhost, String name, PolicyInfo info) {

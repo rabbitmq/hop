@@ -1,5 +1,5 @@
 /*
- * Copyright 2015-2020 the original author or authors.
+ * Copyright 2015-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -272,6 +272,40 @@ class ClientSpec extends Specification {
   }
 
   @Unroll
+  def "GET /api/connections with paging"(Client client) {
+    given: "some named RabbitMQ client connections"
+    def connections = (0..15).collect {it ->
+      def name = "list-connections-with-paging-test-" + it
+      def conn = openConnection(name)
+      conn
+    }
+
+    when: "client queries the first page of connections"
+    waitAtMostUntilTrue(10, {
+      client.getConnections().size() == connections.size()
+    })
+    def queryParameters = new QueryParameters()
+            .pagination()
+            .pageSize(10)
+            .query()
+    def page = client.getConnections(queryParameters)
+
+    then: "a list of paged connections is returned"
+    page.filteredCount == connections.size()
+    page.itemCount == 10
+    page.pageCount == 2
+    page.totalCount >= page.filteredCount
+    page.page == 1
+    verifyConnectionInfo(page.itemsAsList.first())
+
+    cleanup:
+    connections.forEach { it.close() }
+
+    where:
+    client << clients()
+  }
+
+  @Unroll
   def "GET /api/connections/{name}"(Client client) {
     given: "an open RabbitMQ client connection"
     def conn = openConnection()
@@ -417,6 +451,41 @@ class ClientSpec extends Specification {
   }
 
   @Unroll
+  def "GET /api/channels with paging"(Client client) {
+    given: "some AMQP channels"
+    def conn = openConnection()
+    def channels = (1..16).collect {it ->
+        conn.createChannel(it)
+    }
+
+    when: "client queries the first page of channels"
+    waitAtMostUntilTrue(10, {
+      client.getChannels().size() == channels.size()
+    })
+    def queryParameters = new QueryParameters()
+            .pagination()
+            .pageSize(10)
+            .query()
+    def page = client.getChannels(queryParameters)
+
+    then: "a list of paged channels is returned"
+    page.filteredCount == channels.size()
+    page.itemCount == 10
+    page.pageCount == 2
+    page.totalCount >= page.filteredCount
+    page.page == 1
+    def channelInfo = page.itemsAsList.first()
+    def originalChannel = channels.find {it.getChannelNumber() == channelInfo.getNumber() }
+    verifyChannelInfo(channelInfo, originalChannel)
+
+    cleanup:
+    conn.close()
+
+    where:
+    client << clients()
+  }
+
+  @Unroll
   def "GET /api/connections/{name}/channels/"(Client client) {
     given: "an open RabbitMQ client connection with 1 channel"
     def s = UUID.randomUUID().toString()
@@ -496,7 +565,7 @@ class ClientSpec extends Specification {
     Connection conn = cf.newConnection()
 
     when: "client lists exchanges"
-    def queryParameters = new QueryParameters().pagination().setPageSize(10).query();
+    def queryParameters = new QueryParameters().pagination().pageSize(10).query();
     def pagedXs = client.getExchanges("/", queryParameters)
 
     then: "a list of paged exchanges is returned"
@@ -720,18 +789,68 @@ class ClientSpec extends Specification {
     given: "at least one queue was declared"
     Connection conn = cf.newConnection()
     Channel ch = conn.createChannel()
-    String q = ch.queueDeclare().queue
+    def queues = (0..15).collect {it ->
+      def q = "queue-for-paging-test-" + it
+      ch.queueDeclare(q, false, false, false, null)
+      q
+    }
 
     when: "client lists queues"
-    def queryParameters = new QueryParameters().pagination().setPageSize(10).query();
-    def pagedXs = client.getQueues(queryParameters)
+    def queryParameters = new QueryParameters()
+            .name("queue-for-paging-test-*", true)
+            .pagination()
+            .pageSize(10)
+            .query()
+    def page = client.getQueues(queryParameters)
 
     then: "a list of paged queues is returned"
-    def x = pagedXs.itemsAsList.first();
+    page.filteredCount == queues.size()
+    page.itemCount == 10
+    page.pageCount == 2
+    page.totalCount >= page.filteredCount
+    page.page == 1
+    def x = page.itemsAsList.first();
     verifyQueueInfo(x)
 
     cleanup:
-    ch.queueDelete(q)
+    queues.forEach { ch.queueDelete(it) }
+    conn.close()
+
+    where:
+    client << clients()
+  }
+
+  @Unroll
+  def "GET /api/queues with paging and navigating"() {
+    given: "at least one queue was declared"
+    Connection conn = cf.newConnection()
+    Channel ch = conn.createChannel()
+    def queues = (0..15).collect {it ->
+      def q = "queue-for-paging-and-navigating-test-" + it
+      ch.queueDeclare(q, false, false, false, null)
+      q
+    }
+
+    when: "client gets first page and then second page"
+    def queryParameters = new QueryParameters()
+            .name("queue-for-paging-and-navigating-test-*", true)
+            .pagination()
+            .pageSize(10)
+            .query()
+    def page = client.getQueues(queryParameters)
+    page = client.getQueues(queryParameters.pagination().nextPage(page).query())
+
+    then: "the second page is returned"
+    page.filteredCount == queues.size()
+    page.itemCount == 6
+    page.pageCount == 2
+    page.totalCount >= page.filteredCount
+    page.page == 2
+    def x = page.itemsAsList.first();
+    verifyQueueInfo(x)
+
+    cleanup:
+    queues.forEach { ch.queueDelete(it) }
     conn.close()
 
     where:
@@ -2852,11 +2971,6 @@ class ClientSpec extends Specification {
     assert x.durable != null
     assert x.exclusive != null
     assert x.autoDelete != null
-  }
-  protected static void verifyQueuePagination(QueuePagination x, int expectedPage, int expectedPageCount) {
-    assert x.page == expectedPage
-    assert x.pageCount == expectedPageCount
-    assert x.itemCount == x.items.length
   }
 
   static boolean isVersion36orLater(String currentVersion) {
