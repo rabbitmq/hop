@@ -677,7 +677,8 @@ class ReactorNettyClientSpec extends Specification {
 
         then: "connection is refused"
         // it would have a chance of being accepted if the x509 authentication mechanism was used. MK.
-        thrown AuthenticationFailureException
+        Exception e = thrown()
+        e instanceof AuthenticationFailureException || e instanceof IOException
 
         cleanup:
         client.deleteUser(u).block()
