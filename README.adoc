@@ -1,8 +1,8 @@
 :rabbitmq-version: 3.8.14
-:hop-version: 3.9.0.RELEASE
-:spring-version: 5.3.5
-:jackson-version: 2.12.2
-:reactor-netty-version: 1.0.5
+:hop-version: 3.10.0.RC1
+:spring-version: 5.3.6
+:jackson-version: 2.12.3
+:reactor-netty-version: 1.0.6
 :http-client-version: 4.5.13
 :okhttp-version: 3.14.9
 
@@ -38,7 +38,10 @@ User documentation is currently kept in this README.
 
 image:https://maven-badges.herokuapp.com/maven-central/com.rabbitmq/http-client/badge.svg["Maven Central", link="https://maven-badges.herokuapp.com/maven-central/com.rabbitmq/http-client"]
 
-Project artifacts are available from Maven Central and https://repo.spring.io[repo.spring.io].
+Project artifacts are available from Maven Central.
+
+For milestones and release candidates, declare the
+<<milestone-rc-repository,milestone repository>> in your dependency manager.
 
 === Maven
 
@@ -108,6 +111,7 @@ compile "io.projectreactor.netty:reactor-netty:{reactor-netty-version}"
 compile "com.fasterxml.jackson.core:jackson-databind:{jackson-version}"
 ----
 
+[[milestone-rc-repository]]
 === Milestones and Release Candidates
 
 Milestones and release candidates are available on the RabbitMQ Milestone Repository:
