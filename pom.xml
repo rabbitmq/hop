@@ -1,12 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project
-  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd"
-  xmlns="http://maven.apache.org/POM/4.0.0"
-  xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
   <groupId>com.rabbitmq</groupId>
   <artifactId>http-client</artifactId>
-  <version>3.10.0-SNAPSHOT</version>
+  <version>3.10.0.RC1</version>
 
   <name>Hop</name>
   <description>Java Client for the RabbitMQ HTTP API</description>
@@ -34,7 +31,7 @@
     <connection>scm:git:git://github.com/rabbitmq/hop.git</connection>
     <developerConnection>scm:git:git@github.com:rabbitmq/hop.git
     </developerConnection>
-    <tag>HEAD</tag>
+    <tag>v3.10.0.RC1</tag>
   </scm>
 
   <properties>
