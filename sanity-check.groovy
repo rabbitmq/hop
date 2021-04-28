@@ -1,7 +1,7 @@
 @GrabResolver(name = 'ossrh-staging', root = 'https://oss.sonatype.org/content/groups/staging/')
 @GrabResolver(name = 'rabbitmq-packagecloud-milestones', root = 'https://packagecloud.io/rabbitmq/maven-milestones/maven2')
 @Grab(group = 'com.rabbitmq', module = 'http-client', version = "${version}")
-@Grab(group = 'org.springframework', module = 'spring-web', version = "5.3.0")
+@Grab(group = 'org.springframework', module = 'spring-web', version = "5.3.6")
 @Grab(group = 'org.apache.httpcomponents', module = 'httpclient', version = "4.5.13")
 @Grab(group = 'org.slf4j', module = 'slf4j-simple', version = '1.7.30')
 
