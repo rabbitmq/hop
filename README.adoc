@@ -1,5 +1,5 @@
-:rabbitmq-version: 3.8.14
-:hop-version: 3.10.0.RC1
+:rabbitmq-version: 3.8.16
+:hop-version: 3.10.0
 :spring-version: 5.3.6
 :jackson-version: 2.12.3
 :reactor-netty-version: 1.0.6
