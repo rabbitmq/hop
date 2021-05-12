@@ -2246,7 +2246,6 @@ class ClientSpec extends Specification {
 
     then: "user definitions are returned"
     !d.getUsers().isEmpty()
-    !d.getUsers().get(0).getTags().isEmpty()
     d.getUsers().get(0).getName() != null
     !d.getUsers().get(0).getName().isEmpty()
 
