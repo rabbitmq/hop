@@ -35,11 +35,11 @@
   </scm>
 
   <properties>
-    <spring.version>5.3.6</spring.version>
+    <spring.version>5.3.7</spring.version>
     <httpclient.version>4.5.13</httpclient.version>
     <okhttp.version>3.14.9</okhttp.version>
     <jackson.version>2.12.3</jackson.version>
-    <reactor-netty.version>1.0.6</reactor-netty.version>
+    <reactor-netty.version>1.0.7</reactor-netty.version>
     <groovy.version>3.0.8</groovy.version>
     <spock.version>2.0-M5-groovy-3.0</spock.version>
     <junit.version>5.7.1</junit.version>
