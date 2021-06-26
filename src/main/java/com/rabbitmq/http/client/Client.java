@@ -20,6 +20,8 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.rabbitmq.http.client.domain.*;
+
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
 import org.springframework.core.ParameterizedTypeReference;
@@ -369,6 +371,44 @@ public class Client {
     headers.put("X-Reason", Collections.singletonList(reason));
 
     deleteIgnoring404(uri, headers);
+  }
+
+  /**
+   * Retrieves state and metrics information for all consumers across the cluster.
+   *
+   * @return list of consumers across the cluster
+   */
+  public List<ConsumerDetails> getConsumers() {
+    final URI uri = uriWithPath("./consumers/");
+    return Arrays.asList(this.rt.getForObject(uri, ConsumerDetails[].class));
+  }
+
+
+  /**
+   * Retrieves state and metrics information for all consumers across the cluster.
+   * using query parameters
+   *
+   * @param queryParameters
+   * @return list of consumers across the cluster
+   */
+  @SuppressWarnings("unchecked")
+  public Page<ConsumerDetails> getConsumers(QueryParameters queryParameters) {
+    final URI uri = uriWithPath("./consumers/", queryParameters);
+    ParameterizedTypeReference<Page<ConsumerDetails>> type = new ParameterizedTypeReference<Page<ConsumerDetails>>() {
+    };
+    return (queryParameters.pagination().hasAny()) ? this.rt.exchange(uri, HttpMethod.GET, null, type).getBody() :
+            new Page(this.rt.getForObject(uri, ChannelInfo[].class));
+  }
+
+  /**
+   * Retrieves state and metrics information for individual consumer.
+   *
+   * @param name channel name
+   * @return consumer information
+   */
+  public ConsumerDetails getConsumer(String name) {
+    final URI uri = uriWithPath("./consumer/" + encodePathSegment(name));
+    return this.rt.getForObject(uri, ConsumerDetails.class);
   }
 
   /**
