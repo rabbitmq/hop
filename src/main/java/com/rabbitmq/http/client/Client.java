@@ -401,14 +401,14 @@ public class Client {
   }
 
   /**
-   * Retrieves state and metrics information for individual consumer.
+   * Retrieves state and metrics information for all consumers across an individual virtual host.
    *
-   * @param name channel name
+   * @param name name of the virtual host
    * @return consumer information
    */
-  public ConsumerDetails getConsumer(String name) {
+  public List<ConsumerDetails> getConsumer(String name) {
     final URI uri = uriWithPath("./consumer/" + encodePathSegment(name));
-    return this.rt.getForObject(uri, ConsumerDetails.class);
+    return Arrays.asList(this.rt.getForObject(uri, ConsumerDetails[].class));
   }
 
   /**
