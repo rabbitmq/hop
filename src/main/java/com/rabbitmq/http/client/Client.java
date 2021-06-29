@@ -389,7 +389,7 @@ public class Client {
    * using query parameters
    *
    * @param queryParameters
-   * @return list of consumers across the cluster
+   * @return list of consumers across all virtual hosts (and nodes)
    */
   @SuppressWarnings("unchecked")
   public Page<ConsumerDetails> getConsumers(QueryParameters queryParameters) {
@@ -403,11 +403,11 @@ public class Client {
   /**
    * Retrieves state and metrics information for all consumers across an individual virtual host.
    *
-   * @param name name of the virtual host
-   * @return consumer information
+   * @param vhost name of the virtual host
+   * @return list of consumers in the virtual host (across all nodes)
    */
-  public List<ConsumerDetails> getConsumer(String name) {
-    final URI uri = uriWithPath("./consumer/" + encodePathSegment(name));
+  public List<ConsumerDetails> getConsumers(String vhost) {
+    final URI uri = uriWithPath("./consumers/" + encodePathSegment(vhost));
     return Arrays.asList(this.rt.getForObject(uri, ConsumerDetails[].class));
   }
 
