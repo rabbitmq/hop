@@ -990,6 +990,65 @@ class ClientSpec extends Specification {
     client << clients()
   }
 
+  //
+  // Consumers
+  //
+
+  @Unroll
+  def "GET /api/consumers"() {
+    given: "at least one queue with an online consumer"
+    Connection conn = cf.newConnection()
+    Channel ch = conn.createChannel()
+    String q = ch.queueDeclare().queue
+    String consumerTag = ch.basicConsume(q, true, {_ctag, _msg ->
+      // do nothing
+    }, { _ctag -> } as CancelCallback)
+    awaitEventPropagation {}
+
+    when: "client lists consumers"
+    def cs = awaitEventPropagation { client.getConsumers() } as ConsumerDetails[]
+
+    then: "a list of consumers is returned"
+    ConsumerDetails cons = cs.find { it.consumerTag == consumerTag }
+    cons != null
+
+    cleanup:
+    ch.queueDelete(q)
+    conn.close()
+
+    where:
+    client << clients()
+  }
+
+  @Unroll
+  def "GET /api/consumers/{vhost}"() {
+    given: "at least one queue with an online consumer in a given virtual host"
+    Connection conn = cf.newConnection()
+    Channel ch = conn.createChannel()
+    String q = ch.queueDeclare().queue
+    String consumerTag = ch.basicConsume(q, true, {_ctag, _msg ->
+      // do nothing
+    }, { _ctag -> } as CancelCallback)
+    awaitEventPropagation {}
+
+    when: "client lists consumers in a specific virtual host"
+    def cs = awaitEventPropagation { client.getConsumers("/") } as ConsumerDetails[]
+
+    then: "a list of consumers in that virtual host is returned"
+    ConsumerDetails cons = cs.find { it.consumerTag == consumerTag }
+    cons != null
+
+    cleanup:
+    ch.queueDelete(q)
+    conn.close()
+
+    where:
+    client << clients()
+  }
+
+  //
+  // Policies
+  //
 
   @Unroll
   def "PUT /api/policies/{vhost}/{name}"() {
