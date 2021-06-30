@@ -59,8 +59,9 @@ import java.util.stream.Collectors;
  * </li>
  * <li>
  * {@link ObjectMapper}: <code>DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES</code> and
- * <code>MapperFeature.DEFAULT_VIEW_INCLUSION</code> are disabled. {@link Utils#VHOST_LIMITS_JSON_DESERIALIZER}
- * set up.
+ * <code>MapperFeature.DEFAULT_VIEW_INCLUSION</code> are disabled.
+ * {@link JsonUtils#CURRENT_USER_DETAILS_DESERIALIZER_INSTANCE}, {@link JsonUtils#USER_INFO_DESERIALIZER_INSTANCE},
+ * and {@link JsonUtils#VHOST_LIMITS_DESERIALIZER_INSTANCE} set up.
  * </li>
  * <li><code>Mono&lt;String&gt; token</code>: basic HTTP authentication used for the
  * <code>authorization</code> header.
@@ -185,6 +186,14 @@ public class ReactorNettyClient {
 
     public Mono<HttpResponse> closeConnection(String name, String reason) {
         return doDelete(headers -> headers.set("X-Reason", reason), "connections", enc(name));
+    }
+
+    public Flux<ConsumerDetails> getConsumers() {
+        return doGetFlux(ConsumerDetails.class, "consumers");
+    }
+
+    public Flux<ConsumerDetails> getConsumers(String vhost) {
+        return doGetFlux(ConsumerDetails.class, "consumers", enc(vhost));
     }
 
     public Mono<HttpResponse> declarePolicy(String vhost, String name, PolicyInfo info) {

@@ -1029,7 +1029,9 @@ class ClientSpec extends Specification {
     String consumerTag = ch.basicConsume(q, true, {_ctag, _msg ->
       // do nothing
     }, { _ctag -> } as CancelCallback)
-    awaitEventPropagation {}
+    waitAtMostUntilTrue(10, {
+      client.getConsumers().size() == 1
+    })
 
     when: "client lists consumers in a specific virtual host"
     def cs = awaitEventPropagation { client.getConsumers("/") } as ConsumerDetails[]
@@ -1037,6 +1039,33 @@ class ClientSpec extends Specification {
     then: "a list of consumers in that virtual host is returned"
     ConsumerDetails cons = cs.find { it.consumerTag == consumerTag }
     cons != null
+
+    cleanup:
+    ch.queueDelete(q)
+    conn.close()
+
+    where:
+    client << clients()
+  }
+
+  @Unroll
+  def "GET /api/consumers/{vhost} with no consumers in vhost"() {
+    given: "at least one queue with an online consumer in a given virtual host"
+    Connection conn = cf.newConnection()
+    Channel ch = conn.createChannel()
+    String q = ch.queueDeclare().queue
+    ch.basicConsume(q, true, {_ctag, _msg ->
+      // do nothing
+    }, { _ctag -> } as CancelCallback)
+    waitAtMostUntilTrue(10, {
+      client.getConsumers().size() == 1
+    })
+
+    when: "client lists consumers in another virtual host "
+    def cs = client.getConsumers("vh1")
+
+    then: "no consumers are returned"
+    cs.isEmpty()
 
     cleanup:
     ch.queueDelete(q)
