@@ -1,8 +1,8 @@
-:rabbitmq-version: 3.8.19
-:hop-version: 3.11.0
-:spring-version: 5.3.8
-:jackson-version: 2.12.4
-:reactor-netty-version: 1.0.8
+:rabbitmq-version: 3.9.5
+:hop-version: 3.12.0.RC1
+:spring-version: 5.3.9
+:jackson-version: 2.12.5
+:reactor-netty-version: 1.0.10
 :http-client-version: 4.5.13
 :okhttp-version: 3.14.9
 
