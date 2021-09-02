@@ -21,6 +21,7 @@ import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.deser.std.StdDeserializer;
+import com.rabbitmq.http.client.domain.ChannelDetails;
 import com.rabbitmq.http.client.domain.CurrentUserDetails;
 import com.rabbitmq.http.client.domain.UserInfo;
 import com.rabbitmq.http.client.domain.VhostLimits;
@@ -38,6 +39,8 @@ final class JsonUtils {
       new CurrentUserDetailsDeserializer();
   static final JsonDeserializer<UserInfo> USER_INFO_DESERIALIZER_INSTANCE =
       new UserInfoDeserializer();
+  static final JsonDeserializer<ChannelDetails> CHANNEL_DETAILS_DESERIALIZER_INSTANCE =
+      new ChannelDetailsDeserializer();
 
   private JsonUtils() {}
 
@@ -84,9 +87,9 @@ final class JsonUtils {
 
   private abstract static class UserDeserializer<T> extends StdDeserializer<T> {
 
-    private static final long serialVersionUID = 3473030985825959020L;
     protected static final String USERNAME_FIELD = "name";
     protected static final String TAGS_FIELD = "tags";
+    private static final long serialVersionUID = 3473030985825959020L;
 
     protected UserDeserializer(Class<?> vc) {
       super(vc);
@@ -156,6 +159,37 @@ final class JsonUtils {
       JsonNode node = jp.getCodec().readTree(jp);
 
       return new CurrentUserDetails(get(node, USERNAME_FIELD), getTags(node));
+    }
+  }
+
+  private static final class ChannelDetailsDeserializer extends StdDeserializer<ChannelDetails> {
+
+    private static final String CONNECTION_NAME_FIELD = "connection_name";
+    private static final String NAME_FIELD = "name";
+    private static final String NUMBER_FIELD = "number";
+    private static final String PEER_HOST_FIELD = "peer_host";
+    private static final String PEER_PORT_FIELD = "peer_port";
+    private static final long serialVersionUID = -1831999885508961350L;
+
+    protected ChannelDetailsDeserializer() {
+      super(ChannelDetails.class);
+    }
+
+    private static int getPeerPort(JsonNode node) {
+      return node.asInt(0);
+    }
+
+    @Override
+    public ChannelDetails deserialize(JsonParser jp, DeserializationContext deserializationContext)
+        throws IOException {
+      JsonNode node = jp.getCodec().readTree(jp);
+      ChannelDetails channelDetails = new ChannelDetails();
+      channelDetails.setConnectionName(get(node, CONNECTION_NAME_FIELD));
+      channelDetails.setName(get(node, NAME_FIELD));
+      channelDetails.setNumber(node.get(NUMBER_FIELD).asInt());
+      channelDetails.setPeerHost(get(node, PEER_HOST_FIELD));
+      channelDetails.setPeerPort(getPeerPort(node.get(PEER_PORT_FIELD)));
+      return channelDetails;
     }
   }
 }

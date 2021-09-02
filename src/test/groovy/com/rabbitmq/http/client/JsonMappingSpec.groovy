@@ -17,6 +17,7 @@
 package com.rabbitmq.http.client
 
 import com.fasterxml.jackson.databind.ObjectMapper
+import com.rabbitmq.http.client.domain.ConsumerDetails
 import com.rabbitmq.http.client.domain.QueueInfo
 import com.rabbitmq.http.client.domain.UserInfo
 import spock.lang.Specification
@@ -110,9 +111,36 @@ class JsonMappingSpec extends Specification {
     mapper << mappers() + mappers()
     json << [
             JSON_USER_WITH_USER_TAGS_AS_EMPTY_ARRAY, JSON_USER_WITH_USER_TAGS_AS_EMPTY_STRING,
-            JSON_USER_WITH_USER_TAGS_AS_EMPTY_STRING, JSON_USER_WITH_USER_TAGS_AS_EMPTY_ARRAY,
-
+            JSON_USER_WITH_USER_TAGS_AS_EMPTY_STRING, JSON_USER_WITH_USER_TAGS_AS_EMPTY_ARRAY
     ]
+  }
+
+  @Unroll
+  def "channel details with undefined peer port should deserialize without errors"() {
+    when: "JSON document for consumer with undefined channel peer port"
+    def c = mapper.readValue(JSON_CONSUMER_DETAILS_WITH_UNDEFINED_CHANNEL_PEER_PORT, ConsumerDetails.class)
+
+    then: "the channel peer port should be 0"
+    c.channelDetails.peerPort == 0
+
+    where:
+    mapper << mappers()
+  }
+
+  @Unroll
+  def "channel details with peer port should deserialize without errors"() {
+    when: "JSON document for consumer with correct channel peer port"
+    def c = mapper.readValue(JSON_CONSUMER_DETAILS, ConsumerDetails.class)
+
+    then: "channel details properties should be set correctly"
+    c.channelDetails.connectionName == "127.0.0.1:40548 -> 127.0.0.1:5672"
+    c.channelDetails.name == "127.0.0.1:40548 -> 127.0.0.1:5672 (1)"
+    c.channelDetails.number == 1
+    c.channelDetails.peerHost == "127.0.0.1"
+    c.channelDetails.peerPort == 40548
+
+    where:
+    mapper << mappers()
   }
 
   // RabbitMQ 3.9+
@@ -361,5 +389,55 @@ class JsonMappingSpec extends Specification {
           "  },\n" +
           "  \"type\": \"quorum\",\n" +
           "  \"vhost\": \"/\"\n" +
+          "}"
+
+  static final String JSON_CONSUMER_DETAILS_WITH_UNDEFINED_CHANNEL_PEER_PORT = "{\n" +
+          "   \"arguments\":{\n" +
+          "      \n" +
+          "   },\n" +
+          "   \"ack_required\":true,\n" +
+          "   \"active\":true,\n" +
+          "   \"activity_status\":\"up\",\n" +
+          "   \"channel_details\":{\n" +
+          "      \"connection_name\":\"rabbit@10-244-108-91.1628951087.17337.1\",\n" +
+          "      \"name\":\"rabbit@10-244-108-91.1628951087.17337.1 (1)\",\n" +
+          "      \"node\":\"rabbit@10-244-108-91\",\n" +
+          "      \"number\":1,\n" +
+          "      \"peer_host\":\"undefined\",\n" +
+          "      \"peer_port\":\"undefined\",\n" +
+          "      \"user\":\"shovel\"\n" +
+          "   },\n" +
+          "   \"consumer_tag\":\"amq.ctag-uLSmF70x9pQEDL34OCbkvg\",\n" +
+          "   \"exclusive\":false,\n" +
+          "   \"prefetch_count\":1000,\n" +
+          "   \"queue\":{\n" +
+          "      \"name\":\"amq.gen-vIuezFJTmuEAOB2SouuafQ\",\n" +
+          "      \"vhost\":\"PROD\"\n" +
+          "   }\n" +
+          "}"
+
+  static final String JSON_CONSUMER_DETAILS = "{\n" +
+          "   \"arguments\":{\n" +
+          "      \n" +
+          "   },\n" +
+          "   \"ack_required\":true,\n" +
+          "   \"active\":true,\n" +
+          "   \"activity_status\":\"up\",\n" +
+          "   \"channel_details\":{\n" +
+          "      \"connection_name\":\"127.0.0.1:40548 -> 127.0.0.1:5672\",\n" +
+          "      \"name\":\"127.0.0.1:40548 -> 127.0.0.1:5672 (1)\",\n" +
+          "      \"node\":\"rabbit@my-host\",\n" +
+          "      \"number\":1,\n" +
+          "      \"peer_host\":\"127.0.0.1\",\n" +
+          "      \"peer_port\":40548,\n" +
+          "      \"user\":\"guest\"\n" +
+          "   },\n" +
+          "   \"consumer_tag\":\"amq.ctag-Od3nR5Kglfbkm6dB3Jw-dg\",\n" +
+          "   \"exclusive\":false,\n" +
+          "   \"prefetch_count\":0,\n" +
+          "   \"queue\":{\n" +
+          "      \"name\":\"amq.gen-ofOF2lL5hhOzhchiFCPhjg\",\n" +
+          "      \"vhost\":\"/\"\n" +
+          "   }\n" +
           "}"
 }

@@ -61,7 +61,8 @@ import java.util.stream.Collectors;
  * {@link ObjectMapper}: <code>DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES</code> and
  * <code>MapperFeature.DEFAULT_VIEW_INCLUSION</code> are disabled.
  * {@link JsonUtils#CURRENT_USER_DETAILS_DESERIALIZER_INSTANCE}, {@link JsonUtils#USER_INFO_DESERIALIZER_INSTANCE},
- * and {@link JsonUtils#VHOST_LIMITS_DESERIALIZER_INSTANCE} set up.
+ * {@link JsonUtils#VHOST_LIMITS_DESERIALIZER_INSTANCE},
+ * and {@link JsonUtils#CHANNEL_DETAILS_DESERIALIZER_INSTANCE} set up.
  * </li>
  * <li><code>Mono&lt;String&gt; token</code>: basic HTTP authentication used for the
  * <code>authorization</code> header.
@@ -144,6 +145,7 @@ public class ReactorNettyClient {
         module.addDeserializer(VhostLimits.class, JsonUtils.VHOST_LIMITS_DESERIALIZER_INSTANCE);
         module.addDeserializer(UserInfo.class, JsonUtils.USER_INFO_DESERIALIZER_INSTANCE);
         module.addDeserializer(CurrentUserDetails.class, JsonUtils.CURRENT_USER_DETAILS_DESERIALIZER_INSTANCE);
+        module.addDeserializer(ChannelDetails.class, JsonUtils.CHANNEL_DETAILS_DESERIALIZER_INSTANCE);
         objectMapper.registerModule(module);
         return objectMapper;
     }

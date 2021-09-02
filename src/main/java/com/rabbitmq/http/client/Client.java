@@ -1410,6 +1410,7 @@ public class Client {
         .deserializerByType(VhostLimits.class, JsonUtils.VHOST_LIMITS_DESERIALIZER_INSTANCE)
         .deserializerByType(UserInfo.class, JsonUtils.USER_INFO_DESERIALIZER_INSTANCE)
         .deserializerByType(CurrentUserDetails.class, JsonUtils.CURRENT_USER_DETAILS_DESERIALIZER_INSTANCE)
+        .deserializerByType(ChannelDetails.class, JsonUtils.CHANNEL_DETAILS_DESERIALIZER_INSTANCE)
         .build();
   }
 

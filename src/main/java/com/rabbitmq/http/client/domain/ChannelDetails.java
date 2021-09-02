@@ -16,17 +16,12 @@
 
 package com.rabbitmq.http.client.domain;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
-
-@SuppressWarnings("ununsed")
+@SuppressWarnings("unused")
 public class ChannelDetails {
-  @JsonProperty("connection_name")
   private String connectionName;
   private String name;
   private int number;
-  @JsonProperty("peer_host")
   private String peerHost;
-  @JsonProperty("peer_port")
   private int peerPort;
 
   public String getConnectionName() {
