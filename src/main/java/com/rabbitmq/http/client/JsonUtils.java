@@ -45,7 +45,8 @@ final class JsonUtils {
   private JsonUtils() {}
 
   private static String get(JsonNode jp, String name) {
-    return jp.get(name).asText();
+    JsonNode node = jp.get(name);
+    return node == null ? null : node.asText();
   }
 
   private static final class VhostLimitsDeserializer extends StdDeserializer<VhostLimits> {
@@ -176,7 +177,7 @@ final class JsonUtils {
     }
 
     private static int getPeerPort(JsonNode node) {
-      return node.asInt(0);
+      return node == null ? 0 : node.asInt(0);
     }
 
     @Override
@@ -186,7 +187,8 @@ final class JsonUtils {
       ChannelDetails channelDetails = new ChannelDetails();
       channelDetails.setConnectionName(get(node, CONNECTION_NAME_FIELD));
       channelDetails.setName(get(node, NAME_FIELD));
-      channelDetails.setNumber(node.get(NUMBER_FIELD).asInt());
+      JsonNode numberNode = node.get(NUMBER_FIELD);
+      channelDetails.setNumber(numberNode == null ? -1 : numberNode.asInt());
       channelDetails.setPeerHost(get(node, PEER_HOST_FIELD));
       channelDetails.setPeerPort(getPeerPort(node.get(PEER_PORT_FIELD)));
       return channelDetails;
