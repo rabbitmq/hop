@@ -42,7 +42,7 @@
     <reactor-netty.version>1.0.11</reactor-netty.version>
     <groovy.version>3.0.9</groovy.version>
     <spock.version>2.0-groovy-3.0</spock.version>
-    <junit.version>5.8.0</junit.version>
+    <junit.version>5.8.1</junit.version>
     <amqp-client.version>5.13.1</amqp-client.version>
     <logback.version>1.2.6</logback.version>
     <maven.compiler.plugin.version>3.8.1</maven.compiler.plugin.version>
