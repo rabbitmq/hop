@@ -250,7 +250,7 @@ public class Client {
     if (url.toString().endsWith("/")) {
       this.rootUri = url.toURI();
     } else {
-      this.rootUri = new URL(url.toString() + "/").toURI();
+      this.rootUri = new URL(url + "/").toURI();
     }
     RestTemplate restTemplate = new RestTemplate();
     restTemplate.setMessageConverters(getMessageConverters());
