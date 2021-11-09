@@ -136,18 +136,7 @@ public class ReactorNettyClient {
     }
 
     public static ObjectMapper createDefaultObjectMapper() {
-        ObjectMapper objectMapper = new ObjectMapper();
-        objectMapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
-        objectMapper.enable(DeserializationFeature.ACCEPT_EMPTY_ARRAY_AS_NULL_OBJECT);
-        objectMapper.disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
-        objectMapper.disable(MapperFeature.DEFAULT_VIEW_INCLUSION);
-        SimpleModule module = new SimpleModule();
-        module.addDeserializer(VhostLimits.class, JsonUtils.VHOST_LIMITS_DESERIALIZER_INSTANCE);
-        module.addDeserializer(UserInfo.class, JsonUtils.USER_INFO_DESERIALIZER_INSTANCE);
-        module.addDeserializer(CurrentUserDetails.class, JsonUtils.CURRENT_USER_DETAILS_DESERIALIZER_INSTANCE);
-        module.addDeserializer(ChannelDetails.class, JsonUtils.CHANNEL_DETAILS_DESERIALIZER_INSTANCE);
-        objectMapper.registerModule(module);
-        return objectMapper;
+        return JsonUtils.createDefaultObjectMapper();
     }
 
     public static Mono<String> createBasicAuthenticationToken(String username, String password) {

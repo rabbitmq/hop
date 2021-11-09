@@ -4,16 +4,21 @@ import static com.rabbitmq.http.client.Utils.encode;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.fail;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.introspect.TypeResolutionContext;
 import com.rabbitmq.client.Connection;
 import com.rabbitmq.client.ConnectionFactory;
 import com.rabbitmq.http.client.domain.ConnectionInfo;
 import com.rabbitmq.http.client.domain.ExchangeType;
 import com.rabbitmq.http.client.domain.OverviewResponse;
+import com.rabbitmq.http.client.domain.Page;
+import com.rabbitmq.http.client.domain.QueryParameters;
 import com.rabbitmq.http.client.domain.QueueInfo;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UncheckedIOException;
+import java.lang.reflect.Type;
 import java.net.URI;
 import java.net.URL;
 import java.net.http.HttpClient;
@@ -29,8 +34,10 @@ import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Base64;
 import java.util.Collection;
+import java.util.Map;
 import java.util.concurrent.Callable;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
 import org.junit.jupiter.api.Test;
 
 public class HttpClientTest {
@@ -39,24 +46,35 @@ public class HttpClientTest {
     return rootUri.resolve(path);
   }
 
+  private URI uriWithPath(URI rootUri, String path, QueryParameters queryParameters) {
+    Map<String, String> parameters = queryParameters.parameters();
+    if (parameters.isEmpty()) {
+      return uriWithPath(rootUri, path);
+    } else {
+      String parametersString = parameters.entrySet().stream().map(entry ->
+          entry.getKey() + "=" + Utils.encodeHttpParameter(entry.getValue())).collect(Collectors.joining("&"));
+      return rootUri.resolve(path + "?" + parametersString);
+    }
+  }
+
   static String base64(String in) {
     return Base64.getEncoder().encodeToString(in.getBytes(StandardCharsets.UTF_8));
   }
 
   static <W> java.net.http.HttpResponse.BodySubscriber<Supplier<W>> asJson(
-      ObjectMapper mapper, Class<W> targetType) {
+      ObjectMapper mapper, Type type) {
     java.net.http.HttpResponse.BodySubscriber<InputStream> upstream =
         java.net.http.HttpResponse.BodySubscribers.ofInputStream();
 
     return java.net.http.HttpResponse.BodySubscribers.mapping(
-        upstream, inputStream -> toSupplierOfType(mapper, inputStream, targetType));
+        upstream, inputStream -> toSupplierOfType(mapper, inputStream, type));
   }
 
   public static <W> Supplier<W> toSupplierOfType(
-      ObjectMapper mapper, InputStream inputStream, Class<W> targetType) {
+      ObjectMapper mapper, InputStream inputStream, Type type) {
     return () -> {
       try (InputStream stream = inputStream) {
-        return mapper.readValue(stream, targetType);
+        return mapper.readValue(stream, mapper.constructType(type));
       } catch (IOException e) {
         throw new UncheckedIOException(e);
       }
@@ -64,15 +82,20 @@ public class HttpClientTest {
   }
 
   static <T> T get(
-      URI rootUri, String path, ObjectMapper mapper, HttpClient client, Class<T> targetClass) {
+      URI rootUri, String path, ObjectMapper mapper, HttpClient client, Type type) {
+    return get(uriWithPath(rootUri, path), mapper, client, type);
+  }
+
+  static <T> T get(
+      URI uri, ObjectMapper mapper, HttpClient client, Type type) {
     Duration timeout = Duration.ofSeconds(60);
-    Builder requestBuilder = HttpRequest.newBuilder(uriWithPath(rootUri, path));
+    Builder requestBuilder = HttpRequest.newBuilder(uri);
     requestBuilder = auth(requestBuilder, "guest", "guest");
     HttpRequest request =
         requestBuilder.timeout(timeout).header("accept", "application/json").GET().build();
     try {
       HttpResponse<Supplier<T>> connectionsResponse =
-          client.send(request, new JsonBodyHandler<>(mapper, targetClass));
+          client.send(request, new JsonBodyHandler<>(mapper, type));
       if (connectionsResponse.statusCode() == 404) {
         return null;
       } else {
@@ -134,7 +157,7 @@ public class HttpClientTest {
     HttpClient client = builder.build();
 
     Duration timeout = Duration.ofSeconds(60);
-    ObjectMapper objectMapper = Client.createDefaultObjectMapper();
+    ObjectMapper objectMapper = JsonUtils.createDefaultObjectMapper();
 
     OverviewResponse overview =
         get(rootUri, "./overview", objectMapper, client, OverviewResponse.class);
@@ -150,10 +173,26 @@ public class HttpClientTest {
     Collection<Connection> connections = new ArrayList<>();
     try {
       ConnectionFactory cf = new ConnectionFactory();
-      for (int i = 0; i < 10; i++) {
+      for (int i = 0; i < 15; i++) {
         connections.add(cf.newConnection());
       }
-      waitAtMost(() -> connectionsRequestCall.call().length == initialConnectionCount + 10);
+      waitAtMost(() -> connectionsRequestCall.call().length == initialConnectionCount + connections.size());
+
+      QueryParameters queryParameters = new QueryParameters()
+          .pagination()
+          .pageSize(10)
+          .query();
+
+      URI uri = uriWithPath(rootUri, "./connections/", queryParameters);
+      TypeReference<Page<ConnectionInfo>> type = new TypeReference<>() {
+      };
+      Page<ConnectionInfo> page = get(uri, objectMapper, client, type.getType());
+      assertThat(page.getFilteredCount()).isEqualTo(connections.size());
+      assertThat(page.getItemCount()).isEqualTo(10);
+      assertThat(page.getPageCount()).isEqualTo(2);
+      assertThat(page.getTotalCount()).isGreaterThanOrEqualTo(page.getFilteredCount());
+      assertThat(page.getPage()).isEqualTo(1);
+
     } finally {
       for (Connection connection : connections) {
         connection.close();
@@ -196,17 +235,17 @@ public class HttpClientTest {
       implements java.net.http.HttpResponse.BodyHandler<Supplier<W>> {
 
     private final ObjectMapper mapper;
-    private final Class<W> wClass;
+    private final Type type;
 
-    public JsonBodyHandler(ObjectMapper mapper, Class<W> wClass) {
+    public JsonBodyHandler(ObjectMapper mapper, Type type) {
       this.mapper = mapper;
-      this.wClass = wClass;
+      this.type = type;
     }
 
     @Override
     public java.net.http.HttpResponse.BodySubscriber<Supplier<W>> apply(
         HttpResponse.ResponseInfo responseInfo) {
-      return asJson(mapper, wClass);
+      return asJson(mapper, type);
     }
   }
 }

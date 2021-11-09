@@ -27,7 +27,7 @@ import java.net.URI;
  */
 public class ClientCreationContext {
 
-    private final RestTemplate restTemplate;
+    private RestTemplate restTemplate;
     private final ClientParameters clientParameters;
     private final URI rootUri;
 
@@ -67,5 +67,10 @@ public class ClientCreationContext {
      */
     public URI getRootUri() {
         return rootUri;
+    }
+
+    public ClientCreationContext restTemplate(RestTemplate restTemplate) {
+        this.restTemplate = restTemplate;
+        return this;
     }
 }

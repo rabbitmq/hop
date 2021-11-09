@@ -26,7 +26,7 @@ import spock.lang.Unroll
 class JsonMappingSpec extends Specification {
 
   static ObjectMapper[] mappers() {
-    [Client.createDefaultObjectMapper(), ReactorNettyClient.createDefaultObjectMapper()]
+    [RestTemplateHttpLayer.createDefaultObjectMapper(), JsonUtils.createDefaultObjectMapper()]
   }
 
   @Unroll
@@ -44,7 +44,7 @@ class JsonMappingSpec extends Specification {
   @Unroll
   def "JSON document for queue with defined message count should return appropriate value for message count"() {
     when: "JSON document for queue has a ready messages count field with a value"
-    def q = Client.createDefaultObjectMapper().readValue(JSON_QUEUE_SOME_READY_MESSAGES, QueueInfo.class)
+    def q = JsonUtils.createDefaultObjectMapper().readValue(JSON_QUEUE_SOME_READY_MESSAGES, QueueInfo.class)
 
     then: "the field value of the Java object should be the same as in the JSON document"
     q.messagesReady == 1000
@@ -56,7 +56,7 @@ class JsonMappingSpec extends Specification {
   @Unroll
   def "fields for classic HA queue should be mapped correctly"() {
     when: "JSON document for classic HA queue has details on nodes"
-    def q = Client.createDefaultObjectMapper().readValue(JSON_CLASSIC_HA_QUEUE, QueueInfo.class)
+    def q = JsonUtils.createDefaultObjectMapper().readValue(JSON_CLASSIC_HA_QUEUE, QueueInfo.class)
 
     then: "the Java object should be filled accordingly"
     q.type == "classic"
@@ -71,7 +71,7 @@ class JsonMappingSpec extends Specification {
   @Unroll
   def "fields for quorum queue should be mapped correctly"() {
     when: "JSON document for quorum queue has details on nodes"
-    def q = Client.createDefaultObjectMapper().readValue(JSON_QUORUM_QUEUE, QueueInfo.class)
+    def q = JsonUtils.createDefaultObjectMapper().readValue(JSON_QUORUM_QUEUE, QueueInfo.class)
 
     then: "the Java object should be filled accordingly"
     q.type == "quorum"

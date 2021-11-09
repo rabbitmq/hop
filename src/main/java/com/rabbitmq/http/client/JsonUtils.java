@@ -16,11 +16,17 @@
 
 package com.rabbitmq.http.client;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.DeserializationContext;
+import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.MapperFeature;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.deser.std.StdDeserializer;
+import com.fasterxml.jackson.databind.json.JsonMapper;
+import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.rabbitmq.http.client.domain.ChannelDetails;
 import com.rabbitmq.http.client.domain.CurrentUserDetails;
 import com.rabbitmq.http.client.domain.UserInfo;
@@ -47,6 +53,22 @@ final class JsonUtils {
   private static String get(JsonNode jp, String name) {
     JsonNode node = jp.get(name);
     return node == null ? null : node.asText();
+  }
+
+  static ObjectMapper createDefaultObjectMapper() {
+    JsonMapper objectMapper =
+        JsonMapper.builder().disable(MapperFeature.DEFAULT_VIEW_INCLUSION).build();
+    objectMapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
+    objectMapper.enable(DeserializationFeature.ACCEPT_EMPTY_ARRAY_AS_NULL_OBJECT);
+    objectMapper.disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
+    SimpleModule module = new SimpleModule();
+    module.addDeserializer(VhostLimits.class, JsonUtils.VHOST_LIMITS_DESERIALIZER_INSTANCE);
+    module.addDeserializer(UserInfo.class, JsonUtils.USER_INFO_DESERIALIZER_INSTANCE);
+    module.addDeserializer(
+        CurrentUserDetails.class, JsonUtils.CURRENT_USER_DETAILS_DESERIALIZER_INSTANCE);
+    module.addDeserializer(ChannelDetails.class, JsonUtils.CHANNEL_DETAILS_DESERIALIZER_INSTANCE);
+    objectMapper.registerModule(module);
+    return objectMapper;
   }
 
   private static final class VhostLimitsDeserializer extends StdDeserializer<VhostLimits> {
