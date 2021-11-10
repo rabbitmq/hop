@@ -104,7 +104,9 @@ public class ClientParameters {
      * @param restTemplateConfigurator the configurator to use
      * @return this client parameters instance
      * @see RestTemplateConfigurator
+     * @deprecated use {@link #httpLayerFactory} instead
      */
+    @Deprecated(since = "4.0.0", forRemoval = true)
     public ClientParameters restTemplateConfigurator(RestTemplateConfigurator restTemplateConfigurator) {
         this.restTemplateConfigurator = restTemplateConfigurator;
         return this;
@@ -122,6 +124,13 @@ public class ClientParameters {
         return password;
     }
 
+
+    /**
+     *
+     * @return
+     * @deprecated use {@link #httpLayerFactory} instead
+     */
+    @Deprecated(since = "4.0.0", forRemoval = true)
     public RestTemplateConfigurator getRestTemplateConfigurator() {
         return restTemplateConfigurator;
     }
@@ -132,8 +141,10 @@ public class ClientParameters {
 
     /**
      * Set the {@link HttpLayerFactory} to use.
+     *
      * @param httpLayerFactory
      * @return this client parameters instance
+     * @see HttpLayer#configure()
      */
     public ClientParameters httpLayerFactory(HttpLayerFactory httpLayerFactory) {
         this.httpLayerFactory = httpLayerFactory;

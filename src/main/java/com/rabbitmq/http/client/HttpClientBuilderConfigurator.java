@@ -16,6 +16,7 @@
 
 package com.rabbitmq.http.client;
 
+import com.rabbitmq.http.client.HttpLayer.HttpLayerFactory;
 import org.apache.http.HttpHost;
 import org.apache.http.HttpRequestInterceptor;
 import org.apache.http.conn.routing.HttpRoutePlanner;
@@ -42,7 +43,9 @@ import javax.net.ssl.SSLContext;
  * @see HttpClientBuilder#setSSLContext(SSLContext)
  * @see HttpClientBuilder#setSSLSocketFactory(LayeredConnectionSocketFactory)
  * @see HttpClientBuilder#setSSLHostnameVerifier(HostnameVerifier)
+ * @deprecated use {@link ClientParameters#httpLayerFactory(HttpLayerFactory)} instead
  */
+@Deprecated(since = "4.0.0", forRemoval = true)
 @FunctionalInterface
 public interface HttpClientBuilderConfigurator {
 

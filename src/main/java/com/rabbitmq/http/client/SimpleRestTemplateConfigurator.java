@@ -16,6 +16,7 @@
 
 package com.rabbitmq.http.client;
 
+import com.rabbitmq.http.client.HttpLayer.HttpLayerFactory;
 import org.springframework.http.client.ClientHttpRequestFactory;
 import org.springframework.http.client.ClientHttpRequestInterceptor;
 import org.springframework.http.client.SimpleClientHttpRequestFactory;
@@ -38,7 +39,9 @@ import java.util.List;
  * Use this to use standard JDK facilities to create requests in the {@link Client}'s {@link RestTemplate}.
  *
  * @since 3.6.0
+ * @deprecated use {@link ClientParameters#httpLayerFactory(HttpLayerFactory)} instead
  */
+@Deprecated(since = "4.0.0", forRemoval = true)
 public class SimpleRestTemplateConfigurator implements RestTemplateConfigurator {
 
     private static final HttpConnectionConfigurator NO_OP_HTTP_CONNECTION_CONFIGURATOR = c -> {

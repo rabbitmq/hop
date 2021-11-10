@@ -16,6 +16,7 @@
 
 package com.rabbitmq.http.client;
 
+import com.rabbitmq.http.client.HttpLayer.HttpLayerFactory;
 import java.net.HttpURLConnection;
 
 /**
@@ -26,7 +27,9 @@ import java.net.HttpURLConnection;
  * configurator.
  *
  * @since 3.6.0
+ * @deprecated use {@link ClientParameters#httpLayerFactory(HttpLayerFactory)} instead
  */
+@Deprecated(since = "4.0.0", forRemoval = true)
 @FunctionalInterface
 public interface HttpConnectionConfigurator {
 

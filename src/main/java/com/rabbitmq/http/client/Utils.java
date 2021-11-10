@@ -22,7 +22,6 @@ import java.net.URISyntaxException;
 import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
-import org.springframework.util.StringUtils;
 
 import java.io.UnsupportedEncodingException;
 import java.net.MalformedURLException;
@@ -132,7 +131,7 @@ final class Utils {
         } catch (MalformedURLException e) {
             throw new IllegalArgumentException("URL is malformed");
         }
-        return StringUtils.replace(url, url1.getUserInfo() + "@", "");
+        return url.replace(url1.getUserInfo() + "@", "");
     }
 
     static String base64(String in) {

@@ -24,7 +24,9 @@ import java.net.URI;
  *
  * @see RestTemplateConfigurator#configure(ClientCreationContext)
  * @since 3.6.0
+ * @deprecated
  */
+@Deprecated(since = "4.0.0", forRemoval = true)
 public class ClientCreationContext {
 
     private RestTemplate restTemplate;

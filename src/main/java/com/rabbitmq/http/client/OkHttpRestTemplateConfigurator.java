@@ -16,6 +16,7 @@
 
 package com.rabbitmq.http.client;
 
+import com.rabbitmq.http.client.HttpLayer.HttpLayerFactory;
 import okhttp3.Credentials;
 import okhttp3.OkHttpClient;
 import org.springframework.http.client.ClientHttpRequestFactory;
@@ -31,7 +32,9 @@ import java.net.URL;
  * {@link RestTemplateConfigurator} that sets an {@link OkHttp3ClientHttpRequestFactory} on a {@link RestTemplate}.
  * <p>
  * Use this to use OkHttp to create requests in the {@link Client}'s {@link RestTemplate}.
+ * @deprecated use {@link ClientParameters#httpLayerFactory(HttpLayerFactory)} instead
  */
+@Deprecated(since = "4.0.0", forRemoval = true)
 public class OkHttpRestTemplateConfigurator implements RestTemplateConfigurator {
 
     private static final OkHttpClientBuilderConfigurator NO_OP_HTTP_CLIENT_BUILDER_CONFIGURATOR = builder -> builder;

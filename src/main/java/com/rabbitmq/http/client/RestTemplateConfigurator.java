@@ -16,6 +16,7 @@
 
 package com.rabbitmq.http.client;
 
+import com.rabbitmq.http.client.HttpLayer.HttpLayerFactory;
 import org.springframework.web.client.RestTemplate;
 
 /**
@@ -32,7 +33,9 @@ import org.springframework.web.client.RestTemplate;
  * @see RestTemplate
  * @see org.springframework.http.client.ClientHttpRequestFactory
  * @since 3.6.0
+ * @deprecated use {@link ClientParameters#httpLayerFactory(HttpLayerFactory)} instead
  */
+@Deprecated(since = "4.0.0", forRemoval = true)
 @FunctionalInterface
 public interface RestTemplateConfigurator {
 
