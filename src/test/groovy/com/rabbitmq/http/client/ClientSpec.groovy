@@ -50,7 +50,7 @@ class ClientSpec extends Specification {
     [
             new Client(
               new ClientParameters().url(url()).username(DEFAULT_USERNAME).password(DEFAULT_PASSWORD)
-                      .httpLayerFactory(JdkHttpClientHttpLayer.Factory.configure().create())
+                      .httpLayerFactory(HttpLayer.configure().create())
       )
     ] +
     [
@@ -82,7 +82,7 @@ class ClientSpec extends Specification {
     [
             new Client(
                     new ClientParameters().url(url()).username(DEFAULT_USERNAME).password(DEFAULT_PASSWORD)
-                            .httpLayerFactory(JdkHttpClientHttpLayer.Factory.configure().create())
+                            .httpLayerFactory(HttpLayer.configure().create())
             )
     ] +
     [

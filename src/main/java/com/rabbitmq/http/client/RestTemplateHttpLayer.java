@@ -43,6 +43,13 @@ import org.springframework.web.client.RequestCallback;
 import org.springframework.web.client.ResponseExtractor;
 import org.springframework.web.client.RestTemplate;
 
+/**
+ * {@link HttpLayer} using Spring's {@link RestTemplate}.
+ *
+ * @since 4.0.0
+ * @deprecated Use {@link JdkHttpClientHttpLayer} instead
+ */
+@Deprecated(since="4.0.0", forRemoval = true)
 class RestTemplateHttpLayer implements HttpLayer {
 
   private final RestTemplate rt;

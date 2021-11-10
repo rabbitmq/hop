@@ -34,6 +34,11 @@ import java.util.Map;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
+/**
+ * {@link HttpLayer} using JDK 11's {@link HttpClient}.
+ *
+ * @since 4.0.0
+ */
 class JdkHttpClientHttpLayer implements HttpLayer {
 
   private static final Duration REQUEST_TIMEOUT = Duration.ofSeconds(60);
@@ -193,22 +198,18 @@ class JdkHttpClientHttpLayer implements HttpLayer {
     private final Consumer<HttpClient.Builder> clientBuilderConsumer;
     private final Consumer<HttpRequest.Builder> requestBuilderConsumer;
 
-    private Factory(
+    Factory(
         Consumer<HttpClient.Builder> clientBuilderConsumer,
         Consumer<HttpRequest.Builder> requestBuilderConsumer) {
       this.clientBuilderConsumer = clientBuilderConsumer;
       this.requestBuilderConsumer = requestBuilderConsumer;
     }
 
-    static Configuration configure() {
-      return new Configuration();
-    }
-
     @Override
     public HttpLayer create(ClientParameters parameters) {
       HttpClient.Builder builder =
           HttpClient.newBuilder()
-              .version(Version.HTTP_1_1)
+              .version(Version.HTTP_2)
               .followRedirects(Redirect.NORMAL)
               .connectTimeout(Duration.ofSeconds(10));
       this.clientBuilderConsumer.accept(builder);
@@ -229,33 +230,6 @@ class JdkHttpClientHttpLayer implements HttpLayer {
       return new JdkHttpClientHttpLayer(client, mapper, requestBuilderConsumer);
     }
 
-    static class Configuration {
-
-      private Consumer<HttpClient.Builder> clientBuilderConsumer = b -> {};
-      private Consumer<HttpRequest.Builder> requestBuilderConsumer = null;
-
-      public Configuration clientBuilderConsumer(
-          Consumer<HttpClient.Builder> clientBuilderConsumer) {
-        if (clientBuilderConsumer == null) {
-          throw new IllegalArgumentException("Client builder consumer cannot be null");
-        }
-        this.clientBuilderConsumer = clientBuilderConsumer;
-        return this;
-      }
-
-      public Configuration requestBuilderConsumer(
-          Consumer<HttpRequest.Builder> requestBuilderConsumer) {
-        if (requestBuilderConsumer == null) {
-          throw new IllegalArgumentException("Request builder consumer cannot be null");
-        }
-        this.requestBuilderConsumer = requestBuilderConsumer;
-        return this;
-      }
-
-      HttpLayerFactory create() {
-        return new Factory(this.clientBuilderConsumer, this.requestBuilderConsumer);
-      }
-    }
   }
 
   private static class JsonBodyHandler<W>

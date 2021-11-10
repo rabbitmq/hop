@@ -126,11 +126,16 @@ public class ClientParameters {
         return restTemplateConfigurator;
     }
 
-    HttpLayerFactory getHttpLayerFactory() {
+    public HttpLayerFactory getHttpLayerFactory() {
         return httpLayerFactory;
     }
 
-    ClientParameters httpLayerFactory(HttpLayerFactory httpLayerFactory) {
+    /**
+     * Set the {@link HttpLayerFactory} to use.
+     * @param httpLayerFactory
+     * @return this client parameters instance
+     */
+    public ClientParameters httpLayerFactory(HttpLayerFactory httpLayerFactory) {
         this.httpLayerFactory = httpLayerFactory;
         return this;
     }
