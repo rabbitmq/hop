@@ -230,18 +230,13 @@ public class Client {
   public Client(ClientParameters parameters) throws URISyntaxException, MalformedURLException {
     parameters.validate();
     URL url = parameters.getUrl();
-    if (url.toString().endsWith("/")) {
-      this.rootUri = url.toURI();
-    } else {
-      this.rootUri = new URL(url + "/").toURI();
-    }
+    this.rootUri = Utils.rootUri(url);
 
-    ClientCreationContext clientCreationContext = new ClientCreationContext(
-        null,
-        parameters,
-        this.rootUri);
-    HttpLayerFactory httpLayerFactory = new RestTemplateHttpLayerFactory();
-    this.httpLayer = httpLayerFactory.create(clientCreationContext);
+    HttpLayerFactory httpLayerFactory =
+        parameters.getHttpLayerFactory() == null
+            ? new RestTemplateHttpLayerFactory()
+            : parameters.getHttpLayerFactory();
+    this.httpLayer = httpLayerFactory.create(parameters);
   }
 
   /**
@@ -259,7 +254,7 @@ public class Client {
    * @return true if the check succeeded
    */
   public boolean alivenessTest(String vhost) {
-    final URI uri = uriWithPath("./aliveness-test/" + encode(vhost));
+    final URI uri = uriWithPath("./aliveness-test/" + encodePath(vhost));
     return this.httpLayer.get(uri, AlivenessTestResult.class).isSuccessful();
   }
 
@@ -288,7 +283,7 @@ public class Client {
    * @return node information
    */
   public NodeInfo getNode(String name) {
-    final URI uri = uriWithPath("./nodes/" + encode(name));
+    final URI uri = uriWithPath("./nodes/" + encodePath(name));
     return this.httpLayer.get(uri, NodeInfo.class);
   }
 
@@ -328,7 +323,7 @@ public class Client {
    * @return connection information
    */
   public ConnectionInfo getConnection(String name) {
-    final URI uri = uriWithPath("./connections/" + encode(name));
+    final URI uri = uriWithPath("./connections/" + encodePath(name));
     return this.httpLayer.get(uri, ConnectionInfo.class);
   }
 
@@ -339,7 +334,7 @@ public class Client {
    * @param name connection name
    */
   public void closeConnection(String name) {
-    final URI uri = uriWithPath("./connections/" + encode(name));
+    final URI uri = uriWithPath("./connections/" + encodePath(name));
     deleteIgnoring404(uri);
   }
 
@@ -351,7 +346,7 @@ public class Client {
    * @param reason the reason of closing
    */
   public void closeConnection(String name, String reason) {
-    final URI uri = uriWithPath("./connections/" + encode(name));
+    final URI uri = uriWithPath("./connections/" + encodePath(name));
 
     Map<String, String> headers = new HashMap<>();
     headers.put("X-Reason", reason);
@@ -376,7 +371,7 @@ public class Client {
    * @return list of consumers in the virtual host (across all nodes)
    */
   public List<ConsumerDetails> getConsumers(String vhost) {
-    final URI uri = uriWithPath("./consumers/" + encode(vhost));
+    final URI uri = uriWithPath("./consumers/" + encodePath(vhost));
     return Arrays.asList(this.httpLayer.get(uri, ConsumerDetails[].class));
   }
 
@@ -415,7 +410,7 @@ public class Client {
    * @return list of channels on the connection
    */
   public List<ChannelInfo> getChannels(String connectionName) {
-    final URI uri = uriWithPath("./connections/" + encode(connectionName) + "/channels/");
+    final URI uri = uriWithPath("./connections/" + encodePath(connectionName) + "/channels/");
     return Arrays.asList(this.httpLayer.get(uri, ChannelInfo[].class));
   }
 
@@ -426,7 +421,7 @@ public class Client {
    * @return channel information
    */
   public ChannelInfo getChannel(String name) {
-    final URI uri = uriWithPath("./channels/" + encode(name));
+    final URI uri = uriWithPath("./channels/" + encodePath(name));
     return this.httpLayer.get(uri, ChannelInfo.class);
   }
 
@@ -436,7 +431,7 @@ public class Client {
   }
 
   public VhostInfo getVhost(String name) {
-    final URI uri = uriWithPath("./vhosts/" + encode(name));
+    final URI uri = uriWithPath("./vhosts/" + encodePath(name));
     return getForObjectReturningNullOn404(uri, VhostInfo.class);
   }
 
@@ -462,7 +457,7 @@ public class Client {
       body.put("tags", String.join(",", tags));
     }
 
-    final URI uri = uriWithPath("./vhosts/" + encode(name));
+    final URI uri = uriWithPath("./vhosts/" + encodePath(name));
     this.httpLayer.put(uri, body);
     this.httpLayer.put(uri, body);
   }
@@ -492,23 +487,23 @@ public class Client {
   }
 
   public void createVhost(String name) {
-    final URI uri = uriWithPath("./vhosts/" + encode(name));
+    final URI uri = uriWithPath("./vhosts/" + encodePath(name));
     this.httpLayer.put(uri, null);
   }
 
   public void deleteVhost(String name) {
-    final URI uri = uriWithPath("./vhosts/" + encode(name));
+    final URI uri = uriWithPath("./vhosts/" + encodePath(name));
     deleteIgnoring404(uri);
   }
 
   public List<UserPermissions> getPermissionsIn(String vhost) {
-    final URI uri = uriWithPath("./vhosts/" + encode(vhost) + "/permissions");
+    final URI uri = uriWithPath("./vhosts/" + encodePath(vhost) + "/permissions");
     UserPermissions[] result = this.getForObjectReturningNullOn404(uri, UserPermissions[].class);
     return asListOrNull(result);
   }
 
   public List<UserPermissions> getPermissionsOf(String username) {
-    final URI uri = uriWithPath("./users/" + encode(username) + "/permissions");
+    final URI uri = uriWithPath("./users/" + encodePath(username) + "/permissions");
     UserPermissions[] result = this.getForObjectReturningNullOn404(uri, UserPermissions[].class);
     return asListOrNull(result);
   }
@@ -520,18 +515,18 @@ public class Client {
   }
 
   public UserPermissions getPermissions(String vhost, String username) {
-    final URI uri = uriWithPath("./permissions/" + encode(vhost) + "/" + encode(username));
+    final URI uri = uriWithPath("./permissions/" + encodePath(vhost) + "/" + encodePath(username));
     return this.getForObjectReturningNullOn404(uri, UserPermissions.class);
   }
 
   public List<TopicPermissions> getTopicPermissionsIn(String vhost) {
-    final URI uri = uriWithPath("./vhosts/" + encode(vhost) + "/topic-permissions");
+    final URI uri = uriWithPath("./vhosts/" + encodePath(vhost) + "/topic-permissions");
     TopicPermissions[] result = this.getForObjectReturningNullOn404(uri, TopicPermissions[].class);
     return asListOrNull(result);
   }
 
   public List<TopicPermissions> getTopicPermissionsOf(String username) {
-    final URI uri = uriWithPath("./users/" + encode(username) + "/topic-permissions");
+    final URI uri = uriWithPath("./users/" + encodePath(username) + "/topic-permissions");
     TopicPermissions[] result = this.getForObjectReturningNullOn404(uri, TopicPermissions[].class);
     return asListOrNull(result);
   }
@@ -543,7 +538,7 @@ public class Client {
   }
 
   public List<TopicPermissions> getTopicPermissions(String vhost, String username) {
-    final URI uri = uriWithPath("./topic-permissions/" + encode(vhost) + "/" + encode(username));
+    final URI uri = uriWithPath("./topic-permissions/" + encodePath(vhost) + "/" + encodePath(username));
     return asListOrNull(this.getForObjectReturningNullOn404(uri, TopicPermissions[].class));
   }
 
@@ -565,14 +560,14 @@ public class Client {
   }
 
   public List<ExchangeInfo> getExchanges(String vhost) {
-    final URI uri = uriWithPath("./exchanges/" + encode(vhost));
+    final URI uri = uriWithPath("./exchanges/" + encodePath(vhost));
     final ExchangeInfo[] result = this.getForObjectReturningNullOn404(uri, ExchangeInfo[].class);
     return asListOrNull(result);
   }
 
   @SuppressWarnings("unchecked")
   public Page<ExchangeInfo> getExchanges(String vhost, QueryParameters queryParameters) {
-    final URI uri = uriWithPath("./exchanges/" + encode(vhost), queryParameters);
+    final URI uri = uriWithPath("./exchanges/" + encodePath(vhost), queryParameters);
     ParameterizedTypeReference<Page<ExchangeInfo>> type = new ParameterizedTypeReference<>() {
     };
     if (queryParameters.pagination().hasAny()) {
@@ -583,17 +578,17 @@ public class Client {
   }
 
   public ExchangeInfo getExchange(String vhost, String name) {
-    final URI uri = uriWithPath("./exchanges/" + encode(vhost) + "/" + encode(name));
+    final URI uri = uriWithPath("./exchanges/" + encodePath(vhost) + "/" + encodePath(name));
     return this.getForObjectReturningNullOn404(uri, ExchangeInfo.class);
   }
 
   public void declareExchange(String vhost, String name, ExchangeInfo info) {
-    final URI uri = uriWithPath("./exchanges/" + encode(vhost) + "/" + encode(name));
+    final URI uri = uriWithPath("./exchanges/" + encodePath(vhost) + "/" + encodePath(name));
     this.httpLayer.put(uri, info);
   }
 
   public void deleteExchange(String vhost, String name) {
-    this.deleteIgnoring404(uriWithPath("./exchanges/" + encode(vhost) + "/" + encode(name)));
+    this.deleteIgnoring404(uriWithPath("./exchanges/" + encodePath(vhost) + "/" + encodePath(name)));
   }
 
   /**
@@ -622,7 +617,7 @@ public class Client {
 
     Map<String, Object> body = Utils.bodyForPublish(routingKey, outboundMessage);
 
-    final URI uri = uriWithPath("./exchanges/" + encode(vhost) + "/" + encode(exchange) + "/publish");
+    final URI uri = uriWithPath("./exchanges/" + encodePath(vhost) + "/" + encodePath(exchange) + "/publish");
     Map<?, ?> response = this.httpLayer.post(uri, body, Map.class);
     Boolean routed = (Boolean) response.get("routed");
     if (routed == null) {
@@ -638,14 +633,14 @@ public class Client {
   }
 
   public List<QueueInfo> getQueues(String vhost) {
-    final URI uri = uriWithPath("./queues/" + encode(vhost));
+    final URI uri = uriWithPath("./queues/" + encodePath(vhost));
     final QueueInfo[] result = this.getForObjectReturningNullOn404(uri, QueueInfo[].class);
     return asListOrNull(result);
   }
 
   @SuppressWarnings("unchecked")
   public Page<QueueInfo> getQueues(String vhost, QueryParameters queryParameters) {
-    final URI uri = uriWithPath("./queues/" + encode(vhost), queryParameters);
+    final URI uri = uriWithPath("./queues/" + encodePath(vhost), queryParameters);
     ParameterizedTypeReference<Page<QueueInfo>> type = new ParameterizedTypeReference<>() {
     };
     if (queryParameters.pagination().hasAny()) {
@@ -656,7 +651,7 @@ public class Client {
   }
 
   public QueueInfo getQueue(String vhost, String name) {
-    final URI uri = uriWithPath("./queues/" + encode(vhost) + "/" + encode(name));
+    final URI uri = uriWithPath("./queues/" + encodePath(vhost) + "/" + encodePath(name));
     return this.getForObjectReturningNullOn404(uri, QueueInfo.class);
   }
 
@@ -673,25 +668,25 @@ public class Client {
   }
 
   public void declarePolicy(String vhost, String name, PolicyInfo info) {
-    final URI uri = uriWithPath("./policies/" + encode(vhost) + "/" + encode(name));
+    final URI uri = uriWithPath("./policies/" + encodePath(vhost) + "/" + encodePath(name));
     this.httpLayer.put(uri, info);
   }
 
   public void declareQueue(String vhost, String name, QueueInfo info) {
-    final URI uri = uriWithPath("./queues/" + encode(vhost) + "/" + encode(name));
+    final URI uri = uriWithPath("./queues/" + encodePath(vhost) + "/" + encodePath(name));
     this.httpLayer.put(uri, info);
   }
 
   public void purgeQueue(String vhost, String name) {
-    this.deleteIgnoring404(uriWithPath("./queues/" + encode(vhost) + "/" + encode(name) + "/contents/"));
+    this.deleteIgnoring404(uriWithPath("./queues/" + encodePath(vhost) + "/" + encodePath(name) + "/contents/"));
   }
 
   public void deleteQueue(String vhost, String name) {
-    this.deleteIgnoring404(uriWithPath("./queues/" + encode(vhost) + "/" + encode(name)));
+    this.deleteIgnoring404(uriWithPath("./queues/" + encodePath(vhost) + "/" + encodePath(name)));
   }
 
   public void deleteQueue(String vhost, String name, DeleteQueueParameters deleteInfo) {
-    this.deleteIgnoring404(uriWithPath("./queues/" + encode(vhost) + "/" + encode(name), deleteInfo.getAsQueryParams()));
+    this.deleteIgnoring404(uriWithPath("./queues/" + encodePath(vhost) + "/" + encodePath(name), deleteInfo.getAsQueryParams()));
   }
 
 
@@ -723,7 +718,7 @@ public class Client {
         }
         Map<String, Object> body = Utils.bodyForGet(count, ackMode, encoding, truncate);
 
-        final URI uri = uriWithPath("./queues/" + encode(vhost) + "/" + encode(queue) + "/get");
+        final URI uri = uriWithPath("./queues/" + encodePath(vhost) + "/" + encodePath(queue) + "/get");
         return Arrays.asList(this.httpLayer.post(uri, body, InboundMessage[].class));
     }
 
@@ -773,7 +768,7 @@ public class Client {
     }
 
   public void deletePolicy(String vhost, String name) {
-    this.deleteIgnoring404(uriWithPath("./policies/" + encode(vhost) + "/" + encode(name)));
+    this.deleteIgnoring404(uriWithPath("./policies/" + encodePath(vhost) + "/" + encodePath(name)));
   }
 
   public List<UserInfo> getUsers() {
@@ -782,7 +777,7 @@ public class Client {
   }
 
   public UserInfo getUser(String username) {
-    final URI uri = uriWithPath("./users/" + encode(username));
+    final URI uri = uriWithPath("./users/" + encodePath(username));
     return this.getForObjectReturningNullOn404(uri, UserInfo.class);
   }
 
@@ -798,7 +793,7 @@ public class Client {
     body.put("password", new String(password));
     body.put("tags", String.join(",", tags));
 
-    final URI uri = uriWithPath("./users/" + encode(username));
+    final URI uri = uriWithPath("./users/" + encodePath(username));
     this.httpLayer.put(uri, body);
   }
 
@@ -815,7 +810,7 @@ public class Client {
     body.put("password_hash", String.valueOf(passwordHash));
     body.put("tags", String.join(",", tags));
 
-    final URI uri = uriWithPath("./users/" + encode(username));
+    final URI uri = uriWithPath("./users/" + encodePath(username));
     this.httpLayer.put(uri, body);
   }
 
@@ -830,31 +825,31 @@ public class Client {
     }
     body.put("tags", String.join(",", tags));
 
-    final URI uri = uriWithPath("./users/" + encode(username));
+    final URI uri = uriWithPath("./users/" + encodePath(username));
     this.httpLayer.put(uri, body);
   }
 
   public void deleteUser(String username) {
-    this.deleteIgnoring404(uriWithPath("./users/" + encode(username)));
+    this.deleteIgnoring404(uriWithPath("./users/" + encodePath(username)));
   }
 
   public void updatePermissions(String vhost, String username, UserPermissions permissions) {
-    final URI uri = uriWithPath("./permissions/" + encode(vhost) + "/" + encode(username));
+    final URI uri = uriWithPath("./permissions/" + encodePath(vhost) + "/" + encodePath(username));
     this.httpLayer.put(uri, permissions);
   }
 
   public void clearPermissions(String vhost, String username) {
-    final URI uri = uriWithPath("./permissions/" + encode(vhost) + "/" + encode(username));
+    final URI uri = uriWithPath("./permissions/" + encodePath(vhost) + "/" + encodePath(username));
     deleteIgnoring404(uri);
   }
 
   public void updateTopicPermissions(String vhost, String username, TopicPermissions permissions) {
-    final URI uri = uriWithPath("./topic-permissions/" + encode(vhost) + "/" + encode(username));
+    final URI uri = uriWithPath("./topic-permissions/" + encodePath(vhost) + "/" + encodePath(username));
     this.httpLayer.put(uri, permissions);
   }
 
   public void clearTopicPermissions(String vhost, String username) {
-    final URI uri = uriWithPath("./topic-permissions/" + encode(vhost) + "/" + encode(username));
+    final URI uri = uriWithPath("./topic-permissions/" + encodePath(vhost) + "/" + encodePath(username));
     deleteIgnoring404(uri);
   }
 
@@ -864,7 +859,7 @@ public class Client {
   }
 
   public List<PolicyInfo> getPolicies(String vhost) {
-    final URI uri = uriWithPath("./policies/" + encode(vhost));
+    final URI uri = uriWithPath("./policies/" + encodePath(vhost));
     final PolicyInfo[] result = this.getForObjectReturningNullOn404(uri, PolicyInfo[].class);
     return asListOrNull(result);
   }
@@ -875,7 +870,7 @@ public class Client {
   }
 
   public List<BindingInfo> getBindings(String vhost) {
-    final URI uri = uriWithPath("./bindings/" + encode(vhost));
+    final URI uri = uriWithPath("./bindings/" + encodePath(vhost));
     return Arrays.asList(this.httpLayer.get(uri, BindingInfo[].class));
   }
 
@@ -889,8 +884,8 @@ public class Client {
    */
   public List<BindingInfo> getBindingsBySource(String vhost, String exchange) {
     final String x = exchange.equals("") ? "amq.default" : exchange;
-    final URI uri = uriWithPath("./exchanges/" + encode(vhost) +
-        "/" + encode(x) + "/bindings/source");
+    final URI uri = uriWithPath("./exchanges/" + encodePath(vhost) +
+        "/" + encodePath(x) + "/bindings/source");
     return Arrays.asList(this.httpLayer.get(uri, BindingInfo[].class));
   }
 
@@ -904,8 +899,8 @@ public class Client {
    */
   public List<BindingInfo> getExchangeBindingsByDestination(String vhost, String exchange) {
     final String x = exchange.equals("") ? "amq.default" : exchange;
-    final URI uri = uriWithPath("./exchanges/" + encode(vhost) +
-        "/" + encode(x) + "/bindings/destination");
+    final URI uri = uriWithPath("./exchanges/" + encodePath(vhost) +
+        "/" + encodePath(x) + "/bindings/destination");
     final BindingInfo[] result = this.httpLayer.get(uri, BindingInfo[].class);
     return asListOrNull(result);
   }
@@ -918,22 +913,22 @@ public class Client {
    * @return list of bindings
    */
   public List<BindingInfo> getQueueBindings(String vhost, String queue) {
-    final URI uri = uriWithPath("./queues/" + encode(vhost) +
-        "/" + encode(queue) + "/bindings");
+    final URI uri = uriWithPath("./queues/" + encodePath(vhost) +
+        "/" + encodePath(queue) + "/bindings");
     final BindingInfo[] result = this.httpLayer.get(uri, BindingInfo[].class);
     return asListOrNull(result);
   }
 
   public List<BindingInfo> getQueueBindingsBetween(String vhost, String exchange, String queue) {
-    final URI uri = uriWithPath("./bindings/" + encode(vhost) +
-        "/e/" + encode(exchange) + "/q/" + encode(queue));
+    final URI uri = uriWithPath("./bindings/" + encodePath(vhost) +
+        "/e/" + encodePath(exchange) + "/q/" + encodePath(queue));
     final BindingInfo[] result = this.httpLayer.get(uri, BindingInfo[].class);
     return asListOrNull(result);
   }
 
   public List<BindingInfo> getExchangeBindingsBetween(String vhost, String source, String destination) {
-    final URI uri = uriWithPath("./bindings/" + encode(vhost) +
-        "/e/" + encode(source) + "/e/" + encode(destination));
+    final URI uri = uriWithPath("./bindings/" + encodePath(vhost) +
+        "/e/" + encodePath(source) + "/e/" + encodePath(destination));
     final BindingInfo[] result = this.httpLayer.get(uri, BindingInfo[].class);
     return asListOrNull(result);
   }
@@ -973,8 +968,8 @@ public class Client {
     }
     body.put("routing_key", routingKey);
 
-    final URI uri = uriWithPath("./bindings/" + encode(vhost) +
-      "/e/" + encode(exchange) + "/q/" + encode(queue));
+    final URI uri = uriWithPath("./bindings/" + encodePath(vhost) +
+      "/e/" + encodePath(exchange) + "/q/" + encodePath(queue));
     this.httpLayer.post(uri, body, null);
   }
 
@@ -996,8 +991,8 @@ public class Client {
       throw new IllegalArgumentException("exchange cannot be null or blank");
     }
     
-    this.deleteIgnoring404(uriWithPath("./bindings/" + encode(vhost) + "/e/" + encode(exchange) +
-      "/q/" + encode(queue) + '/' + encode(routingKey)));
+    this.deleteIgnoring404(uriWithPath("./bindings/" + encodePath(vhost) + "/e/" + encodePath(exchange) +
+      "/q/" + encodePath(queue) + '/' + encodePath(routingKey)));
   }
 
   /**
@@ -1035,8 +1030,8 @@ public class Client {
     }
     body.put("routing_key", routingKey);
 
-    final URI uri = uriWithPath("./bindings/" + encode(vhost) +
-      "/e/" + encode(source) + "/e/" + encode(destination));
+    final URI uri = uriWithPath("./bindings/" + encodePath(vhost) +
+      "/e/" + encodePath(source) + "/e/" + encodePath(destination));
     this.httpLayer.post(uri, body, null);
   }
 
@@ -1058,8 +1053,8 @@ public class Client {
       throw new IllegalArgumentException("source cannot be null or blank");
     }
 	    
-    this.deleteIgnoring404(uriWithPath("./bindings/" + encode(vhost) + "/e/" + encode(source) +
-      "/e/" + encode(destination) + '/' + encode(routingKey)));
+    this.deleteIgnoring404(uriWithPath("./bindings/" + encodePath(vhost) + "/e/" + encodePath(source) +
+      "/e/" + encodePath(destination) + '/' + encodePath(routingKey)));
   }
 
   public ClusterId getClusterName() {
@@ -1102,7 +1097,7 @@ public class Client {
     if(props != null && props.isEmpty()) {
       throw new IllegalArgumentException("Shovel publish properties must be a non-empty map or null");
     }
-    final URI uri = uriWithPath("./parameters/shovel/" + encode(vhost) + "/" + encode(info.getName()));
+    final URI uri = uriWithPath("./parameters/shovel/" + encodePath(vhost) + "/" + encodePath(info.getName()));
     this.httpLayer.put(uri, info);
   }
 
@@ -1123,7 +1118,7 @@ public class Client {
    * @return Shovels.
    */
   public List<ShovelInfo> getShovels(String vhost) {
-    final URI uri = uriWithPath("./parameters/shovel/" + encode(vhost));
+    final URI uri = uriWithPath("./parameters/shovel/" + encodePath(vhost));
     final ShovelInfo[] result = this.getForObjectReturningNullOn404(uri, ShovelInfo[].class);
     return asListOrNull(result);
   }
@@ -1145,7 +1140,7 @@ public class Client {
    * @return Shovels.
    */
   public List<ShovelStatus> getShovelsStatus(String vhost) {
-    final URI uri = uriWithPath("./shovels/" + encode(vhost));
+    final URI uri = uriWithPath("./shovels/" + encodePath(vhost));
     final ShovelStatus[] result = this.getForObjectReturningNullOn404(uri, ShovelStatus[].class);
     return asListOrNull(result);
   }
@@ -1157,7 +1152,7 @@ public class Client {
    * @param shovelname Shovel to be deleted.
    */
   public void deleteShovel(String vhost, String shovelname) {
-	    this.deleteIgnoring404(uriWithPath("./parameters/shovel/" + encode(vhost) + "/" + encode(shovelname)));
+	    this.deleteIgnoring404(uriWithPath("./parameters/shovel/" + encodePath(vhost) + "/" + encodePath(shovelname)));
   }
 
   //
@@ -1175,7 +1170,7 @@ public class Client {
       throw new IllegalArgumentException("Upstream uri must not be null or empty");
     }
     final URI uri = uriWithPath("./parameters/federation-upstream/"
-            + encode(vhost) + "/" + encode(name));
+            + encodePath(vhost) + "/" + encodePath(name));
     UpstreamInfo body = new UpstreamInfo();
     body.setVhost(vhost);
     body.setName(name);
@@ -1190,7 +1185,7 @@ public class Client {
    */
   public void deleteUpstream(String vhost, String name) {
     this.deleteIgnoring404(uriWithPath("./parameters/federation-upstream/"
-            + encode(vhost) + "/" + encode(name)));
+            + encodePath(vhost) + "/" + encodePath(name)));
   }
 
   /**
@@ -1228,7 +1223,7 @@ public class Client {
       }
     }
     final URI uri = uriWithPath("./parameters/federation-upstream-set/"
-            + encode(vhost) + "/" + encode(name));
+            + encodePath(vhost) + "/" + encodePath(name));
     UpstreamSetInfo body = new UpstreamSetInfo();
     body.setVhost(vhost);
     body.setName(name);
@@ -1243,7 +1238,7 @@ public class Client {
    */
   public void deleteUpstreamSet(String vhost, String name) {
     this.deleteIgnoring404(uriWithPath("./parameters/federation-upstream-set/"
-            + encode(vhost) + "/" + encode(name)));
+            + encodePath(vhost) + "/" + encodePath(name)));
   }
 
   /**
@@ -1286,7 +1281,7 @@ public class Client {
    * @since 3.7.0
    */
   public VhostLimits getVhostLimits(String vhost) {
-    final URI uri = uriWithPath("./vhost-limits/" + encode(vhost));
+    final URI uri = uriWithPath("./vhost-limits/" + encodePath(vhost));
     VhostLimits limits = this.httpLayer.get(uri, VhostLimits.class);
     if (limits != null && limits.getVhost() == null) {
       limits = new VhostLimits(vhost, -1, -1);
@@ -1302,7 +1297,7 @@ public class Client {
    * @since 3.7.0
    */
   public void limitMaxNumberOfConnections(String vhost, int limit) {
-    final URI uri = uriWithPath("./vhost-limits/" + encode(vhost) + "/max-connections");
+    final URI uri = uriWithPath("./vhost-limits/" + encodePath(vhost) + "/max-connections");
     this.httpLayer.put(uri, Collections.singletonMap("value", limit));
   }
 
@@ -1314,7 +1309,7 @@ public class Client {
    * @since 3.7.0
    */
   public void limitMaxNumberOfQueues(String vhost, int limit) {
-    final URI uri = uriWithPath("./vhost-limits/" + encode(vhost) + "/max-queues");
+    final URI uri = uriWithPath("./vhost-limits/" + encodePath(vhost) + "/max-queues");
     this.httpLayer.put(uri, Collections.singletonMap("value", limit));
   }
 
@@ -1325,7 +1320,7 @@ public class Client {
    * @since 3.7.0
    */
   public void clearMaxConnectionsLimit(String vhost) {
-    final URI uri = uriWithPath("./vhost-limits/" + encode(vhost) + "/max-connections");
+    final URI uri = uriWithPath("./vhost-limits/" + encodePath(vhost) + "/max-connections");
     this.deleteIgnoring404(uri);
   }
 
@@ -1336,7 +1331,7 @@ public class Client {
    * @since 3.7.0
    */
   public void clearMaxQueuesLimit(String vhost) {
-    final URI uri = uriWithPath("./vhost-limits/" + encode(vhost) + "/max-queues");
+    final URI uri = uriWithPath("./vhost-limits/" + encodePath(vhost) + "/max-queues");
     this.deleteIgnoring404(uri);
   }
 
@@ -1346,7 +1341,7 @@ public class Client {
   }
 
   private <T> List<T> getParameters(String vhost, String component, final ParameterizedTypeReference<List<T>> responseType) {
-    final URI uri = uriWithPath("./parameters/" + component + "/" + encode(vhost));
+    final URI uri = uriWithPath("./parameters/" + component + "/" + encodePath(vhost));
     return getForObjectReturningNullOn404(uri, responseType);
   }
 
@@ -1378,13 +1373,17 @@ public class Client {
   private URI uriWithPath(String path, final Map<String, String> queryParams) {
     if (queryParams != null && !queryParams.isEmpty()) {
       path += queryParams.entrySet().stream()
-          .map(e -> String.format("%s=%s", e.getKey(), encode(e.getValue())))
+          .map(e -> String.format("%s=%s", e.getKey(), encodeHttpParameter(e.getValue())))
           .collect(Collectors.joining("&", "?", ""));
     }
     return rootUri.resolve(path);
   }
 
-  private static String encode(final String pathSegment) {
+  private static String encodeHttpParameter(String parameter) {
+    return Utils.encodeHttpParameter(parameter);
+  }
+
+  private static String encodePath(String pathSegment) {
     return Utils.encode(pathSegment);
   }
 

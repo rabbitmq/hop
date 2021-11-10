@@ -16,6 +16,7 @@
 
 package com.rabbitmq.http.client;
 
+import com.rabbitmq.http.client.HttpLayer.HttpLayerFactory;
 import org.springframework.util.Assert;
 
 import java.net.MalformedURLException;
@@ -32,6 +33,7 @@ public class ClientParameters {
     private String username;
     private String password;
     private RestTemplateConfigurator restTemplateConfigurator;
+    private HttpLayerFactory httpLayerFactory;
 
     /**
      * Set the URL to use.
@@ -122,6 +124,15 @@ public class ClientParameters {
 
     public RestTemplateConfigurator getRestTemplateConfigurator() {
         return restTemplateConfigurator;
+    }
+
+    HttpLayerFactory getHttpLayerFactory() {
+        return httpLayerFactory;
+    }
+
+    ClientParameters httpLayerFactory(HttpLayerFactory httpLayerFactory) {
+        this.httpLayerFactory = httpLayerFactory;
+        return this;
     }
 
     void validate() {

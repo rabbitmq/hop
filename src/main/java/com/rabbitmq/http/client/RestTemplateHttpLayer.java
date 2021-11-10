@@ -23,7 +23,9 @@ import com.rabbitmq.http.client.domain.ChannelDetails;
 import com.rabbitmq.http.client.domain.CurrentUserDetails;
 import com.rabbitmq.http.client.domain.UserInfo;
 import com.rabbitmq.http.client.domain.VhostLimits;
+import java.net.MalformedURLException;
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -136,10 +138,17 @@ class RestTemplateHttpLayer implements HttpLayer {
   static class RestTemplateHttpLayerFactory implements HttpLayerFactory {
 
     @Override
-    public HttpLayer create(ClientCreationContext context) {
-      ClientParameters parameters = context.getClientParameters();
+    public HttpLayer create(ClientParameters parameters) {
       RestTemplate restTemplate = new RestTemplate();
-      context.restTemplate(restTemplate);
+      URI rootUri;
+      try {
+        rootUri = Utils.rootUri(parameters.getUrl());
+      } catch (URISyntaxException e) {
+        throw new HttpException(e);
+      } catch (MalformedURLException e) {
+        throw new HttpException(e);
+      }
+      ClientCreationContext context = new ClientCreationContext(restTemplate, parameters, rootUri);
       restTemplate.setMessageConverters(getMessageConverters());
       RestTemplateConfigurator restTemplateConfigurator =
           parameters.getRestTemplateConfigurator() == null

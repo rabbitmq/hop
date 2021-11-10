@@ -18,16 +18,7 @@ package com.rabbitmq.http.client
 
 import com.rabbitmq.client.*
 import com.rabbitmq.http.client.domain.*
-import groovy.json.JsonSlurper
-import org.apache.http.HttpRequest
-import org.apache.http.HttpRequestInterceptor
-import org.apache.http.auth.AuthScope
-import org.apache.http.client.protocol.HttpClientContext
-import org.apache.http.protocol.HttpContext
-import org.springframework.http.HttpMethod
-import org.springframework.http.HttpStatus
-import org.springframework.http.client.ClientHttpRequest
-import org.springframework.web.client.*
+import org.springframework.web.client.HttpClientErrorException
 import spock.lang.IgnoreIf
 import spock.lang.Specification
 import spock.lang.Unroll
@@ -57,6 +48,12 @@ class ClientSpec extends Specification {
 
   static Client[] clients() {
     [
+            new Client(
+              new ClientParameters().url(url()).username(DEFAULT_USERNAME).password(DEFAULT_PASSWORD)
+                      .httpLayerFactory(JdkHttpClientHttpLayer.Factory.configure().create())
+      )
+    ] +
+    [
             new HttpComponentsRestTemplateConfigurator(),
             new OkHttpRestTemplateConfigurator(),
             new SimpleRestTemplateConfigurator()
@@ -82,6 +79,12 @@ class ClientSpec extends Specification {
   }
 
   static Client[] clientsWithCredentialsInUrl() {
+    [
+            new Client(
+                    new ClientParameters().url(url()).username(DEFAULT_USERNAME).password(DEFAULT_PASSWORD)
+                            .httpLayerFactory(JdkHttpClientHttpLayer.Factory.configure().create())
+            )
+    ] +
     [
             new HttpComponentsRestTemplateConfigurator(),
             new OkHttpRestTemplateConfigurator(),
@@ -113,28 +116,11 @@ class ClientSpec extends Specification {
 
   def "user info decoding"() {
     when: "username and password are encoded in the URL"
-    def usernamePassword = new AtomicReference<>()
-    def localClient = new Client("http://test+user:test%40password@localhost:" + managementPort() + "/api/", { builder ->
-      builder.addInterceptorLast(new HttpRequestInterceptor() {
-        @Override
-        void process(HttpRequest request, HttpContext context) throws org.apache.http.HttpException, IOException {
-          HttpClientContext httpCtx = (HttpContext) context as HttpClientContext
-          def credentials = httpCtx.getCredentialsProvider().getCredentials(new AuthScope(AuthScope.ANY_HOST, AuthScope.ANY_PORT))
-          usernamePassword.set(credentials.getUserPrincipal().name + ":" + credentials.getPassword())
-        }
-      })
-      return builder
-    }
-    )
-
-    try {
-      localClient.getOverview()
-    } catch (Exception ignored) {
-      // OK
-    }
-
-    then: "username and password are decoded before going into the request"
-    usernamePassword.get() == "test user:test@password"
+    def clientParameters = new ClientParameters()
+            .url("http://test+user:test%40password@localhost:" + managementPort() + "/api/");
+    then: "username and password are decoded"
+    clientParameters.getUsername() == "test user"
+    clientParameters.getPassword() == "test@password"
   }
 
   @Unroll
@@ -1120,8 +1106,8 @@ class ClientSpec extends Specification {
     client.declareQueue(v, s, new QueueInfo(false, false, false))
 
     then: "an exception is thrown"
-    def e = thrown(HttpClientErrorException)
-    e.getStatusCode() == HttpStatus.NOT_FOUND
+    def e = thrown(Exception)
+    exceptionStatus(e) == 404
 
     where:
     client << clients()
@@ -1171,8 +1157,8 @@ class ClientSpec extends Specification {
     client.deleteQueue(v, queue, new DeleteQueueParameters(true, false))
 
     then: "an exception is thrown"
-    def e = thrown(HttpClientErrorException)
-    e.getStatusCode() == HttpStatus.BAD_REQUEST
+    def e = thrown(Exception)
+    exceptionStatus(e) == 400
 
     cleanup:
     client.deleteQueue(v, queue)
@@ -1987,8 +1973,8 @@ class ClientSpec extends Specification {
     client.updatePermissions(v, u, new UserPermissions("read", "write", "configure"))
 
     then: "an exception is thrown"
-    def e = thrown(HttpClientErrorException)
-    e.getStatusCode() == HttpStatus.BAD_REQUEST
+    def e = thrown(Exception)
+    exceptionStatus(e) == 400
 
     cleanup:
     client.deleteUser(u)
@@ -2135,8 +2121,8 @@ class ClientSpec extends Specification {
     client.updateTopicPermissions(v, u, new TopicPermissions("amq.topic", "read", "write"))
 
     then: "an exception is thrown"
-    def e = thrown(HttpClientErrorException)
-    e.getStatusCode() == HttpStatus.BAD_REQUEST
+    def e = thrown(Exception.class)
+    exceptionStatus(e) == 400
 
     cleanup:
     client.deleteUser(u)
@@ -2421,63 +2407,6 @@ class ClientSpec extends Specification {
 
     cleanup:
     client.deleteQueue("/","queue1")
-
-    where:
-    client << clients()
-  }
-
-  @Unroll
-  def "PUT /api/parameters/shovel ShovelDetails.sourcePrefetchCount not sent if not set"() {
-    given: "mock RestTemplate"
-    MockRestTemplate rt = new MockRestTemplate()
-    Client c = new Client(
-            new ClientParameters().url(url()).username(DEFAULT_USERNAME).password(DEFAULT_PASSWORD)
-              .restTemplateConfigurator({ context -> rt})
-    )
-
-    and: "a basic topology with null sourcePrefetchCount"
-    ShovelDetails details = new ShovelDetails("amqp://", "amqp://", 30, true, null)
-    details.setSourceQueue("queue1")
-    details.setDestinationExchange("exchange1")
-
-    when: "client declares the shovels"
-    c.declareShovel("/", new ShovelInfo("shovel1", details))
-
-    then: "the json will not include src-prefetch-count"
-    def body = new JsonSlurper().parseText(rt.requestCaptor.body.toString())
-    body.value['src-prefetch-count'] == null
-
-    cleanup:
-    client.deleteShovel("/","shovel1")
-
-    where:
-    client << clients()
-  }
-
-  @Unroll
-  def "PUT /api/parameters/shovel ShovelDetails.destinationAddTimestampHeader not sent if not set"() {
-    given: "mock RestTemplate"
-    MockRestTemplate rt = new MockRestTemplate()
-    Client c = new Client(
-            new ClientParameters().url(url()).username(DEFAULT_USERNAME).password(DEFAULT_PASSWORD)
-                    .restTemplateConfigurator({ context -> rt})
-    )
-
-    and: "a basic topology with null destinationAddTimestampHeader"
-    ShovelDetails details = new ShovelDetails("amqp://", "amqp://", 30, true, null)
-    details.setSourceQueue("queue1")
-    details.setDestinationExchange("exchange1")
-
-    when: "client declares the shovels"
-    c.declareShovel("/", new ShovelInfo("shovel1", details))
-
-    then: "the json will not include dest-add-timestamp-header"
-    def body = new JsonSlurper().parseText(rt.requestCaptor.body.toString())
-    body.value['dest-add-timestamp-header'] == null
-
-    cleanup:
-    client.deleteShovel("/","shovel1")
-    client.deleteQueue("/", "queue1")
 
     where:
     client << clients()
@@ -3179,18 +3108,13 @@ class ClientSpec extends Specification {
     assert upstream.value.uri == "amqp://localhost:5672"
   }
 
-  static class MockRestTemplate extends RestTemplate {
-    ClientHttpRequest requestCaptor
-
-    @Override
-    protected <T> T doExecute(URI url, HttpMethod method, RequestCallback requestCallback,
-                              ResponseExtractor<T> responseExtractor) throws RestClientException {
-      ClientHttpRequest request = createRequest(url, method)
-      if (requestCallback != null) {
-        requestCallback.doWithRequest(request)
-      }
-      requestCaptor = request
-      return null
+  static int exceptionStatus(Exception e) {
+    if (e instanceof HttpClientErrorException) {
+      return ((HttpClientErrorException) e).getStatusCode().value();
+    } else if (e instanceof HttpClientException){
+      return ((HttpClientException) e).status();
+    } else {
+      throw new IllegalArgumentException("Unknown exception type: " + e.getClass());
     }
   }
 

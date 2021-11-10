@@ -31,9 +31,10 @@ interface HttpLayer {
 
   void delete(URI uri, Map<String, String> headers);
 
+  @FunctionalInterface
   interface HttpLayerFactory {
 
-    HttpLayer create(ClientCreationContext context);
+    HttpLayer create(ClientParameters parameters);
 
   }
 }
