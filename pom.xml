@@ -47,6 +47,9 @@
     <assertj.version>3.21.0</assertj.version>
     <amqp-client.version>5.13.1</amqp-client.version>
     <logback.version>1.2.6</logback.version>
+    <wiremock.version>2.31.0</wiremock.version>
+    <jetty.version>9.4.44.v20210927</jetty.version>
+    <bouncycastle.version>1.69</bouncycastle.version>
     <maven.compiler.plugin.version>3.8.1</maven.compiler.plugin.version>
     <maven-surefire-plugin.version>2.22.2</maven-surefire-plugin.version>
     <maven.gpg.plugin.version>1.6</maven.gpg.plugin.version>
@@ -148,6 +151,24 @@
       <groupId>ch.qos.logback</groupId>
       <artifactId>logback-classic</artifactId>
       <version>${logback.version}</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>com.github.tomakehurst</groupId>
+      <artifactId>wiremock-jre8</artifactId>
+      <version>${wiremock.version}</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.eclipse.jetty</groupId>
+      <artifactId>jetty-servlet</artifactId>
+      <version>${jetty.version}</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.bouncycastle</groupId>
+      <artifactId>bcpkix-jdk15on</artifactId>
+      <version>${bouncycastle.version}</version>
       <scope>test</scope>
     </dependency>
   </dependencies>

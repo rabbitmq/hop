@@ -42,6 +42,7 @@ import java.util.function.Supplier;
 class JdkHttpClientHttpLayer implements HttpLayer {
 
   private static final Duration REQUEST_TIMEOUT = Duration.ofSeconds(60);
+  private static final Duration CONNECT_TIMEOUT = Duration.ofSeconds(30);
 
   private final HttpClient client;
   private final ObjectMapper mapper;
@@ -214,7 +215,7 @@ class JdkHttpClientHttpLayer implements HttpLayer {
           HttpClient.newBuilder()
               .version(Version.HTTP_1_1)
               .followRedirects(Redirect.NORMAL)
-              .connectTimeout(Duration.ofSeconds(10));
+              .connectTimeout(CONNECT_TIMEOUT);
       this.clientBuilderConsumer.accept(builder);
       HttpClient client = builder.build();
       ObjectMapper mapper = JsonUtils.createDefaultObjectMapper();

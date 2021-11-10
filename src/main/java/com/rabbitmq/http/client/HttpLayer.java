@@ -22,6 +22,8 @@ import java.net.http.HttpClient.Builder;
 import java.net.http.HttpRequest;
 import java.util.Map;
 import java.util.function.Consumer;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLParameters;
 
 /**
  * HTTP layer abstraction for {@link Client}.
@@ -106,6 +108,7 @@ public interface HttpLayer {
   interface HttpLayerFactory {
 
     HttpLayer create(ClientParameters parameters);
+
   }
 
   /**
@@ -120,6 +123,13 @@ public interface HttpLayer {
 
     /**
      * Callback to configure the {@link java.net.http.HttpClient.Builder}.
+     *
+     * The client can be configured to use TLS with this callback. Use the
+     * {@link Builder#sslContext(SSLContext)} and {@link Builder#sslParameters(SSLParameters)}
+     * methods to configure TLS appropriately.
+     *
+     * Use the {@link SSLParameters#setEndpointIdentificationAlgorithm(String)} method with
+     * the <code>HTTPS</code> value to enable server hostname verification.
      *
      * @param clientBuilderConsumer
      * @return this configuration instance
