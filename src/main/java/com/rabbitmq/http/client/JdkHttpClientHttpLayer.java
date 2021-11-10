@@ -151,6 +151,7 @@ class JdkHttpClientHttpLayer implements HttpLayer {
     } catch (IOException e) {
       throw new HttpException(e);
     } catch (InterruptedException e) {
+      Thread.currentThread().interrupt();
       throw new HttpException(e);
     }
   }
@@ -171,6 +172,7 @@ class JdkHttpClientHttpLayer implements HttpLayer {
     } catch (IOException e) {
       throw new HttpException(e);
     } catch (InterruptedException e) {
+      Thread.currentThread().interrupt();
       throw new HttpException(e);
     }
   }
@@ -189,6 +191,7 @@ class JdkHttpClientHttpLayer implements HttpLayer {
     } catch (IOException e) {
       throw new HttpException(e);
     } catch (InterruptedException e) {
+      Thread.currentThread().interrupt();
       throw new HttpException(e);
     }
   }
