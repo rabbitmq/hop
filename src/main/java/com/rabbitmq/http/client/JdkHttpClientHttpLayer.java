@@ -209,7 +209,7 @@ class JdkHttpClientHttpLayer implements HttpLayer {
     public HttpLayer create(ClientParameters parameters) {
       HttpClient.Builder builder =
           HttpClient.newBuilder()
-              .version(Version.HTTP_2)
+              .version(Version.HTTP_1_1)
               .followRedirects(Redirect.NORMAL)
               .connectTimeout(Duration.ofSeconds(10));
       this.clientBuilderConsumer.accept(builder);
