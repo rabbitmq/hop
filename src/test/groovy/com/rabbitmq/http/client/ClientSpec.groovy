@@ -28,6 +28,9 @@ import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicReference
 
+import static com.rabbitmq.http.client.domain.DestinationType.EXCHANGE
+import static com.rabbitmq.http.client.domain.DestinationType.QUEUE
+
 class ClientSpec extends Specification {
 
   static final String DEFAULT_USERNAME = "guest"
@@ -52,7 +55,8 @@ class ClientSpec extends Specification {
               new ClientParameters().url(url()).username(DEFAULT_USERNAME).password(DEFAULT_PASSWORD)
                       .httpLayerFactory(HttpLayer.configure().create())
       )
-    ] +
+    ]
+    +
     [
             new HttpComponentsRestTemplateConfigurator(),
             new OkHttpRestTemplateConfigurator(),
@@ -708,7 +712,7 @@ class ClientSpec extends Specification {
     def xs = client.getBindingsBySource("/", "")
 
     then: "there is an automatic binding for hop.queue1"
-    def x = xs.find { it.source == "" && it.destinationType == "queue" && it.destination == q }
+    def x = xs.find { it.source == "" && it.destinationType == QUEUE && it.destination == q }
     x != null
 
     cleanup:
@@ -734,7 +738,7 @@ class ClientSpec extends Specification {
 
     then: "there is a binding for hop.exchange1"
     def x = xs.find { it.source == src &&
-        it.destinationType == "exchange" &&
+        it.destinationType == EXCHANGE &&
         it.destination == dest
     }
     x != null
@@ -1184,7 +1188,7 @@ class ClientSpec extends Specification {
     def List<BindingInfo> xs = client.getBindings()
 
     then: "amq.fanout bindings are listed"
-    xs.findAll { it.destinationType == "queue" && it.source == x }
+    xs.findAll { it.destinationType == QUEUE && it.source == x }
       .size() >= 3
 
     cleanup:
@@ -1212,7 +1216,7 @@ class ClientSpec extends Specification {
     def List<BindingInfo> xs = client.getBindings("/")
 
     then: "amq.fanout bindings are listed"
-    xs.findAll { it.destinationType == "queue" && it.source == x }
+    xs.findAll { it.destinationType == QUEUE && it.source == x }
       .size() >= 2
 
     cleanup:
@@ -1238,7 +1242,7 @@ class ClientSpec extends Specification {
     def List<BindingInfo> xs = client.getBindings("/")
 
     then: "the amq.fanout binding is listed"
-    xs.find { it.destinationType == "queue" && it.source == x && it.destination == q }
+    xs.find { it.destinationType == QUEUE && it.source == x && it.destination == q }
 
     cleanup:
     ch.queueDelete(q)
@@ -1262,7 +1266,7 @@ class ClientSpec extends Specification {
     def List<BindingInfo> xs = client.getQueueBindings("/", q)
 
     then: "the amq.fanout binding is listed"
-    xs.find { it.destinationType == "queue" && it.source == x && it.destination == q }
+    xs.find { it.destinationType == QUEUE && it.source == x && it.destination == q }
 
     cleanup:
     ch.queueDelete(q)
@@ -1290,7 +1294,7 @@ class ClientSpec extends Specification {
     xs.size() == 1
     b.source == x
     b.destination == q
-    b.destinationType == "queue"
+    b.destinationType == QUEUE
 
     cleanup:
     ch.queueDelete(q)
@@ -1318,7 +1322,7 @@ class ClientSpec extends Specification {
     xs.size() == 1
     b.source == s
     b.destination == d
-    b.destinationType == "exchange"
+    b.destinationType == EXCHANGE
 
     cleanup:
     ch.exchangeDelete(d)
@@ -1346,7 +1350,7 @@ class ClientSpec extends Specification {
     xs.size() == 1
     b.source == s
     b.destination == d
-    b.destinationType == "exchange"
+    b.destinationType == EXCHANGE
     b.arguments.size() == 2
     b.arguments.containsKey("arg1")
     b.arguments.arg1 == "value1"
@@ -1377,7 +1381,7 @@ class ClientSpec extends Specification {
     xs.size() == 1
     b.source == x
     b.destination == q
-    b.destinationType == "queue"
+    b.destinationType == QUEUE
     b.arguments.size() == 2
     b.arguments.containsKey("arg1")
     b.arguments.arg1 == "value1"
@@ -2397,13 +2401,13 @@ class ClientSpec extends Specification {
     !d.getBindings().isEmpty()
     d.getBindings().size() >= 1
     BindingInfo b = d.getBindings().find {
-      it.source == "amq.fanout" && it.destination == "queue1" && it.destinationType == "queue"
+      it.source == "amq.fanout" && it.destination == "queue1" && it.destinationType == QUEUE
     }
     b != null
     b.vhost == "/"
     b.source == "amq.fanout"
     b.destination == "queue1"
-    b.destinationType == "queue"
+    b.destinationType == QUEUE
 
     cleanup:
     client.deleteQueue("/","queue1")
