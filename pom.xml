@@ -337,7 +337,7 @@
             <version>${maven-javadoc-plugin.version}</version>
             <configuration>
               <quiet>true</quiet>
-              <source>8</source>
+              <source>11</source>
               <additionalOptions>-Xdoclint:none</additionalOptions>
               <additionalJOption>${javadoc.joption}</additionalJOption>
             </configuration>
@@ -387,7 +387,7 @@
             <configuration>
               <additionalOptions>${javadoc.opts}</additionalOptions>
               <additionalJOption>${javadoc.joption}</additionalJOption>
-              <source>8</source>
+              <source>11</source>
               <quiet>true</quiet>
             </configuration>
             <executions>
@@ -441,7 +441,7 @@
             <configuration>
               <additionalOptions>${javadoc.opts}</additionalOptions>
               <additionalJOption>${javadoc.joption}</additionalJOption>
-              <source>8</source>
+              <source>11</source>
               <quiet>true</quiet>
             </configuration>
             <executions>
