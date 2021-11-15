@@ -1,5 +1,5 @@
 /*
- * Copyright 2015 the original author or authors.
+ * Copyright 2015-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -57,13 +57,6 @@ public class BindingInfo {
     this.destination = destination;
   }
 
-  public String getDestinationType() {
-    if(destinationType != null) {
-      return destinationType.name().toLowerCase();
-    }
-    return null;
-  }
-
   public void setDestinationType(DestinationType destinationType){
     this.destinationType = destinationType;
   }
@@ -74,7 +67,7 @@ public class BindingInfo {
     }
   }
 
-  public DestinationType getDestinationTypeAsEnum(){
+  public DestinationType getDestinationType(){
     return destinationType;
   }
 
