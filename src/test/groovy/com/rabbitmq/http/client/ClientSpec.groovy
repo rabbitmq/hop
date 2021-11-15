@@ -55,8 +55,7 @@ class ClientSpec extends Specification {
               new ClientParameters().url(url()).username(DEFAULT_USERNAME).password(DEFAULT_PASSWORD)
                       .httpLayerFactory(HttpLayer.configure().create())
       )
-    ]
-    +
+    ] +
     [
             new HttpComponentsRestTemplateConfigurator(),
             new OkHttpRestTemplateConfigurator(),
