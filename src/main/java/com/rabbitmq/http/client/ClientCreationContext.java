@@ -24,10 +24,12 @@ import java.net.URI;
  *
  * @see RestTemplateConfigurator#configure(ClientCreationContext)
  * @since 3.6.0
+ * @deprecated
  */
+@Deprecated(since = "4.0.0", forRemoval = true)
 public class ClientCreationContext {
 
-    private final RestTemplate restTemplate;
+    private RestTemplate restTemplate;
     private final ClientParameters clientParameters;
     private final URI rootUri;
 
@@ -67,5 +69,10 @@ public class ClientCreationContext {
      */
     public URI getRootUri() {
         return rootUri;
+    }
+
+    public ClientCreationContext restTemplate(RestTemplate restTemplate) {
+        this.restTemplate = restTemplate;
+        return this;
     }
 }

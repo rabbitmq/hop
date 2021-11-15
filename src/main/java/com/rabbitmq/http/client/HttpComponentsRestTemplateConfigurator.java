@@ -16,6 +16,7 @@
 
 package com.rabbitmq.http.client;
 
+import com.rabbitmq.http.client.HttpLayer.HttpLayerFactory;
 import org.apache.http.HttpHost;
 import org.apache.http.auth.AuthScope;
 import org.apache.http.auth.UsernamePasswordCredentials;
@@ -47,7 +48,9 @@ import java.net.URL;
  *
  * @see HttpComponentsClientHttpRequestFactory
  * @since 3.6.0
+ * @deprecated use {@link ClientParameters#httpLayerFactory(HttpLayerFactory)} instead
  */
+@Deprecated(since = "4.0.0", forRemoval = true)
 public class HttpComponentsRestTemplateConfigurator implements RestTemplateConfigurator {
 
     private static final HttpClientBuilderConfigurator NO_OP_HTTP_CLIENT_BUILDER_CONFIGURATOR = builder -> builder;

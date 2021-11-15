@@ -17,8 +17,11 @@
 package com.rabbitmq.http.client;
 
 import com.rabbitmq.http.client.domain.OutboundMessage;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.URLEncoder;
-import org.springframework.util.StringUtils;
+import java.nio.charset.StandardCharsets;
+import java.util.Base64;
 
 import java.io.UnsupportedEncodingException;
 import java.net.MalformedURLException;
@@ -100,6 +103,14 @@ final class Utils {
         };
     }
 
+    static URI rootUri(URL url) throws URISyntaxException, MalformedURLException {
+        if (url.toString().endsWith("/")) {
+            return url.toURI();
+        } else {
+            return new URL(url + "/").toURI();
+        }
+    }
+
     static String decode(String potentiallyEncodedString) {
         if (potentiallyEncodedString != null && !potentiallyEncodedString.isEmpty()) {
             try {
@@ -120,7 +131,11 @@ final class Utils {
         } catch (MalformedURLException e) {
             throw new IllegalArgumentException("URL is malformed");
         }
-        return StringUtils.replace(url, url1.getUserInfo() + "@", "");
+        return url.replace(url1.getUserInfo() + "@", "");
+    }
+
+    static String base64(String in) {
+        return Base64.getEncoder().encodeToString(in.getBytes(StandardCharsets.UTF_8));
     }
 
     /* from https://github.com/apache/httpcomponents-client/commit/b58e7d46d75e1d3c42f5fd6db9bd45f32a49c639#diff-a74b24f025e68ec11e4550b42e9f807d */
@@ -144,15 +159,11 @@ final class Utils {
     }
 
     static String encodeHttpParameter(String value) {
-        try {
-            return URLEncoder.encode(value, CHARSET_UTF8.name());
-        } catch (UnsupportedEncodingException e) {
-          throw new IllegalStateException("Unknown charset for encoding", e);
-        }
+        return URLEncoder.encode(value, CHARSET_UTF8);
     }
 
-    static String encode(String content) {
-        return encodePath(content, CHARSET_UTF8);
+    static String encode(String pathSegment) {
+        return encodePath(pathSegment, CHARSET_UTF8);
     }
 
     private static final int RADIX = 16;

@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2020 the original author or authors.
+ * Copyright 2019-2021 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,14 +19,17 @@ package com.rabbitmq.http.client
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.rabbitmq.http.client.domain.ConsumerDetails
 import com.rabbitmq.http.client.domain.QueueInfo
+import com.rabbitmq.http.client.domain.ShovelDetails
+import com.rabbitmq.http.client.domain.ShovelInfo
 import com.rabbitmq.http.client.domain.UserInfo
+import groovy.json.JsonSlurper
 import spock.lang.Specification
 import spock.lang.Unroll
 
 class JsonMappingSpec extends Specification {
 
   static ObjectMapper[] mappers() {
-    [Client.createDefaultObjectMapper(), ReactorNettyClient.createDefaultObjectMapper()]
+    [RestTemplateHttpLayer.createDefaultObjectMapper(), JsonUtils.createDefaultObjectMapper()]
   }
 
   @Unroll
@@ -44,7 +47,7 @@ class JsonMappingSpec extends Specification {
   @Unroll
   def "JSON document for queue with defined message count should return appropriate value for message count"() {
     when: "JSON document for queue has a ready messages count field with a value"
-    def q = Client.createDefaultObjectMapper().readValue(JSON_QUEUE_SOME_READY_MESSAGES, QueueInfo.class)
+    def q = JsonUtils.createDefaultObjectMapper().readValue(JSON_QUEUE_SOME_READY_MESSAGES, QueueInfo.class)
 
     then: "the field value of the Java object should be the same as in the JSON document"
     q.messagesReady == 1000
@@ -56,7 +59,7 @@ class JsonMappingSpec extends Specification {
   @Unroll
   def "fields for classic HA queue should be mapped correctly"() {
     when: "JSON document for classic HA queue has details on nodes"
-    def q = Client.createDefaultObjectMapper().readValue(JSON_CLASSIC_HA_QUEUE, QueueInfo.class)
+    def q = JsonUtils.createDefaultObjectMapper().readValue(JSON_CLASSIC_HA_QUEUE, QueueInfo.class)
 
     then: "the Java object should be filled accordingly"
     q.type == "classic"
@@ -71,7 +74,7 @@ class JsonMappingSpec extends Specification {
   @Unroll
   def "fields for quorum queue should be mapped correctly"() {
     when: "JSON document for quorum queue has details on nodes"
-    def q = Client.createDefaultObjectMapper().readValue(JSON_QUORUM_QUEUE, QueueInfo.class)
+    def q = JsonUtils.createDefaultObjectMapper().readValue(JSON_QUORUM_QUEUE, QueueInfo.class)
 
     then: "the Java object should be filled accordingly"
     q.type == "quorum"
@@ -138,6 +141,38 @@ class JsonMappingSpec extends Specification {
     c.channelDetails.number == 1
     c.channelDetails.peerHost == "127.0.0.1"
     c.channelDetails.peerPort == 40548
+
+    where:
+    mapper << mappers()
+  }
+
+  @Unroll
+  def "ShovelDetails.sourcePrefetchCount not present if not set"() {
+    when: "basic topology with null sourcePrefetchCount"
+    ShovelDetails details = new ShovelDetails("amqp://", "amqp://", 30, true, null)
+    details.setSourceQueue("queue1")
+    details.setDestinationExchange("exchange1")
+    def json = mapper.writeValueAsString(new ShovelInfo("shovel1", details))
+
+    then: "the json will not include src-prefetch-count"
+    def body = new JsonSlurper().parseText(json)
+    body.value['src-prefetch-count'] == null
+
+    where:
+    mapper << mappers()
+  }
+
+  @Unroll
+  def "ShovelDetails.destinationAddTimestampHeader not sent if not set"() {
+    when: "basic topology with null destinationAddTimestampHeader"
+    ShovelDetails details = new ShovelDetails("amqp://", "amqp://", 30, true, null)
+    details.setSourceQueue("queue1")
+    details.setDestinationExchange("exchange1")
+    def json = mapper.writeValueAsString(new ShovelInfo("shovel1", details))
+
+    then: "the json will not include dest-add-timestamp-header"
+    def body = new JsonSlurper().parseText(json)
+    body.value['dest-add-timestamp-header'] == null
 
     where:
     mapper << mappers()

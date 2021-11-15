@@ -16,6 +16,7 @@
 
 package com.rabbitmq.http.client;
 
+import com.rabbitmq.http.client.HttpLayer.HttpLayerFactory;
 import okhttp3.OkHttpClient;
 
 /**
@@ -29,7 +30,9 @@ import okhttp3.OkHttpClient;
  * and TLS-related settings.
  *
  * @since 3.6.0
+ * @deprecated use {@link ClientParameters#httpLayerFactory(HttpLayerFactory)} instead
  */
+@Deprecated(since = "4.0.0", forRemoval = true)
 @FunctionalInterface
 public interface OkHttpClientBuilderConfigurator {
 
