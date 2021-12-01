@@ -150,7 +150,7 @@ public class JdkHttpClientHttpLayerTest {
     SSLContext sslContext = SSLContext.getInstance("TLSv1.3");
     sslContext.init(null, tmf.getTrustManagers(), null);
     HttpLayerFactory factory =
-        HttpLayer.configure()
+        JdkHttpClientHttpLayer.configure()
             .clientBuilderConsumer(builder -> builder.sslContext(sslContext))
             .requestBuilderConsumer(builder -> {})
             .create();
@@ -237,7 +237,7 @@ public class JdkHttpClientHttpLayerTest {
       AtomicBoolean clientBuilderConsumerCalled = new AtomicBoolean(false);
       AtomicBoolean requestBuilderConsumerCalled = new AtomicBoolean(false);
       HttpLayerFactory factory =
-          HttpLayer.configure()
+          JdkHttpClientHttpLayer.configure()
               .clientBuilderConsumer(builder -> clientBuilderConsumerCalled.set(true))
               .requestBuilderConsumer(builder -> requestBuilderConsumerCalled.set(true))
               .create();

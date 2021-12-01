@@ -50,11 +50,11 @@ import org.springframework.web.client.RestTemplate;
  * @deprecated Use {@link JdkHttpClientHttpLayer} instead
  */
 @Deprecated(since="4.0.0", forRemoval = true)
-class RestTemplateHttpLayer implements HttpLayer {
+final class RestTemplateHttpLayer implements HttpLayer {
 
   private final RestTemplate rt;
 
-  RestTemplateHttpLayer(RestTemplate rt) {
+  private RestTemplateHttpLayer(RestTemplate rt) {
     this.rt = rt;
   }
 

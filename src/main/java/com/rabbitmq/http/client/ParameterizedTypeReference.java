@@ -29,7 +29,7 @@ import java.lang.reflect.Type;
  * @param <T>
  * @since 4.0.0
  */
-public abstract class ParameterizedTypeReference<T> {
+abstract class ParameterizedTypeReference<T> {
 
   private final Type type;
 

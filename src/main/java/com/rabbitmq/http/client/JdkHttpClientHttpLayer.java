@@ -22,6 +22,7 @@ import java.io.InputStream;
 import java.lang.reflect.Type;
 import java.net.URI;
 import java.net.http.HttpClient;
+import java.net.http.HttpClient.Builder;
 import java.net.http.HttpClient.Redirect;
 import java.net.http.HttpClient.Version;
 import java.net.http.HttpRequest;
@@ -33,13 +34,15 @@ import java.util.Collections;
 import java.util.Map;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLParameters;
 
 /**
  * {@link HttpLayer} using JDK 11's {@link HttpClient}.
  *
  * @since 4.0.0
  */
-class JdkHttpClientHttpLayer implements HttpLayer {
+final class JdkHttpClientHttpLayer implements HttpLayer {
 
   private static final Duration REQUEST_TIMEOUT = Duration.ofSeconds(60);
   private static final Duration CONNECT_TIMEOUT = Duration.ofSeconds(30);
@@ -48,7 +51,7 @@ class JdkHttpClientHttpLayer implements HttpLayer {
   private final ObjectMapper mapper;
   private final Consumer<HttpRequest.Builder> requestBuilderConsumer;
 
-  JdkHttpClientHttpLayer(
+  private JdkHttpClientHttpLayer(
       HttpClient client,
       ObjectMapper mapper,
       Consumer<HttpRequest.Builder> requestBuilderConsumer) {
@@ -115,6 +118,19 @@ class JdkHttpClientHttpLayer implements HttpLayer {
     } else if (errorClass == 500) {
       throw new HttpServerException(statusCode, message);
     }
+  }
+
+  /**
+   * Configure the default {@link HttpLayer} implementation.
+   *
+   * @return a configuration instance
+   */
+  public static Configuration configure() {
+    return new Configuration();
+  }
+
+  public static String authorization(String username, String password) {
+    return "Basic " + Utils.base64(username + ":" + password);
   }
 
   @Override
@@ -197,7 +213,7 @@ class JdkHttpClientHttpLayer implements HttpLayer {
     }
   }
 
-  static class Factory implements HttpLayerFactory {
+  private static class Factory implements HttpLayerFactory {
 
     private final Consumer<HttpClient.Builder> clientBuilderConsumer;
     private final Consumer<HttpRequest.Builder> requestBuilderConsumer;
@@ -227,13 +243,12 @@ class JdkHttpClientHttpLayer implements HttpLayer {
             requestBuilder ->
                 requestBuilder
                     .timeout(REQUEST_TIMEOUT)
-                    .setHeader("Authorization", "Basic " + Utils.base64(username + ":" + password));
+                    .setHeader("Authorization", authorization(username, password));
       } else {
         requestBuilderConsumer = this.requestBuilderConsumer;
       }
       return new JdkHttpClientHttpLayer(client, mapper, requestBuilderConsumer);
     }
-
   }
 
   private static class JsonBodyHandler<W>
@@ -251,6 +266,57 @@ class JdkHttpClientHttpLayer implements HttpLayer {
     public java.net.http.HttpResponse.BodySubscriber<Supplier<W>> apply(
         HttpResponse.ResponseInfo responseInfo) {
       return asJson(mapper, type);
+    }
+  }
+
+  /**
+   * Class to configure the default {@link HttpLayer} implementation.
+   *
+   * @see JdkHttpClientHttpLayer
+   */
+  public static class Configuration {
+
+    private Consumer<Builder> clientBuilderConsumer = b -> {};
+    private Consumer<HttpRequest.Builder> requestBuilderConsumer = null;
+
+    /**
+     * Callback to configure the {@link Builder}.
+     *
+     * <p>The client can be configured to use TLS with this callback. Use the {@link
+     * Builder#sslContext(SSLContext)} and {@link Builder#sslParameters(SSLParameters)} methods to
+     * configure TLS appropriately.
+     *
+     * <p>Use the {@link SSLParameters#setEndpointIdentificationAlgorithm(String)} method with the
+     * <code>HTTPS</code> value to enable server hostname verification.
+     *
+     * @param clientBuilderConsumer
+     * @return this configuration instance
+     */
+    public Configuration clientBuilderConsumer(Consumer<Builder> clientBuilderConsumer) {
+      if (clientBuilderConsumer == null) {
+        throw new IllegalArgumentException("Client builder consumer cannot be null");
+      }
+      this.clientBuilderConsumer = clientBuilderConsumer;
+      return this;
+    }
+
+    /**
+     * Callback to configure the {@link HttpRequest.Builder}.
+     *
+     * @param requestBuilderConsumer
+     * @return the configuration instance
+     */
+    public Configuration requestBuilderConsumer(
+        Consumer<HttpRequest.Builder> requestBuilderConsumer) {
+      if (requestBuilderConsumer == null) {
+        throw new IllegalArgumentException("Request builder consumer cannot be null");
+      }
+      this.requestBuilderConsumer = requestBuilderConsumer;
+      return this;
+    }
+
+    HttpLayerFactory create() {
+      return new Factory(this.clientBuilderConsumer, this.requestBuilderConsumer);
     }
   }
 }

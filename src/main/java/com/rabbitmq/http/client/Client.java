@@ -239,7 +239,7 @@ public class Client {
           parameters.getHttpLayerFactory();
     } else {
       httpLayerFactory = parameters.getHttpLayerFactory() == null ?
-          HttpLayer.configure().create() :
+          JdkHttpClientHttpLayer.configure().create() :
           parameters.getHttpLayerFactory();
     }
     this.httpLayer = httpLayerFactory.create(parameters);

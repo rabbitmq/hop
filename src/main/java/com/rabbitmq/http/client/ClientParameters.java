@@ -144,7 +144,7 @@ public class ClientParameters {
      *
      * @param httpLayerFactory
      * @return this client parameters instance
-     * @see HttpLayer#configure()
+     * @see JdkHttpClientHttpLayer#configure()
      */
     public ClientParameters httpLayerFactory(HttpLayerFactory httpLayerFactory) {
         this.httpLayerFactory = httpLayerFactory;

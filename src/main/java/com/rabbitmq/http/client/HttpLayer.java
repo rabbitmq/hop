@@ -16,34 +16,19 @@
 
 package com.rabbitmq.http.client;
 
-import com.rabbitmq.http.client.JdkHttpClientHttpLayer.Factory;
 import java.net.URI;
-import java.net.http.HttpClient.Builder;
-import java.net.http.HttpRequest;
 import java.util.Map;
-import java.util.function.Consumer;
-import javax.net.ssl.SSLContext;
-import javax.net.ssl.SSLParameters;
 
 /**
  * HTTP layer abstraction for {@link Client}.
  *
  * <p>This is considered a SPI and is susceptible to change at any time.
  *
- * <p>Use the {@link #configure()} to configure and create the default implementation.
+ * <p>Use the {@link JdkHttpClientHttpLayer#configure()} to configure and create the default implementation.
  *
  * @since 4.0.0
  */
 public interface HttpLayer {
-
-  /**
-   * Configure the default {@link HttpLayer} implementation.
-   *
-   * @return a configuration instance
-   */
-  static Configuration configure() {
-    return new Configuration();
-  }
 
   /**
    * GET operation when the expected class does not use generics.
@@ -111,54 +96,4 @@ public interface HttpLayer {
 
   }
 
-  /**
-   * Class to configure the default {@link HttpLayer} implementation.
-   *
-   * @see JdkHttpClientHttpLayer
-   */
-  class Configuration {
-
-    private Consumer<Builder> clientBuilderConsumer = b -> {};
-    private Consumer<HttpRequest.Builder> requestBuilderConsumer = null;
-
-    /**
-     * Callback to configure the {@link java.net.http.HttpClient.Builder}.
-     *
-     * The client can be configured to use TLS with this callback. Use the
-     * {@link Builder#sslContext(SSLContext)} and {@link Builder#sslParameters(SSLParameters)}
-     * methods to configure TLS appropriately.
-     *
-     * Use the {@link SSLParameters#setEndpointIdentificationAlgorithm(String)} method with
-     * the <code>HTTPS</code> value to enable server hostname verification.
-     *
-     * @param clientBuilderConsumer
-     * @return this configuration instance
-     */
-    public Configuration clientBuilderConsumer(Consumer<Builder> clientBuilderConsumer) {
-      if (clientBuilderConsumer == null) {
-        throw new IllegalArgumentException("Client builder consumer cannot be null");
-      }
-      this.clientBuilderConsumer = clientBuilderConsumer;
-      return this;
-    }
-
-    /**
-     * Callback to configure the {@link java.net.http.HttpRequest.Builder}.
-     *
-     * @param requestBuilderConsumer
-     * @return the configuration instance
-     */
-    public Configuration requestBuilderConsumer(
-        Consumer<HttpRequest.Builder> requestBuilderConsumer) {
-      if (requestBuilderConsumer == null) {
-        throw new IllegalArgumentException("Request builder consumer cannot be null");
-      }
-      this.requestBuilderConsumer = requestBuilderConsumer;
-      return this;
-    }
-
-    HttpLayerFactory create() {
-      return new Factory(this.clientBuilderConsumer, this.requestBuilderConsumer);
-    }
-  }
 }
