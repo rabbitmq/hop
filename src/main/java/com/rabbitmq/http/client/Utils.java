@@ -35,6 +35,7 @@ import java.util.BitSet;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  *
@@ -140,17 +141,19 @@ final class Utils {
         URI rootURI;
         StringBuilder sb = new StringBuilder();
         QueryParameters queryParameters;
+        Map<String,String> mapOfParameters;
 
         public URIBuilder(URI rootURI) {
             this.rootURI = rootURI;
         }
 
         URIBuilder withEncodedPath(String path) {
+            if (sb.length() > 0 && sb.charAt(sb.length()-1) != '/') sb.append("/");
             sb.append(path);
             return this;
         }
         URIBuilder withPath(String path) {
-            if (sb.charAt(sb.length()-1) != '/') sb.append("/");
+            if (sb.length() > 0 && sb.charAt(sb.length()-1) != '/') sb.append("/");
             appendEncodePath(sb, path, CHARSET_UTF8);
             return this;
         }
@@ -158,11 +161,23 @@ final class Utils {
             this.queryParameters = queryParameters;
             return this;
         }
+        URIBuilder withQueryParameters(Map<String,String> mapOfParameters) {
+            this.mapOfParameters = mapOfParameters;
+            return this;
+        }
         URI get() {
             try {
+                if ((queryParameters != null && !queryParameters.isEmpty()) || mapOfParameters != null
+                        && !mapOfParameters.isEmpty()) sb.append("?");
+
                 if (queryParameters != null && !queryParameters.isEmpty()) {
-                    sb.append("?");
                     for (Map.Entry<String, String> param : queryParameters.parameters().entrySet()) {
+                        sb.append(param.getKey()).append("=").append(Utils.encodeHttpParameter(param.getValue())).append("&");
+                    }
+                    sb.deleteCharAt(sb.length() - 1); // eliminate last &
+                }
+                if (mapOfParameters != null && !mapOfParameters.isEmpty()) {
+                    for (Map.Entry<String, String> param : mapOfParameters.entrySet()) {
                         sb.append(param.getKey()).append("=").append(Utils.encodeHttpParameter(param.getValue())).append("&");
                     }
                     sb.deleteCharAt(sb.length() - 1); // eliminate last &
@@ -171,6 +186,11 @@ final class Utils {
             }finally {
                 sb.setLength(0);
             }
+        }
+
+        public URIBuilder withPathSeparator() {
+            sb.append("/");
+            return this;
         }
     }
 

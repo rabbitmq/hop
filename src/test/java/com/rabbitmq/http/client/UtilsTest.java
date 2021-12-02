@@ -34,6 +34,9 @@ class UtilsTest {
     @Test
     void uriWithTwoPathComponents() {
         assertEquals(rootURI.resolve("one/two%2F"), builder.withEncodedPath("one").withPath("two/").get());
+        assertEquals(rootURI.resolve("connections/some-name/channels"),
+                builder.withEncodedPath("./connections").withPath("some-name").withEncodedPath("channels").get());
+        assertEquals(rootURI.resolve("exchanges/one/two"), builder.withEncodedPath("./exchanges").withPath("one").withPath("two").get());
     }
 
     @Test
@@ -53,6 +56,18 @@ class UtilsTest {
         }
     }
 
+    @Test
+    void queryUriWithMapOfParameterAndOnePath() {
+        QueryParameters expectedQueryParams = new QueryParameters().name("some-name").columns().add("name").query();
+
+        URI u = builder.withEncodedPath("one").withQueryParameters(expectedQueryParams.parameters()).get();
+
+        Map<String, String> actualQueryParams = URLEncodedUtils.parse(u, StandardCharsets.UTF_8).stream()
+                .collect(Collectors.toMap(NameValuePair::getName, NameValuePair::getValue));
+        for (Map.Entry<String,String> q : expectedQueryParams.parameters().entrySet()) {
+            assertEquals(actualQueryParams.get(q.getKey()), q.getValue());
+        }
+    }
 
     private QueryParameters emptyQueryParameters() {
         return new QueryParameters();
