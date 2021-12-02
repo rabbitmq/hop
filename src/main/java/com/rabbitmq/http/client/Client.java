@@ -260,7 +260,7 @@ public class Client {
    * @return true if the check succeeded
    */
   public boolean alivenessTest(String vhost) {
-    final URI uri = uriWithPath("./aliveness-test/" + encodePath(vhost));
+    final URI uri = uri().withEncodedPath("./aliveness-test").withPath(vhost).get();
     return this.httpLayer.get(uri, AlivenessTestResult.class).isSuccessful();
   }
 
@@ -289,7 +289,7 @@ public class Client {
    * @return node information
    */
   public NodeInfo getNode(String name) {
-    final URI uri = uriWithPath("./nodes/" + encodePath(name));
+    final URI uri = uri().withEncodedPath("./nodes").withPath(name).get();
     return this.httpLayer.get(uri, NodeInfo.class);
   }
 
@@ -299,7 +299,7 @@ public class Client {
    * @return list of connections across the cluster
    */
   public List<ConnectionInfo> getConnections() {
-    final URI uri = uriWithPath("./connections/");
+    final URI uri = uri().withEncodedPath("./connections/").get();
     return Arrays.asList(this.httpLayer.get(uri, ConnectionInfo[].class));
   }
 
@@ -312,7 +312,7 @@ public class Client {
    */
   @SuppressWarnings("unchecked")
   public Page<ConnectionInfo> getConnections(QueryParameters queryParameters) {
-    final URI uri = uriWithPath("./connections/", queryParameters);
+    final URI uri = uri().withEncodedPath("./connections/").withQueryParameters(queryParameters).get();
     ParameterizedTypeReference<Page<ConnectionInfo>> type = new ParameterizedTypeReference<>() {
     };
     if (queryParameters.pagination().hasAny()) {
@@ -329,7 +329,7 @@ public class Client {
    * @return connection information
    */
   public ConnectionInfo getConnection(String name) {
-    final URI uri = uriWithPath("./connections/" + encodePath(name));
+    final URI uri = uri().withEncodedPath("./connections").withPath(name).get();
     return this.httpLayer.get(uri, ConnectionInfo.class);
   }
 
@@ -340,7 +340,7 @@ public class Client {
    * @param name connection name
    */
   public void closeConnection(String name) {
-    final URI uri = uriWithPath("./connections/" + encodePath(name));
+    final URI uri = uri().withEncodedPath("./connections").withPath(name).get();
     deleteIgnoring404(uri);
   }
 
@@ -352,7 +352,7 @@ public class Client {
    * @param reason the reason of closing
    */
   public void closeConnection(String name, String reason) {
-    final URI uri = uriWithPath("./connections/" + encodePath(name));
+    final URI uri = uri().withEncodedPath("./connections").withPath(name).get();
 
     Map<String, String> headers = new HashMap<>();
     headers.put("X-Reason", reason);
@@ -377,7 +377,7 @@ public class Client {
    * @return list of consumers in the virtual host (across all nodes)
    */
   public List<ConsumerDetails> getConsumers(String vhost) {
-    final URI uri = uriWithPath("./consumers/" + encodePath(vhost));
+    final URI uri = uri().withEncodedPath("./consumers").withPath(vhost).get();
     return Arrays.asList(this.httpLayer.get(uri, ConsumerDetails[].class));
   }
 
@@ -400,7 +400,7 @@ public class Client {
    */
   @SuppressWarnings("unchecked")
   public Page<ChannelInfo> getChannels(QueryParameters queryParameters) {
-    final URI uri = uriWithPath("./channels/", queryParameters);
+    final URI uri = uri().withEncodedPath("./channels").withQueryParameters(queryParameters).get();
     ParameterizedTypeReference<Page<ChannelInfo>> type = new ParameterizedTypeReference<>() {
     };
     if (queryParameters.pagination().hasAny()) {
@@ -493,35 +493,35 @@ public class Client {
   }
 
   public void createVhost(String name) {
-    final URI uri = uriWithPath("./vhosts/" + encodePath(name));
+    final URI uri = uri().withEncodedPath("./vhosts/").withPath(name).get();
     this.httpLayer.put(uri, null);
   }
 
   public void deleteVhost(String name) {
-    final URI uri = uriWithPath("./vhosts/" + encodePath(name));
+    final URI uri = uri().withEncodedPath("./vhosts/").withPath(name).get();
     deleteIgnoring404(uri);
   }
 
   public List<UserPermissions> getPermissionsIn(String vhost) {
-    final URI uri = uriWithPath("./vhosts/" + encodePath(vhost) + "/permissions");
+    final URI uri = uri().withEncodedPath("./vhosts/").withPath(vhost).withEncodedPath("/permissions").get();
     UserPermissions[] result = this.getForObjectReturningNullOn404(uri, UserPermissions[].class);
     return asListOrNull(result);
   }
 
   public List<UserPermissions> getPermissionsOf(String username) {
-    final URI uri = uriWithPath("./users/" + encodePath(username) + "/permissions");
+    final URI uri = uri().withEncodedPath("./users/").withPath(username).withEncodedPath("/permissions").get();
     UserPermissions[] result = this.getForObjectReturningNullOn404(uri, UserPermissions[].class);
     return asListOrNull(result);
   }
 
   public List<UserPermissions> getPermissions() {
-    final URI uri = uriWithPath("./permissions");
+    final URI uri = uri().withEncodedPath("./permissions").get();
     UserPermissions[] result = this.getForObjectReturningNullOn404(uri, UserPermissions[].class);
     return asListOrNull(result);
   }
 
   public UserPermissions getPermissions(String vhost, String username) {
-    final URI uri = uriWithPath("./permissions/" + encodePath(vhost) + "/" + encodePath(username));
+    final URI uri = uri().withEncodedPath("./permissions/").withPath(vhost).withPath(username).get();
     return this.getForObjectReturningNullOn404(uri, UserPermissions.class);
   }
 
@@ -1365,6 +1365,7 @@ public class Client {
   private URI uriWithPath(final String path) {
     return this.rootUri.resolve(path);
   }
+
   private URI uriWithPath(final String path, QueryParameters queryParameters) {
     Map<String, String> parameters = queryParameters.parameters();
     if (parameters.isEmpty()) {
@@ -1383,6 +1384,9 @@ public class Client {
           .collect(Collectors.joining("&", "?", ""));
     }
     return rootUri.resolve(path);
+  }
+  private Utils.URIBuilder uri() {
+    return new Utils.URIBuilder(rootUri);
   }
 
   private static String encodeHttpParameter(String parameter) {
