@@ -423,4 +423,4 @@ https://www.apache.org/licenses/LICENSE-2.0.html[Apache 2.0].
 
 Michael Klishin, 2014-2016.
 
-VMware, Inc. or its affiliates, 2014-2020.
+VMware, Inc. or its affiliates, 2014-2022.
