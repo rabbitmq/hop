@@ -17,6 +17,8 @@
 package com.rabbitmq.http.client;
 
 import com.rabbitmq.http.client.domain.OutboundMessage;
+import com.rabbitmq.http.client.domain.QueryParameters;
+
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URLEncoder;
@@ -33,6 +35,7 @@ import java.util.BitSet;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  *
@@ -134,6 +137,63 @@ final class Utils {
         return url.replace(url1.getUserInfo() + "@", "");
     }
 
+    static class URIBuilder {
+        URI rootURI;
+        StringBuilder sb = new StringBuilder();
+        QueryParameters queryParameters;
+        Map<String,String> mapOfParameters;
+
+        public URIBuilder(URI rootURI) {
+            this.rootURI = rootURI;
+        }
+
+        URIBuilder withEncodedPath(String path) {
+            if (sb.length() > 0 && sb.charAt(sb.length()-1) != '/') sb.append("/");
+            sb.append(path);
+            return this;
+        }
+        URIBuilder withPath(String path) {
+            if (sb.length() > 0 && sb.charAt(sb.length()-1) != '/') sb.append("/");
+            appendEncodePath(sb, path, CHARSET_UTF8);
+            return this;
+        }
+        URIBuilder withQueryParameters(QueryParameters queryParameters) {
+            this.queryParameters = queryParameters;
+            return this;
+        }
+        URIBuilder withQueryParameters(Map<String,String> mapOfParameters) {
+            this.mapOfParameters = mapOfParameters;
+            return this;
+        }
+        URI get() {
+            try {
+                if ((queryParameters != null && !queryParameters.isEmpty()) || mapOfParameters != null
+                        && !mapOfParameters.isEmpty()) sb.append("?");
+
+                if (queryParameters != null && !queryParameters.isEmpty()) {
+                    for (Map.Entry<String, String> param : queryParameters.parameters().entrySet()) {
+                        sb.append(param.getKey()).append("=").append(Utils.encodeHttpParameter(param.getValue())).append("&");
+                    }
+                    sb.deleteCharAt(sb.length() - 1); // eliminate last &
+                }
+                if (mapOfParameters != null && !mapOfParameters.isEmpty()) {
+                    for (Map.Entry<String, String> param : mapOfParameters.entrySet()) {
+                        sb.append(param.getKey()).append("=").append(Utils.encodeHttpParameter(param.getValue())).append("&");
+                    }
+                    sb.deleteCharAt(sb.length() - 1); // eliminate last &
+                }
+                return rootURI.resolve(sb.toString());
+            }finally {
+                sb.setLength(0);
+            }
+        }
+
+        public URIBuilder withPathSeparator() {
+            sb.append("/");
+            return this;
+        }
+    }
+
     static String base64(String in) {
         return Base64.getEncoder().encodeToString(in.getBytes(StandardCharsets.UTF_8));
     }
@@ -141,7 +201,9 @@ final class Utils {
     /* from https://github.com/apache/httpcomponents-client/commit/b58e7d46d75e1d3c42f5fd6db9bd45f32a49c639#diff-a74b24f025e68ec11e4550b42e9f807d */
 
     static String encodePath(String content, Charset charset) {
-        final StringBuilder buf = new StringBuilder();
+        return appendEncodePath(new StringBuilder(), content, charset).toString();
+    }
+    static StringBuilder appendEncodePath(StringBuilder buf, String content, Charset charset) {
         final ByteBuffer bb = charset.encode(content);
         while (bb.hasRemaining()) {
             final int b = bb.get() & 0xff;
@@ -155,9 +217,8 @@ final class Utils {
                 buf.append(hex2);
             }
         }
-        return buf.toString();
+        return buf;
     }
-
     static String encodeHttpParameter(String value) {
         return URLEncoder.encode(value, CHARSET_UTF8);
     }
