@@ -32,7 +32,7 @@ User documentation is currently kept in this README.
 
 == Pre-requisites
 
-As of 4.0, Hop requires Java 11 or more.
+As of 4.0, Hop requires Java 11 or later.
 
 == Maven Artifacts
 
