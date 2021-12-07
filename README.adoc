@@ -212,7 +212,8 @@ HttpLayerFactory factory =
 
 Note the `HttpClient` enables https://tools.ietf.org/search/rfc2818#section-3.1[hostname verification] by default.
 This is a good thing for security, but it can generate surprising failures.
-Hostname verification can be disabled _globally_ with the https://bugs.openjdk.java.net/browse/JDK-8213309[`jdk.internal.httpclient.disableHostnameVerification` system property], but at no cost in a production environment.
+
+Hostname verification can be disabled _globally_ with the https://bugs.openjdk.java.net/browse/JDK-8213309[`jdk.internal.httpclient.disableHostnameVerification` system property] for development or test purposes, but at no cost in a production environment.
 
 === Getting Overview
 
