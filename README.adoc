@@ -1,10 +1,7 @@
-:rabbitmq-version: 3.9.5
-:hop-version: 3.12.1
-:spring-version: 5.3.9
-:jackson-version: 2.12.5
-:reactor-netty-version: 1.0.10
-:http-client-version: 4.5.13
-:okhttp-version: 3.14.9
+:rabbitmq-version: 3.9.11
+:hop-version: 4.0.0.RC1
+:jackson-version: 2.13.0
+:reactor-netty-version: 1.0.13
 
 = Hop, Java Client for the RabbitMQ HTTP API
 
@@ -12,7 +9,6 @@ image:https://github.com/rabbitmq/hop/workflows/Build%20(Linux)/badge.svg?branch
 
 Hop is a Java client for the
 https://raw.githack.com/rabbitmq/rabbitmq-server/v{rabbitmq-version}/deps/rabbitmq_management/priv/www/api/index.html[RabbitMQ HTTP API].
-
 
 == Polyglot
 
@@ -34,6 +30,10 @@ This project is mature and covers all key RabbitMQ HTTP API endpoints.
 Meaningful breaking API changes are reflected in the version.
 User documentation is currently kept in this README.
 
+== Pre-requisites
+
+As of 4.0, Hop requires Java 11 or more.
+
 == Maven Artifacts
 
 image:https://maven-badges.herokuapp.com/maven-central/com.rabbitmq/http-client/badge.svg["Maven Central", link="https://maven-badges.herokuapp.com/maven-central/com.rabbitmq/http-client"]
@@ -43,7 +43,7 @@ Project artifacts are available from Maven Central.
 For milestones and release candidates, declare the
 <<milestone-rc-repository,milestone repository>> in your dependency manager.
 
-=== Maven
+=== Dependency Manager Configuration
 
 If you want to use the **blocking IO client**, add the following dependencies:
 
@@ -56,15 +56,17 @@ If you want to use the **blocking IO client**, add the following dependencies:
   <version>{hop-version}</version>
 </dependency>
 <dependency>
-  <groupId>org.springframework</groupId>
-  <artifactId>spring-web</artifactId>
-  <version>{spring-version}</version>
-</dependency>
-<dependency>
   <groupId>com.fasterxml.jackson.core</groupId>
   <artifactId>jackson-databind</artifactId>
   <version>{jackson-version}</version>
 </dependency>
+----
+
+.build.gradle
+[source,groovy,subs="attributes,specialcharacters"]
+----
+compile "com.rabbitmq:http-client:{hop-version}"
+compile "com.fasterxml.jackson.core:jackson-databind:{jackson-version}"
 ----
 
 If you want to use the **reactive, non-blocking IO client**, add the following dependencies:
@@ -88,20 +90,6 @@ If you want to use the **reactive, non-blocking IO client**, add the following d
   <version>{jackson-version}</version>
 </dependency>
 ----
-
-=== Gradle
-
-If you want to use the **blocking IO client**, add the following dependencies:
-
-.build.gradle
-[source,groovy,subs="attributes,specialcharacters"]
-----
-compile "com.rabbitmq:http-client:{hop-version}"
-compile "org.springframework:spring-web:{spring-version}"
-compile "com.fasterxml.jackson.core:jackson-databind:{jackson-version}"
-----
-
-If you want to use the **reactive, non-blocking IO client**, add the following dependencies:
 
 .build.gradle
 [source,groovy,subs="attributes,specialcharacters"]
@@ -168,81 +156,63 @@ Client c = new Client(
 );
 ----
 
-=== HTTP Layer
+=== HTTP Layer (Synchronous Client)
 
-The HTTP layer used by the `Client` is pluggable. The `Client(ClientParameters)` constructor
-uses standard JDK HTTP facilities by default, but
-https://hc.apache.org/[Apache HTTP Components] and https://square.github.io/okhttp/[OkHttp]
-are also supported.
+The synchronous client uses https://docs.oracle.com/en/java/javase/11/docs/api/java.net.http/java/net/http/HttpClient.html[Java 11's `HttpClient`] internally.
 
-==== Apache HTTP Components
+==== Advanced Configuration
 
-To use Apache HTTP Components, use an `HttpComponentsRestTemplateConfigurator`
-instance when creating the client:
+The client uses sensible defaults, but it is possible to customize the `HttpClient` instance and requests creation with `JdkHttpClientHttpLayer#configure()`:
 
 [source,java]
 ----
-Client client = new Client(
-    new ClientParameters().url("http://localhost:15672/api").username("guest").password("guest")
-     .restTemplateConfigurator(new HttpComponentsRestTemplateConfigurator())
-);
+HttpLayerFactory httpLayerFactory =
+  JdkHttpClientHttpLayer.configure()  // (1)
+    .clientBuilderConsumer(
+      clientBuilder ->  // (2)
+        clientBuilder
+          .connectTimeout(Duration.ofSeconds(10)))
+    .requestBuilderConsumer(
+      requestBuilder ->  // (3)
+        requestBuilder
+          .timeout(Duration.ofSeconds(10))
+          .setHeader("Authorization", authorization("guest", "guest")))
+    .create();  // (4)
+
+Client c =
+    new Client(
+        new ClientParameters()
+            .url("http://127.0.0.1:15672/api/")
+            .username("guest")
+            .password("guest")
+            .httpLayerFactory(httpLayerFactory));  // (5)
 ----
+<1> Configure the HTTP layer factory
+<2> Configure the creation of the `HttpClient` instance
+<3> Configure the creation of each request
+<4> Instantiate the HTTP layer factory
+<5> Set the HTTP layer factory
 
-This requires to add Apache HTTP Components on the classpath.
+==== TLS
 
-For Maven:
-
-.pom.xml
-[source,xml,subs="attributes,specialcharacters"]
-----
-<dependency>
-  <groupId>org.apache.httpcomponents</groupId>
-  <artifactId>httpclient</artifactId>
-  <version>{http-client-version}</version>
-</dependency>
-----
-
-For Gradle:
-
-.build.gradle
-[source,groovy,subs="attributes,specialcharacters"]
-----
-compile "org.apache.httpcomponents:httpclient:{http-client-version}"
-----
-
-==== OkHttp
-
-To use OkHttp, use an `OkHttpRestTemplateConfigurator` instance when creating the client:
+Set the `SSLContext` on the `HttpClient` builder to configure TLS:
 
 [source,java]
 ----
-Client client = new Client(
-    new ClientParameters().url("http://localhost:15672/api").username("guest").password("guest")
-     .restTemplateConfigurator(new OkHttpRestTemplateConfigurator())
-);
+SSLContext sslContext = SSLContext.getInstance("TLSv1.3");  // (1)
+sslContext.init(kmf.getKeyManagers(), tmf.getTrustManagers(), random);  // (2)
+HttpLayerFactory factory =
+  JdkHttpClientHttpLayer.configure()
+    .clientBuilderConsumer(builder -> builder.sslContext(sslContext))  // (3)
+    .create();
 ----
+<1> Create the SSL context
+<2> Initialize the SSL context
+<3> Set the SSL context on the client builder
 
-This requires to add OkHttp on the classpath.
-
-For Maven:
-
-.pom.xml
-[source,xml,subs="attributes,specialcharacters"]
-----
-<dependency>
-  <groupId>com.squareup.okhttp3</groupId>
-  <artifactId>okhttp</artifactId>
-  <version>{okhttp-version}</version>
-</dependency>
-----
-
-For Gradle:
-
-.build.gradle
-[source,groovy,subs="attributes,specialcharacters"]
-----
-compile "com.squareup.okhttp3:okhttp:{okhttp-version}"
-----
+Note the `HttpClient` enables https://tools.ietf.org/search/rfc2818#section-3.1[hostname verification] by default.
+This is a good thing for security, but it can generate surprising failures.
+Hostname verification can be disabled _globally_ with the https://bugs.openjdk.java.net/browse/JDK-8213309[`jdk.internal.httpclient.disableHostnameVerification` system property], but at no cost in a production environment.
 
 === Getting Overview
 
@@ -423,4 +393,4 @@ https://www.apache.org/licenses/LICENSE-2.0.html[Apache 2.0].
 
 Michael Klishin, 2014-2016.
 
-VMware, Inc. or its affiliates, 2014-2020.
+VMware, Inc. or its affiliates, 2014-2021.
