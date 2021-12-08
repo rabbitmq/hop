@@ -18,7 +18,6 @@ public class HttpLayerTest {
 
   static ClassLoader isolatedClassLoader(List<String> toFilter) {
     String classpath = System.getProperty("java.class.path");
-
     Collection<URL> urls =
         Arrays.stream(classpath.split(":"))
             .filter(entry -> !toFilter.stream().anyMatch(filter -> entry.contains(filter)))
@@ -57,7 +56,10 @@ public class HttpLayerTest {
             JdkSmokeApplication.class, Arrays.asList("okhttp", "httpclient"), false),
         new TestConfiguration(OkHttpSmokeApplication.class, Arrays.asList("okhttp"), true),
         new TestConfiguration(
-            HttpComponentsSmokeApplication.class, Arrays.asList("httpclient"), true));
+            HttpComponentsSmokeApplication.class, Arrays.asList("httpclient"), true),
+        new TestConfiguration(
+            JdkHttpClientSmokeApplication.class, Arrays.asList("okhttp", "httpclient", "spring"), false)
+        );
   }
 
   @ParameterizedTest
@@ -117,6 +119,20 @@ public class HttpLayerTest {
               new ClientParameters()
                   .url(url())
                   .restTemplateConfigurator(new SimpleRestTemplateConfigurator()));
+      List<VhostInfo> vhosts = client.getVhosts();
+      if (vhosts.isEmpty() || !vhosts.get(0).getName().equals("/")) {
+        throw new IllegalStateException();
+      }
+    }
+  }
+
+  public static class JdkHttpClientSmokeApplication {
+
+    public static void test() throws Exception {
+      Client client =
+          new Client(
+              new ClientParameters()
+                  .url(url()));
       List<VhostInfo> vhosts = client.getVhosts();
       if (vhosts.isEmpty() || !vhosts.get(0).getName().equals("/")) {
         throw new IllegalStateException();

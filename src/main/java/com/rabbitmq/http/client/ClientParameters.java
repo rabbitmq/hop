@@ -16,8 +16,9 @@
 
 package com.rabbitmq.http.client;
 
+import static com.rabbitmq.http.client.Utils.notNull;
+
 import com.rabbitmq.http.client.HttpLayer.HttpLayerFactory;
-import org.springframework.util.Assert;
 
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -152,8 +153,8 @@ public class ClientParameters {
     }
 
     void validate() {
-        Assert.notNull(url, "URL is required; it must not be null");
-        Assert.notNull(username, "username is required; it must not be null");
-        Assert.notNull(password, "password is required; it must not be null");
+        notNull(url, "URL is required; it must not be null");
+        notNull(username, "username is required; it must not be null");
+        notNull(password, "password is required; it must not be null");
     }
 }

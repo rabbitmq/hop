@@ -20,7 +20,6 @@ import com.rabbitmq.http.client.HttpLayer.HttpLayerFactory;
 import com.rabbitmq.http.client.RestTemplateHttpLayer.RestTemplateHttpLayerFactory;
 import com.rabbitmq.http.client.domain.*;
 
-import java.util.stream.Collectors;
 import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
 
 import javax.net.ssl.SSLContext;

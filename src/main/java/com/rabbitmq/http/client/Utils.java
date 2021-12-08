@@ -35,7 +35,6 @@ import java.util.BitSet;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 /**
  *
@@ -45,6 +44,12 @@ final class Utils {
     private Utils() { }
 
     private static final Charset CHARSET_UTF8 = Charset.forName("UTF-8");
+
+    static void notNull(Object object, String message) {
+        if (object == null) {
+            throw new IllegalArgumentException(message);
+        }
+    }
 
     static Map<String, Object> bodyForPublish(String routingKey, OutboundMessage outboundMessage) {
         if (routingKey == null) {
