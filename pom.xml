@@ -44,9 +44,9 @@
     <spock.version>2.0-groovy-3.0</spock.version>
     <junit.version>5.8.2</junit.version>
     <junit-platform.version>1.8.2</junit-platform.version>
-    <assertj.version>3.21.0</assertj.version>
+    <assertj.version>3.22.0</assertj.version>
     <amqp-client.version>5.14.0</amqp-client.version>
-    <logback.version>1.2.7</logback.version>
+    <logback.version>1.2.10</logback.version>
     <wiremock.version>2.32.0</wiremock.version>
     <jetty.version>9.4.44.v20210927</jetty.version>
     <bouncycastle.version>1.70</bouncycastle.version>
