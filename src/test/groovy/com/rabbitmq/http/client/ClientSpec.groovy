@@ -1,5 +1,5 @@
 /*
- * Copyright 2015-2021 the original author or authors.
+ * Copyright 2015-2022 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,7 +24,10 @@ import spock.lang.Specification
 import spock.lang.Unroll
 
 import java.nio.charset.Charset
+import java.nio.charset.StandardCharsets
 import java.util.concurrent.CountDownLatch
+import java.util.concurrent.ExecutorService
+import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicReference
 
@@ -101,7 +104,10 @@ class ClientSpec extends Specification {
   }
 
   def setup() {
-    def c = new Client(url(), DEFAULT_USERNAME, DEFAULT_PASSWORD)
+    def c = new Client(new ClientParameters()
+            .url(url())
+            .username(DEFAULT_USERNAME)
+            .password(DEFAULT_PASSWORD))
     c.getConnections().each { c.closeConnection(it.getName())}
     awaitAllConnectionsClosed(c)
     brokerVersion = c.getOverview().getServerVersion()
@@ -773,6 +779,56 @@ class ClientSpec extends Specification {
   }
 
   @Unroll
+  def "GET /api/queues with details"() {
+    given: "at least one queue was declared and some messages published"
+    Connection conn = cf.newConnection()
+    Channel ch = conn.createChannel()
+    String q = ch.queueDeclare().queue
+    ExecutorService executorService = Executors.newSingleThreadExecutor()
+    def publishing = {
+      while (!Thread.currentThread().isInterrupted()) {
+        ch.basicPublish("", q, null, "".getBytes(StandardCharsets.UTF_8))
+        try {
+          Thread.sleep(10)
+        } catch (InterruptedException e) {
+          return
+        }
+      }
+    }
+    executorService.submit(publishing)
+
+    when: "client lists queues with details"
+    def detailsParameters = new DetailsParameters()
+      .messageRates(60, 5)
+      .lengths(60, 5)
+    def request = { client.getQueues(detailsParameters)
+      .find({qi -> qi.name == q})}
+    waitAtMostUntilTrue(10, {
+      def qi = request()
+      qi.messagesDetails != null && qi.messagesDetails.rate > 0
+    })
+    def x = request()
+
+    then: "a list of queues with details is returned"
+    verifyQueueInfo(x)
+    x.getMessagesDetails() != null
+    x.getMessagesDetails().getAverage() > 0
+    x.getMessagesDetails().getAverageRate() > 0
+    x.getMessagesDetails().getRate() > 0
+    x.getMessagesDetails().getSamples().size() > 0
+    x.getMessagesDetails().getSamples().get(0).getSample() > 0
+    x.getMessagesDetails().getSamples().get(0).getTimestamp() > 0
+
+    cleanup:
+    executorService.shutdownNow()
+    ch.queueDelete(q)
+    conn.close()
+
+    where:
+    client << clients()
+  }
+
+  @Unroll
   def "GET /api/queues with paging"() {
     given: "at least one queue was declared"
     Connection conn = cf.newConnection()
@@ -838,6 +894,74 @@ class ClientSpec extends Specification {
     verifyQueueInfo(x)
 
     cleanup:
+    queues.forEach { ch.queueDelete(it) }
+    conn.close()
+
+    where:
+    client << clients()
+  }
+
+  @Unroll
+  def "GET /api/queues with paging and details"() {
+    given: "at least one queue was declared"
+    Connection conn = cf.newConnection()
+    Channel ch = conn.createChannel()
+    def queues = (0..15).collect {it ->
+      def q = "queue-for-paging-and-details-test-" + it
+      ch.queueDeclare(q, false, false, false, null)
+      ch.queueBind(q, "amq.fanout", "")
+      q
+    }
+
+    ExecutorService executorService = Executors.newSingleThreadExecutor()
+    def publishing = {
+      while (!Thread.currentThread().isInterrupted()) {
+        ch.basicPublish("amq.fanout", "", null, "".getBytes(StandardCharsets.UTF_8))
+        try {
+          Thread.sleep(10)
+        } catch (InterruptedException e) {
+          return
+        }
+      }
+    }
+    executorService.submit(publishing)
+
+    when: "client lists queues with details"
+    def queryParameters = new DetailsParameters()
+              .messageRates(60, 5)
+              .lengths(60, 5)
+            .queryParameters()
+              .name("^queue-for-paging-and-details-test-*", true)
+              .pagination()
+              .pageSize(10)
+            .query()
+
+    def request = { client.getQueues(queryParameters) }
+    waitAtMostUntilTrue(10, {
+      def p = request()
+      p.filteredCount == queues.size() && p.items[0].messagesDetails != null
+        && p.items[0].messagesDetails.rate > 0
+    })
+    def page = request()
+
+    then: "a list of paged queues with details is returned"
+    page.filteredCount == queues.size()
+    page.itemCount == 10
+    page.pageCount == 2
+    page.totalCount >= page.filteredCount
+    page.page == 1
+    def x = page.itemsAsList.first();
+    verifyQueueInfo(x)
+    x.getMessagesDetails() != null
+    x.getMessagesDetails().getAverage() > 0
+    x.getMessagesDetails().getAverageRate() > 0
+    x.getMessagesDetails().getRate() > 0
+    x.getMessagesDetails().getSamples().size() > 0
+    x.getMessagesDetails().getSamples().get(0).getSample() > 0
+    x.getMessagesDetails().getSamples().get(0).getTimestamp() > 0
+
+    cleanup:
+    executorService.shutdownNow()
     queues.forEach { ch.queueDelete(it) }
     conn.close()
 
@@ -922,6 +1046,72 @@ class ClientSpec extends Specification {
     x.exclusive
 
     cleanup:
+    ch.queueDelete(q)
+    conn.close()
+
+    where:
+    client << clients()
+  }
+
+  @Unroll
+  def "GET /api/queues/{name} with details"() {
+    given: "at least one queue was declared and some messages published"
+    ExecutorService executorService = Executors.newSingleThreadExecutor()
+    Connection conn = cf.newConnection()
+    Channel ch = conn.createChannel()
+    String q = ch.queueDeclare().queue
+    def publishing = {
+      while (!Thread.currentThread().isInterrupted()) {
+        ch.basicPublish("", q, null, "".getBytes(StandardCharsets.UTF_8))
+        try {
+          Thread.sleep(10)
+        } catch (InterruptedException e) {
+          return
+        }
+      }
+    }
+    executorService.submit(publishing)
+
+    when: "client get queue with details"
+    def request = { client.getQueue("/", q, new DetailsParameters()
+            .messageRates(60, 5)
+            .lengths(60, 5))}
+    waitAtMostUntilTrue(10, {
+      def qi = request()
+      qi.getMessagesDetails() != null && qi.getMessagesDetails().getRate() > 0
+    })
+    def x = request()
+
+    then: "the queue with details info is returned"
+    verifyQueueInfo(x)
+    x.getMessagesDetails() != null
+    x.getMessagesDetails().getAverage() > 0
+    x.getMessagesDetails().getAverageRate() > 0
+    x.getMessagesDetails().getRate() > 0
+    x.getMessagesDetails().getSamples().size() > 0
+    x.getMessagesDetails().getSamples().get(0).getSample() > 0
+    x.getMessagesDetails().getSamples().get(0).getTimestamp() > 0
+
+    x.getMessagesReadyDetails() != null
+    x.getMessagesReadyDetails().getAverage() > 0
+    x.getMessagesReadyDetails().getAverageRate() > 0
+    x.getMessagesReadyDetails().getRate() > 0
+    x.getMessagesReadyDetails().getSamples().size() > 0
+    x.getMessagesReadyDetails().getSamples().get(0).getSample() > 0
+    x.getMessagesReadyDetails().getSamples().get(0).getTimestamp() > 0
+
+    x.getMessagesUnacknowledgedDetails() != null
+
+    x.getMessageStats() != null
+    x.getMessageStats().getBasicPublishDetails().getAverage() > 0
+    x.getMessageStats().getBasicPublishDetails().getAverageRate() > 0
+    x.getMessageStats().getBasicPublishDetails().getRate() > 0
+    x.getMessageStats().getBasicPublishDetails().getSamples().size() > 0
+    x.getMessageStats().getBasicPublishDetails().getSamples().get(0).getSample() > 0
+    x.getMessageStats().getBasicPublishDetails().getSamples().get(0).getTimestamp() > 0
+
+    cleanup:
+    executorService.shutdown()
     ch.queueDelete(q)
     conn.close()
 

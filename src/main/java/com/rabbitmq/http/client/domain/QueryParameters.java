@@ -1,5 +1,5 @@
 /*
- * Copyright 2021 the original author or authors.
+ * Copyright 2021-2022 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,14 +24,20 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Set;
 import java.util.function.BiFunction;
-import java.util.function.BinaryOperator;
-import org.apache.http.client.utils.URIBuilder;
 
 public class QueryParameters {
 
-  private final Map<String, Object> parameters = new HashMap<>();
+  private final Map<String, Object> parameters;
   private final Pagination pagination = new Pagination();
   private final Columns columns = new Columns();
+
+  public QueryParameters() {
+    this(new HashMap<>());
+  }
+
+  QueryParameters(Map<String, Object> parameters) {
+    this.parameters = parameters;
+  }
 
   public Pagination pagination() {
     return pagination;
@@ -81,6 +87,11 @@ public class QueryParameters {
     );
   }
 
+  QueryParameters parameter(String field, Object value) {
+    this.parameters.put(field, value);
+    return this;
+  }
+
   public class Columns {
     public Columns add(String name) {
       @SuppressWarnings("unchecked")
@@ -119,6 +130,7 @@ public class QueryParameters {
           || parameters.containsKey("sort")
           || parameters.containsKey("sort_reverse");
     }
+
   }
 
   public class Pagination {

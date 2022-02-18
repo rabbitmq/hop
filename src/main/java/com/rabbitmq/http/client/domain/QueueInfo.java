@@ -1,5 +1,5 @@
 /*
- * Copyright 2015 the original author or authors.
+ * Copyright 2015-2022 the original author or authors.
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -127,6 +127,8 @@ public class QueueInfo {
   private long totalPersistentMessages = -1;
   @JsonProperty("messages_ram")
   private long totalTransientMessages = -1;
+  @JsonProperty("messages_details")
+  private RateDetails messagesDetails;
   @JsonProperty("messages_ready")
   private long messagesReady = -1;
   @JsonProperty("messages_ready_details")
@@ -378,6 +380,14 @@ public class QueueInfo {
 
   public void setMessagesReady(long messagesReady) {
     this.messagesReady = messagesReady;
+  }
+
+  public RateDetails getMessagesDetails() {
+    return messagesDetails;
+  }
+
+  public void setMessagesDetails(RateDetails messagesDetails) {
+    this.messagesDetails = messagesDetails;
   }
 
   public RateDetails getMessagesReadyDetails() {

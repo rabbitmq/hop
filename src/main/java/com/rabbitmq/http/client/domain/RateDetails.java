@@ -1,5 +1,5 @@
 /*
- * Copyright 2015 the original author or authors.
+ * Copyright 2015-2022 the original author or authors.
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -17,22 +17,54 @@
 package com.rabbitmq.http.client.domain;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import java.util.Collections;
+import java.util.List;
 
 public class RateDetails {
+  private final double average;
+  private final double averageRate;
   private final double rate;
+  private final List<Sample> samples;
 
-  public RateDetails(@JsonProperty("rate") double rate) {
+  public RateDetails(double rate) {
+    this(0, 0, rate, Collections.emptyList());
+  }
+
+  public RateDetails(
+      @JsonProperty("avg") double average,
+      @JsonProperty("avg_rate") double averageRate,
+      @JsonProperty("rate") double rate,
+      @JsonProperty("samples") List<Sample> samples
+      ) {
+    this.average = average;
+    this.averageRate = averageRate;
     this.rate = rate;
+    this.samples = samples;
+  }
+
+  public double getAverage() {
+    return average;
+  }
+
+  public double getAverageRate() {
+    return averageRate;
   }
 
   public double getRate() {
     return rate;
   }
 
+  public List<Sample> getSamples() {
+    return samples;
+  }
+
   @Override
   public String toString() {
     return "RateDetails{" +
-        "rate=" + rate +
+        "average=" + average +
+        ", averageRate=" + averageRate +
+        ", rate=" + rate +
+        ", samples=" + samples +
         '}';
   }
 }
