@@ -50,7 +50,7 @@
     <wiremock.version>2.32.0</wiremock.version>
     <jetty.version>9.4.45.v20220203</jetty.version>
     <bouncycastle.version>1.70</bouncycastle.version>
-    <maven.compiler.plugin.version>3.8.1</maven.compiler.plugin.version>
+    <maven.compiler.plugin.version>3.10.0</maven.compiler.plugin.version>
     <maven-surefire-plugin.version>2.22.2</maven-surefire-plugin.version>
     <maven.gpg.plugin.version>3.0.1</maven.gpg.plugin.version>
     <maven-resources-plugin.version>3.1.0</maven-resources-plugin.version>
