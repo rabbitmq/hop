@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2020 the original author or authors.
+ * Copyright 2018-2022 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -482,8 +482,20 @@ public class ReactorNettyClient {
         return doGetFlux(QueueInfo.class, "queues");
     }
 
+    public Flux<QueueInfo> getQueues(DetailsParameters detailsParameters) {
+        return doGetFlux(QueueInfo.class, detailsParameters.parameters(), "queues");
+    }
+
     public Flux<QueueInfo> getQueues(String vhost) {
         return doGetFlux(QueueInfo.class, "queues", encodePath(vhost));
+    }
+
+    public Flux<QueueInfo> getQueues(String vhost, DetailsParameters detailsParameters) {
+        return doGetFlux(QueueInfo.class, detailsParameters.parameters(), "queues", encodePath(vhost));
+    }
+
+    public Mono<QueueInfo> getQueue(String vhost, String name, DetailsParameters detailsParameters) {
+        return doGetMono(QueueInfo.class, detailsParameters.parameters(), "queues", encodePath(vhost), encodePath(name));
     }
 
     public Mono<QueueInfo> getQueue(String vhost, String name) {
@@ -852,10 +864,20 @@ public class ReactorNettyClient {
     }
 
     private <T> Mono<T> doGetMono(Class<T> type, String... pathSegments) {
+       return doGetMono(type, null, pathSegments);
+    }
+
+    private <T> Mono<T> doGetMono(Class<T> type, Map<String, String> queryParameters, String... pathSegments) {
+        String uri = uri(pathSegments);
+        if (queryParameters != null && !queryParameters.isEmpty()) {
+            uri += queryParameters.entrySet().stream()
+                .map(e -> String.format("%s=%s", e.getKey(), encodeHttpParameter(e.getValue())))
+                .collect(Collectors.joining("&", "?", ""));
+        }
         return Mono.from(client
                 .headersWhen(authorizedHeader())
                 .get()
-                .uri(uri(pathSegments))
+                .uri(uri)
                 .response(decode(type)));
     }
 
@@ -880,9 +902,14 @@ public class ReactorNettyClient {
         }
     }
 
-    @SuppressWarnings("unchecked")
     private <T> Flux<T> doGetFlux(Class<T> type, String... pathSegments) {
-        return (Flux<T>) doGetMono(Array.newInstance(type, 0).getClass(), pathSegments).flatMapMany(items -> Flux.fromArray((Object[]) items));
+        return doGetFlux(type, null, pathSegments);
+    }
+
+    @SuppressWarnings("unchecked")
+    private <T> Flux<T> doGetFlux(Class<T> type, Map<String, String> queryParameters, String... pathSegments) {
+        return (Flux<T>) doGetMono(Array.newInstance(type, 0).getClass(), queryParameters, pathSegments)
+            .flatMapMany(items -> Flux.fromArray((Object[]) items));
     }
 
     protected Function<? super HttpHeaders, Mono<? extends HttpHeaders>> authorizedHeader() {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2018-2020 the original author or authors.
+ * Copyright 2018-2022 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,6 +34,7 @@ import com.rabbitmq.http.client.domain.ConsumerDetails
 import com.rabbitmq.http.client.domain.Definitions
 import com.rabbitmq.http.client.domain.DeleteQueueParameters
 import com.rabbitmq.http.client.domain.DestinationType
+import com.rabbitmq.http.client.domain.DetailsParameters
 import com.rabbitmq.http.client.domain.ExchangeInfo
 import com.rabbitmq.http.client.domain.InboundMessage
 import com.rabbitmq.http.client.domain.OutboundMessage
@@ -60,8 +61,11 @@ import spock.lang.IgnoreIf
 import spock.lang.Specification
 
 import java.nio.charset.Charset
+import java.nio.charset.StandardCharsets
 import java.time.Duration
 import java.util.concurrent.CountDownLatch
+import java.util.concurrent.ExecutorService
+import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.atomic.AtomicBoolean
 import java.util.concurrent.atomic.AtomicReference
@@ -1185,6 +1189,53 @@ class ReactorNettyClientSpec extends Specification {
         conn.close()
     }
 
+    def "GET /api/queues with details"() {
+        given: "at least one queue was declared and some messages published"
+        Connection conn = cf.newConnection()
+        Channel ch = conn.createChannel()
+        String q = ch.queueDeclare().queue
+        ExecutorService executorService = Executors.newSingleThreadExecutor()
+        def publishing = {
+            while (!Thread.currentThread().isInterrupted()) {
+                ch.basicPublish("", q, null, "".getBytes(StandardCharsets.UTF_8))
+                try {
+                    Thread.sleep(10)
+                } catch (InterruptedException e) {
+                    return
+                }
+            }
+        }
+        executorService.submit(publishing)
+
+        when: "client lists queues with details"
+        def detailsParameters = new DetailsParameters()
+                .messageRates(60, 5)
+                .lengths(60, 5)
+        def request = { client.getQueues(detailsParameters)
+                                     .filter({qi -> qi.name == q })}
+        waitAtMostUntilTrue(10, {
+            def p = request().blockFirst()
+            p.messagesDetails != null && p.messagesDetails.rate > 0
+        })
+        def xs = request()
+
+        then: "a list of queues with details is returned"
+        def x = xs.blockFirst()
+        verifyQueueInfo(x)
+        x.getMessagesDetails() != null
+        x.getMessagesDetails().getAverage() > 0
+        x.getMessagesDetails().getAverageRate() > 0
+        x.getMessagesDetails().getRate() > 0
+        x.getMessagesDetails().getSamples().size() > 0
+        x.getMessagesDetails().getSamples().get(0).getSample() > 0
+        x.getMessagesDetails().getSamples().get(0).getTimestamp() > 0
+
+        cleanup:
+        executorService.shutdownNow()
+        ch.queueDelete(q)
+        conn.close()
+    }
+
     def "GET /api/queues/{vhost} when vhost exists"() {
         given: "at least one queue was declared in vhost /"
         Connection conn = cf.newConnection()
@@ -1250,6 +1301,69 @@ class ReactorNettyClientSpec extends Specification {
         x.exclusive
 
         cleanup:
+        ch.queueDelete(q)
+        conn.close()
+    }
+
+    def "GET /api/queues/{name} with details"() {
+        given: "at least one queue was declared and some messages published"
+        ExecutorService executorService = Executors.newSingleThreadExecutor()
+        Connection conn = cf.newConnection()
+        Channel ch = conn.createChannel()
+        String q = ch.queueDeclare().queue
+        def publishing = {
+            while (!Thread.currentThread().isInterrupted()) {
+                ch.basicPublish("", q, null, "".getBytes(StandardCharsets.UTF_8))
+                try {
+                    Thread.sleep(10)
+                } catch (InterruptedException e) {
+                    return
+                }
+            }
+        }
+        executorService.submit(publishing)
+
+        when: "client get queue with details"
+        def detailsParameters = new DetailsParameters()
+                .messageRates(60, 5)
+                .lengths(60, 5)
+        def request = { client.getQueue("/", q, detailsParameters) }
+        waitAtMostUntilTrue(10, {
+            def qi = request().block()
+            qi.getMessagesDetails() != null && qi.getMessagesDetails().getRate() > 0
+        })
+        def x = request().block()
+
+        then: "the queue with details info is returned"
+        verifyQueueInfo(x)
+        x.getMessagesDetails() != null
+        x.getMessagesDetails().getAverage() > 0
+        x.getMessagesDetails().getAverageRate() > 0
+        x.getMessagesDetails().getRate() > 0
+        x.getMessagesDetails().getSamples().size() > 0
+        x.getMessagesDetails().getSamples().get(0).getSample() > 0
+        x.getMessagesDetails().getSamples().get(0).getTimestamp() > 0
+
+        x.getMessagesReadyDetails() != null
+        x.getMessagesReadyDetails().getAverage() > 0
+        x.getMessagesReadyDetails().getAverageRate() > 0
+        x.getMessagesReadyDetails().getRate() > 0
+        x.getMessagesReadyDetails().getSamples().size() > 0
+        x.getMessagesReadyDetails().getSamples().get(0).getSample() > 0
+        x.getMessagesReadyDetails().getSamples().get(0).getTimestamp() > 0
+
+        x.getMessagesUnacknowledgedDetails() != null
+
+        x.getMessageStats() != null
+        x.getMessageStats().getBasicPublishDetails().getAverage() > 0
+        x.getMessageStats().getBasicPublishDetails().getAverageRate() > 0
+        x.getMessageStats().getBasicPublishDetails().getRate() > 0
+        x.getMessageStats().getBasicPublishDetails().getSamples().size() > 0
+        x.getMessageStats().getBasicPublishDetails().getSamples().get(0).getSample() > 0
+        x.getMessageStats().getBasicPublishDetails().getSamples().get(0).getTimestamp() > 0
+
+        cleanup:
+        executorService.shutdown()
         ch.queueDelete(q)
         conn.close()
     }

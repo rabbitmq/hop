@@ -1,5 +1,5 @@
 /*
- * Copyright 2015-2021 the original author or authors.
+ * Copyright 2015-2022 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -637,8 +637,24 @@ public class Client {
     return Arrays.asList(this.httpLayer.get(uri, QueueInfo[].class));
   }
 
+  public List<QueueInfo> getQueues(DetailsParameters detailsParameters) {
+    final URI uri = uri().withEncodedPath("./queues")
+        .withQueryParameters(detailsParameters.parameters())
+        .get();
+    return Arrays.asList(this.httpLayer.get(uri, QueueInfo[].class));
+  }
+
   public List<QueueInfo> getQueues(String vhost) {
     final URI uri = uri().withEncodedPath("./queues").withPath(vhost).get();
+    final QueueInfo[] result = this.getForObjectReturningNullOn404(uri, QueueInfo[].class);
+    return asListOrNull(result);
+  }
+
+  public List<QueueInfo> getQueues(String vhost, DetailsParameters detailsParameters) {
+    final URI uri = uri().withEncodedPath("./queues")
+        .withPath(vhost)
+        .withQueryParameters(detailsParameters.parameters())
+        .get();
     final QueueInfo[] result = this.getForObjectReturningNullOn404(uri, QueueInfo[].class);
     return asListOrNull(result);
   }
@@ -653,6 +669,15 @@ public class Client {
     } else {
       return new Page(this.httpLayer.get(uri, QueueInfo[].class));
     }
+  }
+
+  public QueueInfo getQueue(String vhost, String name, DetailsParameters detailsParameters) {
+    final URI uri = uri().withEncodedPath("./queues")
+        .withPath(vhost)
+        .withPath(name)
+        .withQueryParameters(detailsParameters.parameters())
+        .get();
+    return this.getForObjectReturningNullOn404(uri, QueueInfo.class);
   }
 
   public QueueInfo getQueue(String vhost, String name) {
