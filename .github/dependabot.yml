@@ -1,0 +1,13 @@
+# Please see the documentation for all configuration options:
+# https://docs.github.com/github/administering-a-repository/configuration-options-for-dependency-updates
+version: 2
+updates:
+  - package-ecosystem: "maven"
+    directory: "/"
+    schedule:
+      interval: "daily"
+    open-pull-requests-limit: 20
+    ignore:
+      - dependency-name: "com.swiftmq:swiftmq-client"
+      - dependency-name: "com.squareup.okhttp3:okhttp"
+        versions: ["[4.0,)"]
