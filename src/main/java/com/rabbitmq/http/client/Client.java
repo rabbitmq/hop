@@ -633,27 +633,26 @@ public class Client {
   }
 
   public List<QueueInfo> getQueues() {
-    final URI uri = uriWithPath("./queues/");
-    return Arrays.asList(this.httpLayer.get(uri, QueueInfo[].class));
+    return this.getQueues((DetailsParameters) null);
   }
 
   public List<QueueInfo> getQueues(DetailsParameters detailsParameters) {
     final URI uri = uri().withEncodedPath("./queues")
-        .withQueryParameters(detailsParameters.parameters())
+        .withQueryParameters(detailsParameters == null ? Collections.emptyMap() :
+            detailsParameters.parameters())
         .get();
     return Arrays.asList(this.httpLayer.get(uri, QueueInfo[].class));
   }
 
   public List<QueueInfo> getQueues(String vhost) {
-    final URI uri = uri().withEncodedPath("./queues").withPath(vhost).get();
-    final QueueInfo[] result = this.getForObjectReturningNullOn404(uri, QueueInfo[].class);
-    return asListOrNull(result);
+    return this.getQueues(vhost, (DetailsParameters) null);
   }
 
   public List<QueueInfo> getQueues(String vhost, DetailsParameters detailsParameters) {
     final URI uri = uri().withEncodedPath("./queues")
         .withPath(vhost)
-        .withQueryParameters(detailsParameters.parameters())
+        .withQueryParameters(detailsParameters == null ? Collections.emptyMap() :
+            detailsParameters.parameters())
         .get();
     final QueueInfo[] result = this.getForObjectReturningNullOn404(uri, QueueInfo[].class);
     return asListOrNull(result);
@@ -675,14 +674,14 @@ public class Client {
     final URI uri = uri().withEncodedPath("./queues")
         .withPath(vhost)
         .withPath(name)
-        .withQueryParameters(detailsParameters.parameters())
+        .withQueryParameters(detailsParameters == null ? Collections.emptyMap() :
+            detailsParameters.parameters())
         .get();
     return this.getForObjectReturningNullOn404(uri, QueueInfo.class);
   }
 
   public QueueInfo getQueue(String vhost, String name) {
-    final URI uri = uri().withEncodedPath("./queues").withPath(vhost).withPath(name).get();
-    return this.getForObjectReturningNullOn404(uri, QueueInfo.class);
+    return getQueue(vhost, name, null);
   }
 
   @SuppressWarnings("unchecked")

@@ -479,27 +479,33 @@ public class ReactorNettyClient {
     }
 
     public Flux<QueueInfo> getQueues() {
-        return doGetFlux(QueueInfo.class, "queues");
+        return getQueues((DetailsParameters) null);
     }
 
     public Flux<QueueInfo> getQueues(DetailsParameters detailsParameters) {
-        return doGetFlux(QueueInfo.class, detailsParameters.parameters(), "queues");
+        return doGetFlux(QueueInfo.class,
+            detailsParameters == null ? Collections.emptyMap() : detailsParameters.parameters(),
+            "queues");
     }
 
     public Flux<QueueInfo> getQueues(String vhost) {
-        return doGetFlux(QueueInfo.class, "queues", encodePath(vhost));
+        return getQueues(vhost, null);
     }
 
     public Flux<QueueInfo> getQueues(String vhost, DetailsParameters detailsParameters) {
-        return doGetFlux(QueueInfo.class, detailsParameters.parameters(), "queues", encodePath(vhost));
+        return doGetFlux(QueueInfo.class,
+            detailsParameters == null ? Collections.emptyMap() : detailsParameters.parameters(),
+            "queues", encodePath(vhost));
     }
 
     public Mono<QueueInfo> getQueue(String vhost, String name, DetailsParameters detailsParameters) {
-        return doGetMono(QueueInfo.class, detailsParameters.parameters(), "queues", encodePath(vhost), encodePath(name));
+        return doGetMono(QueueInfo.class,
+            detailsParameters == null ? Collections.emptyMap() : detailsParameters.parameters(),
+            "queues", encodePath(vhost), encodePath(name));
     }
 
     public Mono<QueueInfo> getQueue(String vhost, String name) {
-        return doGetMono(QueueInfo.class, "queues", encodePath(vhost), encodePath(name));
+        return this.getQueue(vhost, name, null);
     }
 
     public Mono<HttpResponse> declareQueue(String vhost, String name, QueueInfo info) {
