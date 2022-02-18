@@ -927,14 +927,15 @@ class ClientSpec extends Specification {
     executorService.submit(publishing)
 
     when: "client lists queues with details"
-    def queryParameters = new DetailsParameters(new QueryParameters()
-            .name("^queue-for-paging-and-details-test-*", true)
-            .pagination()
-            .pageSize(10)
-            .query())
-            .messageRates(60, 5)
-            .lengths(60, 5)
-            .withQueryParameters()
+    def queryParameters = new DetailsParameters()
+              .messageRates(60, 5)
+              .lengths(60, 5)
+            .queryParameters()
+              .name("^queue-for-paging-and-details-test-*", true)
+              .pagination()
+              .pageSize(10)
+            .query()
+
     def request = { client.getQueues(queryParameters) }
     waitAtMostUntilTrue(10, {
       def p = request()

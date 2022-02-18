@@ -19,6 +19,8 @@ package com.rabbitmq.http.client.domain;
 import java.time.Duration;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Map.Entry;
+import java.util.stream.Collectors;
 
 /**
  * A class to gather parameters on <code>_details</code> objects.
@@ -26,10 +28,10 @@ import java.util.Map;
  * <p>Parameters can be set to get extra information on how count fields have changed (messages sent
  * and received, queue lengths).
  *
- * <p>A {@link DetailsParameters} instance can wrap a {@link QueryParameters} and return it with its
- * own parameters applied on it, see {@link #DetailsParameters(QueryParameters)} and {@link
- * #withQueryParameters()}. This way {@link DetailsParameters} can be "injected" in methods like
- * {@link com.rabbitmq.http.client.Client#getQueues(DetailsParameters)}.
+ * <p>A {@link DetailsParameters} instance can create a {@link QueryParameters} instance with its
+ * own parameters applied on it, see {@link #queryParameters()}. This way {@link DetailsParameters}
+ * can be "injected" in methods like {@link
+ * com.rabbitmq.http.client.Client#getQueues(DetailsParameters)}.
  *
  * @since 4.1.0
  * @see com.rabbitmq.http.client.Client#getQueues(DetailsParameters)
@@ -40,16 +42,8 @@ import java.util.Map;
  */
 public class DetailsParameters {
 
-  private final Map<String, String> parameters = new HashMap<>();
-  private final QueryParameters queryParameters;
-
-  public DetailsParameters() {
-    this(null);
-  }
-
-  public DetailsParameters(QueryParameters queryParameters) {
-    this.queryParameters = queryParameters;
-  }
+  private final Map<String, Object> parameters = new HashMap<>();
+  private QueryParameters queryParameters;
 
   private static void checkGreaterThanZero(int value, String field) {
     if (value <= 0) {
@@ -95,14 +89,14 @@ public class DetailsParameters {
   }
 
   public Map<String, String> parameters() {
-    return new HashMap<>(parameters);
+    return this.parameters.entrySet().stream()
+        .collect(Collectors.toMap(Entry::getKey, e -> e.getValue().toString()));
   }
 
-  public QueryParameters withQueryParameters() {
+  public QueryParameters queryParameters() {
     if (this.queryParameters == null) {
-      throw new IllegalStateException("No query parameters");
+      this.queryParameters = new QueryParameters(this.parameters);
     }
-    this.parameters.forEach((k, v) -> this.queryParameters.parameter(k, v));
     return this.queryParameters;
   }
 }

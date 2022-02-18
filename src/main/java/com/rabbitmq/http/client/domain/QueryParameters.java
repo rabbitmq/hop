@@ -27,9 +27,17 @@ import java.util.function.BiFunction;
 
 public class QueryParameters {
 
-  private final Map<String, Object> parameters = new HashMap<>();
+  private final Map<String, Object> parameters;
   private final Pagination pagination = new Pagination();
   private final Columns columns = new Columns();
+
+  public QueryParameters() {
+    this(new HashMap<>());
+  }
+
+  QueryParameters(Map<String, Object> parameters) {
+    this.parameters = parameters;
+  }
 
   public Pagination pagination() {
     return pagination;
