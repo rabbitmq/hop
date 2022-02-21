@@ -251,4 +251,28 @@ public class JdkHttpClientHttpLayerTest {
       wireMockServer.stop();
     }
   }
+
+  @Test
+  void clientServerErrorsShouldTriggerClientServerExceptions() throws Exception {
+    WireMockServer wireMockServer = new WireMockServer(wireMockConfig().dynamicPort());
+    wireMockServer.start();
+    try {
+      WireMock.configureFor("http", "localhost", wireMockServer.port());
+      stubFor(get(urlPathMatching("/client-error")).willReturn(WireMock.forbidden()));
+      stubFor(get(urlPathMatching("/server-error")).willReturn(WireMock.serviceUnavailable()));
+
+      HttpLayerFactory factory = JdkHttpClientHttpLayer.configure().create();
+      HttpLayer httpLayer = factory.create(new ClientParameters());
+      URI baseUri = new URI("http://localhost:" + wireMockServer.port());
+      assertThatThrownBy(() -> httpLayer.get(baseUri.resolve("/client-error"), String[].class))
+          .isInstanceOf(HttpClientException.class);
+      verify(exactly(1), getRequestedFor(urlEqualTo("/client-error")));
+
+      assertThatThrownBy(() -> httpLayer.get(baseUri.resolve("/server-error"), String[].class))
+          .isInstanceOf(HttpServerException.class);
+      verify(exactly(1), getRequestedFor(urlEqualTo("/server-error")));
+    } finally {
+      wireMockServer.stop();
+    }
+  }
 }

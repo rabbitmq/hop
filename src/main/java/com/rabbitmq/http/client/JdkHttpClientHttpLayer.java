@@ -73,10 +73,20 @@ final class JdkHttpClientHttpLayer implements HttpLayer {
     try {
       HttpResponse<Supplier<T>> response =
           client.send(request, new JsonBodyHandler<>(mapper, type));
-      if (response.statusCode() == 404) {
+      int statusCode = response.statusCode();
+      if (statusCode == 404) {
         return null;
-      } else {
+      } else if (statusCode == 200) {
         return response.body().get();
+      } else {
+        int errorClass = errorClass(statusCode);
+        if (errorClass == 400) {
+          throw new HttpClientException(statusCode, "GET returned " + statusCode);
+        } else if (errorClass == 500) {
+          throw new HttpServerException(statusCode, "GET returned " + statusCode);
+        } else {
+          throw new HttpException("GET returned " + statusCode);
+        }
       }
     } catch (IOException e) {
       throw new HttpException(e);
@@ -112,12 +122,16 @@ final class JdkHttpClientHttpLayer implements HttpLayer {
         return;
       }
     }
-    int errorClass = statusCode - statusCode % 100;
+    int errorClass = errorClass(statusCode);
     if (errorClass == 400) {
       throw new HttpClientException(statusCode, message);
     } else if (errorClass == 500) {
       throw new HttpServerException(statusCode, message);
     }
+  }
+
+  private static int errorClass(int statusCode) {
+    return statusCode - statusCode % 100;
   }
 
   /**
