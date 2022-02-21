@@ -259,6 +259,7 @@ public class JdkHttpClientHttpLayerTest {
     try {
       WireMock.configureFor("http", "localhost", wireMockServer.port());
       stubFor(get(urlPathMatching("/client-error")).willReturn(WireMock.forbidden()));
+      stubFor(get(urlPathMatching("/client-not-found")).willReturn(WireMock.notFound()));
       stubFor(get(urlPathMatching("/server-error")).willReturn(WireMock.serviceUnavailable()));
 
       HttpLayerFactory factory = JdkHttpClientHttpLayer.configure().create();
@@ -267,6 +268,9 @@ public class JdkHttpClientHttpLayerTest {
       assertThatThrownBy(() -> httpLayer.get(baseUri.resolve("/client-error"), String[].class))
           .isInstanceOf(HttpClientException.class);
       verify(exactly(1), getRequestedFor(urlEqualTo("/client-error")));
+
+      assertThat(httpLayer.get(baseUri.resolve("/client-not-found"), String[].class)).isNull();
+      verify(exactly(1), getRequestedFor(urlEqualTo("/client-not-found")));
 
       assertThatThrownBy(() -> httpLayer.get(baseUri.resolve("/server-error"), String[].class))
           .isInstanceOf(HttpServerException.class);
