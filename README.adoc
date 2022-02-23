@@ -2,6 +2,8 @@
 :hop-version: 4.0.0
 :jackson-version: 2.13.1
 :reactor-netty-version: 1.0.14
+:hop-snapshot: 4.1.0-SNAPSHOT
+:jackson-snapshot: 2.13.1
 
 = Hop, Java Client for the RabbitMQ HTTP API
 
@@ -110,15 +112,15 @@ Maven:
 [source,xml,subs="attributes,specialcharacters"]
 ----
 <repositories>
-<repository>
-  <id>packagecloud-rabbitmq-maven-milestones</id>
-  <url>https://packagecloud.io/rabbitmq/maven-milestones/maven2</url>
-  <releases>
-    <enabled>true</enabled>
-  </releases>
-  <snapshots>
-    <enabled>false</enabled>
-  </snapshots>
+  <repository>
+    <id>packagecloud-rabbitmq-maven-milestones</id>
+    <url>https://packagecloud.io/rabbitmq/maven-milestones/maven2</url>
+    <releases>
+      <enabled>true</enabled>
+    </releases>
+    <snapshots>
+      <enabled>false</enabled>
+    </snapshots>
   </repository>
 </repositories>
 ----
@@ -134,6 +136,65 @@ repositories {
   }
 }
 ----
+
+=== Snapshots
+
+To use snapshots, add the following dependencies:
+
+.pom.xml
+[source,xml,subs="attributes,specialcharacters"]
+----
+<dependency>
+  <groupId>com.rabbitmq</groupId>
+  <artifactId>http-client</artifactId>
+  <version>{hop-snapshot}</version>
+</dependency>
+<dependency>
+  <groupId>com.fasterxml.jackson.core</groupId>
+  <artifactId>jackson-databind</artifactId>
+  <version>{jackson-snapshot}</version>
+</dependency>
+----
+
+.build.gradle
+[source,groovy,subs="attributes,specialcharacters"]
+----
+compile "com.rabbitmq:http-client:{hop-snapshot}"
+compile "com.fasterxml.jackson.core:jackson-databind:{jackson-snapshot}"
+----
+
+Add the https://oss.sonatype.org/content/repositories/snapshots/com/rabbitmq/http-client/[Sonatype OSS snapshot repository] to your dependency manager:
+
+Maven:
+
+.pom.xml
+[source,xml,subs="attributes,specialcharacters"]
+----
+<repositories>
+  <repository>
+    <id>ossrh</id>
+    <url>https://oss.sonatype.org/content/repositories/snapshots</url>
+    <snapshots>
+      <enabled>true</enabled>
+    </snapshots>
+    <releases>
+      <enabled>false</enabled>
+    </releases>
+  </repository>
+</repositories>
+----
+
+Gradle:
+
+.build.gradle
+[source,groovy,subs="attributes,specialcharacters"]
+----
+repositories {
+  maven { url 'https://oss.sonatype.org/content/repositories/snapshots' }
+  mavenCentral()
+}
+----
+
 
 == Usage Guide
 
