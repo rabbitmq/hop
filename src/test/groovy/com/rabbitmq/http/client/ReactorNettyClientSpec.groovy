@@ -1225,7 +1225,6 @@ class ReactorNettyClientSpec extends Specification {
         x.getMessagesDetails() != null
         x.getMessagesDetails().getAverage() > 0
         x.getMessagesDetails().getAverageRate() > 0
-        x.getMessagesDetails().getRate() > 0
         x.getMessagesDetails().getSamples().size() > 0
         x.getMessagesDetails().getSamples().get(0).getSample() > 0
         x.getMessagesDetails().getSamples().get(0).getTimestamp() > 0
@@ -1339,7 +1338,6 @@ class ReactorNettyClientSpec extends Specification {
         x.getMessagesDetails() != null
         x.getMessagesDetails().getAverage() > 0
         x.getMessagesDetails().getAverageRate() > 0
-        x.getMessagesDetails().getRate() > 0
         x.getMessagesDetails().getSamples().size() > 0
         x.getMessagesDetails().getSamples().get(0).getSample() > 0
         x.getMessagesDetails().getSamples().get(0).getTimestamp() > 0
@@ -1347,7 +1345,6 @@ class ReactorNettyClientSpec extends Specification {
         x.getMessagesReadyDetails() != null
         x.getMessagesReadyDetails().getAverage() > 0
         x.getMessagesReadyDetails().getAverageRate() > 0
-        x.getMessagesReadyDetails().getRate() > 0
         x.getMessagesReadyDetails().getSamples().size() > 0
         x.getMessagesReadyDetails().getSamples().get(0).getSample() > 0
         x.getMessagesReadyDetails().getSamples().get(0).getTimestamp() > 0
@@ -1357,7 +1354,6 @@ class ReactorNettyClientSpec extends Specification {
         x.getMessageStats() != null
         x.getMessageStats().getBasicPublishDetails().getAverage() > 0
         x.getMessageStats().getBasicPublishDetails().getAverageRate() > 0
-        x.getMessageStats().getBasicPublishDetails().getRate() > 0
         x.getMessageStats().getBasicPublishDetails().getSamples().size() > 0
         x.getMessageStats().getBasicPublishDetails().getSamples().get(0).getSample() > 0
         x.getMessageStats().getBasicPublishDetails().getSamples().get(0).getTimestamp() > 0
