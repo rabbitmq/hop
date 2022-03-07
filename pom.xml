@@ -36,7 +36,7 @@
 
   <properties>
     <spring.version>5.3.16</spring.version>
-    <jackson.version>2.13.1</jackson.version>
+    <jackson.version>2.13.2</jackson.version>
     <httpclient.version>4.5.13</httpclient.version>
     <okhttp.version>3.14.9</okhttp.version>
     <reactor-netty.version>1.0.16</reactor-netty.version>
