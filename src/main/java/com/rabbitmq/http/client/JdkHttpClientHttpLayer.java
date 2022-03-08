@@ -42,7 +42,7 @@ import javax.net.ssl.SSLParameters;
  *
  * @since 4.0.0
  */
-final class JdkHttpClientHttpLayer implements HttpLayer {
+public final class JdkHttpClientHttpLayer implements HttpLayer {
 
   private static final Duration REQUEST_TIMEOUT = Duration.ofSeconds(60);
   private static final Duration CONNECT_TIMEOUT = Duration.ofSeconds(30);
