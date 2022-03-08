@@ -329,7 +329,7 @@ public final class JdkHttpClientHttpLayer implements HttpLayer {
       return this;
     }
 
-    HttpLayerFactory create() {
+    public HttpLayerFactory create() {
       return new Factory(this.clientBuilderConsumer, this.requestBuilderConsumer);
     }
   }
