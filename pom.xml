@@ -45,7 +45,7 @@
     <junit.version>5.8.2</junit.version>
     <junit-platform.version>1.8.2</junit-platform.version>
     <assertj.version>3.23.1</assertj.version>
-    <amqp-client.version>5.14.2</amqp-client.version>
+    <amqp-client.version>5.15.0</amqp-client.version>
     <logback.version>1.2.11</logback.version>
     <wiremock.version>2.33.2</wiremock.version>
     <jetty.version>9.4.46.v20220331</jetty.version>
