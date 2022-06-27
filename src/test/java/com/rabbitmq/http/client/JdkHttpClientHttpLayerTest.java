@@ -1,21 +1,12 @@
 package com.rabbitmq.http.client;
 
-import static com.github.tomakehurst.wiremock.client.WireMock.aResponse;
-import static com.github.tomakehurst.wiremock.client.WireMock.exactly;
-import static com.github.tomakehurst.wiremock.client.WireMock.get;
-import static com.github.tomakehurst.wiremock.client.WireMock.getRequestedFor;
-import static com.github.tomakehurst.wiremock.client.WireMock.stubFor;
-import static com.github.tomakehurst.wiremock.client.WireMock.urlEqualTo;
-import static com.github.tomakehurst.wiremock.client.WireMock.urlPathMatching;
-import static com.github.tomakehurst.wiremock.client.WireMock.verify;
-import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.wireMockConfig;
 import static com.rabbitmq.http.client.JdkHttpClientHttpLayer.maybeThrowClientServerException;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-import com.github.tomakehurst.wiremock.WireMockServer;
-import com.github.tomakehurst.wiremock.client.WireMock;
 import com.rabbitmq.http.client.HttpLayer.HttpLayerFactory;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.math.BigInteger;
 import java.net.ServerSocket;
@@ -29,11 +20,12 @@ import java.security.cert.X509Certificate;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.Date;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicLong;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManagerFactory;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 import org.bouncycastle.asn1.x500.X500NameBuilder;
 import org.bouncycastle.asn1.x500.style.BCStyle;
 import org.bouncycastle.cert.X509CertificateHolder;
@@ -46,6 +38,7 @@ import org.eclipse.jetty.server.Handler;
 import org.eclipse.jetty.server.HttpConfiguration;
 import org.eclipse.jetty.server.HttpConnectionFactory;
 import org.eclipse.jetty.server.Request;
+import org.eclipse.jetty.server.Response;
 import org.eclipse.jetty.server.SecureRequestCustomizer;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.ServerConnector;
@@ -74,6 +67,43 @@ public class JdkHttpClientHttpLayerTest {
     int port = socket.getLocalPort();
     socket.close();
     return port;
+  }
+
+  private static AbstractHandler staticJsonHandler(String content) {
+    return staticHandler(content, "application/json", new ConcurrentHashMap<>());
+  }
+
+  private static AbstractHandler staticJsonHandler(String content, Map<String, AtomicLong> calls) {
+    return staticHandler(content, "application/json", calls);
+  }
+
+  private static AbstractHandler staticHandler(
+      String content, String contentType, Map<String, AtomicLong> calls) {
+    return new AbstractHandler() {
+      @Override
+      public void handle(
+          String target,
+          Request request,
+          HttpServletRequest httpRequest,
+          HttpServletResponse response)
+          throws IOException {
+        calls.computeIfAbsent(target, path -> new AtomicLong(0)).incrementAndGet();
+        response.setStatus(HttpServletResponse.SC_OK);
+        response.setContentLength(content.length());
+        response.setContentType(contentType);
+        response.getWriter().print(content);
+        request.setHandled(true);
+      }
+    };
+  }
+
+  private static Server startHttpServer(int port, Handler handler) throws Exception {
+    Server server = new Server(port);
+    Connector connector = new ServerConnector(server);
+    server.addConnector(connector);
+    server.setHandler(handler);
+    server.start();
+    return server;
   }
 
   @BeforeEach
@@ -125,25 +155,48 @@ public class JdkHttpClientHttpLayerTest {
   }
 
   @Test
+  void clientServerErrorsShouldTriggerClientServerExceptions() throws Exception {
+    int port = randomNetworkPort();
+    Map<String, Integer> responseCodes = new ConcurrentHashMap<>();
+    responseCodes.put("/client-error", Response.SC_FORBIDDEN);
+    responseCodes.put("/client-not-found", Response.SC_NOT_FOUND);
+    responseCodes.put("/server-error", Response.SC_SERVICE_UNAVAILABLE);
+    Map<String, AtomicLong> calls = new ConcurrentHashMap<>();
+    server =
+        startHttpServer(
+            port,
+            new AbstractHandler() {
+              @Override
+              public void handle(
+                  String target,
+                  Request baseRequest,
+                  HttpServletRequest request,
+                  HttpServletResponse response) {
+                calls.computeIfAbsent(target, path -> new AtomicLong(0)).incrementAndGet();
+                response.setStatus(responseCodes.get(target));
+                baseRequest.setHandled(true);
+              }
+            });
+
+    HttpLayerFactory factory = JdkHttpClientHttpLayer.configure().create();
+    HttpLayer httpLayer = factory.create(new ClientParameters());
+    URI baseUri = new URI("http://localhost:" + port);
+    assertThatThrownBy(() -> httpLayer.get(baseUri.resolve("/client-error"), String[].class))
+        .isInstanceOf(HttpClientException.class);
+    assertThat(calls.get("/client-error")).hasValue(1);
+
+    assertThat(httpLayer.get(baseUri.resolve("/client-not-found"), String[].class)).isNull();
+    assertThat(calls.get("/client-not-found")).hasValue(1);
+
+    assertThatThrownBy(() -> httpLayer.get(baseUri.resolve("/server-error"), String[].class))
+        .isInstanceOf(HttpServerException.class);
+    assertThat(calls.get("/server-error")).hasValue(1);
+  }
+
+  @Test
   void tls() throws Exception {
     int port = randomNetworkPort();
-    AbstractHandler httpHandler =
-        new AbstractHandler() {
-          @Override
-          public void handle(
-              String target,
-              Request baseRequest,
-              HttpServletRequest request,
-              HttpServletResponse response)
-              throws IOException {
-            String json = "[]";
-            response.setStatus(HttpServletResponse.SC_OK);
-            response.setContentLength(json.length());
-            response.setContentType("application/json");
-            response.getWriter().print(json);
-            baseRequest.setHandled(true);
-          }
-        };
+    Handler httpHandler = staticJsonHandler("[]");
     KeyStore keyStore = startHttpsServer(port, httpHandler);
     TrustManagerFactory tmf = TrustManagerFactory.getInstance("SunX509");
     tmf.init(keyStore);
@@ -192,7 +245,7 @@ public class JdkHttpClientHttpLayerTest {
         new Certificate[] {certificate});
 
     server = new Server();
-    SslContextFactory sslContextFactory = new SslContextFactory.Server();
+    SslContextFactory.Server sslContextFactory = new SslContextFactory.Server();
     sslContextFactory.setKeyStore(keyStore);
     sslContextFactory.setKeyStorePassword(keyStorePassword);
 
@@ -228,55 +281,22 @@ public class JdkHttpClientHttpLayerTest {
 
   @Test
   void builderConsumers() throws Exception {
-    WireMockServer wireMockServer = new WireMockServer(wireMockConfig().dynamicPort());
-    wireMockServer.start();
-    try {
-      WireMock.configureFor("http", "localhost", wireMockServer.port());
-      stubFor(get(urlPathMatching("/foo")).willReturn(aResponse().withBody("[]")));
+    int port = randomNetworkPort();
+    Map<String, AtomicLong> calls = new ConcurrentHashMap<>();
+    server = startHttpServer(port, staticJsonHandler("[]", calls));
 
-      AtomicBoolean clientBuilderConsumerCalled = new AtomicBoolean(false);
-      AtomicBoolean requestBuilderConsumerCalled = new AtomicBoolean(false);
-      HttpLayerFactory factory =
-          JdkHttpClientHttpLayer.configure()
-              .clientBuilderConsumer(builder -> clientBuilderConsumerCalled.set(true))
-              .requestBuilderConsumer(builder -> requestBuilderConsumerCalled.set(true))
-              .create();
-      HttpLayer httpLayer = factory.create(new ClientParameters());
-      URI uri = new URI("http://localhost:" + wireMockServer.port() + "/foo");
-      httpLayer.get(uri, String[].class);
-      verify(exactly(1), getRequestedFor(urlEqualTo("/foo")));
-      assertThat(clientBuilderConsumerCalled).isTrue();
-      assertThat(requestBuilderConsumerCalled).isTrue();
-    } finally {
-      wireMockServer.stop();
-    }
-  }
-
-  @Test
-  void clientServerErrorsShouldTriggerClientServerExceptions() throws Exception {
-    WireMockServer wireMockServer = new WireMockServer(wireMockConfig().dynamicPort());
-    wireMockServer.start();
-    try {
-      WireMock.configureFor("http", "localhost", wireMockServer.port());
-      stubFor(get(urlPathMatching("/client-error")).willReturn(WireMock.forbidden()));
-      stubFor(get(urlPathMatching("/client-not-found")).willReturn(WireMock.notFound()));
-      stubFor(get(urlPathMatching("/server-error")).willReturn(WireMock.serviceUnavailable()));
-
-      HttpLayerFactory factory = JdkHttpClientHttpLayer.configure().create();
-      HttpLayer httpLayer = factory.create(new ClientParameters());
-      URI baseUri = new URI("http://localhost:" + wireMockServer.port());
-      assertThatThrownBy(() -> httpLayer.get(baseUri.resolve("/client-error"), String[].class))
-          .isInstanceOf(HttpClientException.class);
-      verify(exactly(1), getRequestedFor(urlEqualTo("/client-error")));
-
-      assertThat(httpLayer.get(baseUri.resolve("/client-not-found"), String[].class)).isNull();
-      verify(exactly(1), getRequestedFor(urlEqualTo("/client-not-found")));
-
-      assertThatThrownBy(() -> httpLayer.get(baseUri.resolve("/server-error"), String[].class))
-          .isInstanceOf(HttpServerException.class);
-      verify(exactly(1), getRequestedFor(urlEqualTo("/server-error")));
-    } finally {
-      wireMockServer.stop();
-    }
+    AtomicBoolean clientBuilderConsumerCalled = new AtomicBoolean(false);
+    AtomicBoolean requestBuilderConsumerCalled = new AtomicBoolean(false);
+    HttpLayerFactory factory =
+        JdkHttpClientHttpLayer.configure()
+            .clientBuilderConsumer(builder -> clientBuilderConsumerCalled.set(true))
+            .requestBuilderConsumer(builder -> requestBuilderConsumerCalled.set(true))
+            .create();
+    HttpLayer httpLayer = factory.create(new ClientParameters());
+    URI uri = new URI("http://localhost:" + port + "/foo");
+    httpLayer.get(uri, String[].class);
+    assertThat(calls.get("/foo")).hasValue(1);
+    assertThat(clientBuilderConsumerCalled).isTrue();
+    assertThat(requestBuilderConsumerCalled).isTrue();
   }
 }

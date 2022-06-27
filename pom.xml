@@ -47,8 +47,7 @@
     <assertj.version>3.23.1</assertj.version>
     <amqp-client.version>5.15.0</amqp-client.version>
     <logback.version>1.2.11</logback.version>
-    <wiremock.version>2.33.2</wiremock.version>
-    <jetty.version>9.4.48.v20220622</jetty.version>
+    <jetty.version>11.0.11</jetty.version>
     <bouncycastle.version>1.70</bouncycastle.version>
     <maven.compiler.plugin.version>3.10.1</maven.compiler.plugin.version>
     <maven-surefire-plugin.version>2.22.2</maven-surefire-plugin.version>
@@ -156,14 +155,8 @@
       <scope>test</scope>
     </dependency>
     <dependency>
-      <groupId>com.github.tomakehurst</groupId>
-      <artifactId>wiremock-jre8</artifactId>
-      <version>${wiremock.version}</version>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
       <groupId>org.eclipse.jetty</groupId>
-      <artifactId>jetty-servlet</artifactId>
+      <artifactId>jetty-server</artifactId>
       <version>${jetty.version}</version>
       <scope>test</scope>
     </dependency>
