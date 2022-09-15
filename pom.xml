@@ -35,7 +35,7 @@
   </scm>
 
   <properties>
-    <spring.version>5.3.22</spring.version>
+    <spring.version>5.3.23</spring.version>
     <jackson.version>2.13.4</jackson.version>
     <httpclient.version>4.5.13</httpclient.version>
     <okhttp.version>3.14.9</okhttp.version>
