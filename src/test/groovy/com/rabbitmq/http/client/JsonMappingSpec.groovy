@@ -1,5 +1,5 @@
 /*
- * Copyright 2019-2021 the original author or authors.
+ * Copyright 2019-2022 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,39 +24,27 @@ import com.rabbitmq.http.client.domain.ShovelInfo
 import com.rabbitmq.http.client.domain.UserInfo
 import groovy.json.JsonSlurper
 import spock.lang.Specification
-import spock.lang.Unroll
 
 class JsonMappingSpec extends Specification {
 
-  static ObjectMapper[] mappers() {
-    [RestTemplateHttpLayer.createDefaultObjectMapper(), JsonUtils.createDefaultObjectMapper()]
-  }
+  ObjectMapper mapper = JsonUtils.createDefaultObjectMapper();
 
-  @Unroll
   def "JSON document for queue with NaN message count should return -1 for message count"() {
     when: "JSON document for queue has no ready messages count field"
     def q = mapper.readValue(JSON_QUEUE_NO_READY_MESSAGES, QueueInfo.class)
 
     then: "the field value should be -1 in the Java object"
     q.messagesReady == -1
-
-    where:
-    mapper << mappers()
   }
 
-  @Unroll
   def "JSON document for queue with defined message count should return appropriate value for message count"() {
     when: "JSON document for queue has a ready messages count field with a value"
     def q = JsonUtils.createDefaultObjectMapper().readValue(JSON_QUEUE_SOME_READY_MESSAGES, QueueInfo.class)
 
     then: "the field value of the Java object should be the same as in the JSON document"
     q.messagesReady == 1000
-
-    where:
-    mapper << mappers()
   }
 
-  @Unroll
   def "fields for classic HA queue should be mapped correctly"() {
     when: "JSON document for classic HA queue has details on nodes"
     def q = JsonUtils.createDefaultObjectMapper().readValue(JSON_CLASSIC_HA_QUEUE, QueueInfo.class)
@@ -66,12 +54,8 @@ class JsonMappingSpec extends Specification {
     q.recoverableMirrors == ["rabbit-3@host3", "rabbit-2@host2"]
     q.mirrorNodes == ["rabbit-3@host3", "rabbit-2@host2"]
     q.synchronisedMirrorNodes == ["rabbit-3@host3", "rabbit-2@host2"]
-
-    where:
-    mapper << mappers()
   }
 
-  @Unroll
   def "fields for quorum queue should be mapped correctly"() {
     when: "JSON document for quorum queue has details on nodes"
     def q = JsonUtils.createDefaultObjectMapper().readValue(JSON_QUORUM_QUEUE, QueueInfo.class)
@@ -80,12 +64,8 @@ class JsonMappingSpec extends Specification {
     q.type == "quorum"
     q.leaderNode == "rabbit-1@host1"
     q.memberNodes == ["rabbit-3@host3", "rabbit-2@host2", "rabbit-1@host1"]
-
-    where:
-    mapper << mappers()
   }
 
-  @Unroll
   def "user tags should be deserialized from array (RabbitMQ 3.9+) or string (prior to RabbitMQ 3.9)"() {
     when: "JSON document for user with user tags as array or as string"
     def u = mapper.readValue(json, UserInfo.class)
@@ -94,7 +74,6 @@ class JsonMappingSpec extends Specification {
     u.tags == ["monitoring", "management"]
 
     where:
-    mapper << mappers() + mappers()
     json << [
             JSON_USER_WITH_USER_TAGS_AS_ARRAY, JSON_USER_WITH_USER_TAGS_AS_STRING,
             JSON_USER_WITH_USER_TAGS_AS_STRING, JSON_USER_WITH_USER_TAGS_AS_ARRAY,
@@ -102,7 +81,6 @@ class JsonMappingSpec extends Specification {
     ]
   }
 
-  @Unroll
   def "user tags should be deserialized from empty array (RabbitMQ 3.9) or empty string (prior to RabbitMQ 3.9)"() {
     when: "JSON document for user with user tags as empty array or as empty string"
     def u = mapper.readValue(json, UserInfo.class)
@@ -111,26 +89,20 @@ class JsonMappingSpec extends Specification {
     u.tags == []
 
     where:
-    mapper << mappers() + mappers()
     json << [
             JSON_USER_WITH_USER_TAGS_AS_EMPTY_ARRAY, JSON_USER_WITH_USER_TAGS_AS_EMPTY_STRING,
             JSON_USER_WITH_USER_TAGS_AS_EMPTY_STRING, JSON_USER_WITH_USER_TAGS_AS_EMPTY_ARRAY
     ]
   }
 
-  @Unroll
   def "channel details with undefined peer port should deserialize without errors"() {
     when: "JSON document for consumer with undefined channel peer port"
     def c = mapper.readValue(JSON_CONSUMER_DETAILS_WITH_UNDEFINED_CHANNEL_PEER_PORT, ConsumerDetails.class)
 
     then: "the channel peer port should be 0"
     c.channelDetails.peerPort == 0
-
-    where:
-    mapper << mappers()
   }
 
-  @Unroll
   def "channel details with peer port should deserialize without errors"() {
     when: "JSON document for consumer with correct channel peer port"
     def c = mapper.readValue(JSON_CONSUMER_DETAILS, ConsumerDetails.class)
@@ -141,12 +113,8 @@ class JsonMappingSpec extends Specification {
     c.channelDetails.number == 1
     c.channelDetails.peerHost == "127.0.0.1"
     c.channelDetails.peerPort == 40548
-
-    where:
-    mapper << mappers()
   }
 
-  @Unroll
   def "ShovelDetails.sourcePrefetchCount not present if not set"() {
     when: "basic topology with null sourcePrefetchCount"
     ShovelDetails details = new ShovelDetails("amqp://", "amqp://", 30, true, null)
@@ -157,12 +125,8 @@ class JsonMappingSpec extends Specification {
     then: "the json will not include src-prefetch-count"
     def body = new JsonSlurper().parseText(json)
     body.value['src-prefetch-count'] == null
-
-    where:
-    mapper << mappers()
   }
 
-  @Unroll
   def "ShovelDetails.destinationAddTimestampHeader not sent if not set"() {
     when: "basic topology with null destinationAddTimestampHeader"
     ShovelDetails details = new ShovelDetails("amqp://", "amqp://", 30, true, null)
@@ -173,9 +137,6 @@ class JsonMappingSpec extends Specification {
     then: "the json will not include dest-add-timestamp-header"
     def body = new JsonSlurper().parseText(json)
     body.value['dest-add-timestamp-header'] == null
-
-    where:
-    mapper << mappers()
   }
 
   // RabbitMQ 3.9+

@@ -17,10 +17,7 @@
 package com.rabbitmq.http.client;
 
 import com.rabbitmq.http.client.HttpLayer.HttpLayerFactory;
-import com.rabbitmq.http.client.RestTemplateHttpLayer.RestTemplateHttpLayerFactory;
 import com.rabbitmq.http.client.domain.*;
-
-import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
 
 import javax.net.ssl.SSLContext;
 import java.net.MalformedURLException;
@@ -41,44 +38,6 @@ public class Client {
   /**
    * Construct an instance with the provided url and credentials.
    * <p>
-   * The instance will be using Apache HttpComponents HTTP Client to create requests.
-   *
-   * @param url      the url e.g. "http://localhost:15672/api/".
-   * @param username the username.
-   * @param password the password
-   * @throws MalformedURLException for a badly formed URL.
-   * @throws URISyntaxException    for a badly formed URL.
-   * @see HttpComponentsRestTemplateConfigurator
-   * @deprecated use {@link #Client(ClientParameters)} and {@link ClientParameters#httpLayerFactory(HttpLayerFactory)} instead
-   */
-  @Deprecated(since ="4.0.0", forRemoval = true)
-  public Client(String url, String username, String password) throws MalformedURLException, URISyntaxException {
-    this(new URL(url), username, password);
-  }
-
-  /**
-   * Construct an instance with the provided url and credentials.
-   * <p>
-   * The instance will be using Apache HttpComponents HTTP Client to create requests.
-   *
-   * @param url          the url e.g. "http://localhost:15672/api/".
-   * @param username     the username.
-   * @param password     the password
-   * @param configurator {@link HttpClientBuilderConfigurator} to use
-   * @throws MalformedURLException for a badly formed URL.
-   * @throws URISyntaxException    for a badly formed URL.
-   * @see HttpComponentsRestTemplateConfigurator
-   * @deprecated use {@link #Client(ClientParameters)} and {@link ClientParameters#httpLayerFactory(HttpLayerFactory)} instead
-   */
-  @Deprecated(since ="4.0.0", forRemoval = true)
-  public Client(String url, String username, String password, HttpClientBuilderConfigurator configurator)
-          throws MalformedURLException, URISyntaxException {
-    this(new URL(url), username, password, configurator);
-  }
-
-  /**
-   * Construct an instance with the provided url and credentials.
-   * <p>
    *
    * @param url      the url e.g. "http://localhost:15672/api/".
    * @param username the username.
@@ -87,49 +46,7 @@ public class Client {
    * @throws URISyntaxException    for a badly formed URL.
    */
   public Client(URL url, String username, String password) throws MalformedURLException, URISyntaxException {
-    this(url, username, password, null, null);
-  }
-
-  /**
-   * Construct an instance with the provided url and credentials.
-   * <p>
-   * The instance will be using Apache HttpComponents HTTP Client to create requests.
-   *
-   * @param url          the url e.g. "http://localhost:15672/api/".
-   * @param username     the username.
-   * @param password     the password
-   * @param configurator {@link HttpClientBuilderConfigurator} to use
-   * @throws MalformedURLException for a badly formed URL.
-   * @throws URISyntaxException    for a badly formed URL.
-   * @deprecated use {@link #Client(ClientParameters)} and {@link ClientParameters#httpLayerFactory(HttpLayerFactory)} instead
-   */
-  @Deprecated(since ="4.0.0", forRemoval = true)
-  public Client(URL url, String username, String password, HttpClientBuilderConfigurator configurator)
-          throws MalformedURLException, URISyntaxException {
-    this(url, username, password, null, null, configurator);
-  }
-
-  /**
-   * Construct an instance with the provided url and credentials.
-   * <p>
-   *
-   * @param url                        the url e.g. "http://localhost:15672/api/".
-   * @param username                   the username.
-   * @param password                   the password
-   * @param sslConnectionSocketFactory ssl connection factory for http client
-   * @param sslContext                 ssl context for http client
-   * @throws MalformedURLException for a badly formed URL.
-   * @throws URISyntaxException    for a badly formed URL.
-   * @deprecated use {@link #Client(ClientParameters)} and {@link ClientParameters#httpLayerFactory(HttpLayerFactory)} instead
-   */
-  @Deprecated(since ="4.0.0", forRemoval = true)
-  private Client(URL url, String username, String password, SSLConnectionSocketFactory sslConnectionSocketFactory, SSLContext sslContext)
-          throws MalformedURLException, URISyntaxException {
-    this(new ClientParameters()
-            .url(url).username(username).password(password).restTemplateConfigurator(
-                    new HttpComponentsRestTemplateConfigurator(sslConnectionSocketFactory, sslContext)
-            )
-    );
+    this(new ClientParameters().url(url).username(username).password(password));
   }
 
   /**
@@ -143,26 +60,16 @@ public class Client {
    * @throws MalformedURLException for a badly formed URL.
    * @throws URISyntaxException    for a badly formed URL.
    */
-  public Client(URL url, String username, String password, SSLContext sslContext) throws MalformedURLException, URISyntaxException {
-    this(url, username, password, null, sslContext);
-  }
-
-  /**
-   * Construct an instance with the provided url and credentials.
-   * <p>
-   * The instance will be using Apache HttpComponents HTTP Client to create requests.
-   *
-   * @param url                        the url e.g. "http://localhost:15672/api/".
-   * @param username                   the username.
-   * @param password                   the password
-   * @param sslConnectionSocketFactory ssl connection factory for http client
-   * @throws MalformedURLException for a badly formed URL.
-   * @throws URISyntaxException    for a badly formed URL.
-   * @deprecated use {@link #Client(ClientParameters)} and {@link ClientParameters#httpLayerFactory(HttpLayerFactory)} instead
-   */
-  @Deprecated(since ="4.0.0", forRemoval = true)
-  private Client(URL url, String username, String password, SSLConnectionSocketFactory sslConnectionSocketFactory) throws MalformedURLException, URISyntaxException {
-    this(url, username, password, sslConnectionSocketFactory, null);
+  public Client(URL url, String username, String password, SSLContext sslContext)
+      throws MalformedURLException, URISyntaxException {
+    this(new ClientParameters()
+        .url(url)
+        .username(username)
+        .password(password)
+        .httpLayerFactory(JdkHttpClientHttpLayer.configure()
+            .clientBuilderConsumer(builder -> builder.sslContext(sslContext))
+            .create())
+    );
   }
 
   /**
@@ -175,45 +82,6 @@ public class Client {
    */
   public Client(String url) throws MalformedURLException, URISyntaxException {
     this(new ClientParameters().url(url));
-  }
-
-  /**
-   * Construct an instance with the provided url and credentials.
-   * <p>
-   * The instance will be using Apache HttpComponents HTTP Client to create requests.
-   *
-   * @param url          the url e.g. "https://guest:guest@localhost:15672/api/".
-   * @param configurator {@link HttpClientBuilderConfigurator} to use
-   * @throws MalformedURLException for a badly formed URL.
-   * @throws URISyntaxException    for a badly formed URL.
-   * @deprecated use {@link #Client(ClientParameters)} and {@link ClientParameters#httpLayerFactory(HttpLayerFactory)} instead
-   */
-  @Deprecated(since ="4.0.0", forRemoval = true)
-  public Client(String url, HttpClientBuilderConfigurator configurator) throws MalformedURLException, URISyntaxException {
-    this(Utils.urlWithoutCredentials(url),
-            Utils.extractUsernamePassword(url)[0],
-            Utils.extractUsernamePassword(url)[1],
-            configurator
-    );
-  }
-
-  /**
-   * Construct an instance with the provided url and credentials.
-   * <p>
-   *
-   * @param url the url e.g. "https://guest:guest@localhost:15672/api/".
-   * @throws MalformedURLException for a badly formed URL.
-   * @throws URISyntaxException    for a badly formed URL.
-   * @deprecated use {@link #Client(ClientParameters)} and {@link ClientParameters#httpLayerFactory(HttpLayerFactory)} instead
-   */
-  @Deprecated(since ="4.0.0", forRemoval = true)
-  public Client(URL url) throws MalformedURLException, URISyntaxException {
-    this(url, null, null);
-  }
-
-  private Client(URL url, String username, String password, SSLConnectionSocketFactory sslConnectionSocketFactory, SSLContext sslContext, HttpClientBuilderConfigurator configurator) throws MalformedURLException, URISyntaxException {
-    this(new ClientParameters().url(url).username(username).password(password)
-            .restTemplateConfigurator(new HttpComponentsRestTemplateConfigurator(sslConnectionSocketFactory, sslContext, configurator)));
   }
 
   /**
@@ -230,17 +98,9 @@ public class Client {
     parameters.validate();
     URL url = parameters.getUrl();
     this.rootUri = Utils.rootUri(url);
-
-    HttpLayerFactory httpLayerFactory;
-    if (parameters.getRestTemplateConfigurator() != null) {
-      httpLayerFactory = parameters.getHttpLayerFactory() == null ?
-          new RestTemplateHttpLayerFactory() :
-          parameters.getHttpLayerFactory();
-    } else {
-      httpLayerFactory = parameters.getHttpLayerFactory() == null ?
+    HttpLayerFactory httpLayerFactory = parameters.getHttpLayerFactory() == null ?
           JdkHttpClientHttpLayer.configure().create() :
           parameters.getHttpLayerFactory();
-    }
     this.httpLayer = httpLayerFactory.create(parameters);
   }
 
@@ -1375,7 +1235,7 @@ public class Client {
 
   /**
    * Produces a URI used to issue HTTP requests to avoid double-escaping of path segments
-   * (e.g. vhost names) from {@link RestTemplate#execute}.
+   * (e.g. vhost names).
    *
    * @param path The path after /api/
    * @return resolved URI

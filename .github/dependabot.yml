@@ -8,8 +8,6 @@ updates:
       interval: "daily"
     open-pull-requests-limit: 20
     ignore:
-      - dependency-name: "com.squareup.okhttp3:okhttp"
-        versions: ["[4.0,)"]
       - dependency-name: "ch.qos.logback:logback-classic"
         versions: [ "[1.3,)" ]
   - package-ecosystem: "github-actions"

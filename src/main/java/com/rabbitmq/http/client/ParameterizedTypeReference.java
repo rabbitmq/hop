@@ -83,7 +83,7 @@ abstract class ParameterizedTypeReference<T> {
   @Override
   public boolean equals(Object other) {
     return (this == other
-        || (other instanceof org.springframework.core.ParameterizedTypeReference
+        || (other instanceof ParameterizedTypeReference
             && this.type.equals(((ParameterizedTypeReference<?>) other).type)));
   }
 
