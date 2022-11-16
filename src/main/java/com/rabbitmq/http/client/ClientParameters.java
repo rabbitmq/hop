@@ -1,5 +1,5 @@
 /*
- * Copyright 2020 the original author or authors.
+ * Copyright 2020-2022the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,7 +33,6 @@ public class ClientParameters {
     private URL url;
     private String username;
     private String password;
-    private RestTemplateConfigurator restTemplateConfigurator;
     private HttpLayerFactory httpLayerFactory;
 
     /**
@@ -95,24 +94,6 @@ public class ClientParameters {
         return this;
     }
 
-    /**
-     * Set a {@link RestTemplateConfigurator} to post-process the {@link Client}'s {@link org.springframework.web.client.RestTemplate}.
-     * <p>
-     * The default is to use {@link HttpComponentsRestTemplateConfigurator} and so using
-     * {@link org.springframework.http.client.HttpComponentsClientHttpRequestFactory} in the {@link org.springframework.web.client.RestTemplate}
-     * to create requests.
-     *
-     * @param restTemplateConfigurator the configurator to use
-     * @return this client parameters instance
-     * @see RestTemplateConfigurator
-     * @deprecated use {@link #httpLayerFactory} instead
-     */
-    @Deprecated(since = "4.0.0", forRemoval = true)
-    public ClientParameters restTemplateConfigurator(RestTemplateConfigurator restTemplateConfigurator) {
-        this.restTemplateConfigurator = restTemplateConfigurator;
-        return this;
-    }
-
     public URL getUrl() {
         return url;
     }
@@ -123,17 +104,6 @@ public class ClientParameters {
 
     public String getPassword() {
         return password;
-    }
-
-
-    /**
-     *
-     * @return
-     * @deprecated use {@link #httpLayerFactory} instead
-     */
-    @Deprecated(since = "4.0.0", forRemoval = true)
-    public RestTemplateConfigurator getRestTemplateConfigurator() {
-        return restTemplateConfigurator;
     }
 
     public HttpLayerFactory getHttpLayerFactory() {
