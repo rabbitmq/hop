@@ -2,7 +2,7 @@
 :hop-version: 4.2.0
 :jackson-version: 2.14.0
 :reactor-netty-version: 1.1.0
-:hop-snapshot: 4.3.0-SNAPSHOT
+:hop-snapshot: 5.0.0-SNAPSHOT
 :jackson-snapshot: 2.14.0
 
 = Hop, Java Client for the RabbitMQ HTTP API
