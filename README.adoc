@@ -1,5 +1,5 @@
 :rabbitmq-version: 3.11.3
-:hop-version: 4.2.0
+:hop-version: 5.0.0.RC1
 :jackson-version: 2.14.0
 :reactor-netty-version: 1.1.0
 :hop-snapshot: 5.0.0-SNAPSHOT
