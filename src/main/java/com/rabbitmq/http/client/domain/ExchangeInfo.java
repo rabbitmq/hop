@@ -103,6 +103,14 @@ public class ExchangeInfo {
     this.arguments = arguments;
   }
 
+  public ExchangeMessageStats getMessageStats() {
+    return messageStats;
+  }
+
+  public void setMessageStats(ExchangeMessageStats messageStats) {
+    this.messageStats = messageStats;
+  }
+
   @Override
   public String toString() {
     return "ExchangeInfo{" +
