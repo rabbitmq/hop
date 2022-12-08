@@ -41,6 +41,6 @@ jobs:
       - name: Show version
         run: ./mvnw --version
       - name: Test
-        run: ./mvnw test --no-transfer-progress
+        run: ./mvnw test -DskipBytecodeCheck --no-transfer-progress
       - name: Stop broker
         run: docker stop rabbitmq && docker rm rabbitmq
