@@ -1,0 +1,46 @@
+name: Test against RabbitMQ 3.11 stable
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+env:
+  RABBITMQ_IMAGE_TAG: 3.11
+  RABBITMQ_IMAGE: rabbitmq
+
+jobs:
+  build:
+    runs-on: ubuntu-22.04
+
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set up JDK
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+          cache: 'maven'
+          server-id: ossrh
+          server-username: MAVEN_USERNAME
+          server-password: MAVEN_PASSWORD
+          gpg-private-key: ${{ secrets.MAVEN_GPG_PRIVATE_KEY }}
+          gpg-passphrase: MAVEN_GPG_PASSPHRASE
+      - name: Start RabbitMQ application
+        run: ci/start-broker.sh
+      - name: Configure broker
+        run: HOP_RABBITMQCTL=DOCKER:rabbitmq ci/before-build.sh
+      - name: Test
+        run: ./mvnw test --no-transfer-progress
+      - name: Stop broker
+        run: docker stop rabbitmq && docker rm rabbitmq
+      - name: Publish snapshot
+        run: ./mvnw clean deploy -Psnapshots -DskipITs -DskipTests --no-transfer-progress
+        if: ${{ github.event_name != 'pull_request' }}
+        env:
+          MAVEN_USERNAME: ${{ secrets.OSSRH_USERNAME }}
+          MAVEN_PASSWORD: ${{ secrets.OSSRH_TOKEN }}
+          MAVEN_GPG_PASSPHRASE: ${{ secrets.MAVEN_GPG_PASSPHRASE }}
