@@ -7,7 +7,7 @@
 
 = Hop, Java Client for the RabbitMQ HTTP API
 
-image:https://github.com/rabbitmq/hop/workflows/Build%20(Linux)/badge.svg?branch=main["Build Status", link="https://github.com/rabbitmq/hop/actions?query=workflow%3A%22Build+%28Linux%29%22+branch%3Amain"]
+image:https://github.com/rabbitmq/hop/actions/workflows/test-3.11-stable.yml/badge.svg["Build Status", link="https://github.com/rabbitmq/hop/actions/workflows/test-3.11-stable.yml"]
 
 Hop is a Java client for the
 https://raw.githack.com/rabbitmq/rabbitmq-server/v{rabbitmq-version}/deps/rabbitmq_management/priv/www/api/index.html[RabbitMQ HTTP API].
