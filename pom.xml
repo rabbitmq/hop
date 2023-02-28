@@ -45,7 +45,7 @@
     <httpclient.version>4.5.14</httpclient.version>
     <amqp-client.version>5.16.0</amqp-client.version>
     <logback.version>1.2.11</logback.version>
-    <jetty.version>11.0.13</jetty.version>
+    <jetty.version>11.0.14</jetty.version>
     <bouncycastle.version>1.70</bouncycastle.version>
     <maven.compiler.plugin.version>3.11.0</maven.compiler.plugin.version>
     <maven-surefire-plugin.version>2.22.2</maven-surefire-plugin.version>
