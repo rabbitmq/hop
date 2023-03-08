@@ -1,7 +1,7 @@
 #!/bin/sh
 
-CTL=${HOP_RABBITMQCTL:="sudo rabbitmqctl"}
-PLUGINS=${HOP_RABBITMQ_PLUGINS:="sudo rabbitmq-plugins"}
+CTL=${HOP_RABBITMQCTL:="DOCKER:rabbitmq"}
+PLUGINS=${HOP_RABBITMQ_PLUGINS:="DOCKER:rabbitmq"}
 
 case $CTL in
         DOCKER*)

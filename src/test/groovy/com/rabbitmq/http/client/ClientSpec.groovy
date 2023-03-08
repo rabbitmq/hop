@@ -1679,7 +1679,9 @@ class ClientSpec extends Specification {
     def x = xs.find { (it.name == "guest") }
     x.name == "guest"
     x.passwordHash != null
-    isVersion36orLater(version) ? x.hashingAlgorithm != null : x.hashingAlgorithm == null
+    if (isVersion36orLater(version)) {
+      x.hashingAlgorithm != null
+    }
     x.tags.contains("administrator")
 
   }
@@ -1693,7 +1695,9 @@ class ClientSpec extends Specification {
     then: "user info returned"
     x.name == "guest"
     x.passwordHash != null
-    isVersion36orLater(version) ? x.hashingAlgorithm != null : x.hashingAlgorithm == null
+    if (isVersion36orLater(version)) {
+      x.hashingAlgorithm != null
+    }
     x.tags.contains("administrator")
 
   }
@@ -2803,8 +2807,12 @@ class ClientSpec extends Specification {
   protected static void verifyVhost(VhostInfo vhi, String version) {
     assert vhi.name == "/"
     assert !vhi.tracing
-    assert isVersion37orLater(version) ? vhi.clusterState != null : vhi.clusterState == null
-    assert isVersion38orLater(version) ? vhi.description != null : vhi.description == null
+    if (isVersion37orLater(version)) {
+      assert vhi.clusterState != null
+    }
+    if (isVersion38orLater(version)) {
+      assert vhi.description != null
+    }
   }
 
   protected Connection openConnection() {
@@ -2858,17 +2866,29 @@ class ClientSpec extends Specification {
 
   static boolean isVersion36orLater(String currentVersion) {
     String v = currentVersion.replaceAll("\\+.*\$", "")
-    v == "0.0.0" ? true : compareVersions(v, "3.6.0") >= 0
+    try {
+      v == "0.0.0" ? true : compareVersions(v, "3.6.0") >= 0
+    } catch (Exception e) {
+      false
+    }
   }
 
   static boolean isVersion37orLater(String currentVersion) {
     String v = currentVersion.replaceAll("\\+.*\$", "")
-    v == "0.0.0" ? true : compareVersions(v, "3.7.0") >= 0
+    try {
+      v == "0.0.0" ? true : compareVersions(v, "3.7.0") >= 0
+    } catch (Exception e) {
+      false
+    }
   }
 
   static boolean isVersion38orLater(String currentVersion) {
     String v = currentVersion.replaceAll("\\+.*\$", "")
-    v == "0.0.0" ? true : compareVersions(v, "3.8.0") >= 0
+    try {
+      v == "0.0.0" ? true : compareVersions(v, "3.8.0") >= 0
+    } catch (Exception e) {
+      false
+    }
   }
 
   boolean isVersion37orLater() {
