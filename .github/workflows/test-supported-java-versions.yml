@@ -27,7 +27,7 @@ jobs:
         run: ./mvnw --version
       - name: Compile
         run: ./mvnw clean test-compile --no-transfer-progress
-      - name: Start RabbitMQ application
+      - name: Start RabbitMQ
         run: ci/start-broker.sh
       - name: Configure broker
         run: HOP_RABBITMQCTL=DOCKER:rabbitmq ci/before-build.sh
