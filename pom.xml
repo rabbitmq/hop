@@ -40,7 +40,7 @@
     <groovy.version>3.0.17</groovy.version>
     <spock.version>2.3-groovy-4.0</spock.version>
     <junit.version>5.9.2</junit.version>
-    <junit-platform.version>1.9.2</junit-platform.version>
+    <junit-platform.version>1.9.3</junit-platform.version>
     <assertj.version>3.24.2</assertj.version>
     <httpclient.version>4.5.14</httpclient.version>
     <amqp-client.version>5.17.0</amqp-client.version>
