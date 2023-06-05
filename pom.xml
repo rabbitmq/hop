@@ -54,7 +54,7 @@
     <maven-source-plugin.version>3.3.0</maven-source-plugin.version>
     <maven-javadoc-plugin.version>3.5.0</maven-javadoc-plugin.version>
     <maven.jar.plugin.version>3.3.0</maven.jar.plugin.version>
-    <maven.release.plugin.version>3.0.0</maven.release.plugin.version>
+    <maven.release.plugin.version>3.0.1</maven.release.plugin.version>
     <checksum.maven.plugin.version>1.11</checksum.maven.plugin.version>
     <gmavenplus-plugin.version>3.0.0</gmavenplus-plugin.version>
     <maven.packagecloud.wagon.version>0.0.6</maven.packagecloud.wagon.version>
