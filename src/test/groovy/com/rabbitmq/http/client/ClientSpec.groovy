@@ -18,6 +18,7 @@ package com.rabbitmq.http.client
 
 import com.rabbitmq.client.*
 import com.rabbitmq.http.client.domain.*
+import org.eclipse.jetty.server.Authentication
 import spock.lang.IgnoreIf
 import spock.lang.Specification
 
@@ -210,7 +211,6 @@ class ClientSpec extends Specification {
 
     cleanup:
     conn.close()
-
   }
 
   
@@ -235,6 +235,56 @@ class ClientSpec extends Specification {
     cleanup:
     conn.close()
 
+  }
+
+  def "GET /api/connections/username/{name}"() {
+    given: "an open RabbitMQ client connection"
+    def conn = openConnection()
+    def username = "guest"
+
+    when: "client retrieves user connection info for the given name"
+
+    UserConnectionInfo[] xs = awaitEventPropagation({ client.getConnectionsOfUser(username) }) as UserConnectionInfo[]
+    def uc = xs.first()
+
+    then: "the info is returned"
+    verifyUserConnectionInfo(uc, username)
+
+    cleanup:
+    conn.close()
+  }
+
+  def "DELETE /api/connections/username/{name}"() {
+    given: "an open RabbitMQ client connection"
+    def latch = new CountDownLatch(1)
+    def s = UUID.randomUUID().toString()
+    def username = "guest"
+    def conn = openConnection(s)
+    conn.addShutdownListener({ e -> latch.countDown()})
+    assert conn.isOpen()
+
+    and: "that shows up on connection list of a user"
+
+    UserConnectionInfo[] xs = awaitEventPropagation({ client.getConnectionsOfUser(username) }) as UserConnectionInfo[]
+    // applying filter as some previous connections can still show up the management API
+    xs = xs.findAll({
+      (it.username == username)
+    })
+    assert xs.length > 0
+
+    when: "client closes all connections of the user"
+    client.closeAllConnectionsOfUser(username);
+
+    and: "some time passes"
+    assert awaitOn(latch)
+
+    then: "the connection is closed"
+    !conn.isOpen()
+
+    cleanup:
+    if (conn.isOpen()) {
+      conn.close()
+    }
   }
 
   def "DELETE /api/connections/{name}"() {
@@ -264,7 +314,6 @@ class ClientSpec extends Specification {
     if (conn.isOpen()) {
       conn.close()
     }
-
   }
 
   def "DELETE /api/connections/{name} with a user-provided reason"() {
@@ -2792,6 +2841,10 @@ class ClientSpec extends Specification {
   protected static void verifyConnectionInfo(ConnectionInfo info) {
     assert info.port == ConnectionFactory.DEFAULT_AMQP_PORT
     assert !info.usesTLS
+  }
+
+  protected static void verifyUserConnectionInfo(UserConnectionInfo info, String username) {
+    assert info.username == username
   }
 
   protected static void verifyChannelInfo(ChannelInfo chi, Channel ch) {
