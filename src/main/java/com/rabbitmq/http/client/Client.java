@@ -193,6 +193,16 @@ public class Client {
   }
 
   /**
+   * Lists connection that belong to a specific user (used the provided username
+   * during authentication).
+   * @param username username
+   */
+  public List<UserConnectionInfo> getConnectionsOfUser(String username) {
+    final URI uri = uri().withEncodedPath("./connections/username/").withPath(username).get();
+    return Arrays.asList(this.httpLayer.get(uri, UserConnectionInfo[].class));
+  }
+
+  /**
    * Forcefully closes individual connection.
    * The client will receive a <i>connection.close</i> method frame.
    *
@@ -200,6 +210,18 @@ public class Client {
    */
   public void closeConnection(String name) {
     final URI uri = uri().withEncodedPath("./connections").withPath(name).get();
+    deleteIgnoring404(uri);
+  }
+
+  /**
+   * Forcefully closes all connections that belong to a specific user
+   * (used the provided username during authentication).
+   * The client will receive a <i>connection.close</i> method frame.
+   *
+   * @param username username
+   */
+  public void closeAllConnectionsOfUser(String username) {
+    final URI uri = uri().withEncodedPath("./connections/username/").withPath(username).get();
     deleteIgnoring404(uri);
   }
 
