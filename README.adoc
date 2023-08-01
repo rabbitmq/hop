@@ -22,8 +22,8 @@ http://clojurerabbitmq.info[Langohr], and you should use Langohr instead.
 
 == Reactive
 
-As of Hop 2.1.0, a new reactive, non-blocking IO client based on https://projectreactor.io/[Reactor Netty]
-is available. Note the original blocking IO client remains available.
+Hop provides a reactive, non-blocking IO client based on https://projectreactor.io/[Reactor Netty].
+A blocking client is available as well.
 
 == Project Maturity
 
@@ -34,7 +34,7 @@ User documentation is currently kept in this README.
 
 == Pre-requisites
 
-As of 4.0, Hop requires Java 11 or later.
+Hop requires Java 11 or later.
 
 == Maven Artifacts
 
