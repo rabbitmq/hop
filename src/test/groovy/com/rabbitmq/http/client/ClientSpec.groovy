@@ -18,7 +18,6 @@ package com.rabbitmq.http.client
 
 import com.rabbitmq.client.*
 import com.rabbitmq.http.client.domain.*
-import org.eclipse.jetty.server.Authentication
 import spock.lang.IgnoreIf
 import spock.lang.Specification
 

@@ -44,7 +44,6 @@
     <httpclient.version>4.5.14</httpclient.version>
     <amqp-client.version>5.18.0</amqp-client.version>
     <logback.version>1.2.12</logback.version>
-    <jetty.version>11.0.15</jetty.version>
     <bouncycastle.version>1.70</bouncycastle.version>
     <maven.compiler.plugin.version>3.11.0</maven.compiler.plugin.version>
     <maven-surefire-plugin.version>3.1.2</maven-surefire-plugin.version>
@@ -143,12 +142,6 @@
       <groupId>ch.qos.logback</groupId>
       <artifactId>logback-classic</artifactId>
       <version>${logback.version}</version>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.eclipse.jetty</groupId>
-      <artifactId>jetty-server</artifactId>
-      <version>${jetty.version}</version>
       <scope>test</scope>
     </dependency>
     <dependency>

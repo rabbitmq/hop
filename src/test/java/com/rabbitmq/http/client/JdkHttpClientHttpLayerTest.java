@@ -5,12 +5,17 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 import com.rabbitmq.http.client.HttpLayer.HttpLayerFactory;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
+import com.sun.net.httpserver.HttpHandler;
+import com.sun.net.httpserver.HttpServer;
+import com.sun.net.httpserver.HttpsConfigurator;
+import com.sun.net.httpserver.HttpsServer;
 import java.io.IOException;
+import java.io.OutputStream;
 import java.math.BigInteger;
+import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.URI;
+import java.nio.charset.StandardCharsets;
 import java.security.KeyPair;
 import java.security.KeyPairGenerator;
 import java.security.KeyStore;
@@ -24,6 +29,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
+import javax.net.ssl.KeyManagerFactory;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManagerFactory;
 import org.bouncycastle.asn1.x500.X500NameBuilder;
@@ -32,20 +38,6 @@ import org.bouncycastle.cert.X509CertificateHolder;
 import org.bouncycastle.cert.jcajce.JcaX509CertificateConverter;
 import org.bouncycastle.cert.jcajce.JcaX509v3CertificateBuilder;
 import org.bouncycastle.operator.jcajce.JcaContentSignerBuilder;
-import org.eclipse.jetty.http.HttpVersion;
-import org.eclipse.jetty.server.Connector;
-import org.eclipse.jetty.server.Handler;
-import org.eclipse.jetty.server.HttpConfiguration;
-import org.eclipse.jetty.server.HttpConnectionFactory;
-import org.eclipse.jetty.server.Request;
-import org.eclipse.jetty.server.Response;
-import org.eclipse.jetty.server.SecureRequestCustomizer;
-import org.eclipse.jetty.server.Server;
-import org.eclipse.jetty.server.ServerConnector;
-import org.eclipse.jetty.server.SslConnectionFactory;
-import org.eclipse.jetty.server.handler.AbstractHandler;
-import org.eclipse.jetty.server.handler.ContextHandler;
-import org.eclipse.jetty.util.ssl.SslContextFactory;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -54,7 +46,7 @@ import org.junit.jupiter.params.provider.ValueSource;
 
 public class JdkHttpClientHttpLayerTest {
 
-  Server server;
+  HttpServer server;
 
   static boolean isJava13() {
     String javaVersion = System.getProperty("java.version");
@@ -69,39 +61,30 @@ public class JdkHttpClientHttpLayerTest {
     return port;
   }
 
-  private static AbstractHandler staticJsonHandler(String content) {
+  private static HttpHandler staticHandler(String content) {
     return staticHandler(content, "application/json", new ConcurrentHashMap<>());
   }
 
-  private static AbstractHandler staticJsonHandler(String content, Map<String, AtomicLong> calls) {
+  private static HttpHandler staticHandler(String content, Map<String, AtomicLong> calls) {
     return staticHandler(content, "application/json", calls);
   }
 
-  private static AbstractHandler staticHandler(
-      String content, String contentType, Map<String, AtomicLong> calls) {
-    return new AbstractHandler() {
-      @Override
-      public void handle(
-          String target,
-          Request request,
-          HttpServletRequest httpRequest,
-          HttpServletResponse response)
-          throws IOException {
-        calls.computeIfAbsent(target, path -> new AtomicLong(0)).incrementAndGet();
-        response.setStatus(HttpServletResponse.SC_OK);
-        response.setContentLength(content.length());
-        response.setContentType(contentType);
-        response.getWriter().print(content);
-        request.setHandled(true);
+  private static HttpHandler staticHandler(String content, String contentType, Map<String, AtomicLong> calls) {
+    return exchange -> {
+      String target = exchange.getRequestURI().getPath();
+      calls.computeIfAbsent(target, path -> new AtomicLong(0)).incrementAndGet();
+      exchange.getResponseHeaders().set("Content-Type", contentType);
+      byte[] bytes = content.getBytes(StandardCharsets.UTF_8);
+      exchange.sendResponseHeaders(200, bytes.length);
+      try (OutputStream out = exchange.getResponseBody()) {
+        out.write(bytes);
       }
     };
   }
 
-  private static Server startHttpServer(int port, Handler handler) throws Exception {
-    Server server = new Server(port);
-    Connector connector = new ServerConnector(server);
-    server.addConnector(connector);
-    server.setHandler(handler);
+  private static HttpServer startHttpServer(int port, HttpHandler handler) throws Exception {
+    com.sun.net.httpserver.HttpServer server = com.sun.net.httpserver.HttpServer.create(new InetSocketAddress(port), 0);
+    server.createContext("/", handler);
     server.start();
     return server;
   }
@@ -115,12 +98,12 @@ public class JdkHttpClientHttpLayerTest {
   }
 
   @AfterEach
-  public void tearDown() throws Exception {
+  public void tearDown() {
     if (isJava13()) {
       System.setProperty("keystore.pkcs12.keyProtectionAlgorithm", "");
     }
     if (server != null) {
-      server.stop();
+      server.stop(0);
     }
   }
 
@@ -158,26 +141,18 @@ public class JdkHttpClientHttpLayerTest {
   void clientServerErrorsShouldTriggerClientServerExceptions() throws Exception {
     int port = randomNetworkPort();
     Map<String, Integer> responseCodes = new ConcurrentHashMap<>();
-    responseCodes.put("/client-error", Response.SC_FORBIDDEN);
-    responseCodes.put("/client-not-found", Response.SC_NOT_FOUND);
-    responseCodes.put("/server-error", Response.SC_SERVICE_UNAVAILABLE);
+    responseCodes.put("/client-error", 403);
+    responseCodes.put("/client-not-found", 404);
+    responseCodes.put("/server-error", 503);
     Map<String, AtomicLong> calls = new ConcurrentHashMap<>();
     server =
         startHttpServer(
             port,
-            new AbstractHandler() {
-              @Override
-              public void handle(
-                  String target,
-                  Request baseRequest,
-                  HttpServletRequest request,
-                  HttpServletResponse response) {
-                calls.computeIfAbsent(target, path -> new AtomicLong(0)).incrementAndGet();
-                response.setStatus(responseCodes.get(target));
-                baseRequest.setHandled(true);
-              }
+            exchange -> {
+              String target = exchange.getRequestURI().getPath();
+              calls.computeIfAbsent(target, path -> new AtomicLong(0)).incrementAndGet();
+              exchange.sendResponseHeaders(responseCodes.get(target), 0);
             });
-
     HttpLayerFactory factory = JdkHttpClientHttpLayer.configure().create();
     HttpLayer httpLayer = factory.create(new ClientParameters());
     URI baseUri = new URI("http://localhost:" + port);
@@ -196,11 +171,11 @@ public class JdkHttpClientHttpLayerTest {
   @Test
   void tls() throws Exception {
     int port = randomNetworkPort();
-    Handler httpHandler = staticJsonHandler("[]");
+    HttpHandler httpHandler = staticHandler("[]");
     KeyStore keyStore = startHttpsServer(port, httpHandler);
     TrustManagerFactory tmf = TrustManagerFactory.getInstance("SunX509");
     tmf.init(keyStore);
-    SSLContext sslContext = SSLContext.getInstance("TLSv1.3");
+    SSLContext sslContext = SSLContext.getInstance("TLS");
     sslContext.init(null, tmf.getTrustManagers(), null);
     HttpLayerFactory factory =
         JdkHttpClientHttpLayer.configure()
@@ -213,7 +188,7 @@ public class JdkHttpClientHttpLayerTest {
     httpLayer.get(uri, String[].class);
   }
 
-  KeyStore startHttpsServer(int port, Handler handler) throws Exception {
+  private KeyStore startHttpsServer(int port, HttpHandler handler) throws Exception {
     KeyStore keyStore = KeyStore.getInstance(KeyStore.getDefaultType());
     String keyStorePassword = "password";
     keyStore.load(null, keyStorePassword.toCharArray());
@@ -244,38 +219,15 @@ public class JdkHttpClientHttpLayerTest {
         keyStorePassword.toCharArray(),
         new Certificate[] {certificate});
 
-    server = new Server();
-    SslContextFactory.Server sslContextFactory = new SslContextFactory.Server();
-    sslContextFactory.setKeyStore(keyStore);
-    sslContextFactory.setKeyStorePassword(keyStorePassword);
-
-    HttpConfiguration httpsConfiguration = new HttpConfiguration();
-    httpsConfiguration.setSecureScheme("https");
-    httpsConfiguration.setSecurePort(port);
-    httpsConfiguration.setOutputBufferSize(32768);
-
-    SecureRequestCustomizer src = new SecureRequestCustomizer();
-    src.setStsMaxAge(2000);
-    src.setStsIncludeSubDomains(true);
-    httpsConfiguration.addCustomizer(src);
-
-    ServerConnector https =
-        new ServerConnector(
-            server,
-            new SslConnectionFactory(sslContextFactory, HttpVersion.HTTP_1_1.asString()),
-            new HttpConnectionFactory(httpsConfiguration));
-    https.setPort(port);
-    https.setIdleTimeout(500000);
-
-    server.setConnectors(new Connector[] {https});
-
-    ContextHandler context = new ContextHandler();
-    context.setContextPath("/");
-    context.setHandler(handler);
-
-    server.setHandler(context);
-
-    server.start();
+    KeyManagerFactory keyManagerFactory = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
+    keyManagerFactory.init(keyStore, keyStorePassword.toCharArray());
+    SSLContext sslContext = SSLContext.getInstance("TLS");
+    sslContext.init(keyManagerFactory.getKeyManagers(), null, null);
+    HttpsServer httpsServer = HttpsServer.create(new InetSocketAddress(port), 0);
+    httpsServer.setHttpsConfigurator(new HttpsConfigurator(sslContext));
+    httpsServer.createContext("/", handler);
+    httpsServer.start();
+    server = httpsServer;
     return keyStore;
   }
 
@@ -283,7 +235,7 @@ public class JdkHttpClientHttpLayerTest {
   void builderConsumers() throws Exception {
     int port = randomNetworkPort();
     Map<String, AtomicLong> calls = new ConcurrentHashMap<>();
-    server = startHttpServer(port, staticJsonHandler("[]", calls));
+    server = startHttpServer(port, staticHandler("[]", calls));
 
     AtomicBoolean clientBuilderConsumerCalled = new AtomicBoolean(false);
     AtomicBoolean requestBuilderConsumerCalled = new AtomicBoolean(false);
