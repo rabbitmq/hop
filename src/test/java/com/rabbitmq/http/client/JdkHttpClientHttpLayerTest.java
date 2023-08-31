@@ -39,7 +39,6 @@ import org.bouncycastle.cert.jcajce.JcaX509CertificateConverter;
 import org.bouncycastle.cert.jcajce.JcaX509v3CertificateBuilder;
 import org.bouncycastle.operator.jcajce.JcaContentSignerBuilder;
 import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
@@ -47,11 +46,6 @@ import org.junit.jupiter.params.provider.ValueSource;
 public class JdkHttpClientHttpLayerTest {
 
   HttpServer server;
-
-  static boolean isJava13() {
-    String javaVersion = System.getProperty("java.version");
-    return javaVersion != null && javaVersion.startsWith("13.");
-  }
 
   private static int randomNetworkPort() throws IOException {
     ServerSocket socket = new ServerSocket();
@@ -89,19 +83,8 @@ public class JdkHttpClientHttpLayerTest {
     return server;
   }
 
-  @BeforeEach
-  public void init() {
-    if (isJava13()) {
-      // for Java 13.0.7, see https://github.com/bcgit/bc-java/issues/941
-      System.setProperty("keystore.pkcs12.keyProtectionAlgorithm", "PBEWithHmacSHA256AndAES_256");
-    }
-  }
-
   @AfterEach
   public void tearDown() {
-    if (isJava13()) {
-      System.setProperty("keystore.pkcs12.keyProtectionAlgorithm", "");
-    }
     if (server != null) {
       server.stop(0);
     }
