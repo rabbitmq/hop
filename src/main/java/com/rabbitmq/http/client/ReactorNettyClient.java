@@ -187,6 +187,10 @@ public class ReactorNettyClient {
         return doPut(info, "policies", encodePath(vhost), encodePath(name));
     }
 
+    public Mono<HttpResponse> declareOperatorPolicy(String vhost, String name, PolicyInfo info) {
+        return doPut(info, "operator-policies", encodePath(vhost), encodePath(name));
+    }
+
     public Flux<PolicyInfo> getPolicies() {
         return doGetFlux(PolicyInfo.class, "policies");
     }
@@ -195,8 +199,20 @@ public class ReactorNettyClient {
         return doGetFlux(PolicyInfo.class, "policies", encodePath(vhost));
     }
 
+    public Flux<PolicyInfo> getOperatorPolicies() {
+        return doGetFlux(PolicyInfo.class, "operator-policies");
+    }
+
+    public Flux<PolicyInfo> getOperatorPolicies(String vhost) {
+        return doGetFlux(PolicyInfo.class, "operator-policies", encodePath(vhost));
+    }
+
     public Mono<HttpResponse> deletePolicy(String vhost, String name) {
         return doDelete("policies", encodePath(vhost), encodePath(name));
+    }
+
+    public Mono<HttpResponse> deleteOperatorPolicy(String vhost, String name) {
+        return doDelete("operator-policies", encodePath(vhost), encodePath(name));
     }
 
     public Flux<ChannelInfo> getChannels() {

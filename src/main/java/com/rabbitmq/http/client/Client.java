@@ -583,6 +583,11 @@ public class Client {
     this.httpLayer.put(uri, info);
   }
 
+  public void declareOperatorPolicy(String vhost, String name, PolicyInfo info) {
+    final URI uri = uri().withEncodedPath("./operator-policies").withPath(vhost).withPath(name).get();
+    this.httpLayer.put(uri, info);
+  }
+
   public void declareQueue(String vhost, String name, QueueInfo info) {
     final URI uri = uri().withEncodedPath("./queues").withPath(vhost).withPath(name).get();
     this.httpLayer.put(uri, info);
@@ -684,6 +689,10 @@ public class Client {
     this.deleteIgnoring404(uri().withEncodedPath("./policies").withPath(vhost).withPath(name).get());
   }
 
+  public void deleteOperatorPolicy(String vhost, String name) {
+    this.deleteIgnoring404(uri().withEncodedPath("./operator-policies").withPath(vhost).withPath(name).get());
+  }
+
   public List<UserInfo> getUsers() {
     final URI uri = uriWithPath("./users/");
     return Arrays.asList(this.httpLayer.get(uri, UserInfo[].class));
@@ -773,6 +782,17 @@ public class Client {
 
   public List<PolicyInfo> getPolicies(String vhost) {
     final URI uri = uri().withEncodedPath("./policies").withPath(vhost).get();
+    final PolicyInfo[] result = this.getForObjectReturningNullOn404(uri, PolicyInfo[].class);
+    return asListOrNull(result);
+  }
+
+  public List<PolicyInfo> getOperatorPolicies() {
+    final URI uri = uriWithPath("./operator-policies/");
+    return Arrays.asList(this.httpLayer.get(uri, PolicyInfo[].class));
+  }
+
+  public List<PolicyInfo> getOperatorPolicies(String vhost) {
+    final URI uri = uri().withEncodedPath("./operator-policies").withPath(vhost).get();
     final PolicyInfo[] result = this.getForObjectReturningNullOn404(uri, PolicyInfo[].class);
     return asListOrNull(result);
   }

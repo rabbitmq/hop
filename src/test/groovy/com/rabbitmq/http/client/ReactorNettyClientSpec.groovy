@@ -1109,6 +1109,59 @@ class ReactorNettyClientSpec extends Specification {
         exception.status() == 404
     }
 
+    def "GET /api/operator-policies"() {
+        given: "at least one operator policy was declared"
+        def v = "/"
+        def s = "hop.test"
+        def d = new HashMap<String, Object>()
+        def p = ".*"
+        d.put("ha-mode", "all")
+        client.declareOperatorPolicy(v, s, new PolicyInfo(p, 0, null, d)).block()
+
+        when: "client lists policies"
+        def xs = awaitEventPropagation({ client.getOperatorPolicies() })
+
+        then: "a list of policies is returned"
+        def x = xs.blockFirst()
+        verifyPolicyInfo(x)
+
+        cleanup:
+        client.deleteOperatorPolicy(v, s).block()
+    }
+
+    def "GET /api/operator-policies/{vhost} when vhost exists"() {
+        given: "at least one operator policy was declared in vhost /"
+        def v = "/"
+        def s = "hop.test"
+        def d = new HashMap<String, Object>()
+        def p = ".*"
+        d.put("ha-mode", "all")
+        client.declareOperatorPolicy(v, s, new PolicyInfo(p, 0, null, d)).block()
+
+        when: "client lists policies"
+        def xs = awaitEventPropagation({ client.getOperatorPolicies("/") })
+
+        then: "a list of queues is returned"
+        def x = xs.blockFirst()
+        verifyPolicyInfo(x)
+
+        cleanup:
+        client.deleteOperatorPolicy(v, s).block()
+    }
+
+    def "GET /api/operator-policies/{vhost} when vhost DOES NOT exists"() {
+        given: "vhost lolwut DOES not exist"
+        def v = "lolwut"
+        client.deleteVhost(v).block()
+
+        when: "client lists operator policies"
+        awaitEventPropagation({ client.getOperatorPolicies(v) })
+
+        then: "exception is thrown"
+        def exception = thrown(HttpClientException.class)
+        exception.status() == 404
+    }
+
     def "GET /api/aliveness-test/{vhost}"() {
         when: "client performs aliveness check for the / vhost"
         def hasSucceeded = client.alivenessTest("/").block().isSuccessful()
