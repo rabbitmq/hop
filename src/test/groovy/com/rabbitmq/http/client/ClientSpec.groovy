@@ -1160,7 +1160,7 @@ class ClientSpec extends Specification {
     given: "vhost / and definition"
     def v = "/"
     def d = new HashMap<String, Object>()
-    d.put("ha-mode", "all")
+    d.put("max-length", 6)
 
     when: "client declares an operator policy hop.test"
     def s = "hop.test"
@@ -2238,7 +2238,7 @@ class ClientSpec extends Specification {
     def s = "hop.test"
     def d = new HashMap<String, Object>()
     def p = ".*"
-    d.put("ha-mode", "all")
+    d.put("max-length", 6)
     client.declareOperatorPolicy(v, s, new PolicyInfo(p, 0, null, d))
 
     when: "client lists policies"
@@ -2260,7 +2260,7 @@ class ClientSpec extends Specification {
     def s = "hop.test"
     def d = new HashMap<String, Object>()
     def p = ".*"
-    d.put("ha-mode", "all")
+    d.put("max-length", 6)
     client.declareOperatorPolicy(v, s, new PolicyInfo(p, 0, null, d))
 
     when: "client lists policies"

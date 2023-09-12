@@ -1115,7 +1115,7 @@ class ReactorNettyClientSpec extends Specification {
         def s = "hop.test"
         def d = new HashMap<String, Object>()
         def p = ".*"
-        d.put("ha-mode", "all")
+        d.put("max-length", 6)
         client.declareOperatorPolicy(v, s, new PolicyInfo(p, 0, null, d)).block()
 
         when: "client lists policies"
@@ -1135,7 +1135,7 @@ class ReactorNettyClientSpec extends Specification {
         def s = "hop.test"
         def d = new HashMap<String, Object>()
         def p = ".*"
-        d.put("ha-mode", "all")
+        d.put("max-length", 6)
         client.declareOperatorPolicy(v, s, new PolicyInfo(p, 0, null, d)).block()
 
         when: "client lists policies"
