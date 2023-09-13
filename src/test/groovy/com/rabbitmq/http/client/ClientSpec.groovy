@@ -1156,6 +1156,33 @@ class ClientSpec extends Specification {
 
   }
 
+  def "PUT /api/operator-policies/{vhost}/{name}"() {
+    given: "vhost / and definition"
+    def v = "/"
+    def d = new HashMap<String, Object>()
+    d.put("max-length", 6)
+
+    when: "client declares an operator policy hop.test"
+    def s = "hop.test"
+    client.declareOperatorPolicy(v, s, new PolicyInfo(".*", 1, null, d))
+
+    and: "client lists operator policies in vhost /"
+    List<PolicyInfo> ps = client.getOperatorPolicies(v)
+
+    then: "hop.test is listed"
+    PolicyInfo p = ps.find { (it.name == s) }
+    p != null
+    p.vhost == v
+    p.name == s
+    p.priority == 1
+    p.applyTo == "all"
+    p.definition == d
+
+    cleanup:
+    client.deleteOperatorPolicy(v, s)
+
+  }
+
   
   def "PUT /api/queues/{vhost}/{name} when vhost DOES NOT exist"() {
     given: "vhost lolwut which does not exist"
@@ -2199,6 +2226,63 @@ class ClientSpec extends Specification {
 
     when: "client lists policies"
     def xs = awaitEventPropagation({ client.getPolicies(v) })
+
+    then: "null is returned"
+    xs == null
+
+  }
+
+  def "GET /api/operator-policies"() {
+    given: "at least one operator policy was declared"
+    def v = "/"
+    def s = "hop.test"
+    def d = new HashMap<String, Object>()
+    def p = ".*"
+    d.put("max-length", 6)
+    client.declareOperatorPolicy(v, s, new PolicyInfo(p, 0, null, d))
+
+    when: "client lists policies"
+    PolicyInfo[] xs = awaitEventPropagation({ client.getOperatorPolicies() }) as PolicyInfo[]
+
+    then: "a list of policies is returned"
+    def x = xs.first()
+    verifyPolicyInfo(x)
+
+    cleanup:
+    client.deleteOperatorPolicy(v, s)
+
+  }
+
+
+  def "GET /api/operator-policies/{vhost} when vhost exists"() {
+    given: "at least one operator  was declared in vhost /"
+    def v = "/"
+    def s = "hop.test"
+    def d = new HashMap<String, Object>()
+    def p = ".*"
+    d.put("max-length", 6)
+    client.declareOperatorPolicy(v, s, new PolicyInfo(p, 0, null, d))
+
+    when: "client lists policies"
+    PolicyInfo[] xs = awaitEventPropagation({ client.getOperatorPolicies("/") }) as PolicyInfo[]
+
+    then: "a list of queues is returned"
+    def x = xs.first()
+    verifyPolicyInfo(x)
+
+    cleanup:
+    client.deleteOperatorPolicy(v, s)
+
+  }
+
+
+  def "GET /api/operator-policies/{vhost} when vhost DOES NOT exists"() {
+    given: "vhost lolwut DOES not exist"
+    def v = "lolwut"
+    client.deleteVhost(v)
+
+    when: "client lists operator policies"
+    def xs = awaitEventPropagation({ client.getOperatorPolicies(v) })
 
     then: "null is returned"
     xs == null
