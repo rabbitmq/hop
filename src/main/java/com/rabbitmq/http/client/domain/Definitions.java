@@ -20,6 +20,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class Definitions {
@@ -35,6 +36,11 @@ public class Definitions {
 
     @JsonProperty("topic_permissions")
     private List<TopicPermissions> topicPermissions = new ArrayList<>();
+
+    private List<RuntimeParameter<Object>> parameters = new ArrayList<>();
+
+    @JsonProperty("global_parameters")
+    private List<RuntimeParameter<Object>> globalParameters = new ArrayList<>();
 
     private List<QueueInfo> queues = new ArrayList<QueueInfo>();
 
@@ -104,6 +110,22 @@ public class Definitions {
 
     public List<TopicPermissions> getTopicPermissions() {
         return topicPermissions;
+    }
+
+    public void setParameters(List<RuntimeParameter<Object>> parameters) {
+        this.parameters = parameters;
+    }
+
+    public List<RuntimeParameter<Object>> getParameters() {
+        return parameters;
+    }
+
+    public void setGlobalParameters(List<RuntimeParameter<Object>> globalParameters) {
+        this.globalParameters = globalParameters;
+    }
+
+    public List<RuntimeParameter<Object>> getGlobalParameters() {
+        return globalParameters;
     }
 
     @Override
