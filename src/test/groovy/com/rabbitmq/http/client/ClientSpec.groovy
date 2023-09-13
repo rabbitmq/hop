@@ -2453,6 +2453,42 @@ class ClientSpec extends Specification {
 
   }
 
+  def "GET /api/definitions (parameters)"() {
+    given: "a (shovel) parameter defined"
+    ShovelDetails value = new ShovelDetails("amqp://localhost:5672/vh1", "amqp://localhost:5672/vh2", 30, true, null)
+    value.setSourceQueue("queue1")
+    value.setDestinationExchange("exchange1")
+    value.setSourcePrefetchCount(50L)
+    value.setSourceDeleteAfter("never")
+    value.setDestinationAddTimestampHeader(true)
+    client.declareShovel("/", new ShovelInfo("shovel1", value))
+    when: "client gets the parameters and global parameters"
+    Definitions d = client.getDefinitions()
+    List<RuntimeParameter<Object>> parameters = d.getParameters()
+    List<RuntimeParameter<Object>> globalParameters = d.getGlobalParameters()
+
+    then: "a parameter with a JSON document value and a parameter with a string value are deserialized"
+    !parameters.isEmpty()
+    RuntimeParameter<Object> parameter = parameters.find { (it.name == "shovel1") } as RuntimeParameter<Object>
+    parameter != null
+    parameter.name == "shovel1"
+    parameter.vhost == "/"
+    parameter.component == "shovel"
+    parameter.value instanceof Map
+    parameter.value["src-queue"] == "queue1"
+    parameter.value["dest-exchange"] == "exchange1"
+
+    !globalParameters.isEmpty()
+    RuntimeParameter<Object> globalParameter = globalParameters.find { (it.name == "internal_cluster_id") } as RuntimeParameter<Object>
+    globalParameter != null
+    globalParameter.name == "internal_cluster_id"
+    globalParameter.value instanceof String
+
+    cleanup:
+    client.deleteShovel("/","shovel1")
+    client.deleteQueue("/", "queue1")
+
+  }
   
   def "GET /api/parameters/shovel"() {
     given: "a shovel defined"
