@@ -21,6 +21,8 @@ import static com.rabbitmq.http.client.Utils.notNull;
 import com.rabbitmq.http.client.HttpLayer.HttpLayerFactory;
 
 import java.net.MalformedURLException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.URL;
 
 /**
@@ -61,10 +63,18 @@ public class ClientParameters {
      * @throws MalformedURLException for a badly formed URL.
      */
     public ClientParameters url(String url) throws MalformedURLException {
-        this.url = new URL(url);
+        try {
+            this.url = new URI(url).toURL();
+        } catch (URISyntaxException e) {
+            throw new IllegalArgumentException("URL is malformed");
+        }
         if (this.url.getUserInfo() != null) {
             // URL contains credentials, setting the appropriate parameters
-            this.url = new URL(Utils.urlWithoutCredentials(url));
+            try {
+                this.url = new URI(Utils.urlWithoutCredentials(url)).toURL();
+            } catch (URISyntaxException e) {
+                throw new IllegalArgumentException("URL is malformed");
+            }
             String[] usernamePassword = Utils.extractUsernamePassword(url);
             this.username = usernamePassword[0];
             this.password = usernamePassword[1];

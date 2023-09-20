@@ -92,8 +92,8 @@ final class Utils {
     static String[] extractUsernamePassword(String url) {
         String userInfo = null;
         try {
-            userInfo = new URL(url).getUserInfo();
-        } catch (MalformedURLException e) {
+            userInfo = new URI(url).toURL().getUserInfo();
+        } catch (MalformedURLException | URISyntaxException e) {
             throw new IllegalArgumentException("Malformed URL", e);
         }
         if (userInfo == null) {
@@ -111,11 +111,11 @@ final class Utils {
         };
     }
 
-    static URI rootUri(URL url) throws URISyntaxException, MalformedURLException {
+    static URI rootUri(URL url) throws URISyntaxException {
         if (url.toString().endsWith("/")) {
             return url.toURI();
         } else {
-            return new URL(url + "/").toURI();
+            return new URI(url + "/");
         }
     }
 
@@ -135,8 +135,8 @@ final class Utils {
     static String urlWithoutCredentials(String url) {
         URL url1 = null;
         try {
-            url1 = new URL(url);
-        } catch (MalformedURLException e) {
+            url1 = new URI(url).toURL();
+        } catch (MalformedURLException | URISyntaxException e) {
             throw new IllegalArgumentException("URL is malformed");
         }
         return url.replace(url1.getUserInfo() + "@", "");
