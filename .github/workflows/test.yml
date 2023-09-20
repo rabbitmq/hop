@@ -15,6 +15,22 @@ jobs:
 
     steps:
       - uses: actions/checkout@v4
+      - name: Set up JDK for compilation
+        uses: actions/setup-java@v3
+        with:
+          distribution: 'zulu'
+          java-version: '17'
+          cache: 'maven'
+      - name: Show version
+        run: ./mvnw --version
+      - name: Compile
+        run: ./mvnw clean test-compile --no-transfer-progress
+      - name: Show version
+        run: ./mvnw --version
+      - name: Start RabbitMQ
+        run: ci/start-broker.sh
+      - name: Configure broker
+        run: HOP_RABBITMQCTL=DOCKER:rabbitmq ci/before-build.sh
       - name: Set up JDK
         uses: actions/setup-java@v3
         with:
@@ -26,12 +42,8 @@ jobs:
           server-password: MAVEN_PASSWORD
           gpg-private-key: ${{ secrets.MAVEN_GPG_PRIVATE_KEY }}
           gpg-passphrase: MAVEN_GPG_PASSPHRASE
-      - name: Start RabbitMQ
-        run: ci/start-broker.sh
-      - name: Configure broker
-        run: HOP_RABBITMQCTL=DOCKER:rabbitmq ci/before-build.sh
       - name: Test
-        run: ./mvnw test --no-transfer-progress
+        run: ./mvnw test -DskipBytecodeCheck --no-transfer-progress
       - name: Stop broker
         run: docker stop rabbitmq && docker rm rabbitmq
       - name: Publish snapshot
