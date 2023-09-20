@@ -20,7 +20,7 @@ jobs:
           gpg-private-key: ${{ secrets.MAVEN_GPG_PRIVATE_KEY }}
           gpg-passphrase: MAVEN_GPG_PASSPHRASE
       - name: Publish snapshot
-        run: ./mvnw clean deploy -Psnapshots -DskipITs -DskipTests --no-transfer-progress
+        run: ./mvnw clean deploy -DskipBytecodeCheck -Psnapshots -DskipITs -DskipTests --no-transfer-progress
         env:
           MAVEN_USERNAME: ${{ secrets.OSSRH_USERNAME }}
           MAVEN_PASSWORD: ${{ secrets.OSSRH_TOKEN }}

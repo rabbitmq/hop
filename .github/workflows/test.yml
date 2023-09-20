@@ -42,12 +42,14 @@ jobs:
           server-password: MAVEN_PASSWORD
           gpg-private-key: ${{ secrets.MAVEN_GPG_PRIVATE_KEY }}
           gpg-passphrase: MAVEN_GPG_PASSPHRASE
+      - name: Show version
+        run: ./mvnw --version
       - name: Test
         run: ./mvnw test -DskipBytecodeCheck --no-transfer-progress
       - name: Stop broker
         run: docker stop rabbitmq && docker rm rabbitmq
       - name: Publish snapshot
-        run: ./mvnw clean deploy -Psnapshots -DskipITs -DskipTests --no-transfer-progress
+        run: ./mvnw clean deploy -DskipBytecodeCheck -Psnapshots -DskipITs -DskipTests --no-transfer-progress
         if: ${{ github.event_name != 'pull_request' }}
         env:
           MAVEN_USERNAME: ${{ secrets.OSSRH_USERNAME }}
