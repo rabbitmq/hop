@@ -10,14 +10,14 @@ jobs:
     runs-on: ubuntu-22.04
     strategy:
       matrix:
-        java: [ '11', '17', '20', '21' ]
+        java: [ '11', '17', '20', '21', '22-ea' ]
     name:  Test against Java ${{ matrix.java }}
     steps:
       - uses: actions/checkout@v4
       - name: Set up JDK for compilation
         uses: actions/setup-java@v3
         with:
-          distribution: 'zulu'
+          distribution: 'oracle'
           java-version: '11'
           cache: 'maven'
       - name: Show version
@@ -31,7 +31,7 @@ jobs:
       - name: Set up JDK
         uses: actions/setup-java@v3
         with:
-          distribution: 'zulu'
+          distribution: 'oracle'
           java-version: ${{ matrix.java }}
           cache: 'maven'
       - name: Show version
