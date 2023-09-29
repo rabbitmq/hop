@@ -17,33 +17,21 @@ jobs:
     name:  Test against ${{ matrix.rabbitmq-image }}
     steps:
       - uses: actions/checkout@v4
-      - name: Set up JDK for compilation
-        uses: actions/setup-java@v3
-        with:
-          distribution: 'zulu'
-          java-version: '17'
-          cache: 'maven'
-      - name: Show version
-        run: ./mvnw --version
-      - name: Compile
-        run: ./mvnw clean test-compile --no-transfer-progress
-      - name: Show version
-        run: ./mvnw --version
-      - name: Start RabbitMQ
-        run: ci/start-broker.sh
-        env:
-          RABBITMQ_IMAGE: ${{ matrix.rabbitmq-image }}
-      - name: Configure broker
-        run: HOP_RABBITMQCTL=DOCKER:rabbitmq ci/before-build.sh
       - name: Set up JDK
         uses: actions/setup-java@v3
         with:
           distribution: 'zulu'
           java-version: '21'
           cache: 'maven'
+      - name: Start RabbitMQ
+        run: ci/start-broker.sh
+        env:
+          RABBITMQ_IMAGE: ${{ matrix.rabbitmq-image }}
+      - name: Configure broker
+        run: HOP_RABBITMQCTL=DOCKER:rabbitmq ci/before-build.sh
       - name: Show version
         run: ./mvnw --version
       - name: Test
-        run: ./mvnw -DskipBytecodeCheck test --no-transfer-progress
+        run: ./mvnw test --no-transfer-progress
       - name: Stop broker
         run: docker stop rabbitmq && docker rm rabbitmq

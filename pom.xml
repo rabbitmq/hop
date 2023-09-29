@@ -36,7 +36,7 @@
   <properties>
     <jackson.version>2.15.2</jackson.version>
     <reactor-netty.version>1.1.11</reactor-netty.version>
-    <groovy.version>3.0.19</groovy.version>
+    <groovy.version>4.0.15</groovy.version>
     <spock.version>2.3-groovy-4.0</spock.version>
     <junit.version>5.10.0</junit.version>
     <junit-platform.version>1.10.0</junit-platform.version>
@@ -54,7 +54,7 @@
     <maven.jar.plugin.version>3.3.0</maven.jar.plugin.version>
     <maven.release.plugin.version>3.0.1</maven.release.plugin.version>
     <checksum.maven.plugin.version>1.11</checksum.maven.plugin.version>
-    <gmavenplus-plugin.version>3.0.0</gmavenplus-plugin.version>
+    <gmavenplus-plugin.version>3.0.2</gmavenplus-plugin.version>
     <maven.packagecloud.wagon.version>0.0.6</maven.packagecloud.wagon.version>
     <nexus-staging-maven-plugin.version>1.6.13</nexus-staging-maven-plugin.version>
     <gpg.keyname>6026DFCA</gpg.keyname>
@@ -90,13 +90,13 @@
       <scope>test</scope>
     </dependency>
     <dependency>
-      <groupId>org.codehaus.groovy</groupId>
+      <groupId>org.apache.groovy</groupId>
       <artifactId>groovy</artifactId>
       <version>${groovy.version}</version>
       <scope>test</scope>
     </dependency>
     <dependency>
-      <groupId>org.codehaus.groovy</groupId>
+      <groupId>org.apache.groovy</groupId>
       <artifactId>groovy-json</artifactId>
       <version>${groovy.version}</version>
       <scope>test</scope>
