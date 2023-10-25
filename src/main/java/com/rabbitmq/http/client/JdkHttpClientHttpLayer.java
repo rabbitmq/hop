@@ -16,6 +16,7 @@
 
 package com.rabbitmq.http.client;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.IOException;
 import java.io.InputStream;
@@ -147,6 +148,11 @@ public final class JdkHttpClientHttpLayer implements HttpLayer {
     return "Basic " + Utils.base64(username + ":" + password);
   }
 
+  private static HttpRequest.BodyPublisher bodyPublisher(ObjectMapper mapper, Object requestBody) throws JsonProcessingException {
+    return requestBody == null ? BodyPublishers.noBody() :
+        BodyPublishers.ofByteArray(mapper.writeValueAsBytes(requestBody));
+  }
+
   @Override
   public <T> T get(URI uri, Class<T> responseClass) {
     return get(uri, this.mapper, this.client, this.requestBuilderConsumer, responseClass);
@@ -165,7 +171,7 @@ public final class JdkHttpClientHttpLayer implements HttpLayer {
     try {
       HttpRequest request =
           requestBuilder
-              .POST(BodyPublishers.ofByteArray(mapper.writeValueAsBytes(requestBody)))
+              .POST(bodyPublisher(mapper, requestBody))
               .build();
       if (responseClass == null) {
         HttpResponse<Void> response = client.send(request, BodyHandlers.discarding());
@@ -195,7 +201,7 @@ public final class JdkHttpClientHttpLayer implements HttpLayer {
     try {
       HttpRequest request =
           requestBuilder
-              .PUT(BodyPublishers.ofByteArray(mapper.writeValueAsBytes(requestBody)))
+              .PUT(bodyPublisher(mapper, requestBody))
               .build();
       HttpResponse<Void> response = client.send(request, BodyHandlers.discarding());
       int statusCode = response.statusCode();
@@ -212,7 +218,7 @@ public final class JdkHttpClientHttpLayer implements HttpLayer {
   public void delete(URI uri, Map<String, String> headers) {
     headers = headers == null ? Collections.emptyMap() : headers;
     HttpRequest.Builder requestBuilder = HttpRequest.newBuilder(uri);
-    headers.forEach((n, v) -> requestBuilder.header(n, v));
+    headers.forEach(requestBuilder::header);
     requestBuilderConsumer.accept(requestBuilder);
     try {
       HttpRequest request = requestBuilder.DELETE().build();

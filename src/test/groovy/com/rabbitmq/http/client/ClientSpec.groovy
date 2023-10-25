@@ -237,6 +237,7 @@ class ClientSpec extends Specification {
   }
 
   def "GET /api/connections/username/{name}"() {
+    if (!isVersion310orLater()) return
     given: "an open RabbitMQ client connection"
     def conn = openConnection()
     def username = "guest"
@@ -250,10 +251,13 @@ class ClientSpec extends Specification {
     verifyUserConnectionInfo(uc, username)
 
     cleanup:
-    conn.close()
+    if (isVersion310orLater()) {
+      conn.close()
+    }
   }
 
   def "DELETE /api/connections/username/{name}"() {
+    if (!isVersion310orLater()) return
     given: "an open RabbitMQ client connection"
     def latch = new CountDownLatch(1)
     def s = UUID.randomUUID().toString()
@@ -281,7 +285,7 @@ class ClientSpec extends Specification {
     !conn.isOpen()
 
     cleanup:
-    if (conn.isOpen()) {
+    if (isVersion310orLater() && conn.isOpen()) {
       conn.close()
     }
   }
@@ -3036,31 +3040,29 @@ class ClientSpec extends Specification {
     assert x.autoDelete != null
   }
 
-  static boolean isVersion36orLater(String currentVersion) {
+  private static boolean checkVersionOrLater(String currentVersion, String expectedVersion) {
     String v = currentVersion.replaceAll("\\+.*\$", "")
     try {
-      v == "0.0.0" ? true : compareVersions(v, "3.6.0") >= 0
+      v == "0.0.0" ? true : compareVersions(v, expectedVersion) >= 0
     } catch (Exception e) {
       false
     }
+  }
+
+  static boolean isVersion36orLater(String currentVersion) {
+    checkVersionOrLater(currentVersion, "3.6.0")
   }
 
   static boolean isVersion37orLater(String currentVersion) {
-    String v = currentVersion.replaceAll("\\+.*\$", "")
-    try {
-      v == "0.0.0" ? true : compareVersions(v, "3.7.0") >= 0
-    } catch (Exception e) {
-      false
-    }
+    checkVersionOrLater(currentVersion, "3.7.0")
   }
 
   static boolean isVersion38orLater(String currentVersion) {
-    String v = currentVersion.replaceAll("\\+.*\$", "")
-    try {
-      v == "0.0.0" ? true : compareVersions(v, "3.8.0") >= 0
-    } catch (Exception e) {
-      false
-    }
+    checkVersionOrLater(currentVersion, "3.8.0")
+  }
+
+  static boolean isVersion310orLater(String currentVersion) {
+    checkVersionOrLater(currentVersion, "3.10.0")
   }
 
   boolean isVersion37orLater() {
@@ -3069,6 +3071,10 @@ class ClientSpec extends Specification {
 
   boolean isVersion38orLater() {
     return isVersion38orLater(brokerVersion)
+  }
+
+  boolean isVersion310orLater() {
+    return isVersion310orLater(brokerVersion)
   }
 
   /**
