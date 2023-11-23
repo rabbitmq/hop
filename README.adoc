@@ -454,5 +454,5 @@ https://www.apache.org/licenses/LICENSE-2.0.html[Apache 2.0].
 == Copyright
 
 (c) Michael Klishin, 2014-2016.
-
 (c) VMware, Inc. or its affiliates, 2014-2023.
+(c) Broadcom, 2023. All Rights Reserved. The term "Broadcom" refers to Broadcom Inc. and/or its subsidiaries.
