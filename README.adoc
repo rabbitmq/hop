@@ -388,7 +388,7 @@ Configure the broker for the test suite:
 
 ```sh
 export HOP_RABBITMQCTL="DOCKER:rabbitmq"
-./bin/before_build.sh
+./ci/before-build.sh
 ```
 
 Launch the test suite:
@@ -406,7 +406,7 @@ from the installation.
 Then set up the node that is assumed to be running:
 
 ```sh
-./bin/before_build.sh
+./ci/before-build.sh
 ```
 
 This will enable several plugins used by the test suite and configure the node
