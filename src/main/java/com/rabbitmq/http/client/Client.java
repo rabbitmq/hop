@@ -1261,6 +1261,29 @@ public class Client {
     this.deleteIgnoring404(uri);
   }
 
+  public MqttVhostPortInfo getMqttVhostPorts(){
+    return getGlobalParameters("mqtt_port_to_vhost_mapping", new ParameterizedTypeReference<>() {});
+  }
+
+  public void deleteMqttVhostPorts() {
+    this.deleteIgnoring404(uri().withEncodedPath("./global-parameters/mqtt_port_to_vhost_mapping").get());
+  }
+
+  public void setMqttVhostPorts(Map<Integer, String> portMappings) {
+    for (String vhost : portMappings.values()){
+      if (vhost.isBlank()) {
+        throw new IllegalArgumentException("Map with undefined vhosts provided!");
+      }
+    }
+
+    final URI uri = uri().withEncodedPath("./global-parameters/mqtt_port_to_vhost_mapping").get();
+
+    MqttVhostPortInfo body = new MqttVhostPortInfo();
+    body.setValue(portMappings);
+
+    this.httpLayer.put(uri, body);
+  }
+
   private <T> List<T> getParameters(String component, final ParameterizedTypeReference<List<T>> responseType) {
     final URI uri = uri().withEncodedPath("./parameters").withEncodedPath(component).withPathSeparator().get();
     return this.httpLayer.get(uri, responseType);
@@ -1268,6 +1291,11 @@ public class Client {
 
   private <T> List<T> getParameters(String vhost, String component, final ParameterizedTypeReference<List<T>> responseType) {
     final URI uri = uri().withEncodedPath("./parameters").withEncodedPath(component).withPath(vhost).get();
+    return getForObjectReturningNullOn404(uri, responseType);
+  }
+
+  private <T> T getGlobalParameters(String name, final ParameterizedTypeReference<T> responseType) {
+    final URI uri = uri().withEncodedPath("./global-parameters").withEncodedPath(name).withPathSeparator().get();
     return getForObjectReturningNullOn404(uri, responseType);
   }
 

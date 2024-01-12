@@ -2843,6 +2843,44 @@ class ClientSpec extends Specification {
 
   }
 
+  def "GET /api/global-parameters/mqtt_port_to_vhost_mapping without mqtt vhost port mapping"() {
+    given: "rabbitmq deployment without mqtt port mappings defined"
+    client.deleteMqttVhostPorts()
+
+    when: "client tries to look up mqtt vhost port mappings"
+    def mqttPorts = client.getMqttVhostPorts()
+
+    then: "mqtt vhost port mappings are null"
+    mqttPorts == null
+  }
+
+  def "GET /api/global-parameters/mqtt_port_to_vhost_mapping with a sample mapping"() {
+    given: "a mqtt mapping with 2 vhosts defined"
+    def mqttInputMap = Map.of(2024, "vhost1", 2025, "vhost2")
+    client.setMqttVhostPorts(mqttInputMap)
+
+    when: "client tries to get mqtt port mappings"
+    def mqttInfo = client.getMqttVhostPorts()
+    def mqttReturnValues = mqttInfo.getValue()
+
+    then: "a map with 2 mqtt ports and vhosts is returned"
+    mqttReturnValues == mqttInputMap
+
+    cleanup:
+    client.deleteMqttVhostPorts()
+  }
+
+  def "PUT /api/global-parameters/mqtt_port_to_vhost_mapping with a sample mapping"(){
+    given: "a mqtt mapping with blank vhost"
+    def mqttInputMap = Map.of(2024, " ", 2025, "vhost2")
+
+    when: "client tries to set mqtt port mappings"
+    client.setMqttVhostPorts(mqttInputMap)
+
+    then: "an illegal argument exception is thrown"
+    thrown(IllegalArgumentException)
+  }
+
   
   def "GET /api/vhost-limits/{vhost}"() {
     given: "a virtual host with limits"
