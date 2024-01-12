@@ -2870,7 +2870,7 @@ class ClientSpec extends Specification {
     client.deleteMqttVhostPorts()
   }
 
-  def "PUT /api/global-parameters/mqtt_port_to_vhost_mapping with a sample mapping"(){
+  def "PUT /api/global-parameters/mqtt_port_to_vhost_mapping with a blank vhost value"(){
     given: "a mqtt mapping with blank vhost"
     def mqttInputMap = Map.of(2024, " ", 2025, "vhost2")
 
