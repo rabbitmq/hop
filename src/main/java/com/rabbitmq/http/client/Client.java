@@ -1261,15 +1261,15 @@ public class Client {
     this.deleteIgnoring404(uri);
   }
 
-  public MqttVhostPortInfo getMqttVhostPorts(){
+  public MqttVhostPortInfo getMqttPortToVhostMapping(){
     return getGlobalParameters("mqtt_port_to_vhost_mapping", new ParameterizedTypeReference<>() {});
   }
 
-  public void deleteMqttVhostPorts() {
+  public void deleteMqttPortToVhostMapping() {
     this.deleteIgnoring404(uri().withEncodedPath("./global-parameters/mqtt_port_to_vhost_mapping").get());
   }
 
-  public void setMqttVhostPorts(Map<Integer, String> portMappings) {
+  public void setMqttPortToVhostMapping(Map<Integer, String> portMappings) {
     for (String vhost : portMappings.values()){
       if (vhost.isBlank()) {
         throw new IllegalArgumentException("Map with undefined vhosts provided!");

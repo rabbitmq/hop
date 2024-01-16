@@ -814,15 +814,15 @@ public class ReactorNettyClient {
         return doGetFlux(UpstreamSetInfo.class, "parameters", "federation-upstream-set", encodePath(vhost));
     }
 
-    public Mono<MqttVhostPortInfo> getMqttVhostPorts(){
+    public Mono<MqttVhostPortInfo> getMqttPortToVhostMapping(){
         return doGetMono(MqttVhostPortInfo.class, "global-parameters", "mqtt_port_to_vhost_mapping");
     }
 
-    public Mono<HttpResponse> deleteMqttVhostPorts(){
+    public Mono<HttpResponse> deleteMqttPortToVhostMapping(){
         return doDelete( "global-parameters", "mqtt_port_to_vhost_mapping");
     }
 
-    public Mono<HttpResponse> setMqttVhostPorts(Map<Integer, String> portMappings){
+    public Mono<HttpResponse> setMqttPortToVhostMapping(Map<Integer, String> portMappings){
         for (String vhost : portMappings.values()){
             if (vhost.isBlank()) {
                 throw new IllegalArgumentException("Map with undefined vhosts provided!");
