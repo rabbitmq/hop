@@ -2431,6 +2431,45 @@ class ReactorNettyClientSpec extends Specification {
         client.clearMaxConnectionsLimit("/").block()
     }
 
+
+    def "GET /api/global-parameters/mqtt_port_to_vhost_mapping without mqtt vhost port mapping"() {
+        given: "rabbitmq deployment without mqtt port mappings defined"
+        client.deleteMqttPortToVhostMapping().block();
+
+        when: "client tries to look up mqtt vhost port mappings"
+        def mqttPorts = client.getMqttPortToVhostMapping().block();
+        then: "mono throws exception"
+        def exception = thrown(HttpClientException.class)
+        exception.status() == 404
+    }
+
+    def "GET /api/global-parameters/mqtt_port_to_vhost_mapping with a sample mapping"() {
+        given: "a mqtt mapping with 2 vhosts defined"
+        def mqttInputMap = Map.of(2024, "vhost1", 2025, "vhost2")
+        client.setMqttPortToVhostMapping(mqttInputMap).block()
+
+        when: "client tries to get mqtt port mappings"
+        def mqttInfo = client.getMqttPortToVhostMapping().block()
+        def mqttReturnValues = mqttInfo.getValue()
+
+        then: "a map with 2 mqtt ports and vhosts is returned"
+        mqttReturnValues == mqttInputMap
+
+        cleanup:
+        client.deleteMqttPortToVhostMapping().block()
+    }
+
+    def "PUT /api/global-parameters/mqtt_port_to_vhost_mapping with a blank vhost value"(){
+        given: "a mqtt mapping with blank vhost"
+        def mqttInputMap = Map.of(2024, " ", 2025, "vhost2")
+
+        when: "client tries to set mqtt port mappings"
+        client.setMqttPortToVhostMapping(mqttInputMap).block()
+
+        then: "an illegal argument exception is thrown"
+        thrown(IllegalArgumentException)
+    }
+
     def "GET /api/vhost-limits without limits on any host"() {
         given: "the default configuration"
 
