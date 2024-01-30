@@ -1137,11 +1137,11 @@ class ClientSpec extends Specification {
     given: "vhost / and definition"
     def v = "/"
     def d = new HashMap<String, Object>()
-    d.put("ha-mode", "all")
+    d.put("expires", 30000)
 
     when: "client declares a policy hop.test"
     def s = "hop.test"
-    client.declarePolicy(v, s, new PolicyInfo(".*", 1, null, d))
+    client.declarePolicy(v, s, new PolicyInfo(".*", 1, "queues", d))
 
     and: "client lists policies in vhost /"
     List<PolicyInfo> ps = client.getPolicies(v)
@@ -1152,7 +1152,7 @@ class ClientSpec extends Specification {
     p.vhost == v
     p.name == s
     p.priority == 1
-    p.applyTo == "all"
+    p.applyTo == "queues"
     p.definition == d
 
     cleanup:
@@ -2185,7 +2185,7 @@ class ClientSpec extends Specification {
     def s = "hop.test"
     def d = new HashMap<String, Object>()
     def p = ".*"
-    d.put("ha-mode", "all")
+    d.put("expires", 30000)
     client.declarePolicy(v, s, new PolicyInfo(p, 0, null, d))
 
     when: "client lists policies"
@@ -2207,7 +2207,7 @@ class ClientSpec extends Specification {
     def s = "hop.test"
     def d = new HashMap<String, Object>()
     def p = ".*"
-    d.put("ha-mode", "all")
+    d.put("expires", 30000)
     client.declarePolicy(v, s, new PolicyInfo(p, 0, null, d))
 
     when: "client lists policies"

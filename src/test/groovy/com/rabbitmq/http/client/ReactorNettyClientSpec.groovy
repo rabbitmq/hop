@@ -1062,7 +1062,7 @@ class ReactorNettyClientSpec extends Specification {
         def s = "hop.test"
         def d = new HashMap<String, Object>()
         def p = ".*"
-        d.put("ha-mode", "all")
+        d.put("expires", 30000)
         client.declarePolicy(v, s, new PolicyInfo(p, 0, null, d)).block()
 
         when: "client lists policies"
@@ -1082,7 +1082,7 @@ class ReactorNettyClientSpec extends Specification {
         def s = "hop.test"
         def d = new HashMap<String, Object>()
         def p = ".*"
-        d.put("ha-mode", "all")
+        d.put("expires", 30000)
         client.declarePolicy(v, s, new PolicyInfo(p, 0, null, d)).block()
 
         when: "client lists policies"
@@ -1468,7 +1468,7 @@ class ReactorNettyClientSpec extends Specification {
         given: "vhost / and definition"
         def v = "/"
         def d = new HashMap<String, Object>()
-        d.put("ha-mode", "all")
+        d.put("expires", 30000)
 
         when: "client declares a policy hop.test"
         def s = "hop.test"
