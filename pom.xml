@@ -44,7 +44,7 @@
     <httpclient.version>4.5.14</httpclient.version>
     <amqp-client.version>5.20.0</amqp-client.version>
     <logback.version>1.2.13</logback.version>
-    <bouncycastle.version>1.70</bouncycastle.version>
+    <bouncycastle.version>1.77</bouncycastle.version>
     <maven.compiler.plugin.version>3.12.1</maven.compiler.plugin.version>
     <maven-surefire-plugin.version>3.2.5</maven-surefire-plugin.version>
     <maven.gpg.plugin.version>3.1.0</maven.gpg.plugin.version>
@@ -146,7 +146,7 @@
     </dependency>
     <dependency>
       <groupId>org.bouncycastle</groupId>
-      <artifactId>bcpkix-jdk15on</artifactId>
+      <artifactId>bcpkix-jdk18on</artifactId>
       <version>${bouncycastle.version}</version>
       <scope>test</scope>
     </dependency>
