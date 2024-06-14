@@ -80,6 +80,9 @@ import java.util.Map;
 //        "name": "langohr.tests2.queues.non-auto-deleted1",
 //        "node": "rabbit@mercurio",
 //        "policy": "",
+//        "effective_policy_definition": {
+//            "overflow": "reject-publish"
+//        }
 //        "recoverable_slaves": "",
 //        "state": "running",
 //        "vhost": "/"
@@ -100,6 +103,8 @@ public class QueueInfo {
   private String exclusiveConsumerTag;
   private String state;
   private String policy;
+  @JsonProperty("effective_policy_definition")
+  private Map<String, Object> effectivePolicyDefinition;
   @JsonProperty("idle_since")
   private String idleSince;
 
@@ -268,6 +273,14 @@ public class QueueInfo {
 
   public void setPolicy(String policy) {
     this.policy = policy;
+  }
+
+  public Map<String, Object> getEffectivePolicyDefinition() {
+    return effectivePolicyDefinition;
+  }
+
+  public void setEffectivePolicyDefinition(Map<String, Object> effectivePolicyDefinition) {
+    this.effectivePolicyDefinition = effectivePolicyDefinition;
   }
 
   public String getIdleSince() {
@@ -511,6 +524,7 @@ public class QueueInfo {
         ", exclusiveConsumerTag='" + exclusiveConsumerTag + '\'' +
         ", state='" + state + '\'' +
         ", policy='" + policy + '\'' +
+        ", effective_policy_definition='" + effectivePolicyDefinition + '\'' +
         ", idleSince='" + idleSince + '\'' +
         ", diskReads=" + diskReads +
         ", diskWrites=" + diskWrites +
