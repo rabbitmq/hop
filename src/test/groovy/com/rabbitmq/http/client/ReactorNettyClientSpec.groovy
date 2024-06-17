@@ -73,6 +73,7 @@ import java.util.stream.Collectors
 
 import static com.rabbitmq.http.client.domain.DestinationType.EXCHANGE
 import static com.rabbitmq.http.client.domain.DestinationType.QUEUE
+import static java.util.Collections.singletonMap
 
 class ReactorNettyClientSpec extends Specification {
 
@@ -1244,6 +1245,33 @@ class ReactorNettyClientSpec extends Specification {
         cleanup:
         ch.queueDelete(q)
         conn.close()
+    }
+
+    def "GET /api/queues/{vhost}/{name} with policy definition"() {
+        given: "a policy applies to all queues"
+        def v = "/"
+        def s = "hop.test"
+        def pd = singletonMap("expires", 30000)
+        def pi = new PolicyInfo(".*", 1, "queues", pd)
+        client.declarePolicy(v, s, pi).block()
+
+        when: "a queue is created"
+        Connection conn = cf.newConnection()
+        Channel ch = conn.createChannel()
+        String q = ch.queueDeclare().queue
+
+        then: "the policy definition should be listed in the queue info"
+        waitAtMostUntilTrue(10, {
+            def qi = client.getQueue(v, q).block()
+            return qi != null && qi.effectivePolicyDefinition != null
+        })
+        def queueInfo = client.getQueue(v, q).block()
+        queueInfo.effectivePolicyDefinition == pd
+
+        cleanup:
+        ch.queueDelete(q)
+        conn.close()
+        client.deletePolicy(v, s).block()
     }
 
     def "GET /api/queues with details"() {

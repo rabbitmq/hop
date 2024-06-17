@@ -31,6 +31,7 @@ import java.util.concurrent.atomic.AtomicReference
 
 import static com.rabbitmq.http.client.domain.DestinationType.EXCHANGE
 import static com.rabbitmq.http.client.domain.DestinationType.QUEUE
+import static java.util.Collections.singletonMap
 
 class ClientSpec extends Specification {
 
@@ -597,7 +598,7 @@ class ClientSpec extends Specification {
     properties.put("delivery_mode", 1)
     properties.put("content_type", "text/plain")
     properties.put("priority", 5)
-    properties.put("headers", Collections.singletonMap("header1", "value1"))
+    properties.put("headers", singletonMap("header1", "value1"))
     def routed = client.publish(v, "amq.direct", q,
             new OutboundMessage().payload("Hello world!").utf8Encoded().properties(properties))
 
@@ -685,7 +686,33 @@ class ClientSpec extends Specification {
 
   }
 
-  
+  def "GET /api/queues/{vhost}/{name} with policy definition"() {
+    given: "a policy applies to all queues"
+    def v = "/"
+    def s = "hop.test"
+    def pd = singletonMap("expires", 30000)
+    def pi = new PolicyInfo(".*", 1, "queues", pd)
+    client.declarePolicy(v, s, pi)
+
+    when: "a queue is created"
+    Connection conn = cf.newConnection()
+    Channel ch = conn.createChannel()
+    String q = ch.queueDeclare().queue
+
+    then: "the policy definition should be listed in the queue info"
+    waitAtMostUntilTrue(10, {
+      def qi = client.getQueue(v, q)
+      return qi != null && qi.effectivePolicyDefinition != null
+    })
+    def queueInfo = client.getQueue(v, q)
+    queueInfo.effectivePolicyDefinition == pd
+
+    cleanup:
+    ch.queueDelete(q)
+    conn.close()
+    client.deletePolicy(v, s)
+  }
+
   def "GET /api/queues with details"() {
     given: "at least one queue was declared and some messages published"
     Connection conn = cf.newConnection()
@@ -1481,7 +1508,7 @@ class ClientSpec extends Specification {
     def messageCount = 5
     def properties = new AMQP.BasicProperties.Builder()
             .contentType("text/plain").deliveryMode(1).priority(5)
-            .headers(Collections.singletonMap("header1", "value1"))
+            .headers(singletonMap("header1", "value1"))
             .build()
     (1..messageCount).each { it ->
       ch.basicPublish("", q, properties, "payload${it}".getBytes(Charset.forName("UTF-8")))
@@ -2743,7 +2770,7 @@ class ClientSpec extends Specification {
     p.setApplyTo("exchanges")
     p.setName(policyName)
     p.setPattern("amq\\.topic")
-    p.setDefinition(Collections.singletonMap("federation-upstream-set", upstreamSetName))
+    p.setDefinition(singletonMap("federation-upstream-set", upstreamSetName))
     client.declarePolicy(vhost, policyName, p)
 
     when: "client requests the upstream set list"
