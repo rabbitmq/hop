@@ -167,14 +167,6 @@ public class NodeInfo {
     this.fileDescriptorsTotal = fileDescriptorsTotal;
   }
 
-  public long getSocketsTotal() {
-    return socketsTotal;
-  }
-
-  public void setSocketsTotal(long socketsTotal) {
-    this.socketsTotal = socketsTotal;
-  }
-
   public long getMemoryUsed() {
     return memoryUsed;
   }
