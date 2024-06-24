@@ -2632,7 +2632,6 @@ class ReactorNettyClientSpec extends Specification {
     protected static void verifyNode(NodeInfo node) {
         assert node != null
         assert node.name != null
-        assert node.socketsUsed <= node.socketsTotal
         assert node.erlangProcessesUsed <= node.erlangProcessesTotal
         assert node.erlangRunQueueLength >= 0
         assert node.memoryUsed <= node.memoryLimit

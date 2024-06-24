@@ -38,13 +38,6 @@ public class NodeInfo {
   @JsonProperty("fd_used_details")
   private RateDetails fdUsedDetails;
 
-  @JsonProperty("sockets_used")
-  private long socketsUsed;
-  @JsonProperty("sockets_total")
-  private long socketsTotal;
-  @JsonProperty("sockets_used_details")
-  private RateDetails socketsUsedDetails;
-
   @JsonProperty("mem_used")
   private long memoryUsed;
   @JsonProperty("mem_limit")
@@ -172,22 +165,6 @@ public class NodeInfo {
 
   public void setFileDescriptorsTotal(long fileDescriptorsTotal) {
     this.fileDescriptorsTotal = fileDescriptorsTotal;
-  }
-
-  public long getSocketsUsed() {
-    return socketsUsed;
-  }
-
-  public void setSocketsUsed(long socketsUsed) {
-    this.socketsUsed = socketsUsed;
-  }
-
-  public long getSocketsTotal() {
-    return socketsTotal;
-  }
-
-  public void setSocketsTotal(long socketsTotal) {
-    this.socketsTotal = socketsTotal;
   }
 
   public long getMemoryUsed() {
@@ -442,14 +419,6 @@ public class NodeInfo {
     this.erlangProcessesUsedDetails = erlangProcessesUsedDetails;
   }
 
-  public RateDetails getSocketsUsedDetails() {
-    return socketsUsedDetails;
-  }
-
-  public void setSocketsUsedDetails(RateDetails socketsUsedDetails) {
-    this.socketsUsedDetails = socketsUsedDetails;
-  }
-
   public String getRatesMode() {
     return ratesMode;
   }
@@ -483,9 +452,6 @@ public class NodeInfo {
         ", fileDescriptorsUsed=" + fileDescriptorsUsed +
         ", fileDescriptorsTotal=" + fileDescriptorsTotal +
         ", fdUsedDetails=" + fdUsedDetails +
-        ", socketsUsed=" + socketsUsed +
-        ", socketsTotal=" + socketsTotal +
-        ", socketsUsedDetails=" + socketsUsedDetails +
         ", memoryUsed=" + memoryUsed +
         ", memoryLimit=" + memoryLimit +
         ", memoryAlarmActive=" + memoryAlarmActive +
