@@ -189,9 +189,11 @@ final class JsonUtils {
 
     private static final String CONNECTION_NAME_FIELD = "connection_name";
     private static final String NAME_FIELD = "name";
+    private static final String NODE_FIELD = "node";
     private static final String NUMBER_FIELD = "number";
     private static final String PEER_HOST_FIELD = "peer_host";
     private static final String PEER_PORT_FIELD = "peer_port";
+    private static final String USER_FIELD = "user";
     private static final long serialVersionUID = -1831999885508961350L;
 
     protected ChannelDetailsDeserializer() {
@@ -209,10 +211,12 @@ final class JsonUtils {
       ChannelDetails channelDetails = new ChannelDetails();
       channelDetails.setConnectionName(get(node, CONNECTION_NAME_FIELD));
       channelDetails.setName(get(node, NAME_FIELD));
+      channelDetails.setNode(get(node, NODE_FIELD));
       JsonNode numberNode = node.get(NUMBER_FIELD);
       channelDetails.setNumber(numberNode == null ? -1 : numberNode.asInt());
       channelDetails.setPeerHost(get(node, PEER_HOST_FIELD));
       channelDetails.setPeerPort(getPeerPort(node.get(PEER_PORT_FIELD)));
+      channelDetails.setUser(get(node, USER_FIELD));
       return channelDetails;
     }
   }

@@ -20,9 +20,11 @@ package com.rabbitmq.http.client.domain;
 public class ChannelDetails {
   private String connectionName;
   private String name;
+  private String node;
   private int number;
   private String peerHost;
   private int peerPort;
+  private String user;
 
   public String getConnectionName() {
     return connectionName;
@@ -38,6 +40,14 @@ public class ChannelDetails {
 
   public void setName(String name) {
     this.name = name;
+  }
+
+  public String getNode() {
+    return node;
+  }
+
+  public void setNode(String node) {
+    this.node = node;
   }
 
   public int getNumber() {
@@ -63,15 +73,25 @@ public class ChannelDetails {
   public void setPeerPort(int peerPort) {
     this.peerPort = peerPort;
   }
-  
+
+  public String getUser() {
+    return user;
+  }
+
+  public void setUser(String user) {
+    this.user = user;
+  }
+
   @Override
   public String toString() {
     return "ChannelDetails{" +
         "connectionName='" + connectionName + '\'' +
         ", name='" + name + '\'' +
+        ", node='" + node + '\'' +
         ", number=" + number +
         ", peerHost='" + peerHost + '\'' +
         ", peerPort=" + peerPort +
+        ", user='" + user + '\'' +
         '}';
   }
 }
