@@ -20,7 +20,6 @@ import java.util.Map;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 
 @SuppressWarnings("unused")
 @JsonIgnoreProperties(ignoreUnknown=true)
@@ -37,6 +36,12 @@ public class ConsumerDetails {
   private QueueDetails queueDetails;
   @JsonProperty("active")
   private boolean active = true;
+  @JsonProperty("activity_status")
+  private String activityStatus;
+  @JsonProperty("ack_required")
+  private boolean ackRequired;
+  @JsonProperty("consumer_timeout")
+  private int consumerTimeout;
 
   public String getConsumerTag() {
     return consumerTag;
@@ -94,6 +99,30 @@ public class ConsumerDetails {
     this.active = active;
   }
 
+  public String getActivityStatus() {
+    return activityStatus;
+  }
+
+  public void setActivityStatus(String activityStatus) {
+    this.activityStatus = activityStatus;
+  }
+
+  public boolean isAckRequired() {
+    return ackRequired;
+  }
+
+  public void setAckRequired(boolean ackRequired) {
+    this.ackRequired = ackRequired;
+  }
+
+  public int getConsumerTimeout() {
+    return consumerTimeout;
+  }
+
+  public void setConsumerTimeout(int consumerTimeout) {
+    this.consumerTimeout = consumerTimeout;
+  }
+
   @Override
   public String toString() {
     return "ConsumerDetails{" +
@@ -104,6 +133,9 @@ public class ConsumerDetails {
         ", arguments=" + arguments +
         ", queueDetails=" + queueDetails +
         ", active='" + active +
+        ", activityStatus='" + activityStatus + '\'' +
+        ", ackRequired='" + ackRequired +
+        ", consumerTimeout='" + consumerTimeout +
         '}';
   }
 }

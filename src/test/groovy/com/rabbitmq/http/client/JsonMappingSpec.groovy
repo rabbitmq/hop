@@ -95,6 +95,30 @@ class JsonMappingSpec extends Specification {
     ]
   }
 
+  def "consumer details should deserialize without errors"() {
+    when: "JSON document for consumer"
+    def c = mapper.readValue(JSON_CONSUMER_DETAILS, ConsumerDetails.class)
+
+    then: "consumer details properties should be set correctly"
+    c.consumerTag == "amq.ctag-Od3nR5Kglfbkm6dB3Jw-dg"
+    c.prefetchCount == 0
+    c.channelDetails.connectionName == "127.0.0.1:40548 -> 127.0.0.1:5672"
+    c.channelDetails.name == "127.0.0.1:40548 -> 127.0.0.1:5672 (1)"
+    c.channelDetails.node == "rabbit@my-host"
+    c.channelDetails.number == 1
+    c.channelDetails.peerHost == "127.0.0.1"
+    c.channelDetails.peerPort == 40548
+    c.channelDetails.user == "guest"
+    c.exclusive == false
+    c.arguments.size() == 0
+    c.queueDetails.name == "amq.gen-ofOF2lL5hhOzhchiFCPhjg"
+    c.queueDetails.vhost == "/"
+    c.active == true
+    c.activityStatus == "up"
+    c.ackRequired == true
+    c.consumerTimeout == 1800000
+  }
+
   def "channel details with undefined peer port should deserialize without errors"() {
     when: "JSON document for consumer with undefined channel peer port"
     def c = mapper.readValue(JSON_CONSUMER_DETAILS_WITH_UNDEFINED_CHANNEL_PEER_PORT, ConsumerDetails.class)
@@ -429,6 +453,7 @@ class JsonMappingSpec extends Specification {
           "      \"user\":\"guest\"\n" +
           "   },\n" +
           "   \"consumer_tag\":\"amq.ctag-Od3nR5Kglfbkm6dB3Jw-dg\",\n" +
+          "   \"consumer_timeout\":1800000,\n" +
           "   \"exclusive\":false,\n" +
           "   \"prefetch_count\":0,\n" +
           "   \"queue\":{\n" +
