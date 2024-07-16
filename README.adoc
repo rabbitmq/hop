@@ -380,22 +380,25 @@ c.getBindingsByDestination("/", "an.exchange");
 
 Start the broker:
 
-```sh
+[source,sh]
+----
 docker run -it --rm --name rabbitmq -p 5672:5672 -p 15672:15672 rabbitmq:3.13-management
-```
+----
 
 Configure the broker for the test suite:
 
-```sh
+[source,sh]
+----
 export HOP_RABBITMQCTL="DOCKER:rabbitmq"
 ./ci/before-build.sh
-```
+----
 
 Launch the test suite:
 
-```sh
+[source,sh]
+----
 ./mvnw test
-```
+----
 
 == Running Tests
 
@@ -405,9 +408,10 @@ from the installation.
 
 Then set up the node that is assumed to be running:
 
-```sh
+[source,sh]
+----
 ./ci/before-build.sh
-```
+----
 
 This will enable several plugins used by the test suite and configure the node
 to use a much shorter event refresh interval so that HTTP API reflects system state
@@ -415,9 +419,10 @@ changes with less of a delay.
 
 To run the tests:
 
-```sh
+[source,sh]
+----
 ./mvnw test
-```
+----
 
 The test suite assumes RabbitMQ is running locally with
 stock settings and a few plugins are enabled:
@@ -433,9 +438,10 @@ to point at `rabbitmqctl` and `rabbitmq-plugins` from the installation.
 The test suite can use a different port than 15672 by specifying it with the
 `rabbitmq.management.port` system property:
 
-``` sh
+[source,sh]
+----
 ./mvnw test -Drabbitmq.management.port=15673
-```
+----
 
 == Versioning
 
