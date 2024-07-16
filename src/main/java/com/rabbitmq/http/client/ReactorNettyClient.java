@@ -45,6 +45,9 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
+import static com.rabbitmq.http.client.PercentEncoder.encodeParameter;
+import static com.rabbitmq.http.client.PercentEncoder.encodePathSegment;
+
 /**
  * Reactive client based on Reactor Netty.
  * Use the {@link ReactorNettyClientOptions} constructors for
@@ -156,7 +159,7 @@ public class ReactorNettyClient {
     }
 
     public Mono<NodeInfo> getNode(String name) {
-        return doGetMono(NodeInfo.class, "nodes", encodePath(name));
+        return doGetMono(NodeInfo.class, "nodes", encodePathSegment(name));
     }
 
     public Flux<ConnectionInfo> getConnections() {
@@ -164,15 +167,15 @@ public class ReactorNettyClient {
     }
 
     public Mono<ConnectionInfo> getConnection(String name) {
-        return doGetMono(ConnectionInfo.class, "connections", encodePath(name));
+        return doGetMono(ConnectionInfo.class, "connections", encodePathSegment(name));
     }
 
     public Mono<HttpResponse> closeConnection(String name) {
-        return doDelete("connections", encodePath(name));
+        return doDelete("connections", encodePathSegment(name));
     }
 
     public Mono<HttpResponse> closeConnection(String name, String reason) {
-        return doDelete(headers -> headers.set("X-Reason", reason), "connections", encodePath(name));
+        return doDelete(headers -> headers.set("X-Reason", reason), "connections", encodePathSegment(name));
     }
 
     public Flux<ConsumerDetails> getConsumers() {
@@ -180,15 +183,15 @@ public class ReactorNettyClient {
     }
 
     public Flux<ConsumerDetails> getConsumers(String vhost) {
-        return doGetFlux(ConsumerDetails.class, "consumers", encodePath(vhost));
+        return doGetFlux(ConsumerDetails.class, "consumers", encodePathSegment(vhost));
     }
 
     public Mono<HttpResponse> declarePolicy(String vhost, String name, PolicyInfo info) {
-        return doPut(info, "policies", encodePath(vhost), encodePath(name));
+        return doPut(info, "policies", encodePathSegment(vhost), encodePathSegment(name));
     }
 
     public Mono<HttpResponse> declareOperatorPolicy(String vhost, String name, PolicyInfo info) {
-        return doPut(info, "operator-policies", encodePath(vhost), encodePath(name));
+        return doPut(info, "operator-policies", encodePathSegment(vhost), encodePathSegment(name));
     }
 
     public Flux<PolicyInfo> getPolicies() {
@@ -196,7 +199,7 @@ public class ReactorNettyClient {
     }
 
     public Flux<PolicyInfo> getPolicies(String vhost) {
-        return doGetFlux(PolicyInfo.class, "policies", encodePath(vhost));
+        return doGetFlux(PolicyInfo.class, "policies", encodePathSegment(vhost));
     }
 
     public Flux<PolicyInfo> getOperatorPolicies() {
@@ -204,15 +207,15 @@ public class ReactorNettyClient {
     }
 
     public Flux<PolicyInfo> getOperatorPolicies(String vhost) {
-        return doGetFlux(PolicyInfo.class, "operator-policies", encodePath(vhost));
+        return doGetFlux(PolicyInfo.class, "operator-policies", encodePathSegment(vhost));
     }
 
     public Mono<HttpResponse> deletePolicy(String vhost, String name) {
-        return doDelete("policies", encodePath(vhost), encodePath(name));
+        return doDelete("policies", encodePathSegment(vhost), encodePathSegment(name));
     }
 
     public Mono<HttpResponse> deleteOperatorPolicy(String vhost, String name) {
-        return doDelete("operator-policies", encodePath(vhost), encodePath(name));
+        return doDelete("operator-policies", encodePathSegment(vhost), encodePathSegment(name));
     }
 
     public Flux<ChannelInfo> getChannels() {
@@ -220,11 +223,11 @@ public class ReactorNettyClient {
     }
 
     public Flux<ChannelInfo> getChannels(String connectionName) {
-        return doGetFlux(ChannelInfo.class, "connections", encodePath(connectionName), "channels");
+        return doGetFlux(ChannelInfo.class, "connections", encodePathSegment(connectionName), "channels");
     }
 
     public Mono<ChannelInfo> getChannel(String name) {
-        return doGetMono(ChannelInfo.class, "channels", encodePath(name));
+        return doGetMono(ChannelInfo.class, "channels", encodePathSegment(name));
     }
 
     public Flux<VhostInfo> getVhosts() {
@@ -232,7 +235,7 @@ public class ReactorNettyClient {
     }
 
     public Mono<VhostInfo> getVhost(String name) {
-        return doGetMono(VhostInfo.class, "vhosts", encodePath(name));
+        return doGetMono(VhostInfo.class, "vhosts", encodePathSegment(name));
     }
 
     /**
@@ -257,7 +260,7 @@ public class ReactorNettyClient {
         if (tags != null && tags.length > 0) {
             body.put("tags", String.join(",", tags));
         }
-        return doPut(body, "vhosts", encodePath(name));
+        return doPut(body, "vhosts", encodePathSegment(name));
     }
 
     /**
@@ -287,27 +290,27 @@ public class ReactorNettyClient {
     }
 
     public Mono<HttpResponse> createVhost(String name) {
-        return doPut("vhosts", encodePath(name));
+        return doPut("vhosts", encodePathSegment(name));
     }
 
     public Mono<HttpResponse> deleteVhost(String name) {
-        return doDelete("vhosts", encodePath(name));
+        return doDelete("vhosts", encodePathSegment(name));
     }
 
     public Flux<UserPermissions> getPermissionsIn(String vhost) {
-        return doGetFlux(UserPermissions.class, "vhosts", encodePath(vhost), "permissions");
+        return doGetFlux(UserPermissions.class, "vhosts", encodePathSegment(vhost), "permissions");
     }
 
     public Mono<HttpResponse> updatePermissions(String vhost, String username, UserPermissions permissions) {
-        return doPut(permissions, "permissions", encodePath(vhost), encodePath(username));
+        return doPut(permissions, "permissions", encodePathSegment(vhost), encodePathSegment(username));
     }
 
     public Flux<TopicPermissions> getTopicPermissionsIn(String vhost) {
-        return doGetFlux(TopicPermissions.class, "vhosts", encodePath(vhost), "topic-permissions");
+        return doGetFlux(TopicPermissions.class, "vhosts", encodePathSegment(vhost), "topic-permissions");
     }
 
     public Mono<HttpResponse> updateTopicPermissions(String vhost, String username, TopicPermissions permissions) {
-        return doPut(permissions, "topic-permissions", encodePath(vhost), encodePath(username));
+        return doPut(permissions, "topic-permissions", encodePathSegment(vhost), encodePathSegment(username));
     }
 
     public Flux<UserInfo> getUsers() {
@@ -315,11 +318,11 @@ public class ReactorNettyClient {
     }
 
     public Mono<UserInfo> getUser(String username) {
-        return doGetMono(UserInfo.class, "users", encodePath(username));
+        return doGetMono(UserInfo.class, "users", encodePathSegment(username));
     }
 
     public Mono<HttpResponse> deleteUser(String username) {
-        return doDelete("users", encodePath(username));
+        return doDelete("users", encodePathSegment(username));
     }
 
     public Mono<HttpResponse> createUser(String username, char[] password, List<String> tags) {
@@ -337,7 +340,7 @@ public class ReactorNettyClient {
         } else {
             body.put("tags", String.join(",", tags));
         }
-        return doPut(body, "users", encodePath(username));
+        return doPut(body, "users", encodePathSegment(username));
     }
 
     public Mono<HttpResponse> updateUser(String username, char[] password, List<String> tags) {
@@ -355,15 +358,15 @@ public class ReactorNettyClient {
             body.put("tags", String.join(",", tags));
         }
 
-        return doPut(body, "users", encodePath(username));
+        return doPut(body, "users", encodePathSegment(username));
     }
 
     public Flux<UserPermissions> getPermissionsOf(String username) {
-        return doGetFlux(UserPermissions.class, "users", encodePath(username), "permissions");
+        return doGetFlux(UserPermissions.class, "users", encodePathSegment(username), "permissions");
     }
 
     public Flux<TopicPermissions> getTopicPermissionsOf(String username) {
-        return doGetFlux(TopicPermissions.class, "users", encodePath(username), "topic-permissions");
+        return doGetFlux(TopicPermissions.class, "users", encodePathSegment(username), "topic-permissions");
     }
 
     public Mono<HttpResponse> createUserWithPasswordHash(String username, char[] passwordHash, List<String> tags) {
@@ -383,7 +386,7 @@ public class ReactorNettyClient {
             body.put("tags", String.join(",", tags));
         }
 
-        return doPut(body, "users", encodePath(username));
+        return doPut(body, "users", encodePathSegment(username));
     }
 
     public Mono<CurrentUserDetails> whoAmI() {
@@ -395,11 +398,11 @@ public class ReactorNettyClient {
     }
 
     public Mono<UserPermissions> getPermissions(String vhost, String username) {
-        return doGetMono(UserPermissions.class, "permissions", encodePath(vhost), encodePath(username));
+        return doGetMono(UserPermissions.class, "permissions", encodePathSegment(vhost), encodePathSegment(username));
     }
 
     public Mono<HttpResponse> clearPermissions(String vhost, String username) {
-        return doDelete("permissions", encodePath(vhost), encodePath(username));
+        return doDelete("permissions", encodePathSegment(vhost), encodePathSegment(username));
     }
 
     public Flux<TopicPermissions> getTopicPermissions() {
@@ -407,11 +410,11 @@ public class ReactorNettyClient {
     }
 
     public Flux<TopicPermissions> getTopicPermissions(String vhost, String username) {
-        return doGetFlux(TopicPermissions.class, "topic-permissions", encodePath(vhost), encodePath(username));
+        return doGetFlux(TopicPermissions.class, "topic-permissions", encodePathSegment(vhost), encodePathSegment(username));
     }
 
     public Mono<HttpResponse> clearTopicPermissions(String vhost, String username) {
-        return doDelete("topic-permissions", encodePath(vhost), encodePath(username));
+        return doDelete("topic-permissions", encodePathSegment(vhost), encodePathSegment(username));
     }
 
     public Flux<ExchangeInfo> getExchanges() {
@@ -419,19 +422,19 @@ public class ReactorNettyClient {
     }
 
     public Flux<ExchangeInfo> getExchanges(String vhost) {
-        return doGetFlux(ExchangeInfo.class, "exchanges", encodePath(vhost));
+        return doGetFlux(ExchangeInfo.class, "exchanges", encodePathSegment(vhost));
     }
 
     public Mono<ExchangeInfo> getExchange(String vhost, String name) {
-        return doGetMono(ExchangeInfo.class, "exchanges", encodePath(vhost), encodePath(name));
+        return doGetMono(ExchangeInfo.class, "exchanges", encodePathSegment(vhost), encodePathSegment(name));
     }
 
     public Mono<HttpResponse> declareExchange(String vhost, String name, ExchangeInfo info) {
-        return doPut(info, "exchanges", encodePath(vhost), encodePath(name));
+        return doPut(info, "exchanges", encodePathSegment(vhost), encodePathSegment(name));
     }
 
     public Mono<HttpResponse> deleteExchange(String vhost, String name) {
-        return doDelete("exchanges", encodePath(vhost), encodePath(name));
+        return doDelete("exchanges", encodePathSegment(vhost), encodePathSegment(name));
     }
 
     /**
@@ -460,7 +463,7 @@ public class ReactorNettyClient {
 
         Map<String, Object> body = Utils.bodyForPublish(routingKey, outboundMessage);
 
-        return doPostMono(body, Map.class, "exchanges", encodePath(vhost), encodePath(exchange), "publish").map(response -> {
+        return doPostMono(body, Map.class, "exchanges", encodePathSegment(vhost), encodePathSegment(exchange), "publish").map(response -> {
             Boolean routed = (Boolean) response.get("routed");
             if (routed == null) {
                 return Boolean.FALSE;
@@ -471,7 +474,7 @@ public class ReactorNettyClient {
     }
 
     public Mono<AlivenessTestResult> alivenessTest(String vhost) {
-        return doGetMono(AlivenessTestResult.class, "aliveness-test", encodePath(vhost));
+        return doGetMono(AlivenessTestResult.class, "aliveness-test", encodePathSegment(vhost));
     }
 
     public Mono<ClusterId> getClusterName() {
@@ -511,13 +514,13 @@ public class ReactorNettyClient {
     public Flux<QueueInfo> getQueues(String vhost, DetailsParameters detailsParameters) {
         return doGetFlux(QueueInfo.class,
             detailsParameters == null ? Collections.emptyMap() : detailsParameters.parameters(),
-            "queues", encodePath(vhost));
+            "queues", encodePathSegment(vhost));
     }
 
     public Mono<QueueInfo> getQueue(String vhost, String name, DetailsParameters detailsParameters) {
         return doGetMono(QueueInfo.class,
             detailsParameters == null ? Collections.emptyMap() : detailsParameters.parameters(),
-            "queues", encodePath(vhost), encodePath(name));
+            "queues", encodePathSegment(vhost), encodePathSegment(name));
     }
 
     public Mono<QueueInfo> getQueue(String vhost, String name) {
@@ -525,20 +528,20 @@ public class ReactorNettyClient {
     }
 
     public Mono<HttpResponse> declareQueue(String vhost, String name, QueueInfo info) {
-        return doPut(info, "queues", encodePath(vhost), encodePath(name));
+        return doPut(info, "queues", encodePathSegment(vhost), encodePathSegment(name));
     }
 
     public Mono<HttpResponse> purgeQueue(String vhost, String name) {
-        return doDelete("queues", encodePath(vhost), encodePath(name), "contents");
+        return doDelete("queues", encodePathSegment(vhost), encodePathSegment(name), "contents");
     }
 
     public Mono<HttpResponse> deleteQueue(String vhost, String name) {
-        return doDelete("queues", encodePath(vhost), encodePath(name));
+        return doDelete("queues", encodePathSegment(vhost), encodePathSegment(name));
     }
 
     public Mono<HttpResponse> deleteQueue(String vhost, String name, DeleteQueueParameters parameters) {
         return doDelete(headers -> {
-        }, parameters.getAsQueryParams(), "queues", encodePath(vhost), encodePath(name));
+        }, parameters.getAsQueryParams(), "queues", encodePathSegment(vhost), encodePathSegment(name));
     }
 
     /**
@@ -568,7 +571,7 @@ public class ReactorNettyClient {
             throw new IllegalArgumentException("queue cannot be null or blank");
         }
         Map<String, Object> body = Utils.bodyForGet(count, ackMode, encoding, truncate);
-        return doPostFlux(body, InboundMessage.class, "queues", encodePath(vhost), encodePath(queue), "get");
+        return doPostFlux(body, InboundMessage.class, "queues", encodePathSegment(vhost), encodePathSegment(queue), "get");
     }
 
     /**
@@ -616,29 +619,29 @@ public class ReactorNettyClient {
     }
 
     public Flux<BindingInfo> getBindings(String vhost) {
-        return doGetFlux(BindingInfo.class, "bindings", encodePath(vhost));
+        return doGetFlux(BindingInfo.class, "bindings", encodePathSegment(vhost));
     }
 
     public Flux<BindingInfo> getExchangeBindingsBySource(String vhost, String exchange) {
         final String x = exchange.equals("") ? "amq.default" : exchange;
-        return doGetFlux(BindingInfo.class, "exchanges", encodePath(vhost), encodePath(x), "bindings", "source");
+        return doGetFlux(BindingInfo.class, "exchanges", encodePathSegment(vhost), encodePathSegment(x), "bindings", "source");
     }
 
     public Flux<BindingInfo> getExchangeBindingsByDestination(String vhost, String exchange) {
         final String x = exchange.equals("") ? "amq.default" : exchange;
-        return doGetFlux(BindingInfo.class, "exchanges", encodePath(vhost), encodePath(x), "bindings", "destination");
+        return doGetFlux(BindingInfo.class, "exchanges", encodePathSegment(vhost), encodePathSegment(x), "bindings", "destination");
     }
 
     public Flux<BindingInfo> getQueueBindings(String vhost, String queue) {
-        return doGetFlux(BindingInfo.class, "queues", encodePath(vhost), encodePath(queue), "bindings");
+        return doGetFlux(BindingInfo.class, "queues", encodePathSegment(vhost), encodePathSegment(queue), "bindings");
     }
 
     public Flux<BindingInfo> getQueueBindingsBetween(String vhost, String exchange, String queue) {
-        return doGetFlux(BindingInfo.class, "bindings", encodePath(vhost), "e", encodePath(exchange), "q", encodePath(queue));
+        return doGetFlux(BindingInfo.class, "bindings", encodePathSegment(vhost), "e", encodePathSegment(exchange), "q", encodePathSegment(queue));
     }
 
     public Flux<BindingInfo> getExchangeBindingsBetween(String vhost, String source, String destination) {
-        return doGetFlux(BindingInfo.class, "bindings", encodePath(vhost), "e", encodePath(source), "e", encodePath(destination));
+        return doGetFlux(BindingInfo.class, "bindings", encodePathSegment(vhost), "e", encodePathSegment(source), "e", encodePathSegment(destination));
     }
 
     public Mono<HttpResponse> bindExchange(String vhost, String destination, String source, String routingKey) {
@@ -661,7 +664,7 @@ public class ReactorNettyClient {
         }
         body.put("routing_key", routingKey);
 
-        return doPost(body, "bindings", encodePath(vhost), "e", encodePath(source), "e", encodePath(destination));
+        return doPost(body, "bindings", encodePathSegment(vhost), "e", encodePathSegment(source), "e", encodePathSegment(destination));
     }
 
     public Mono<HttpResponse> bindQueue(String vhost, String queue, String exchange, String routingKey) {
@@ -684,7 +687,7 @@ public class ReactorNettyClient {
         }
         body.put("routing_key", routingKey);
 
-        return doPost(body, "bindings", encodePath(vhost), "e", encodePath(exchange), "q", encodePath(queue));
+        return doPost(body, "bindings", encodePathSegment(vhost), "e", encodePathSegment(exchange), "q", encodePathSegment(queue));
     }
 
     public Mono<HttpResponse> declareShovel(String vhost, ShovelInfo info) {
@@ -692,7 +695,7 @@ public class ReactorNettyClient {
         if (props != null && props.isEmpty()) {
             throw new IllegalArgumentException("Shovel publish properties must be a non-empty map or null");
         }
-        return doPut(info, "parameters", "shovel", encodePath(vhost), encodePath(info.getName()));
+        return doPut(info, "parameters", "shovel", encodePathSegment(vhost), encodePathSegment(info.getName()));
     }
 
     public Flux<ShovelInfo> getShovels() {
@@ -704,7 +707,7 @@ public class ReactorNettyClient {
     }
 
     public Mono<HttpResponse> deleteShovel(String vhost, String shovelName) {
-        return doDelete("parameters", "shovel", encodePath(vhost), encodePath(shovelName));
+        return doDelete("parameters", "shovel", encodePathSegment(vhost), encodePathSegment(shovelName));
     }
 
     //
@@ -727,7 +730,7 @@ public class ReactorNettyClient {
         body.setVhost(vhost);
         body.setName(name);
         body.setValue(details);
-        return doPut(body, "parameters", "federation-upstream", encodePath(vhost), encodePath(name));
+        return doPut(body, "parameters", "federation-upstream", encodePathSegment(vhost), encodePathSegment(name));
     }
 
     /**
@@ -738,7 +741,7 @@ public class ReactorNettyClient {
      * @return HTTP response in a mono
      */
     public Mono<HttpResponse> deleteUpstream(String vhost, String name) {
-        return doDelete("parameters", "federation-upstream", encodePath(vhost), encodePath(name));
+        return doDelete("parameters", "federation-upstream", encodePathSegment(vhost), encodePathSegment(name));
     }
 
     /**
@@ -757,7 +760,7 @@ public class ReactorNettyClient {
      * @return flux of upstream info
      */
     public Flux<UpstreamInfo> getUpstreams(String vhost) {
-        return doGetFlux(UpstreamInfo.class, "parameters", "federation-upstream", encodePath(vhost));
+        return doGetFlux(UpstreamInfo.class, "parameters", "federation-upstream", encodePathSegment(vhost));
 
     }
 
@@ -780,7 +783,7 @@ public class ReactorNettyClient {
         body.setVhost(vhost);
         body.setName(name);
         body.setValue(details);
-        return doPut(body, "parameters", "federation-upstream-set", encodePath(vhost), encodePath(name));
+        return doPut(body, "parameters", "federation-upstream-set", encodePathSegment(vhost), encodePathSegment(name));
     }
 
     /**
@@ -791,7 +794,7 @@ public class ReactorNettyClient {
      * @return HTTP response in a mono
      */
     public Mono<HttpResponse> deleteUpstreamSet(String vhost, String name) {
-        return doDelete("parameters", "federation-upstream-set", encodePath(vhost), encodePath(name));
+        return doDelete("parameters", "federation-upstream-set", encodePathSegment(vhost), encodePathSegment(name));
     }
 
     /**
@@ -811,7 +814,7 @@ public class ReactorNettyClient {
      * @return flux of upstream set info
      */
     public Flux<UpstreamSetInfo> getUpstreamSets(String vhost) {
-        return doGetFlux(UpstreamSetInfo.class, "parameters", "federation-upstream-set", encodePath(vhost));
+        return doGetFlux(UpstreamSetInfo.class, "parameters", "federation-upstream-set", encodePathSegment(vhost));
     }
 
     public Mono<MqttVhostPortInfo> getMqttPortToVhostMapping(){
@@ -853,7 +856,7 @@ public class ReactorNettyClient {
      * @since 3.7.0
      */
     public Mono<VhostLimits> getVhostLimits(String vhost) {
-        return doGetMono(VhostLimits.class, "vhost-limits", encodePath(vhost))
+        return doGetMono(VhostLimits.class, "vhost-limits", encodePathSegment(vhost))
                 .map(limits -> limits.getVhost() == null ?
                         new VhostLimits(vhost, -1, -1) : limits);
     }
@@ -868,7 +871,7 @@ public class ReactorNettyClient {
      */
     public Mono<HttpResponse> limitMaxNumberOfConnections(String vhost, int limit) {
         return doPut(Collections.singletonMap("value", limit),
-                "vhost-limits", encodePath(vhost), "max-connections");
+                "vhost-limits", encodePathSegment(vhost), "max-connections");
     }
 
     /**
@@ -881,7 +884,7 @@ public class ReactorNettyClient {
      */
     public Mono<HttpResponse> limitMaxNumberOfQueues(String vhost, int limit) {
         return doPut(Collections.singletonMap("value", limit),
-                "vhost-limits", encodePath(vhost), "max-queues");
+                "vhost-limits", encodePathSegment(vhost), "max-queues");
     }
 
     /**
@@ -892,7 +895,7 @@ public class ReactorNettyClient {
      * @since 3.7.0
      */
     public Mono<HttpResponse> clearMaxConnectionsLimit(String vhost) {
-        return doDelete("vhost-limits", encodePath(vhost), "max-connections");
+        return doDelete("vhost-limits", encodePathSegment(vhost), "max-connections");
     }
 
     /**
@@ -903,7 +906,7 @@ public class ReactorNettyClient {
      * @since 3.7.0
      */
     public Mono<HttpResponse> clearMaxQueuesLimit(String vhost) {
-        return doDelete("vhost-limits", encodePath(vhost), "max-queues");
+        return doDelete("vhost-limits", encodePathSegment(vhost), "max-queues");
     }
 
     private <T> Mono<T> doGetMono(Class<T> type, String... pathSegments) {
@@ -914,7 +917,7 @@ public class ReactorNettyClient {
         String uri = uri(pathSegments);
         if (queryParameters != null && !queryParameters.isEmpty()) {
             uri += queryParameters.entrySet().stream()
-                .map(e -> String.format("%s=%s", e.getKey(), encodeHttpParameter(e.getValue())))
+                .map(e -> String.format("%s=%s", e.getKey(), encodeParameter(e.getValue())))
                 .collect(Collectors.joining("&", "?", ""));
         }
         return Mono.from(client
@@ -1022,7 +1025,7 @@ public class ReactorNettyClient {
         String uri = uri(pathSegments);
         if (queryParams != null && !queryParams.isEmpty()) {
             uri += queryParams.entrySet().stream()
-                    .map(e -> String.format("%s=%s", e.getKey(), encodeHttpParameter(e.getValue())))
+                    .map(e -> String.format("%s=%s", e.getKey(), encodeParameter(e.getValue())))
                     .collect(Collectors.joining("&", "?", ""));
         }
         return client.headersWhen(authorizedHeader())
@@ -1045,14 +1048,6 @@ public class ReactorNettyClient {
 
     private static String uri(String... pathSegments) {
         return "/" + String.join("/", pathSegments);
-    }
-
-    private static String encodeHttpParameter(String parameter) {
-        return Utils.encodeHttpParameter(parameter);
-    }
-
-    private static String encodePath(String pathSegment) {
-        return Utils.encode(pathSegment);
     }
 
     private static boolean isEmpty(String str) {
