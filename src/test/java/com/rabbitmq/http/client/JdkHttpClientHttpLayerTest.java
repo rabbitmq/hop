@@ -134,9 +134,15 @@ public class JdkHttpClientHttpLayerTest {
             exchange -> {
               String target = exchange.getRequestURI().getPath();
               calls.computeIfAbsent(target, path -> new AtomicLong(0)).incrementAndGet();
-              exchange.sendResponseHeaders(responseCodes.get(target), 0);
+              Integer responseCode = responseCodes.get(target);
+              byte[] body = responseCode.toString().getBytes(StandardCharsets.UTF_8);
+              exchange.sendResponseHeaders(responseCode, body.length);
+              OutputStream responseBody = exchange.getResponseBody();
+              responseBody.write(body);
+              responseBody.close();
             });
-    HttpLayerFactory factory = JdkHttpClientHttpLayer.configure().create();
+    HttpLayerFactory factory = JdkHttpClientHttpLayer.configure()
+        .create();
     HttpLayer httpLayer = factory.create(new ClientParameters());
     URI baseUri = new URI("http://localhost:" + port);
     assertThatThrownBy(() -> httpLayer.get(baseUri.resolve("/client-error"), String[].class))
