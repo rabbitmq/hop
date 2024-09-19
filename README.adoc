@@ -1,4 +1,4 @@
-:rabbitmq-version: 3.12.0
+:rabbitmq-version: 4.0.0
 :hop-version: 5.2.0
 :jackson-version: 2.15.3
 :reactor-netty-version: 1.1.12
@@ -228,17 +228,17 @@ The client uses sensible defaults, but it is possible to customize the `HttpClie
 [source,java]
 ----
 HttpLayerFactory httpLayerFactory =
-  JdkHttpClientHttpLayer.configure()  // (1)
+  JdkHttpClientHttpLayer.configure()  // <1>
     .clientBuilderConsumer(
-      clientBuilder ->  // (2)
+      clientBuilder ->  // <2>
         clientBuilder
           .connectTimeout(Duration.ofSeconds(10)))
     .requestBuilderConsumer(
-      requestBuilder ->  // (3)
+      requestBuilder ->  // <3>
         requestBuilder
           .timeout(Duration.ofSeconds(10))
           .setHeader("Authorization", authorization("guest", "guest")))
-    .create();  // (4)
+    .create();  // <4>
 
 Client c =
     new Client(
@@ -246,7 +246,7 @@ Client c =
             .url("http://127.0.0.1:15672/api/")
             .username("guest")
             .password("guest")
-            .httpLayerFactory(httpLayerFactory));  // (5)
+            .httpLayerFactory(httpLayerFactory));  // <5>
 ----
 <1> Configure the HTTP layer factory
 <2> Configure the creation of the `HttpClient` instance
@@ -260,11 +260,11 @@ Set the `SSLContext` on the `HttpClient` builder to configure TLS:
 
 [source,java]
 ----
-SSLContext sslContext = SSLContext.getInstance("TLSv1.3");  // (1)
-sslContext.init(kmf.getKeyManagers(), tmf.getTrustManagers(), random);  // (2)
+SSLContext sslContext = SSLContext.getInstance("TLSv1.3");  // <1>
+sslContext.init(kmf.getKeyManagers(), tmf.getTrustManagers(), random);  // <2>
 HttpLayerFactory factory =
   JdkHttpClientHttpLayer.configure()
-    .clientBuilderConsumer(builder -> builder.sslContext(sslContext))  // (3)
+    .clientBuilderConsumer(builder -> builder.sslContext(sslContext))  // <3>
     .create();
 ----
 <1> Create the SSL context
@@ -382,7 +382,7 @@ Start the broker:
 
 [source,sh]
 ----
-docker run -it --rm --name rabbitmq -p 5672:5672 -p 15672:15672 rabbitmq:3.13-management
+docker run -it --rm --name rabbitmq -p 5672:5672 -p 15672:15672 rabbitmq:4.0-management
 ----
 
 Configure the broker for the test suite:
