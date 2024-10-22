@@ -38,7 +38,7 @@
     <reactor-netty.version>1.1.23</reactor-netty.version>
     <groovy.version>4.0.23</groovy.version>
     <spock.version>2.3-groovy-4.0</spock.version>
-    <junit.version>5.11.2</junit.version>
+    <junit.version>5.11.3</junit.version>
     <junit-platform.version>1.11.3</junit-platform.version>
     <assertj.version>3.26.3</assertj.version>
     <httpclient.version>4.5.14</httpclient.version>
