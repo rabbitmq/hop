@@ -28,8 +28,8 @@ import java.util.Map;
 import static com.fasterxml.jackson.annotation.JsonFormat.Feature.ACCEPT_SINGLE_VALUE_AS_ARRAY;
 import static com.fasterxml.jackson.annotation.JsonFormat.Feature.WRITE_SINGLE_ELEM_ARRAYS_UNWRAPPED;
 
-//{"src-uri":  "amqp://",              "src-queue":  "my-queue",
-//    "dest-uri": "amqp://remote-server", "dest-queue": "another-queue"}
+// {"src-uri":  "amqp://",              "src-queue":  "my-queue",
+//  "dest-uri": "amqp://remote-server", "dest-queue": "another-queue"}
 
 public class ShovelDetails {
 
