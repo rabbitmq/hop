@@ -46,7 +46,7 @@
     <logback.version>1.2.13</logback.version>
     <bouncycastle.version>1.80</bouncycastle.version>
     <maven.compiler.plugin.version>3.14.0</maven.compiler.plugin.version>
-    <maven-surefire-plugin.version>3.5.2</maven-surefire-plugin.version>
+    <maven-surefire-plugin.version>3.5.3</maven-surefire-plugin.version>
     <maven.gpg.plugin.version>3.2.7</maven.gpg.plugin.version>
     <maven-resources-plugin.version>3.3.1</maven-resources-plugin.version>
     <maven-source-plugin.version>3.3.1</maven-source-plugin.version>
