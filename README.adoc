@@ -1,4 +1,4 @@
-:rabbitmq-version: 4.0.0
+:rabbitmq-version: 4.1.0
 :hop-version: 5.3.0
 :jackson-version: 2.18.1
 :reactor-netty-version: 1.2.0
@@ -382,7 +382,7 @@ Start the broker:
 
 [source,sh]
 ----
-docker run -it --rm --name rabbitmq -p 5672:5672 -p 15672:15672 rabbitmq:4.0-management
+docker run -it --rm --name rabbitmq -p 5672:5672 -p 15672:15672 rabbitmq:4.1-management
 ----
 
 Configure the broker for the test suite:
