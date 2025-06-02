@@ -38,8 +38,8 @@
     <reactor-netty.version>1.2.6</reactor-netty.version>
     <groovy.version>4.0.27</groovy.version>
     <spock.version>2.3-groovy-4.0</spock.version>
-    <junit.version>5.12.2</junit.version>
-    <junit-platform.version>1.12.2</junit-platform.version>
+    <junit.version>5.13.0</junit.version>
+    <junit-platform.version>1.13.0</junit-platform.version>
     <assertj.version>3.27.3</assertj.version>
     <httpclient.version>4.5.14</httpclient.version>
     <amqp-client.version>5.25.0</amqp-client.version>
