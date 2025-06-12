@@ -1,7 +1,7 @@
 :rabbitmq-version: 4.1.0
 :hop-version: 5.4.0
 :jackson-version: 2.19.0
-:reactor-netty-version: 1.2.0
+:reactor-netty-version: 1.2.7
 :hop-snapshot: 5.5.0-SNAPSHOT
 :jackson-for-snapshot: 2.19.0
 
@@ -41,9 +41,6 @@ Hop requires Java 11 or later.
 image:https://maven-badges.herokuapp.com/maven-central/com.rabbitmq/http-client/badge.svg["Maven Central", link="https://maven-badges.herokuapp.com/maven-central/com.rabbitmq/http-client"]
 
 Project artifacts are available from Maven Central.
-
-For milestones and release candidates, declare the
-<<milestone-rc-repository,milestone repository>> in your dependency manager.
 
 === Dependency Manager Configuration
 
@@ -99,42 +96,6 @@ If you want to use the **reactive, non-blocking IO client**, add the following d
 compile "com.rabbitmq:http-client:{hop-version}"
 compile "io.projectreactor.netty:reactor-netty:{reactor-netty-version}"
 compile "com.fasterxml.jackson.core:jackson-databind:{jackson-version}"
-----
-
-[[milestone-rc-repository]]
-=== Milestones and Release Candidates
-
-Milestones and release candidates are available on the RabbitMQ Milestone Repository:
-
-Maven:
-
-.pom.xml
-[source,xml,subs="attributes,specialcharacters"]
-----
-<repositories>
-  <repository>
-    <id>packagecloud-rabbitmq-maven-milestones</id>
-    <url>https://packagecloud.io/rabbitmq/maven-milestones/maven2</url>
-    <releases>
-      <enabled>true</enabled>
-    </releases>
-    <snapshots>
-      <enabled>false</enabled>
-    </snapshots>
-  </repository>
-</repositories>
-----
-
-Gradle:
-
-.build.gradle
-[source,groovy,subs="attributes,specialcharacters"]
-----
-repositories {
-  maven {
-    url "https://packagecloud.io/rabbitmq/maven-milestones/maven2"
-  }
-}
 ----
 
 === Snapshots
