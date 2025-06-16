@@ -34,7 +34,7 @@
   </scm>
 
   <properties>
-    <jackson.version>2.19.0</jackson.version>
+    <jackson.version>2.19.1</jackson.version>
     <reactor-netty.version>1.2.7</reactor-netty.version>
     <groovy.version>4.0.27</groovy.version>
     <spock.version>2.3-groovy-4.0</spock.version>
