@@ -55,7 +55,7 @@
     <maven.release.plugin.version>3.1.1</maven.release.plugin.version>
     <checksum.maven.plugin.version>1.11</checksum.maven.plugin.version>
     <gmavenplus-plugin.version>4.2.0</gmavenplus-plugin.version>
-    <central-publishing-maven-plugin.version>0.7.0</central-publishing-maven-plugin.version>
+    <central-publishing-maven-plugin.version>0.8.0</central-publishing-maven-plugin.version>
     <gpg.keyname>6026DFCA</gpg.keyname>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
   </properties>
