@@ -11,6 +11,8 @@ import java.nio.charset.StandardCharsets;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.junit.jupiter.api.Assertions.*;
 
 class UtilsTest {
@@ -66,6 +68,51 @@ class UtilsTest {
         for (Map.Entry<String,String> q : expectedQueryParams.parameters().entrySet()) {
             assertEquals(actualQueryParams.get(q.getKey()), q.getValue());
         }
+    }
+
+    @Test
+    void extractUsernamePasswordNoDecodingNeeded() {
+        // when: "username and password are extracted from http://mylogin:mypassword@localhost:15672"
+        String[] usernamePassword = Utils.extractUsernamePassword("http://mylogin:mypassword@localhost:15672");
+
+        // then: "username and password are extracted properly"
+        assertThat(usernamePassword).hasSize(2).containsExactly("mylogin", "mypassword");
+    }
+
+    @Test
+    void extractUsernamePasswordNoUserInfoInUrl() {
+        // when: "there is no user info in the URL"
+        // then: "an exception is thrown"
+        assertThatThrownBy(() -> {
+            Utils.extractUsernamePassword("http://localhost:15672");
+        }).isInstanceOf(IllegalArgumentException.class);
+    }
+
+    @Test
+    void extractUsernamePasswordDecodingNeeded() {
+        // when: "username and password are extracted from https://test+user:test%40password@myrabbithost/api/"
+        String[] usernamePassword = Utils.extractUsernamePassword("https://test+user:test%40password@myrabbithost/api/");
+
+        // then: "username and password are extracted and decoded properly"
+        assertThat(usernamePassword).hasSize(2).containsExactly("test user", "test@password");
+    }
+
+    @Test
+    void urlWithoutCredentialsNotEncoded() {
+        // when: "credentials do not need encoding in the URL"
+        String urlWithoutCredentials = Utils.urlWithoutCredentials("http://mylogin:mypassword@localhost:15672");
+
+        // then: "credentials are properly removed from the URL"
+        assertThat(urlWithoutCredentials).isEqualTo("http://localhost:15672");
+    }
+
+    @Test
+    void urlWithoutCredentialsNeedToBeEncoded() {
+        // when: "credentials need encoding in the URL"
+        String urlWithoutCredentials = Utils.urlWithoutCredentials("https://test+user:test%40password@myrabbithost/api/");
+
+        // then: "credentials are properly removed from the URL"
+        assertThat(urlWithoutCredentials).isEqualTo("https://myrabbithost/api/");
     }
 
     private QueryParameters emptyQueryParameters() {
