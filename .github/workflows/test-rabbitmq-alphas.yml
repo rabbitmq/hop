@@ -18,7 +18,7 @@ jobs:
           - pivotalrabbitmq/rabbitmq:main-otp27
     name:  Test against ${{ matrix.rabbitmq-image }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Set up JDK
         uses: actions/setup-java@v4
         with:
