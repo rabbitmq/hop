@@ -35,7 +35,7 @@
 
   <properties>
     <jackson.version>2.19.2</jackson.version>
-    <reactor-netty.version>1.2.8</reactor-netty.version>
+    <reactor-netty.version>1.2.9</reactor-netty.version>
     <groovy.version>4.0.28</groovy.version>
     <spock.version>2.3-groovy-4.0</spock.version>
     <junit.version>5.13.4</junit.version>
