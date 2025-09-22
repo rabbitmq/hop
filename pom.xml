@@ -45,7 +45,7 @@
     <amqp-client.version>5.26.0</amqp-client.version>
     <logback.version>1.2.13</logback.version>
     <bouncycastle.version>1.82</bouncycastle.version>
-    <maven.compiler.plugin.version>3.14.0</maven.compiler.plugin.version>
+    <maven.compiler.plugin.version>3.14.1</maven.compiler.plugin.version>
     <maven-surefire-plugin.version>3.5.4</maven-surefire-plugin.version>
     <maven.gpg.plugin.version>3.2.8</maven.gpg.plugin.version>
     <maven-resources-plugin.version>3.3.1</maven-resources-plugin.version>
