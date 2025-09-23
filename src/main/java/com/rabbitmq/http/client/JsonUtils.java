@@ -58,7 +58,7 @@ final class JsonUtils {
   static ObjectMapper createDefaultObjectMapper() {
     JsonMapper objectMapper =
         JsonMapper.builder().disable(MapperFeature.DEFAULT_VIEW_INCLUSION).build();
-    objectMapper.setSerializationInclusion(JsonInclude.Include.NON_NULL);
+    objectMapper.setDefaultPropertyInclusion(JsonInclude.Include.NON_NULL);
     objectMapper.enable(DeserializationFeature.ACCEPT_EMPTY_ARRAY_AS_NULL_OBJECT);
     objectMapper.disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
     SimpleModule module = new SimpleModule();
@@ -196,7 +196,7 @@ final class JsonUtils {
     private static final String USER_FIELD = "user";
     private static final long serialVersionUID = -1831999885508961350L;
 
-    protected ChannelDetailsDeserializer() {
+    private ChannelDetailsDeserializer() {
       super(ChannelDetails.class);
     }
 
