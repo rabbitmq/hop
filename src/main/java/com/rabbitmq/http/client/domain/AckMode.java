@@ -16,10 +16,10 @@
 
 package com.rabbitmq.http.client.domain;
 
+import java.util.Arrays;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonValue;
-
-import java.util.Arrays;
 
 public enum AckMode {
     /**

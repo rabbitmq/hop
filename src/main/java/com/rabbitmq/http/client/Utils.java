@@ -16,20 +16,19 @@
 
 package com.rabbitmq.http.client;
 
-import com.rabbitmq.http.client.domain.OutboundMessage;
-import com.rabbitmq.http.client.domain.QueryParameters;
-
+import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.nio.charset.StandardCharsets;
-import java.util.Base64;
-
-import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
+import java.util.Base64;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+
+import com.rabbitmq.http.client.domain.OutboundMessage;
+import com.rabbitmq.http.client.domain.QueryParameters;
 
 /**
  *

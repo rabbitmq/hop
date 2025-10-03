@@ -1,3 +1,18 @@
+/*
+ * Copyright 2025 the original author or authors.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      https://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.rabbitmq.http.client;
 
 import static com.rabbitmq.http.client.JdkHttpClientHttpLayer.maybeThrowClientServerException;
@@ -63,7 +78,8 @@ public class JdkHttpClientHttpLayerTest {
     return staticHandler(content, "application/json", calls);
   }
 
-  private static HttpHandler staticHandler(String content, String contentType, Map<String, AtomicLong> calls) {
+  private static HttpHandler staticHandler(
+      String content, String contentType, Map<String, AtomicLong> calls) {
     return exchange -> {
       String target = exchange.getRequestURI().getPath();
       calls.computeIfAbsent(target, path -> new AtomicLong(0)).incrementAndGet();
@@ -77,7 +93,8 @@ public class JdkHttpClientHttpLayerTest {
   }
 
   private static HttpServer startHttpServer(int port, HttpHandler handler) throws Exception {
-    com.sun.net.httpserver.HttpServer server = com.sun.net.httpserver.HttpServer.create(new InetSocketAddress(port), 0);
+    com.sun.net.httpserver.HttpServer server =
+        com.sun.net.httpserver.HttpServer.create(new InetSocketAddress(port), 0);
     server.createContext("/", handler);
     server.start();
     return server;
@@ -141,8 +158,7 @@ public class JdkHttpClientHttpLayerTest {
               responseBody.write(body);
               responseBody.close();
             });
-    HttpLayerFactory factory = JdkHttpClientHttpLayer.configure()
-        .create();
+    HttpLayerFactory factory = JdkHttpClientHttpLayer.configure().create();
     HttpLayer httpLayer = factory.create(new ClientParameters());
     URI baseUri = new URI("http://localhost:" + port);
     assertThatThrownBy(() -> httpLayer.get(baseUri.resolve("/client-error"), String[].class))
@@ -208,7 +224,8 @@ public class JdkHttpClientHttpLayerTest {
         keyStorePassword.toCharArray(),
         new Certificate[] {certificate});
 
-    KeyManagerFactory keyManagerFactory = KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
+    KeyManagerFactory keyManagerFactory =
+        KeyManagerFactory.getInstance(KeyManagerFactory.getDefaultAlgorithm());
     keyManagerFactory.init(keyStore, keyStorePassword.toCharArray());
     SSLContext sslContext = SSLContext.getInstance("TLS");
     sslContext.init(keyManagerFactory.getKeyManagers(), null, null);

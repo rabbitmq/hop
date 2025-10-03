@@ -16,8 +16,59 @@
 
 package com.rabbitmq.http.client;
 
+import static com.rabbitmq.http.client.PercentEncoder.encodeParameter;
+import static com.rabbitmq.http.client.PercentEncoder.encodePathSegment;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.lang.reflect.Array;
+import java.nio.charset.StandardCharsets;
+import java.util.Base64;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.function.BiFunction;
+import java.util.function.Consumer;
+import java.util.function.Function;
+import java.util.function.Supplier;
+import java.util.stream.Collectors;
+
+import org.reactivestreams.Publisher;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.rabbitmq.http.client.domain.*;
+import com.rabbitmq.http.client.domain.AlivenessTestResult;
+import com.rabbitmq.http.client.domain.BindingInfo;
+import com.rabbitmq.http.client.domain.ChannelInfo;
+import com.rabbitmq.http.client.domain.ClusterId;
+import com.rabbitmq.http.client.domain.ConnectionInfo;
+import com.rabbitmq.http.client.domain.ConsumerDetails;
+import com.rabbitmq.http.client.domain.CurrentUserDetails;
+import com.rabbitmq.http.client.domain.Definitions;
+import com.rabbitmq.http.client.domain.DeleteQueueParameters;
+import com.rabbitmq.http.client.domain.DetailsParameters;
+import com.rabbitmq.http.client.domain.ExchangeInfo;
+import com.rabbitmq.http.client.domain.InboundMessage;
+import com.rabbitmq.http.client.domain.MqttVhostPortInfo;
+import com.rabbitmq.http.client.domain.NodeInfo;
+import com.rabbitmq.http.client.domain.OutboundMessage;
+import com.rabbitmq.http.client.domain.OverviewResponse;
+import com.rabbitmq.http.client.domain.PolicyInfo;
+import com.rabbitmq.http.client.domain.QueueInfo;
+import com.rabbitmq.http.client.domain.ShovelInfo;
+import com.rabbitmq.http.client.domain.ShovelStatus;
+import com.rabbitmq.http.client.domain.TopicPermissions;
+import com.rabbitmq.http.client.domain.UpstreamDetails;
+import com.rabbitmq.http.client.domain.UpstreamInfo;
+import com.rabbitmq.http.client.domain.UpstreamSetDetails;
+import com.rabbitmq.http.client.domain.UpstreamSetInfo;
+import com.rabbitmq.http.client.domain.UserInfo;
+import com.rabbitmq.http.client.domain.UserPermissions;
+import com.rabbitmq.http.client.domain.VhostInfo;
+import com.rabbitmq.http.client.domain.VhostLimits;
+
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufOutputStream;
 import io.netty.buffer.PooledByteBufAllocator;
@@ -25,28 +76,12 @@ import io.netty.handler.codec.http.HttpHeaderNames;
 import io.netty.handler.codec.http.HttpHeaderValues;
 import io.netty.handler.codec.http.HttpHeaders;
 import io.netty.handler.codec.http.HttpMethod;
-import org.reactivestreams.Publisher;
 import reactor.core.Exceptions;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 import reactor.netty.ByteBufFlux;
 import reactor.netty.http.client.HttpClient;
 import reactor.netty.http.client.HttpClientResponse;
-
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.lang.reflect.Array;
-import java.nio.charset.StandardCharsets;
-import java.util.*;
-import java.util.function.BiFunction;
-import java.util.function.Consumer;
-import java.util.function.Function;
-import java.util.function.Supplier;
-import java.util.stream.Collectors;
-
-import static com.rabbitmq.http.client.PercentEncoder.encodeParameter;
-import static com.rabbitmq.http.client.PercentEncoder.encodePathSegment;
 
 /**
  * Reactive client based on Reactor Netty.

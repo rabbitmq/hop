@@ -16,9 +16,9 @@
 
 package com.rabbitmq.http.client.domain;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
-
 import java.util.List;
+
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 @SuppressWarnings("unused")
 public class OverviewResponse {

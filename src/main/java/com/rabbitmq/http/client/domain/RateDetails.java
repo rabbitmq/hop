@@ -16,9 +16,10 @@
 
 package com.rabbitmq.http.client.domain;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.Collections;
 import java.util.List;
+
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 public class RateDetails {
   private final double average;

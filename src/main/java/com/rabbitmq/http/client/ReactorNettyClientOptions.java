@@ -16,13 +16,14 @@
 
 package com.rabbitmq.http.client;
 
+import java.util.function.BiConsumer;
+import java.util.function.Supplier;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
+
 import io.netty.buffer.ByteBuf;
 import reactor.core.publisher.Mono;
 import reactor.netty.http.client.HttpClient;
-
-import java.util.function.BiConsumer;
-import java.util.function.Supplier;
 
 /**
  * Options for {@link ReactorNettyClient}.

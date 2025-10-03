@@ -1,8 +1,8 @@
 package com.rabbitmq.http.client.domain;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
-
 import java.util.Map;
+
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 /**
  * POJO for messages consumed from the HTTP API.

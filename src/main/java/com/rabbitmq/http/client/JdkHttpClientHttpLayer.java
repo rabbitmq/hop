@@ -16,8 +16,6 @@
 
 package com.rabbitmq.http.client;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import java.io.IOException;
 import java.io.InputStream;
 import java.lang.reflect.Type;
@@ -35,8 +33,12 @@ import java.util.Collections;
 import java.util.Map;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
+
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLParameters;
+
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 /**
  * {@link HttpLayer} using JDK 11's {@link HttpClient}.

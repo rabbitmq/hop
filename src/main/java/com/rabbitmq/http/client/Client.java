@@ -16,15 +16,51 @@
 
 package com.rabbitmq.http.client;
 
-import com.rabbitmq.http.client.HttpLayer.HttpLayerFactory;
-import com.rabbitmq.http.client.domain.*;
-
-import javax.net.ssl.SSLContext;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import javax.net.ssl.SSLContext;
+
+import com.rabbitmq.http.client.HttpLayer.HttpLayerFactory;
+import com.rabbitmq.http.client.domain.AlivenessTestResult;
+import com.rabbitmq.http.client.domain.BindingInfo;
+import com.rabbitmq.http.client.domain.ChannelInfo;
+import com.rabbitmq.http.client.domain.ClusterId;
+import com.rabbitmq.http.client.domain.ConnectionInfo;
+import com.rabbitmq.http.client.domain.ConsumerDetails;
+import com.rabbitmq.http.client.domain.CurrentUserDetails;
+import com.rabbitmq.http.client.domain.Definitions;
+import com.rabbitmq.http.client.domain.DeleteQueueParameters;
+import com.rabbitmq.http.client.domain.DetailsParameters;
+import com.rabbitmq.http.client.domain.ExchangeInfo;
+import com.rabbitmq.http.client.domain.InboundMessage;
+import com.rabbitmq.http.client.domain.MqttVhostPortInfo;
+import com.rabbitmq.http.client.domain.NodeInfo;
+import com.rabbitmq.http.client.domain.OutboundMessage;
+import com.rabbitmq.http.client.domain.OverviewResponse;
+import com.rabbitmq.http.client.domain.Page;
+import com.rabbitmq.http.client.domain.PolicyInfo;
+import com.rabbitmq.http.client.domain.QueryParameters;
+import com.rabbitmq.http.client.domain.QueueInfo;
+import com.rabbitmq.http.client.domain.ShovelInfo;
+import com.rabbitmq.http.client.domain.ShovelStatus;
+import com.rabbitmq.http.client.domain.TopicPermissions;
+import com.rabbitmq.http.client.domain.UpstreamDetails;
+import com.rabbitmq.http.client.domain.UpstreamInfo;
+import com.rabbitmq.http.client.domain.UpstreamSetDetails;
+import com.rabbitmq.http.client.domain.UpstreamSetInfo;
+import com.rabbitmq.http.client.domain.UserConnectionInfo;
+import com.rabbitmq.http.client.domain.UserInfo;
+import com.rabbitmq.http.client.domain.UserPermissions;
+import com.rabbitmq.http.client.domain.VhostInfo;
+import com.rabbitmq.http.client.domain.VhostLimits;
 
 public class Client {
 

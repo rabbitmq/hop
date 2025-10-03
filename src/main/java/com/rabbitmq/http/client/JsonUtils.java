@@ -16,6 +16,12 @@
 
 package com.rabbitmq.http.client;
 
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.DeserializationContext;
@@ -31,11 +37,6 @@ import com.rabbitmq.http.client.domain.ChannelDetails;
 import com.rabbitmq.http.client.domain.CurrentUserDetails;
 import com.rabbitmq.http.client.domain.UserInfo;
 import com.rabbitmq.http.client.domain.VhostLimits;
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
 
 final class JsonUtils {
 

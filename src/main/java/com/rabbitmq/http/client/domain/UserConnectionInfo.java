@@ -1,6 +1,5 @@
 package com.rabbitmq.http.client.domain;
 
-import com.fasterxml.jackson.annotation.JsonAutoDetect;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 public class UserConnectionInfo {

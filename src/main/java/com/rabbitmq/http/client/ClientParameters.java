@@ -18,12 +18,12 @@ package com.rabbitmq.http.client;
 
 import static com.rabbitmq.http.client.Utils.notNull;
 
-import com.rabbitmq.http.client.HttpLayer.HttpLayerFactory;
-
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
+
+import com.rabbitmq.http.client.HttpLayer.HttpLayerFactory;
 
 /**
  * Parameters to create an instance of {@link Client}.
