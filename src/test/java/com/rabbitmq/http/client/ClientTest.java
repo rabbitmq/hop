@@ -15,8 +15,12 @@
  */
 package com.rabbitmq.http.client;
 
+import static com.rabbitmq.http.client.TestUtils.isVersion36orLater;
 import static org.assertj.core.api.Assertions.assertThat;
 
+import com.rabbitmq.client.AMQP;
+import com.rabbitmq.client.AuthenticationFailureException;
+import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.Connection;
 import com.rabbitmq.client.ConnectionFactory;
 import com.rabbitmq.http.client.domain.AckMode;
@@ -59,13 +63,26 @@ import com.rabbitmq.http.client.domain.UserPermissions;
 import com.rabbitmq.http.client.domain.VhostInfo;
 import com.rabbitmq.http.client.domain.VhostLimits;
 import java.io.IOException;
+import java.lang.reflect.Array;
+import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -130,7 +147,7 @@ public class ClientTest {
 
   protected static void awaitAllConnectionsClosed(Client client) {
     int n = 0;
-    java.util.List<ConnectionInfo> result = client.getConnections();
+    List<ConnectionInfo> result = client.getConnections();
     while (result != null && result.size() > 0 && n < 10000) {
       try {
         Thread.sleep(100);
@@ -180,7 +197,7 @@ public class ClientTest {
     assertThat(info.getUsername()).isEqualTo(username);
   }
 
-  protected static void verifyChannelInfo(ChannelInfo chi, com.rabbitmq.client.Channel ch) {
+  protected static void verifyChannelInfo(ChannelInfo chi, Channel ch) {
     assertThat(chi.getConsumerCount()).isEqualTo(0);
     assertThat(chi.getNumber()).isEqualTo(ch.getChannelNumber());
     assertThat(chi.getNode()).startsWith("rabbit@");
@@ -192,16 +209,16 @@ public class ClientTest {
   protected static void verifyVhost(VhostInfo vhi, String version) {
     assertThat(vhi.getName()).isEqualTo("/");
     assertThat(vhi.isTracing()).isFalse();
-    if (isVersion37orLater(version)) {
+    if (TestUtils.isVersion37orLater(version)) {
       assertThat(vhi.getClusterState()).isNotNull();
     }
-    if (isVersion38orLater(version)) {
+    if (TestUtils.isVersion38orLater(version)) {
       assertThat(vhi.getDescription()).isNotNull();
     }
   }
 
   protected static void verifyUpstreamDefinitions(
-      String vhost, java.util.List<UpstreamInfo> upstreams, String upstreamName) {
+      String vhost, List<UpstreamInfo> upstreams, String upstreamName) {
     assertThat(upstreams).isNotEmpty();
     UpstreamInfo upstream =
         upstreams.stream().filter(u -> u.getName().equals(upstreamName)).findFirst().orElse(null);
@@ -245,13 +262,12 @@ public class ClientTest {
 
   private static <T> boolean isEmptyResult(T result) {
     if (result == null) return true;
-    if (result instanceof java.util.Collection) return ((java.util.Collection<?>) result).isEmpty();
-    if (result.getClass().isArray()) return java.lang.reflect.Array.getLength(result) == 0;
+    if (result instanceof Collection) return ((Collection<?>) result).isEmpty();
+    if (result.getClass().isArray()) return Array.getLength(result) == 0;
     return false;
   }
 
-  protected static boolean waitAtMostUntilTrue(
-      int timeoutInSeconds, java.util.function.Supplier<Boolean> callback) {
+  protected static boolean waitAtMostUntilTrue(int timeoutInSeconds, Supplier<Boolean> callback) {
     if (callback.get()) {
       return true;
     }
@@ -271,9 +287,9 @@ public class ClientTest {
     return false;
   }
 
-  protected static boolean awaitOn(java.util.concurrent.CountDownLatch latch) {
+  protected static boolean awaitOn(CountDownLatch latch) {
     try {
-      return latch.await(10, java.util.concurrent.TimeUnit.SECONDS);
+      return latch.await(10, TimeUnit.SECONDS);
     } catch (InterruptedException e) {
       Thread.currentThread().interrupt();
       return false;
@@ -288,62 +304,16 @@ public class ClientTest {
     }
   }
 
-  private static boolean checkVersionOrLater(String currentVersion, String expectedVersion) {
-    String v = currentVersion.replaceAll("\\+.*$", "");
-    try {
-      return v.equals("0.0.0") || compareVersions(v, expectedVersion) >= 0;
-    } catch (Exception e) {
-      return false;
-    }
-  }
-
-  static boolean isVersion36orLater(String currentVersion) {
-    return checkVersionOrLater(currentVersion, "3.6.0");
-  }
-
-  static boolean isVersion37orLater(String currentVersion) {
-    return checkVersionOrLater(currentVersion, "3.7.0");
-  }
-
-  static boolean isVersion38orLater(String currentVersion) {
-    return checkVersionOrLater(currentVersion, "3.8.0");
-  }
-
-  static boolean isVersion310orLater(String currentVersion) {
-    return checkVersionOrLater(currentVersion, "3.10.0");
-  }
-
   boolean isVersion37orLater() {
-    return isVersion37orLater(brokerVersion);
+    return TestUtils.isVersion37orLater(brokerVersion);
   }
 
   boolean isVersion38orLater() {
-    return isVersion38orLater(brokerVersion);
+    return TestUtils.isVersion38orLater(brokerVersion);
   }
 
   boolean isVersion310orLater() {
-    return isVersion310orLater(brokerVersion);
-  }
-
-  static Integer compareVersions(String str1, String str2) {
-    String[] vals1 = str1.split("\\.");
-    String[] vals2 = str2.split("\\.");
-    int i = 0;
-    while (i < vals1.length && i < vals2.length && vals1[i].equals(vals2[i])) {
-      i++;
-    }
-    if (i < vals1.length && i < vals2.length) {
-      if (vals1[i].indexOf('-') != -1) {
-        vals1[i] = vals1[i].substring(0, vals1[i].indexOf('-'));
-      }
-      if (vals2[i].indexOf('-') != -1) {
-        vals2[i] = vals2[i].substring(0, vals2[i].indexOf('-'));
-      }
-      int diff = Integer.compare(Integer.valueOf(vals1[i]), Integer.valueOf(vals2[i]));
-      return Integer.signum(diff);
-    } else {
-      return Integer.signum(vals1.length - vals2.length);
-    }
+    return TestUtils.isVersion310orLater(brokerVersion);
   }
 
   @Test
@@ -362,16 +332,14 @@ public class ClientTest {
   void getApiOverview() throws Exception {
     // when: client requests GET /api/overview
     Connection conn = openConnection();
-    com.rabbitmq.client.Channel ch = conn.createChannel();
+    Channel ch = conn.createChannel();
     for (int i = 0; i < 1000; i++) {
       ch.basicPublish("", "", null, null);
     }
 
     OverviewResponse res = client.getOverview();
-    java.util.List<String> xts =
-        res.getExchangeTypes().stream()
-            .map(ExchangeType::getName)
-            .collect(java.util.stream.Collectors.toList());
+    List<String> xts =
+        res.getExchangeTypes().stream().map(ExchangeType::getName).collect(Collectors.toList());
 
     // then: the response is converted successfully
     assertThat(res.getNode()).startsWith("rabbit@");
@@ -409,7 +377,7 @@ public class ClientTest {
   @Test
   void getApiNodes() {
     // when: client retrieves a list of cluster nodes
-    java.util.List<NodeInfo> res = client.getNodes();
+    List<NodeInfo> res = client.getNodes();
     NodeInfo node = res.get(0);
 
     // then: the list is returned
@@ -420,7 +388,7 @@ public class ClientTest {
   @Test
   void getApiNodesWithName() {
     // when: client retrieves a list of cluster nodes
-    java.util.List<NodeInfo> res = client.getNodes();
+    List<NodeInfo> res = client.getNodes();
     String name = res.get(0).getName();
     NodeInfo node = client.getNode(name);
 
@@ -435,7 +403,7 @@ public class ClientTest {
     Connection conn = openConnection();
 
     // when: client retrieves a list of connections
-    java.util.List<ConnectionInfo> res = awaitEventPropagation(() -> client.getConnections());
+    List<ConnectionInfo> res = awaitEventPropagation(() -> client.getConnections());
     ConnectionInfo fst = res.get(0);
 
     // then: the list is returned
@@ -449,7 +417,7 @@ public class ClientTest {
   @Test
   void getApiConnectionsWithPaging() throws Exception {
     // given: some named RabbitMQ client connections
-    java.util.List<Connection> connections = new java.util.ArrayList<>();
+    List<Connection> connections = new ArrayList<>();
     for (int i = 0; i <= 15; i++) {
       String name = "list-connections-with-paging-test-" + i;
       Connection conn = openConnection(name);
@@ -481,7 +449,7 @@ public class ClientTest {
     Connection conn = openConnection();
 
     // when: client retrieves connection info with the correct name
-    java.util.List<ConnectionInfo> xs = awaitEventPropagation(() -> client.getConnections());
+    List<ConnectionInfo> xs = awaitEventPropagation(() -> client.getConnections());
     ConnectionInfo x = client.getConnection(xs.get(0).getName());
 
     // then: the info is returned
@@ -494,16 +462,16 @@ public class ClientTest {
   @Test
   void getApiConnectionsWithNameWithClientProvidedName() throws Exception {
     // given: an open RabbitMQ client connection with client-provided name
-    String s = java.util.UUID.randomUUID().toString();
+    String s = UUID.randomUUID().toString();
     Connection conn = openConnection(s);
 
     // when: client retrieves connection info with the correct name
-    java.util.List<ConnectionInfo> xs = awaitEventPropagation(() -> client.getConnections());
+    List<ConnectionInfo> xs = awaitEventPropagation(() -> client.getConnections());
     // applying filter as some previous connections can still show up in the management API
     xs =
         xs.stream()
             .filter(ci -> s.equals(ci.getClientProperties().getConnectionName()))
-            .collect(java.util.stream.Collectors.toList());
+            .collect(Collectors.toList());
     ConnectionInfo x = client.getConnection(xs.get(0).getName());
 
     // then: the info is returned
@@ -523,7 +491,7 @@ public class ClientTest {
     String username = "guest";
 
     // when: client retrieves user connection info for the given name
-    java.util.List<UserConnectionInfo> xs =
+    List<UserConnectionInfo> xs =
         awaitEventPropagation(() -> client.getConnectionsOfUser(username));
     UserConnectionInfo uc = xs.get(0);
 
@@ -541,21 +509,18 @@ public class ClientTest {
     if (!isVersion310orLater()) return;
 
     // given: an open RabbitMQ client connection
-    java.util.concurrent.CountDownLatch latch = new java.util.concurrent.CountDownLatch(1);
-    String s = java.util.UUID.randomUUID().toString();
+    CountDownLatch latch = new CountDownLatch(1);
+    String s = UUID.randomUUID().toString();
     String username = "guest";
     Connection conn = openConnection(s);
     conn.addShutdownListener(e -> latch.countDown());
     assertThat(conn.isOpen()).isTrue();
 
     // and: that shows up on connection list of a user
-    java.util.List<UserConnectionInfo> xs =
+    List<UserConnectionInfo> xs =
         awaitEventPropagation(() -> client.getConnectionsOfUser(username));
     // applying filter as some previous connections can still show up in the management API
-    xs =
-        xs.stream()
-            .filter(uci -> username.equals(uci.getUsername()))
-            .collect(java.util.stream.Collectors.toList());
+    xs = xs.stream().filter(uci -> username.equals(uci.getUsername())).collect(Collectors.toList());
     assertThat(xs).isNotEmpty();
 
     // when: client closes all connections of the user
@@ -576,19 +541,19 @@ public class ClientTest {
   @Test
   void deleteApiConnectionsWithName() throws Exception {
     // given: an open RabbitMQ client connection
-    java.util.concurrent.CountDownLatch latch = new java.util.concurrent.CountDownLatch(1);
-    String s = java.util.UUID.randomUUID().toString();
+    CountDownLatch latch = new CountDownLatch(1);
+    String s = UUID.randomUUID().toString();
     Connection conn = openConnection(s);
     conn.addShutdownListener(e -> latch.countDown());
     assertThat(conn.isOpen()).isTrue();
 
     // when: client closes the connection
-    java.util.List<ConnectionInfo> xs = awaitEventPropagation(() -> client.getConnections());
+    List<ConnectionInfo> xs = awaitEventPropagation(() -> client.getConnections());
     // applying filter as some previous connections can still show up in the management API
     xs =
         xs.stream()
             .filter(ci -> s.equals(ci.getClientProperties().getConnectionName()))
-            .collect(java.util.stream.Collectors.toList());
+            .collect(Collectors.toList());
     for (ConnectionInfo ci : xs) {
       client.closeConnection(ci.getName());
     }
@@ -608,19 +573,19 @@ public class ClientTest {
   @Test
   void deleteApiConnectionsWithNameWithUserProvidedReason() throws Exception {
     // given: an open RabbitMQ client connection
-    java.util.concurrent.CountDownLatch latch = new java.util.concurrent.CountDownLatch(1);
-    String s = java.util.UUID.randomUUID().toString();
+    CountDownLatch latch = new CountDownLatch(1);
+    String s = UUID.randomUUID().toString();
     Connection conn = openConnection(s);
     conn.addShutdownListener(e -> latch.countDown());
     assertThat(conn.isOpen()).isTrue();
 
     // when: client closes the connection
-    java.util.List<ConnectionInfo> xs = awaitEventPropagation(() -> client.getConnections());
+    List<ConnectionInfo> xs = awaitEventPropagation(() -> client.getConnections());
     // applying filter as some previous connections can still show up in the management API
     xs =
         xs.stream()
             .filter(ci -> s.equals(ci.getClientProperties().getConnectionName()))
-            .collect(java.util.stream.Collectors.toList());
+            .collect(Collectors.toList());
     for (ConnectionInfo ci : xs) {
       client.closeConnection(ci.getName(), "because reasons!");
     }
@@ -642,7 +607,7 @@ public class ClientTest {
     // given: an open RabbitMQ client connection with 1 channel
     String s = UUID.randomUUID().toString();
     Connection conn = openConnection(s);
-    com.rabbitmq.client.Channel ch = conn.createChannel();
+    Channel ch = conn.createChannel();
 
     // when: client lists channels
     List<ConnectionInfo> xs = awaitEventPropagation(() -> client.getConnections());
@@ -670,7 +635,7 @@ public class ClientTest {
   void getApiChannelsWithPaging() throws Exception {
     // given: some AMQP channels
     Connection conn = openConnection();
-    List<com.rabbitmq.client.Channel> channels = new java.util.ArrayList<>();
+    List<Channel> channels = new ArrayList<>();
     for (int i = 1; i <= 16; i++) {
       channels.add(conn.createChannel(i));
     }
@@ -687,7 +652,7 @@ public class ClientTest {
     assertThat(page.getTotalCount()).isGreaterThanOrEqualTo(page.getFilteredCount());
     assertThat(page.getPage()).isEqualTo(1);
     ChannelInfo channelInfo = page.getItemsAsList().get(0);
-    com.rabbitmq.client.Channel originalChannel =
+    Channel originalChannel =
         channels.stream()
             .filter(ch -> ch.getChannelNumber() == channelInfo.getNumber())
             .findFirst()
@@ -703,7 +668,7 @@ public class ClientTest {
     // given: an open RabbitMQ client connection with 1 channel
     String s = UUID.randomUUID().toString();
     Connection conn = openConnection(s);
-    com.rabbitmq.client.Channel ch = conn.createChannel();
+    Channel ch = conn.createChannel();
 
     // when: client lists channels on that connection
     List<ConnectionInfo> xs = awaitEventPropagation(() -> client.getConnections());
@@ -731,7 +696,7 @@ public class ClientTest {
     // given: an open RabbitMQ client connection with 1 channel
     String s = UUID.randomUUID().toString();
     Connection conn = openConnection(s);
-    com.rabbitmq.client.Channel ch = conn.createChannel();
+    Channel ch = conn.createChannel();
 
     // when: client retrieves channel info
     List<ConnectionInfo> xs = awaitEventPropagation(() -> client.getConnections());
@@ -862,15 +827,13 @@ public class ClientTest {
     // given: a queue named hop.publish and a consumer on this queue
     String v = "/";
     Connection conn = openConnection();
-    com.rabbitmq.client.Channel ch = conn.createChannel();
+    Channel ch = conn.createChannel();
     String q = "hop.publish";
     ch.queueDeclare(q, false, false, false, null);
     ch.queueBind(q, "amq.direct", q);
     CountDownLatch latch = new CountDownLatch(1);
-    java.util.concurrent.atomic.AtomicReference<String> payloadReference =
-        new java.util.concurrent.atomic.AtomicReference<>();
-    java.util.concurrent.atomic.AtomicReference<com.rabbitmq.client.AMQP.BasicProperties>
-        propertiesReference = new java.util.concurrent.atomic.AtomicReference<>();
+    AtomicReference<String> payloadReference = new AtomicReference<>();
+    AtomicReference<AMQP.BasicProperties> propertiesReference = new AtomicReference<>();
     ch.basicConsume(
         q,
         true,
@@ -882,11 +845,11 @@ public class ClientTest {
         ctag -> {});
 
     // when: client publishes a message to the queue
-    java.util.Map<String, Object> properties = new java.util.HashMap<>();
+    Map<String, Object> properties = new HashMap<>();
     properties.put("delivery_mode", 1);
     properties.put("content_type", "text/plain");
     properties.put("priority", 5);
-    properties.put("headers", java.util.Collections.singletonMap("header1", "value1"));
+    properties.put("headers", Map.of("header1", "value1"));
     boolean routed =
         client.publish(
             v,
@@ -915,7 +878,7 @@ public class ClientTest {
   void getApiExchangesWithVhostWithNameBindingsSource() throws Exception {
     // given: a queue named hop.queue1
     Connection conn = openConnection();
-    com.rabbitmq.client.Channel ch = conn.createChannel();
+    Channel ch = conn.createChannel();
     String q = "hop.queue1";
     ch.queueDeclare(q, false, false, false, null);
 
@@ -943,7 +906,7 @@ public class ClientTest {
   void getApiExchangesWithVhostWithNameBindingsDestination() throws Exception {
     // given: an exchange named hop.exchange1 which is bound to amq.fanout
     Connection conn = openConnection();
-    com.rabbitmq.client.Channel ch = conn.createChannel();
+    Channel ch = conn.createChannel();
     String src = "amq.fanout";
     String dest = "hop.exchange1";
     ch.exchangeDeclare(dest, "fanout");
@@ -972,7 +935,7 @@ public class ClientTest {
   @Test
   void getApiQueues() throws Exception {
     Connection conn = cf.newConnection();
-    com.rabbitmq.client.Channel ch = conn.createChannel();
+    Channel ch = conn.createChannel();
     String q = ch.queueDeclare().getQueue();
     List<QueueInfo> xs = client.getQueues();
     QueueInfo x = xs.get(0);
@@ -985,11 +948,11 @@ public class ClientTest {
   void getApiQueuesWithVhostWithNameWithPolicyDefinition() throws Exception {
     String v = "/";
     String s = "hop.test";
-    java.util.Map<String, Object> pd = java.util.Collections.singletonMap("expires", 30000);
+    Map<String, Object> pd = Collections.singletonMap("expires", 30000);
     PolicyInfo pi = new PolicyInfo(".*", 1, "queues", pd);
     client.declarePolicy(v, s, pi);
     Connection conn = cf.newConnection();
-    com.rabbitmq.client.Channel ch = conn.createChannel();
+    Channel ch = conn.createChannel();
     String q = ch.queueDeclare().getQueue();
     waitAtMostUntilTrue(
         10,
@@ -1007,15 +970,14 @@ public class ClientTest {
   @Test
   void getApiQueuesWithDetails() throws Exception {
     Connection conn = cf.newConnection();
-    com.rabbitmq.client.Channel ch = conn.createChannel();
+    Channel ch = conn.createChannel();
     String q = ch.queueDeclare().getQueue();
-    java.util.concurrent.ExecutorService executorService =
-        java.util.concurrent.Executors.newSingleThreadExecutor();
+    ExecutorService executorService = Executors.newSingleThreadExecutor();
     executorService.submit(
         () -> {
           while (!Thread.currentThread().isInterrupted()) {
             try {
-              ch.basicPublish("", q, null, "".getBytes(java.nio.charset.StandardCharsets.UTF_8));
+              ch.basicPublish("", q, null, "".getBytes(StandardCharsets.UTF_8));
               Thread.sleep(10);
             } catch (Exception e) {
               return;
@@ -1050,8 +1012,8 @@ public class ClientTest {
   @Test
   void getApiQueuesWithPaging() throws Exception {
     Connection conn = cf.newConnection();
-    com.rabbitmq.client.Channel ch = conn.createChannel();
-    List<String> queues = new java.util.ArrayList<>();
+    Channel ch = conn.createChannel();
+    List<String> queues = new ArrayList<>();
     for (int i = 0; i <= 15; i++) {
       String qn = "queue-for-paging-test-" + i;
       ch.queueDeclare(qn, false, false, false, null);
@@ -1074,8 +1036,8 @@ public class ClientTest {
   @Test
   void getApiQueuesWithPagingAndNavigating() throws Exception {
     Connection conn = cf.newConnection();
-    com.rabbitmq.client.Channel ch = conn.createChannel();
-    List<String> queues = new java.util.ArrayList<>();
+    Channel ch = conn.createChannel();
+    List<String> queues = new ArrayList<>();
     for (int i = 0; i <= 15; i++) {
       String qn = "queue-for-paging-and-navigating-test-" + i;
       ch.queueDeclare(qn, false, false, false, null);
@@ -1099,22 +1061,20 @@ public class ClientTest {
   @Test
   void getApiQueuesWithPagingAndDetails() throws Exception {
     Connection conn = cf.newConnection();
-    com.rabbitmq.client.Channel ch = conn.createChannel();
-    List<String> queues = new java.util.ArrayList<>();
+    Channel ch = conn.createChannel();
+    List<String> queues = new ArrayList<>();
     for (int i = 0; i <= 15; i++) {
       String qn = "queue-for-paging-and-details-test-" + i;
       ch.queueDeclare(qn, false, false, false, null);
       ch.queueBind(qn, "amq.fanout", "");
       queues.add(qn);
     }
-    java.util.concurrent.ExecutorService executorService =
-        java.util.concurrent.Executors.newSingleThreadExecutor();
+    ExecutorService executorService = Executors.newSingleThreadExecutor();
     executorService.submit(
         () -> {
           while (!Thread.currentThread().isInterrupted()) {
             try {
-              ch.basicPublish(
-                  "amq.fanout", "", null, "".getBytes(java.nio.charset.StandardCharsets.UTF_8));
+              ch.basicPublish("amq.fanout", "", null, "".getBytes(StandardCharsets.UTF_8));
               Thread.sleep(10);
             } catch (Exception e) {
               return;
@@ -1151,7 +1111,7 @@ public class ClientTest {
   @Test
   void getApiQueuesWithVhostWhenVhostExists() throws Exception {
     Connection conn = cf.newConnection();
-    com.rabbitmq.client.Channel ch = conn.createChannel();
+    Channel ch = conn.createChannel();
     String q = ch.queueDeclare().getQueue();
     List<QueueInfo> xs = client.getQueues("/");
     verifyQueueInfo(xs.get(0));
@@ -1170,7 +1130,7 @@ public class ClientTest {
   @Test
   void getApiQueuesWithVhostWithNameWhenBothVhostAndQueueExist() throws Exception {
     Connection conn = cf.newConnection();
-    com.rabbitmq.client.Channel ch = conn.createChannel();
+    Channel ch = conn.createChannel();
     String q = ch.queueDeclare().getQueue();
     QueueInfo x = client.getQueue("/", q);
     assertThat(x.getVhost()).isEqualTo("/");
@@ -1183,7 +1143,7 @@ public class ClientTest {
   @Test
   void getApiQueuesWithVhostWithNameWithAnExclusiveQueue() throws Exception {
     Connection conn = cf.newConnection();
-    com.rabbitmq.client.Channel ch = conn.createChannel();
+    Channel ch = conn.createChannel();
     String s = "hop.q1.exclusive";
     ch.queueDelete(s);
     String q = ch.queueDeclare(s, false, true, false, null).getQueue();
@@ -1195,16 +1155,15 @@ public class ClientTest {
 
   @Test
   void getApiQueuesWithNameWithDetails() throws Exception {
-    java.util.concurrent.ExecutorService executorService =
-        java.util.concurrent.Executors.newSingleThreadExecutor();
+    ExecutorService executorService = Executors.newSingleThreadExecutor();
     Connection conn = cf.newConnection();
-    com.rabbitmq.client.Channel ch = conn.createChannel();
+    Channel ch = conn.createChannel();
     String q = ch.queueDeclare().getQueue();
     executorService.submit(
         () -> {
           while (!Thread.currentThread().isInterrupted()) {
             try {
-              ch.basicPublish("", q, null, "".getBytes(java.nio.charset.StandardCharsets.UTF_8));
+              ch.basicPublish("", q, null, "".getBytes(StandardCharsets.UTF_8));
               Thread.sleep(10);
             } catch (Exception e) {
               return;
@@ -1232,7 +1191,7 @@ public class ClientTest {
   @Test
   void getApiQueuesWithVhostWithNameWhenQueueDoesNotExist() throws Exception {
     Connection conn = cf.newConnection();
-    com.rabbitmq.client.Channel ch = conn.createChannel();
+    Channel ch = conn.createChannel();
     String q = "lolwut";
     ch.queueDelete(q);
     QueueInfo x = client.getQueue("/", q);
@@ -1256,7 +1215,7 @@ public class ClientTest {
   @Test
   void getApiConsumers() throws Exception {
     Connection conn = cf.newConnection();
-    com.rabbitmq.client.Channel ch = conn.createChannel();
+    Channel ch = conn.createChannel();
     String q = ch.queueDeclare().getQueue();
     String consumerTag = ch.basicConsume(q, true, (ctag, msg) -> {}, ctag -> {});
     try {
@@ -1274,7 +1233,7 @@ public class ClientTest {
   @Test
   void getApiConsumersWithVhost() throws Exception {
     Connection conn = cf.newConnection();
-    com.rabbitmq.client.Channel ch = conn.createChannel();
+    Channel ch = conn.createChannel();
     String q = ch.queueDeclare().getQueue();
     String consumerTag = ch.basicConsume(q, true, (ctag, msg) -> {}, ctag -> {});
     waitAtMostUntilTrue(10, () -> client.getConsumers().size() == 1);
@@ -1289,7 +1248,7 @@ public class ClientTest {
   @Test
   void getApiConsumersWithVhostWithNoConsumersInVhost() throws Exception {
     Connection conn = cf.newConnection();
-    com.rabbitmq.client.Channel ch = conn.createChannel();
+    Channel ch = conn.createChannel();
     String q = ch.queueDeclare().getQueue();
     ch.basicConsume(q, true, (ctag, msg) -> {}, ctag -> {});
     waitAtMostUntilTrue(10, () -> client.getConsumers().size() == 1);
@@ -1302,7 +1261,7 @@ public class ClientTest {
   @Test
   void putApiPoliciesWithVhostWithName() {
     String v = "/";
-    java.util.Map<String, Object> d = new java.util.HashMap<>();
+    Map<String, Object> d = new HashMap<>();
     d.put("expires", 30000);
     String s = "hop.test";
     client.declarePolicy(v, s, new PolicyInfo(".*", 1, "queues", d));
@@ -1320,7 +1279,7 @@ public class ClientTest {
   @Test
   void putApiOperatorPoliciesWithVhostWithName() {
     String v = "/";
-    java.util.Map<String, Object> d = new java.util.HashMap<>();
+    Map<String, Object> d = new HashMap<>();
     d.put("max-length", 6);
     String s = "hop.test";
     client.declareOperatorPolicy(v, s, new PolicyInfo(".*", 1, null, d));
@@ -1338,7 +1297,7 @@ public class ClientTest {
     String s = "hop.test";
     try {
       client.declareQueue(v, s, new QueueInfo(false, false, false));
-      org.junit.jupiter.api.Assertions.fail("Expected exception");
+      Assertions.fail("Expected exception");
     } catch (Exception e) {
       assertThat(exceptionStatus(e)).isEqualTo(404);
     }
@@ -1366,7 +1325,7 @@ public class ClientTest {
     client.publish(v, "amq.default", queue, new OutboundMessage().payload("test"));
     try {
       client.deleteQueue(v, queue, new DeleteQueueParameters(true, false));
-      org.junit.jupiter.api.Assertions.fail("Expected exception");
+      Assertions.fail("Expected exception");
     } catch (Exception e) {
       assertThat(exceptionStatus(e)).isEqualTo(400);
     }
@@ -1376,7 +1335,7 @@ public class ClientTest {
   @Test
   void getApiBindings() throws Exception {
     Connection conn = cf.newConnection();
-    com.rabbitmq.client.Channel ch = conn.createChannel();
+    Channel ch = conn.createChannel();
     String x = "amq.fanout";
     String q1 = ch.queueDeclare().getQueue();
     String q2 = ch.queueDeclare().getQueue();
@@ -1401,7 +1360,7 @@ public class ClientTest {
   @Test
   void getApiBindingsWithVhost() throws Exception {
     Connection conn = cf.newConnection();
-    com.rabbitmq.client.Channel ch = conn.createChannel();
+    Channel ch = conn.createChannel();
     String x = "amq.topic";
     String q1 = ch.queueDeclare().getQueue();
     String q2 = ch.queueDeclare().getQueue();
@@ -1423,7 +1382,7 @@ public class ClientTest {
   @Test
   void getApiBindingsWithVhostExample2() throws Exception {
     Connection conn = cf.newConnection();
-    com.rabbitmq.client.Channel ch = conn.createChannel();
+    Channel ch = conn.createChannel();
     String x = "amq.topic";
     String q = "hop.test";
     ch.queueDeclare(q, false, false, false, null);
@@ -1446,7 +1405,7 @@ public class ClientTest {
   @Test
   void getApiQueuesWithVhostWithNameBindings() throws Exception {
     Connection conn = cf.newConnection();
-    com.rabbitmq.client.Channel ch = conn.createChannel();
+    Channel ch = conn.createChannel();
     String x = "amq.topic";
     String q = "hop.test";
     ch.queueDeclare(q, false, false, false, null);
@@ -1469,7 +1428,7 @@ public class ClientTest {
   @Test
   void getApiBindingsWithVhostEWithExchangeQWithQueue() throws Exception {
     Connection conn = cf.newConnection();
-    com.rabbitmq.client.Channel ch = conn.createChannel();
+    Channel ch = conn.createChannel();
     String x = "amq.topic";
     String q = "hop.test";
     ch.queueDeclare(q, false, false, false, null);
@@ -1487,7 +1446,7 @@ public class ClientTest {
   @Test
   void getApiBindingsWithVhostEWithSourceEWithDestination() throws Exception {
     Connection conn = cf.newConnection();
-    com.rabbitmq.client.Channel ch = conn.createChannel();
+    Channel ch = conn.createChannel();
     String s = "amq.fanout";
     String d = "hop.test";
     ch.exchangeDeclare(d, "fanout", false);
@@ -1509,7 +1468,7 @@ public class ClientTest {
     String d = "hop.test";
     client.deleteExchange(v, d);
     client.declareExchange(v, d, new ExchangeInfo("fanout", false, false));
-    java.util.Map<String, Object> args = new java.util.HashMap<>();
+    Map<String, Object> args = new HashMap<>();
     args.put("arg1", "value1");
     args.put("arg2", "value2");
     client.bindExchange(v, d, s, "", args);
@@ -1527,7 +1486,7 @@ public class ClientTest {
     String x = "amq.topic";
     String q = "hop.test";
     client.declareQueue(v, q, new QueueInfo(false, false, false));
-    java.util.Map<String, Object> args = new java.util.HashMap<>();
+    Map<String, Object> args = new HashMap<>();
     args.put("arg1", "value1");
     args.put("arg2", "value2");
     client.bindQueue(v, q, x, "", args);
@@ -1542,21 +1501,20 @@ public class ClientTest {
   void postApiQueuesWithVhostWithExchangeGet() throws Exception {
     String v = "/";
     Connection conn = openConnection();
-    com.rabbitmq.client.Channel ch = conn.createChannel();
+    Channel ch = conn.createChannel();
     String q = "hop.get";
     ch.queueDeclare(q, false, false, false, null);
     ch.confirmSelect();
     int messageCount = 5;
-    com.rabbitmq.client.AMQP.BasicProperties properties =
-        new com.rabbitmq.client.AMQP.BasicProperties.Builder()
+    AMQP.BasicProperties properties =
+        new AMQP.BasicProperties.Builder()
             .contentType("text/plain")
             .deliveryMode(1)
             .priority(5)
-            .headers(java.util.Collections.singletonMap("header1", "value1"))
+            .headers(Collections.singletonMap("header1", "value1"))
             .build();
     for (int i = 1; i <= messageCount; i++) {
-      ch.basicPublish(
-          "", q, properties, ("payload" + i).getBytes(java.nio.charset.Charset.forName("UTF-8")));
+      ch.basicPublish("", q, properties, ("payload" + i).getBytes(Charset.forName("UTF-8")));
     }
     ch.waitForConfirms(5_000);
     List<InboundMessage> messages =
@@ -1574,11 +1532,11 @@ public class ClientTest {
   void postApiQueuesWithVhostWithExchangeGetForOneMessage() throws Exception {
     String v = "/";
     Connection conn = openConnection();
-    com.rabbitmq.client.Channel ch = conn.createChannel();
+    Channel ch = conn.createChannel();
     String q = "hop.get";
     ch.queueDeclare(q, false, false, false, null);
     ch.confirmSelect();
-    ch.basicPublish("", q, null, "payload".getBytes(java.nio.charset.Charset.forName("UTF-8")));
+    ch.basicPublish("", q, null, "payload".getBytes(Charset.forName("UTF-8")));
     ch.waitForConfirms(5_000);
     InboundMessage message = client.get(v, q);
     assertThat(message.getPayload()).isEqualTo("payload");
@@ -1591,7 +1549,7 @@ public class ClientTest {
   @Test
   void deleteApiQueuesWithVhostWithNameContents() throws Exception {
     Connection conn = cf.newConnection();
-    com.rabbitmq.client.Channel ch = conn.createChannel();
+    Channel ch = conn.createChannel();
     String q = "hop.test";
     ch.queueDelete(q);
     ch.queueDeclare(q, false, false, false, null);
@@ -1601,10 +1559,10 @@ public class ClientTest {
       ch.basicPublish("amq.fanout", "", null, "msg".getBytes());
     }
     assertThat(ch.waitForConfirms()).isTrue();
-    com.rabbitmq.client.AMQP.Queue.DeclareOk qi1 = ch.queueDeclarePassive(q);
+    AMQP.Queue.DeclareOk qi1 = ch.queueDeclarePassive(q);
     assertThat(qi1.getMessageCount()).isEqualTo(100);
     client.purgeQueue("/", q);
-    com.rabbitmq.client.AMQP.Queue.DeclareOk qi2 = ch.queueDeclarePassive(q);
+    AMQP.Queue.DeclareOk qi2 = ch.queueDeclarePassive(q);
     assertThat(qi2.getMessageCount()).isEqualTo(0);
     ch.queueDelete(q);
     conn.close();
@@ -1751,12 +1709,12 @@ public class ClientTest {
   void putApiUsersWithNameUpdatesUserTags() {
     String u = "alt-user";
     client.deleteUser(u);
-    client.createUser(u, u.toCharArray(), java.util.Arrays.asList("original", "management"));
+    client.createUser(u, u.toCharArray(), Arrays.asList("original", "management"));
     try {
       Thread.sleep(1000);
     } catch (InterruptedException e) {
     }
-    client.updateUser(u, u.toCharArray(), java.util.Arrays.asList("management", "updated"));
+    client.updateUser(u, u.toCharArray(), Arrays.asList("management", "updated"));
     try {
       Thread.sleep(1000);
     } catch (InterruptedException e) {
@@ -1770,7 +1728,7 @@ public class ClientTest {
   void deleteApiUsersWithName() {
     String u = "alt-user";
     client.deleteUser(u);
-    client.createUser(u, u.toCharArray(), java.util.Arrays.asList("original", "management"));
+    client.createUser(u, u.toCharArray(), Arrays.asList("original", "management"));
     try {
       Thread.sleep(1000);
     } catch (InterruptedException e) {
@@ -1824,17 +1782,13 @@ public class ClientTest {
     String u = "alt-user";
     String h = "";
     client.deleteUser(u);
-    client.createUserWithPasswordHash(
-        u, h.toCharArray(), java.util.Arrays.asList("original", "management"));
+    client.createUserWithPasswordHash(u, h.toCharArray(), Arrays.asList("original", "management"));
     client.updatePermissions("/", u, new UserPermissions(".*", ".*", ".*"));
     try {
       openConnection("alt-user", "alt-user");
-      org.junit.jupiter.api.Assertions.fail("Expected exception");
+      Assertions.fail("Expected exception");
     } catch (Exception e) {
-      assertThat(
-              e instanceof com.rabbitmq.client.AuthenticationFailureException
-                  || e instanceof IOException)
-          .isTrue();
+      assertThat(e instanceof AuthenticationFailureException || e instanceof IOException).isTrue();
     }
     client.deleteUser(u);
   }
@@ -1887,8 +1841,7 @@ public class ClientTest {
     String v = "hop-vhost1";
     client.createVhost(v);
     String u = "hop-user1";
-    client.createUser(
-        u, "test".toCharArray(), java.util.Arrays.asList("management", "http", "policymaker"));
+    client.createUser(u, "test".toCharArray(), Arrays.asList("management", "http", "policymaker"));
     client.updatePermissions(v, u, new UserPermissions("read", "write", "configure"));
     UserPermissions x = client.getPermissions(v, u);
     assertThat(x.getRead()).isEqualTo("read");
@@ -1903,11 +1856,10 @@ public class ClientTest {
     String v = "hop-vhost1";
     client.deleteVhost(v);
     String u = "hop-user1";
-    client.createUser(
-        u, "test".toCharArray(), java.util.Arrays.asList("management", "http", "policymaker"));
+    client.createUser(u, "test".toCharArray(), Arrays.asList("management", "http", "policymaker"));
     try {
       client.updatePermissions(v, u, new UserPermissions("read", "write", "configure"));
-      org.junit.jupiter.api.Assertions.fail("Expected exception");
+      Assertions.fail("Expected exception");
     } catch (Exception e) {
       assertThat(exceptionStatus(e)).isEqualTo(400);
     }
@@ -1919,8 +1871,7 @@ public class ClientTest {
     String v = "hop-vhost1";
     client.createVhost(v);
     String u = "hop-user1";
-    client.createUser(
-        u, "test".toCharArray(), java.util.Arrays.asList("management", "http", "policymaker"));
+    client.createUser(u, "test".toCharArray(), Arrays.asList("management", "http", "policymaker"));
     client.updatePermissions(v, u, new UserPermissions("read", "write", "configure"));
     UserPermissions x = client.getPermissions(v, u);
     assertThat(x.getRead()).isEqualTo("read");
@@ -1983,8 +1934,7 @@ public class ClientTest {
     String v = "hop-vhost1";
     client.createVhost(v);
     String u = "hop-user1";
-    client.createUser(
-        u, "test".toCharArray(), java.util.Arrays.asList("management", "http", "policymaker"));
+    client.createUser(u, "test".toCharArray(), Arrays.asList("management", "http", "policymaker"));
     if (!isVersion37orLater()) return;
     client.updateTopicPermissions(v, u, new TopicPermissions("amq.topic", "read", "write"));
     List<TopicPermissions> xs = client.getTopicPermissions(v, u);
@@ -2001,12 +1951,11 @@ public class ClientTest {
     String v = "hop-vhost1";
     client.deleteVhost(v);
     String u = "hop-user1";
-    client.createUser(
-        u, "test".toCharArray(), java.util.Arrays.asList("management", "http", "policymaker"));
+    client.createUser(u, "test".toCharArray(), Arrays.asList("management", "http", "policymaker"));
     if (!isVersion37orLater()) return;
     try {
       client.updateTopicPermissions(v, u, new TopicPermissions("amq.topic", "read", "write"));
-      org.junit.jupiter.api.Assertions.fail("Expected exception");
+      Assertions.fail("Expected exception");
     } catch (Exception e) {
       assertThat(exceptionStatus(e)).isEqualTo(400);
     }
@@ -2018,8 +1967,7 @@ public class ClientTest {
     String v = "hop-vhost1";
     client.createVhost(v);
     String u = "hop-user1";
-    client.createUser(
-        u, "test".toCharArray(), java.util.Arrays.asList("management", "http", "policymaker"));
+    client.createUser(u, "test".toCharArray(), Arrays.asList("management", "http", "policymaker"));
     if (!isVersion37orLater()) return;
     client.updateTopicPermissions(v, u, new TopicPermissions("amq.topic", "read", "write"));
     List<TopicPermissions> xs = client.getTopicPermissions(v, u);
@@ -2035,7 +1983,7 @@ public class ClientTest {
   void getApiPolicies() {
     String v = "/";
     String s = "hop.test";
-    java.util.Map<String, Object> d = new java.util.HashMap<>();
+    Map<String, Object> d = new HashMap<>();
     String p = ".*";
     d.put("expires", 30000);
     client.declarePolicy(v, s, new PolicyInfo(p, 0, null, d));
@@ -2049,7 +1997,7 @@ public class ClientTest {
   void getApiPoliciesWithVhostWhenVhostExists() {
     String v = "/";
     String s = "hop.test";
-    java.util.Map<String, Object> d = new java.util.HashMap<>();
+    Map<String, Object> d = new HashMap<>();
     String p = ".*";
     d.put("expires", 30000);
     client.declarePolicy(v, s, new PolicyInfo(p, 0, null, d));
@@ -2071,7 +2019,7 @@ public class ClientTest {
   void getApiOperatorPolicies() {
     String v = "/";
     String s = "hop.test";
-    java.util.Map<String, Object> d = new java.util.HashMap<>();
+    Map<String, Object> d = new HashMap<>();
     String p = ".*";
     d.put("max-length", 6);
     client.declareOperatorPolicy(v, s, new PolicyInfo(p, 0, null, d));
@@ -2085,7 +2033,7 @@ public class ClientTest {
   void getApiOperatorPoliciesWithVhostWhenVhostExists() {
     String v = "/";
     String s = "hop.test";
-    java.util.Map<String, Object> d = new java.util.HashMap<>();
+    Map<String, Object> d = new HashMap<>();
     String p = ".*";
     d.put("max-length", 6);
     client.declareOperatorPolicy(v, s, new PolicyInfo(p, 0, null, d));
@@ -2127,8 +2075,7 @@ public class ClientTest {
   @Test
   void getApiExtensions() {
     @SuppressWarnings("unchecked")
-    List<java.util.Map<String, Object>> xs =
-        (List<java.util.Map<String, Object>>) (List<?>) client.getExtensions();
+    List<Map<String, Object>> xs = (List<Map<String, Object>>) (List<?>) client.getExtensions();
     assertThat(xs).isNotEmpty();
   }
 
@@ -2231,7 +2178,7 @@ public class ClientTest {
         parameters.stream().filter(p -> "shovel1".equals(p.getName())).findFirst().orElse(null);
     assertThat(parameter).isNotNull();
     assertThat(parameter.getComponent()).isEqualTo("shovel");
-    assertThat(parameter.getValue() instanceof java.util.Map).isTrue();
+    assertThat(parameter.getValue() instanceof Map).isTrue();
     client.deleteShovel("/", "shovel1");
     client.deleteQueue("/", "queue1");
   }
@@ -2261,8 +2208,8 @@ public class ClientTest {
   void getApiParametersShovelWithMultipleUris() {
     ShovelDetails value =
         new ShovelDetails(
-            java.util.Arrays.asList("amqp://localhost:5672/vh1", "amqp://localhost:5672/vh3"),
-            java.util.Arrays.asList("amqp://localhost:5672/vh2", "amqp://localhost:5672/vh4"),
+            Arrays.asList("amqp://localhost:5672/vh1", "amqp://localhost:5672/vh3"),
+            Arrays.asList("amqp://localhost:5672/vh2", "amqp://localhost:5672/vh4"),
             30,
             true,
             null);
@@ -2286,12 +2233,12 @@ public class ClientTest {
             "amqp://localhost:5672/vh2",
             30,
             true,
-            java.util.Collections.emptyMap());
+            Collections.emptyMap());
     value.setSourceQueue("queue1");
     value.setDestinationExchange("exchange1");
     try {
       client.declareShovel("/", new ShovelInfo("shovel10", value));
-      org.junit.jupiter.api.Assertions.fail("Expected IllegalArgumentException");
+      Assertions.fail("Expected IllegalArgumentException");
     } catch (IllegalArgumentException expected) {
       // expected
     }
@@ -2375,7 +2322,7 @@ public class ClientTest {
     UpstreamDetails upstreamDetails = new UpstreamDetails();
     try {
       client.declareUpstream("/", "upstream3", upstreamDetails);
-      org.junit.jupiter.api.Assertions.fail("Expected IllegalArgumentException");
+      Assertions.fail("Expected IllegalArgumentException");
     } catch (IllegalArgumentException expected) {
       // expected
     }
@@ -2408,7 +2355,7 @@ public class ClientTest {
     UpstreamSetDetails d2 = new UpstreamSetDetails();
     d2.setUpstream(upstreamB);
     d2.setExchange("exchangeB");
-    List<UpstreamSetDetails> detailsSet = new java.util.ArrayList<>();
+    List<UpstreamSetDetails> detailsSet = new ArrayList<>();
     detailsSet.add(d1);
     detailsSet.add(d2);
     client.declareUpstreamSet(vhost, upstreamSetName, detailsSet);
@@ -2416,7 +2363,7 @@ public class ClientTest {
     p.setApplyTo("exchanges");
     p.setName(policyName);
     p.setPattern("amq\\.topic");
-    p.setDefinition(java.util.Collections.singletonMap("federation-upstream-set", upstreamSetName));
+    p.setDefinition(Collections.singletonMap("federation-upstream-set", upstreamSetName));
     client.declarePolicy(vhost, policyName, p);
     List<UpstreamSetInfo> upstreamSets = awaitEventPropagation(() -> client.getUpstreamSets());
     assertThat(upstreamSets).isNotEmpty();
@@ -2436,11 +2383,11 @@ public class ClientTest {
   @Test
   void putApiParametersFederationUpstreamSetWithoutUpstreams() {
     UpstreamSetDetails upstreamSetDetails = new UpstreamSetDetails();
-    List<UpstreamSetDetails> detailsSet = new java.util.ArrayList<>();
+    List<UpstreamSetDetails> detailsSet = new ArrayList<>();
     detailsSet.add(upstreamSetDetails);
     try {
       client.declareUpstreamSet("/", "upstream-set-2", detailsSet);
-      org.junit.jupiter.api.Assertions.fail("Expected IllegalArgumentException");
+      Assertions.fail("Expected IllegalArgumentException");
     } catch (IllegalArgumentException expected) {
       // expected
     }
@@ -2489,20 +2436,20 @@ public class ClientTest {
 
   @Test
   void getApiGlobalParametersMqttPortToVhostMappingWithASampleMapping() {
-    java.util.Map<Integer, String> mqttInputMap = java.util.Map.of(2024, "vhost1", 2025, "vhost2");
+    Map<Integer, String> mqttInputMap = Map.of(2024, "vhost1", 2025, "vhost2");
     client.setMqttPortToVhostMapping(mqttInputMap);
     MqttVhostPortInfo mqttInfo = client.getMqttPortToVhostMapping();
-    java.util.Map<Integer, String> mqttReturnValues = mqttInfo.getValue();
+    Map<Integer, String> mqttReturnValues = mqttInfo.getValue();
     assertThat(mqttReturnValues).isEqualTo(mqttInputMap);
     client.deleteMqttPortToVhostMapping();
   }
 
   @Test
   void putApiGlobalParametersMqttPortToVhostMappingWithABlankVhostValue() {
-    java.util.Map<Integer, String> mqttInputMap = java.util.Map.of(2024, " ", 2025, "vhost2");
+    Map<Integer, String> mqttInputMap = Map.of(2024, " ", 2025, "vhost2");
     try {
       client.setMqttPortToVhostMapping(mqttInputMap);
-      org.junit.jupiter.api.Assertions.fail("Expected IllegalArgumentException");
+      Assertions.fail("Expected IllegalArgumentException");
     } catch (IllegalArgumentException expected) {
       // expected
     }

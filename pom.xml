@@ -37,8 +37,6 @@
     <spotless.check.skip>true</spotless.check.skip>
     <jackson.version>2.20.0</jackson.version>
     <reactor-netty.version>1.2.10</reactor-netty.version>
-    <groovy.version>4.0.28</groovy.version>
-    <spock.version>2.3-groovy-4.0</spock.version>
     <junit.version>5.14.0</junit.version>
     <junit-platform.version>1.14.0</junit-platform.version>
     <assertj.version>3.27.6</assertj.version>
@@ -55,7 +53,6 @@
     <maven.jar.plugin.version>3.4.2</maven.jar.plugin.version>
     <maven.release.plugin.version>3.1.1</maven.release.plugin.version>
     <checksum.maven.plugin.version>1.11</checksum.maven.plugin.version>
-    <gmavenplus-plugin.version>4.2.1</gmavenplus-plugin.version>
     <central-publishing-maven-plugin.version>0.9.0</central-publishing-maven-plugin.version>
     <spotless.version>3.0.0</spotless.version>
     <google-java-format.version>1.28.0</google-java-format.version>
@@ -74,34 +71,6 @@
       <artifactId>reactor-netty</artifactId>
       <version>${reactor-netty.version}</version>
       <optional>true</optional>
-    </dependency>
-    <dependency>
-      <groupId>org.spockframework</groupId>
-      <artifactId>spock-core</artifactId>
-      <scope>test</scope>
-      <exclusions>
-        <exclusion>
-          <groupId>org.junit.platform</groupId>
-          <artifactId>junit-platform-engine</artifactId>
-        </exclusion>
-      </exclusions>
-    </dependency>
-    <dependency>
-      <groupId>org.spockframework</groupId>
-      <artifactId>spock-junit4</artifactId>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.groovy</groupId>
-      <artifactId>groovy</artifactId>
-      <version>${groovy.version}</version>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.apache.groovy</groupId>
-      <artifactId>groovy-json</artifactId>
-      <version>${groovy.version}</version>
-      <scope>test</scope>
     </dependency>
     <dependency>
       <groupId>org.apache.httpcomponents</groupId>
@@ -163,18 +132,6 @@
 
   </dependencies>
 
-  <dependencyManagement>
-    <dependencies>
-      <dependency>
-        <groupId>org.spockframework</groupId>
-        <artifactId>spock-bom</artifactId>
-        <version>${spock.version}</version>
-        <type>pom</type>
-        <scope>import</scope>
-      </dependency>
-    </dependencies>
-  </dependencyManagement>
-
   <build>
 
     <plugins>
@@ -193,27 +150,12 @@
       </plugin>
 
       <plugin>
-        <groupId>org.codehaus.gmavenplus</groupId>
-        <artifactId>gmavenplus-plugin</artifactId>
-        <version>${gmavenplus-plugin.version}</version>
-        <executions>
-          <execution>
-            <goals>
-              <goal>addTestSources</goal>
-              <goal>compileTests</goal>
-            </goals>
-          </execution>
-        </executions>
-      </plugin>
-
-      <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-surefire-plugin</artifactId>
         <version>${maven-surefire-plugin.version}</version>
         <configuration>
           <includes>
             <include>**/*Test.java</include>
-            <include>**/*Spec.java</include>
           </includes>
         </configuration>
       </plugin>

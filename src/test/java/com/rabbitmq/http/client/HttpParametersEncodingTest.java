@@ -15,7 +15,7 @@
  */
 package com.rabbitmq.http.client;
 
-import static org.junit.Assert.assertEquals;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -33,12 +33,12 @@ public class HttpParametersEncodingTest {
   void uriEncodeOfSpecialCharactersWithApacheURIBuilder() throws URISyntaxException {
     URI uri =
         new URIBuilder().setPath("/exchanges").addParameter("name", queryParameterValue).build();
-    assertEquals("/exchanges?name=" + expectedEncodedValue, uri.toASCIIString());
+    assertThat(uri.toASCIIString()).isEqualTo("/exchanges?name=" + expectedEncodedValue);
   }
 
   @Test
   void uriEncodeOfSpecialCharactersWithJdkUrlEncoder() {
-    assertEquals(
-        expectedEncodedValue, URLEncoder.encode(queryParameterValue, StandardCharsets.UTF_8));
+    assertThat(URLEncoder.encode(queryParameterValue, StandardCharsets.UTF_8))
+        .isEqualTo(expectedEncodedValue);
   }
 }
