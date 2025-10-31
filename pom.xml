@@ -35,7 +35,7 @@
 
   <properties>
     <spotless.check.skip>true</spotless.check.skip>
-    <jackson.version>2.20.0</jackson.version>
+    <jackson.version>2.20.1</jackson.version>
     <reactor-netty.version>1.2.11</reactor-netty.version>
     <junit.version>5.14.0</junit.version>
     <junit-platform.version>1.14.0</junit-platform.version>
