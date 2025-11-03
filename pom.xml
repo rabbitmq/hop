@@ -38,7 +38,7 @@
     <jackson.version>2.20.1</jackson.version>
     <reactor-netty.version>1.2.11</reactor-netty.version>
     <junit.version>5.14.1</junit.version>
-    <junit-platform.version>1.14.0</junit-platform.version>
+    <junit-platform.version>1.14.1</junit-platform.version>
     <assertj.version>3.27.6</assertj.version>
     <httpclient.version>4.5.14</httpclient.version>
     <amqp-client.version>5.27.0</amqp-client.version>
