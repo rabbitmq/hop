@@ -41,7 +41,7 @@
     <junit-platform.version>1.14.1</junit-platform.version>
     <assertj.version>3.27.6</assertj.version>
     <httpclient.version>4.5.14</httpclient.version>
-    <amqp-client.version>5.27.0</amqp-client.version>
+    <amqp-client.version>5.27.1</amqp-client.version>
     <logback.version>1.2.13</logback.version>
     <bouncycastle.version>1.82</bouncycastle.version>
     <maven.compiler.plugin.version>3.14.1</maven.compiler.plugin.version>
