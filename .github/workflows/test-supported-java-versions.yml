@@ -17,7 +17,7 @@ jobs:
             version: '17'
     name:  Test against Java ${{ matrix.distribution }} ${{ matrix.version }}
     steps:
-      - uses: actions/checkout@v5
+      - uses: actions/checkout@v6
       - name: Set up JDK
         uses: actions/setup-java@v5
         with:
