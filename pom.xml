@@ -54,7 +54,7 @@
     <maven.release.plugin.version>3.3.1</maven.release.plugin.version>
     <checksum.maven.plugin.version>1.11</checksum.maven.plugin.version>
     <central-publishing-maven-plugin.version>0.10.0</central-publishing-maven-plugin.version>
-    <spotless.version>3.1.0</spotless.version>
+    <spotless.version>3.2.0</spotless.version>
     <google-java-format.version>1.33.0</google-java-format.version>
     <gpg.keyname>6026DFCA</gpg.keyname>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
