@@ -32,6 +32,7 @@ import com.rabbitmq.http.client.domain.ConsumerDetails;
 import com.rabbitmq.http.client.domain.CurrentUserDetails;
 import com.rabbitmq.http.client.domain.Definitions;
 import com.rabbitmq.http.client.domain.DeleteQueueParameters;
+import com.rabbitmq.http.client.domain.DeprecatedFeature;
 import com.rabbitmq.http.client.domain.DestinationType;
 import com.rabbitmq.http.client.domain.DetailsParameters;
 import com.rabbitmq.http.client.domain.ExchangeInfo;
@@ -2662,5 +2663,17 @@ public class ClientTest {
   @Test
   void healthCheckProtocolListener() {
     client.healthCheckProtocolListener("amqp");
+  }
+
+  @Test
+  void getDeprecatedFeatures() {
+    List<DeprecatedFeature> features = client.getDeprecatedFeatures();
+    assertThat(features).isNotNull();
+  }
+
+  @Test
+  void getDeprecatedFeaturesInUse() {
+    List<DeprecatedFeature> features = client.getDeprecatedFeaturesInUse();
+    assertThat(features).isNotNull();
   }
 }

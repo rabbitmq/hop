@@ -48,6 +48,7 @@ import com.rabbitmq.http.client.domain.ConsumerDetails;
 import com.rabbitmq.http.client.domain.CurrentUserDetails;
 import com.rabbitmq.http.client.domain.Definitions;
 import com.rabbitmq.http.client.domain.DeleteQueueParameters;
+import com.rabbitmq.http.client.domain.DeprecatedFeature;
 import com.rabbitmq.http.client.domain.DetailsParameters;
 import com.rabbitmq.http.client.domain.ExchangeInfo;
 import com.rabbitmq.http.client.domain.FeatureFlag;
@@ -629,6 +630,28 @@ public class ReactorNettyClient {
      */
     public Mono<Void> healthCheckVirtualHosts() {
         return doGetMono(Object.class, "health", "checks", "virtual-hosts").then();
+    }
+
+    /**
+     * Returns all deprecated features.
+     *
+     * @return flux of deprecated features
+     * @since 5.5.0
+     * @see <a href="https://www.rabbitmq.com/docs/deprecated">Deprecated Features</a>
+     */
+    public Flux<DeprecatedFeature> getDeprecatedFeatures() {
+        return doGetFlux(DeprecatedFeature.class, "deprecated-features");
+    }
+
+    /**
+     * Returns deprecated features that are currently in use.
+     *
+     * @return flux of deprecated features in use
+     * @since 5.5.0
+     * @see <a href="https://www.rabbitmq.com/docs/deprecated">Deprecated Features</a>
+     */
+    public Flux<DeprecatedFeature> getDeprecatedFeaturesInUse() {
+        return doGetFlux(DeprecatedFeature.class, "deprecated-features", "used");
     }
 
     public Flux<QueueInfo> getQueues() {

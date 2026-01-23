@@ -38,6 +38,7 @@ import com.rabbitmq.http.client.domain.ConsumerDetails;
 import com.rabbitmq.http.client.domain.CurrentUserDetails;
 import com.rabbitmq.http.client.domain.Definitions;
 import com.rabbitmq.http.client.domain.DeleteQueueParameters;
+import com.rabbitmq.http.client.domain.DeprecatedFeature;
 import com.rabbitmq.http.client.domain.DetailsParameters;
 import com.rabbitmq.http.client.domain.ExchangeInfo;
 import com.rabbitmq.http.client.domain.FeatureFlag;
@@ -1154,6 +1155,34 @@ public class Client {
   public void healthCheckVirtualHosts() {
     final URI uri = uriWithPath("./health/checks/virtual-hosts");
     this.httpLayer.get(uri, Object.class);
+  }
+
+  //
+  // Deprecated features
+  //
+
+  /**
+   * Returns all deprecated features.
+   *
+   * @return list of deprecated features
+   * @since 5.5.0
+   * @see <a href="https://www.rabbitmq.com/docs/deprecated">Deprecated Features</a>
+   */
+  public List<DeprecatedFeature> getDeprecatedFeatures() {
+    final URI uri = uriWithPath("./deprecated-features/");
+    return Arrays.asList(this.httpLayer.get(uri, DeprecatedFeature[].class));
+  }
+
+  /**
+   * Returns deprecated features that are currently in use.
+   *
+   * @return list of deprecated features in use
+   * @since 5.5.0
+   * @see <a href="https://www.rabbitmq.com/docs/deprecated">Deprecated Features</a>
+   */
+  public List<DeprecatedFeature> getDeprecatedFeaturesInUse() {
+    final URI uri = uriWithPath("./deprecated-features/used");
+    return Arrays.asList(this.httpLayer.get(uri, DeprecatedFeature[].class));
   }
 
   //

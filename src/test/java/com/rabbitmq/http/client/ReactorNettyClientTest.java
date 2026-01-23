@@ -39,6 +39,7 @@ import com.rabbitmq.http.client.domain.ConsumerDetails;
 import com.rabbitmq.http.client.domain.CurrentUserDetails;
 import com.rabbitmq.http.client.domain.Definitions;
 import com.rabbitmq.http.client.domain.DeleteQueueParameters;
+import com.rabbitmq.http.client.domain.DeprecatedFeature;
 import com.rabbitmq.http.client.domain.DetailsParameters;
 import com.rabbitmq.http.client.domain.ExchangeInfo;
 import com.rabbitmq.http.client.domain.ExchangeType;
@@ -3335,6 +3336,18 @@ public class ReactorNettyClientTest {
   @Test
   void healthCheckProtocolListener() {
     client.healthCheckProtocolListener("amqp").block();
+  }
+
+  @Test
+  void getDeprecatedFeatures() {
+    List<DeprecatedFeature> features = client.getDeprecatedFeatures().collectList().block();
+    assertThat(features).isNotNull();
+  }
+
+  @Test
+  void getDeprecatedFeaturesInUse() {
+    List<DeprecatedFeature> features = client.getDeprecatedFeaturesInUse().collectList().block();
+    assertThat(features).isNotNull();
   }
 
   boolean isVersion37orLater() {
