@@ -3442,6 +3442,17 @@ public class ReactorNettyClientTest {
     client.deleteGlobalParameter(paramName).block();
   }
 
+  @Test
+  void deleteUsersBulk() {
+    String user1 = "bulk-del-user-1-" + System.currentTimeMillis();
+    String user2 = "bulk-del-user-2-" + System.currentTimeMillis();
+    client.createUser(user1, "password".toCharArray(), Arrays.asList("management")).block();
+    client.createUser(user2, "password".toCharArray(), Arrays.asList("management")).block();
+    assertThat(client.getUser(user1).block()).isNotNull();
+    assertThat(client.getUser(user2).block()).isNotNull();
+    client.deleteUsers(Arrays.asList(user1, user2)).block();
+  }
+
   boolean isVersion37orLater() {
     return TestUtils.isVersion37orLater(brokerVersion);
   }

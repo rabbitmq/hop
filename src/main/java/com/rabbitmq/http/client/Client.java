@@ -1427,6 +1427,23 @@ public class Client {
   }
 
   //
+  // Bulk operations
+  //
+
+  /**
+   * Deletes multiple users in a single operation.
+   *
+   * @param usernames the list of usernames to delete
+   * @since 5.5.0
+   * @see <a href="https://www.rabbitmq.com/docs/access-control">Access Control</a>
+   */
+  public void deleteUsers(List<String> usernames) {
+    final URI uri = uriWithPath("./users/bulk-delete");
+    Map<String, Object> body = Collections.singletonMap("users", usernames);
+    this.httpLayer.post(uri, body, null);
+  }
+
+  //
   // Shovel support
   //
 

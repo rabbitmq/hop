@@ -2766,4 +2766,15 @@ public class ClientTest {
     assertThat(param.getValue()).isEqualTo("test-value");
     client.deleteGlobalParameter(paramName);
   }
+
+  @Test
+  void deleteUsersBulk() {
+    String user1 = "bulk-del-user-1-" + System.currentTimeMillis();
+    String user2 = "bulk-del-user-2-" + System.currentTimeMillis();
+    client.createUser(user1, "password".toCharArray(), Arrays.asList("management"));
+    client.createUser(user2, "password".toCharArray(), Arrays.asList("management"));
+    assertThat(client.getUser(user1)).isNotNull();
+    assertThat(client.getUser(user2)).isNotNull();
+    client.deleteUsers(Arrays.asList(user1, user2));
+  }
 }

@@ -866,6 +866,19 @@ public class ReactorNettyClient {
         return doDelete("global-parameters", encodePathSegment(name));
     }
 
+    /**
+     * Deletes multiple users in a single operation.
+     *
+     * @param usernames the list of usernames to delete
+     * @return HTTP response in a mono
+     * @since 5.5.0
+     * @see <a href="https://www.rabbitmq.com/docs/access-control">Access Control</a>
+     */
+    public Mono<HttpResponse> deleteUsers(List<String> usernames) {
+        Map<String, Object> body = Collections.singletonMap("users", usernames);
+        return doPost(body, "users", "bulk-delete");
+    }
+
     public Flux<QueueInfo> getQueues() {
         return getQueues((DetailsParameters) null);
     }
