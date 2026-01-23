@@ -59,6 +59,8 @@ import com.rabbitmq.http.client.domain.QueueTotals;
 import com.rabbitmq.http.client.domain.ShovelDetails;
 import com.rabbitmq.http.client.domain.ShovelInfo;
 import com.rabbitmq.http.client.domain.ShovelStatus;
+import com.rabbitmq.http.client.domain.StreamConsumer;
+import com.rabbitmq.http.client.domain.StreamPublisher;
 import com.rabbitmq.http.client.domain.TopicPermissions;
 import com.rabbitmq.http.client.domain.UpstreamDetails;
 import com.rabbitmq.http.client.domain.UpstreamInfo;
@@ -3368,6 +3370,42 @@ public class ReactorNettyClientTest {
   @Test
   void rebalanceQueueLeaders() {
     client.rebalanceQueueLeaders().block();
+  }
+
+  @Test
+  void getStreamConnections() {
+    List<ConnectionInfo> connections = client.getStreamConnections().collectList().block();
+    assertThat(connections).isNotNull();
+  }
+
+  @Test
+  void getStreamConnectionsInVhost() {
+    List<ConnectionInfo> connections = client.getStreamConnections("/").collectList().block();
+    assertThat(connections).isNotNull();
+  }
+
+  @Test
+  void getStreamPublishers() {
+    List<StreamPublisher> publishers = client.getStreamPublishers().collectList().block();
+    assertThat(publishers).isNotNull();
+  }
+
+  @Test
+  void getStreamPublishersInVhost() {
+    List<StreamPublisher> publishers = client.getStreamPublishers("/").collectList().block();
+    assertThat(publishers).isNotNull();
+  }
+
+  @Test
+  void getStreamConsumers() {
+    List<StreamConsumer> consumers = client.getStreamConsumers().collectList().block();
+    assertThat(consumers).isNotNull();
+  }
+
+  @Test
+  void getStreamConsumersInVhost() {
+    List<StreamConsumer> consumers = client.getStreamConsumers("/").collectList().block();
+    assertThat(consumers).isNotNull();
   }
 
   boolean isVersion37orLater() {

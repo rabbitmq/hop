@@ -61,6 +61,8 @@ import com.rabbitmq.http.client.domain.PolicyInfo;
 import com.rabbitmq.http.client.domain.QueueInfo;
 import com.rabbitmq.http.client.domain.ShovelInfo;
 import com.rabbitmq.http.client.domain.ShovelStatus;
+import com.rabbitmq.http.client.domain.StreamConsumer;
+import com.rabbitmq.http.client.domain.StreamPublisher;
 import com.rabbitmq.http.client.domain.TopicPermissions;
 import com.rabbitmq.http.client.domain.UserLimits;
 import com.rabbitmq.http.client.domain.UpstreamDetails;
@@ -675,6 +677,114 @@ public class ReactorNettyClient {
      */
     public Mono<HttpResponse> rebalanceQueueLeaders() {
         return doPost(Collections.emptyMap(), "rebalance", "queues");
+    }
+
+    /**
+     * Returns all stream protocol connections across the cluster.
+     *
+     * @return flux of stream connections
+     * @since 5.5.0
+     * @see <a href="https://www.rabbitmq.com/docs/streams">RabbitMQ Streams</a>
+     */
+    public Flux<ConnectionInfo> getStreamConnections() {
+        return doGetFlux(ConnectionInfo.class, "stream", "connections");
+    }
+
+    /**
+     * Returns stream protocol connections in a specific virtual host.
+     *
+     * @param vhost the virtual host name
+     * @return flux of stream connections
+     * @since 5.5.0
+     * @see <a href="https://www.rabbitmq.com/docs/streams">RabbitMQ Streams</a>
+     */
+    public Flux<ConnectionInfo> getStreamConnections(String vhost) {
+        return doGetFlux(ConnectionInfo.class, "stream", "connections", encodePathSegment(vhost));
+    }
+
+    /**
+     * Returns information about a specific stream protocol connection.
+     *
+     * @param vhost the virtual host name
+     * @param name the connection name
+     * @return stream connection info in a mono
+     * @since 5.5.0
+     * @see <a href="https://www.rabbitmq.com/docs/streams">RabbitMQ Streams</a>
+     */
+    public Mono<ConnectionInfo> getStreamConnection(String vhost, String name) {
+        return doGetMono(ConnectionInfo.class, "stream", "connections", encodePathSegment(vhost), encodePathSegment(name));
+    }
+
+    /**
+     * Closes a stream protocol connection.
+     *
+     * @param vhost the virtual host name
+     * @param name the connection name
+     * @return HTTP response in a mono
+     * @since 5.5.0
+     * @see <a href="https://www.rabbitmq.com/docs/streams">RabbitMQ Streams</a>
+     */
+    public Mono<HttpResponse> closeStreamConnection(String vhost, String name) {
+        return doDelete("stream", "connections", encodePathSegment(vhost), encodePathSegment(name));
+    }
+
+    /**
+     * Returns all stream protocol publishers across the cluster.
+     *
+     * @return flux of stream publishers
+     * @since 5.5.0
+     * @see <a href="https://www.rabbitmq.com/docs/streams">RabbitMQ Streams</a>
+     */
+    public Flux<StreamPublisher> getStreamPublishers() {
+        return doGetFlux(StreamPublisher.class, "stream", "publishers");
+    }
+
+    /**
+     * Returns stream protocol publishers in a specific virtual host.
+     *
+     * @param vhost the virtual host name
+     * @return flux of stream publishers
+     * @since 5.5.0
+     * @see <a href="https://www.rabbitmq.com/docs/streams">RabbitMQ Streams</a>
+     */
+    public Flux<StreamPublisher> getStreamPublishers(String vhost) {
+        return doGetFlux(StreamPublisher.class, "stream", "publishers", encodePathSegment(vhost));
+    }
+
+    /**
+     * Returns stream protocol publishers for a specific stream.
+     *
+     * @param vhost the virtual host name
+     * @param stream the stream name
+     * @return flux of stream publishers
+     * @since 5.5.0
+     * @see <a href="https://www.rabbitmq.com/docs/streams">RabbitMQ Streams</a>
+     */
+    public Flux<StreamPublisher> getStreamPublishers(String vhost, String stream) {
+        return doGetFlux(StreamPublisher.class, "stream", "publishers", encodePathSegment(vhost), encodePathSegment(stream));
+    }
+
+    /**
+     * Returns all stream protocol consumers across the cluster.
+     *
+     * @return flux of stream consumers
+     * @since 5.5.0
+     * @see <a href="https://www.rabbitmq.com/docs/streams">RabbitMQ Streams</a>
+     */
+    public Flux<StreamConsumer> getStreamConsumers() {
+        return doGetFlux(StreamConsumer.class, "stream", "consumers");
+    }
+
+    /**
+     * Returns stream protocol consumers in a specific virtual host.
+     *
+     * @param vhost the virtual host name
+     * @return flux of stream consumers
+     * @since 5.5.0
+     * @see <a href="https://www.rabbitmq.com/docs/streams">RabbitMQ Streams</a>
+     */
+    public Flux<StreamConsumer> getStreamConsumers(String vhost) {
+        return doGetFlux(StreamConsumer.class, "stream", "consumers", encodePathSegment(vhost));
     }
 
     public Flux<QueueInfo> getQueues() {

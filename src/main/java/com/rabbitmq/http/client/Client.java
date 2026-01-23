@@ -53,6 +53,8 @@ import com.rabbitmq.http.client.domain.QueryParameters;
 import com.rabbitmq.http.client.domain.QueueInfo;
 import com.rabbitmq.http.client.domain.ShovelInfo;
 import com.rabbitmq.http.client.domain.ShovelStatus;
+import com.rabbitmq.http.client.domain.StreamConsumer;
+import com.rabbitmq.http.client.domain.StreamPublisher;
 import com.rabbitmq.http.client.domain.TopicPermissions;
 import com.rabbitmq.http.client.domain.UserLimits;
 import com.rabbitmq.http.client.domain.UpstreamDetails;
@@ -1211,6 +1213,126 @@ public class Client {
   public void rebalanceQueueLeaders() {
     final URI uri = uriWithPath("./rebalance/queues");
     this.httpLayer.post(uri, Collections.emptyMap(), null);
+  }
+
+  //
+  // Stream protocol support
+  //
+
+  /**
+   * Returns all stream protocol connections across the cluster.
+   *
+   * @return list of stream connections
+   * @since 5.5.0
+   * @see <a href="https://www.rabbitmq.com/docs/streams">RabbitMQ Streams</a>
+   */
+  public List<ConnectionInfo> getStreamConnections() {
+    final URI uri = uriWithPath("./stream/connections/");
+    return Arrays.asList(this.httpLayer.get(uri, ConnectionInfo[].class));
+  }
+
+  /**
+   * Returns stream protocol connections in a specific virtual host.
+   *
+   * @param vhost the virtual host name
+   * @return list of stream connections
+   * @since 5.5.0
+   * @see <a href="https://www.rabbitmq.com/docs/streams">RabbitMQ Streams</a>
+   */
+  public List<ConnectionInfo> getStreamConnections(String vhost) {
+    final URI uri = uri().withEncodedPath("./stream/connections").withPath(vhost).get();
+    return Arrays.asList(this.httpLayer.get(uri, ConnectionInfo[].class));
+  }
+
+  /**
+   * Returns information about a specific stream protocol connection.
+   *
+   * @param vhost the virtual host name
+   * @param name the connection name
+   * @return stream connection info
+   * @since 5.5.0
+   * @see <a href="https://www.rabbitmq.com/docs/streams">RabbitMQ Streams</a>
+   */
+  public ConnectionInfo getStreamConnection(String vhost, String name) {
+    final URI uri = uri().withEncodedPath("./stream/connections").withPath(vhost).withPath(name).get();
+    return this.httpLayer.get(uri, ConnectionInfo.class);
+  }
+
+  /**
+   * Closes a stream protocol connection.
+   *
+   * @param vhost the virtual host name
+   * @param name the connection name
+   * @since 5.5.0
+   * @see <a href="https://www.rabbitmq.com/docs/streams">RabbitMQ Streams</a>
+   */
+  public void closeStreamConnection(String vhost, String name) {
+    final URI uri = uri().withEncodedPath("./stream/connections").withPath(vhost).withPath(name).get();
+    this.httpLayer.delete(uri, null);
+  }
+
+  /**
+   * Returns all stream protocol publishers across the cluster.
+   *
+   * @return list of stream publishers
+   * @since 5.5.0
+   * @see <a href="https://www.rabbitmq.com/docs/streams">RabbitMQ Streams</a>
+   */
+  public List<StreamPublisher> getStreamPublishers() {
+    final URI uri = uriWithPath("./stream/publishers/");
+    return Arrays.asList(this.httpLayer.get(uri, StreamPublisher[].class));
+  }
+
+  /**
+   * Returns stream protocol publishers in a specific virtual host.
+   *
+   * @param vhost the virtual host name
+   * @return list of stream publishers
+   * @since 5.5.0
+   * @see <a href="https://www.rabbitmq.com/docs/streams">RabbitMQ Streams</a>
+   */
+  public List<StreamPublisher> getStreamPublishers(String vhost) {
+    final URI uri = uri().withEncodedPath("./stream/publishers").withPath(vhost).get();
+    return Arrays.asList(this.httpLayer.get(uri, StreamPublisher[].class));
+  }
+
+  /**
+   * Returns stream protocol publishers for a specific stream.
+   *
+   * @param vhost the virtual host name
+   * @param stream the stream name
+   * @return list of stream publishers
+   * @since 5.5.0
+   * @see <a href="https://www.rabbitmq.com/docs/streams">RabbitMQ Streams</a>
+   */
+  public List<StreamPublisher> getStreamPublishers(String vhost, String stream) {
+    final URI uri = uri().withEncodedPath("./stream/publishers").withPath(vhost).withPath(stream).get();
+    return Arrays.asList(this.httpLayer.get(uri, StreamPublisher[].class));
+  }
+
+  /**
+   * Returns all stream protocol consumers across the cluster.
+   *
+   * @return list of stream consumers
+   * @since 5.5.0
+   * @see <a href="https://www.rabbitmq.com/docs/streams">RabbitMQ Streams</a>
+   */
+  public List<StreamConsumer> getStreamConsumers() {
+    final URI uri = uriWithPath("./stream/consumers/");
+    return Arrays.asList(this.httpLayer.get(uri, StreamConsumer[].class));
+  }
+
+  /**
+   * Returns stream protocol consumers in a specific virtual host.
+   *
+   * @param vhost the virtual host name
+   * @return list of stream consumers
+   * @since 5.5.0
+   * @see <a href="https://www.rabbitmq.com/docs/streams">RabbitMQ Streams</a>
+   */
+  public List<StreamConsumer> getStreamConsumers(String vhost) {
+    final URI uri = uri().withEncodedPath("./stream/consumers").withPath(vhost).get();
+    return Arrays.asList(this.httpLayer.get(uri, StreamConsumer[].class));
   }
 
   //
