@@ -3307,6 +3307,36 @@ public class ReactorNettyClientTest {
     }
   }
 
+  @Test
+  void healthCheckClusterAlarms() {
+    client.healthCheckClusterAlarms().block();
+  }
+
+  @Test
+  void healthCheckLocalAlarms() {
+    client.healthCheckLocalAlarms().block();
+  }
+
+  @Test
+  void healthCheckNodeIsQuorumCritical() {
+    client.healthCheckNodeIsQuorumCritical().block();
+  }
+
+  @Test
+  void healthCheckVirtualHosts() {
+    client.healthCheckVirtualHosts().block();
+  }
+
+  @Test
+  void healthCheckPortListener() {
+    client.healthCheckPortListener(5672).block();
+  }
+
+  @Test
+  void healthCheckProtocolListener() {
+    client.healthCheckProtocolListener("amqp").block();
+  }
+
   boolean isVersion37orLater() {
     return TestUtils.isVersion37orLater(brokerVersion);
   }

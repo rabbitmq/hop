@@ -557,6 +557,80 @@ public class ReactorNettyClient {
         return doPut(Collections.emptyMap(), "feature-flags", encodePathSegment(name), "enable");
     }
 
+    /**
+     * Performs a cluster-wide health check for any active resource alarms.
+     * The returned Mono will error with an exception if the check fails (503).
+     *
+     * @return mono that completes on success
+     * @since 5.5.0
+     * @see <a href="https://www.rabbitmq.com/docs/monitoring#health-checks">Health Checks</a>
+     */
+    public Mono<Void> healthCheckClusterAlarms() {
+        return doGetMono(Object.class, "health", "checks", "alarms").then();
+    }
+
+    /**
+     * Performs a health check for alarms on the local node only.
+     * The returned Mono will error with an exception if the check fails (503).
+     *
+     * @return mono that completes on success
+     * @since 5.5.0
+     * @see <a href="https://www.rabbitmq.com/docs/monitoring#health-checks">Health Checks</a>
+     */
+    public Mono<Void> healthCheckLocalAlarms() {
+        return doGetMono(Object.class, "health", "checks", "local-alarms").then();
+    }
+
+    /**
+     * Checks if a specific port has an active listener.
+     * The returned Mono will error with an exception if the check fails (503).
+     *
+     * @param port the port to check
+     * @return mono that completes on success
+     * @since 5.5.0
+     * @see <a href="https://www.rabbitmq.com/docs/monitoring#health-checks">Health Checks</a>
+     */
+    public Mono<Void> healthCheckPortListener(int port) {
+        return doGetMono(Object.class, "health", "checks", "port-listener", String.valueOf(port)).then();
+    }
+
+    /**
+     * Checks if a specific protocol listener is active.
+     * The returned Mono will error with an exception if the check fails (503).
+     *
+     * @param protocol the protocol to check (e.g., "amqp", "mqtt", "stomp")
+     * @return mono that completes on success
+     * @since 5.5.0
+     * @see <a href="https://www.rabbitmq.com/docs/monitoring#health-checks">Health Checks</a>
+     */
+    public Mono<Void> healthCheckProtocolListener(String protocol) {
+        return doGetMono(Object.class, "health", "checks", "protocol-listener", encodePathSegment(protocol)).then();
+    }
+
+    /**
+     * Checks if the target node is critical for maintaining quorum.
+     * The returned Mono will error with an exception if the check fails (503).
+     *
+     * @return mono that completes on success
+     * @since 5.5.0
+     * @see <a href="https://www.rabbitmq.com/docs/monitoring#health-checks">Health Checks</a>
+     */
+    public Mono<Void> healthCheckNodeIsQuorumCritical() {
+        return doGetMono(Object.class, "health", "checks", "node-is-quorum-critical").then();
+    }
+
+    /**
+     * Checks if all virtual hosts are running.
+     * The returned Mono will error with an exception if the check fails (503).
+     *
+     * @return mono that completes on success
+     * @since 5.5.0
+     * @see <a href="https://www.rabbitmq.com/docs/monitoring#health-checks">Health Checks</a>
+     */
+    public Mono<Void> healthCheckVirtualHosts() {
+        return doGetMono(Object.class, "health", "checks", "virtual-hosts").then();
+    }
+
     public Flux<QueueInfo> getQueues() {
         return getQueues((DetailsParameters) null);
     }

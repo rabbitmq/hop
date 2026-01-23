@@ -1079,6 +1079,84 @@ public class Client {
   }
 
   //
+  // Health checks
+  //
+
+  /**
+   * Performs a cluster-wide health check for any active resource alarms.
+   * Throws {@link HttpServerException} with status 503 if the check fails.
+   *
+   * @since 5.5.0
+   * @see <a href="https://www.rabbitmq.com/docs/monitoring#health-checks">Health Checks</a>
+   */
+  public void healthCheckClusterAlarms() {
+    final URI uri = uriWithPath("./health/checks/alarms");
+    this.httpLayer.get(uri, Object.class);
+  }
+
+  /**
+   * Performs a health check for alarms on the local node only.
+   * Throws {@link HttpServerException} with status 503 if the check fails.
+   *
+   * @since 5.5.0
+   * @see <a href="https://www.rabbitmq.com/docs/monitoring#health-checks">Health Checks</a>
+   */
+  public void healthCheckLocalAlarms() {
+    final URI uri = uriWithPath("./health/checks/local-alarms");
+    this.httpLayer.get(uri, Object.class);
+  }
+
+  /**
+   * Checks if a specific port has an active listener.
+   * Throws {@link HttpServerException} with status 503 if the check fails.
+   *
+   * @param port the port to check
+   * @since 5.5.0
+   * @see <a href="https://www.rabbitmq.com/docs/monitoring#health-checks">Health Checks</a>
+   */
+  public void healthCheckPortListener(int port) {
+    final URI uri = uri().withEncodedPath("./health/checks/port-listener").withEncodedPath(String.valueOf(port)).get();
+    this.httpLayer.get(uri, Object.class);
+  }
+
+  /**
+   * Checks if a specific protocol listener is active.
+   * Throws {@link HttpServerException} with status 503 if the check fails.
+   *
+   * @param protocol the protocol to check (e.g., "amqp", "mqtt", "stomp")
+   * @since 5.5.0
+   * @see <a href="https://www.rabbitmq.com/docs/monitoring#health-checks">Health Checks</a>
+   */
+  public void healthCheckProtocolListener(String protocol) {
+    final URI uri = uri().withEncodedPath("./health/checks/protocol-listener").withPath(protocol).get();
+    this.httpLayer.get(uri, Object.class);
+  }
+
+  /**
+   * Checks if the target node is critical for maintaining quorum.
+   * Throws {@link HttpServerException} with status 503 if the check fails.
+   *
+   * @since 5.5.0
+   * @see <a href="https://www.rabbitmq.com/docs/monitoring#health-checks">Health Checks</a>
+   */
+  public void healthCheckNodeIsQuorumCritical() {
+    final URI uri = uriWithPath("./health/checks/node-is-quorum-critical");
+    this.httpLayer.get(uri, Object.class);
+  }
+
+  /**
+   * Checks if all virtual hosts are running.
+   * Throws {@link HttpServerException} with status 503 if the check fails.
+   *
+   * @since 5.5.0
+   * @see <a href="https://www.rabbitmq.com/docs/monitoring#health-checks">Health Checks</a>
+   */
+  public void healthCheckVirtualHosts() {
+    final URI uri = uriWithPath("./health/checks/virtual-hosts");
+    this.httpLayer.get(uri, Object.class);
+  }
+
+  //
   // Shovel support
   //
 

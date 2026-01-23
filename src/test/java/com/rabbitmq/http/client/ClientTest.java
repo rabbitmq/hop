@@ -2633,4 +2633,34 @@ public class ClientTest {
       client.deleteUser(username);
     }
   }
+
+  @Test
+  void healthCheckClusterAlarms() {
+    client.healthCheckClusterAlarms();
+  }
+
+  @Test
+  void healthCheckLocalAlarms() {
+    client.healthCheckLocalAlarms();
+  }
+
+  @Test
+  void healthCheckNodeIsQuorumCritical() {
+    client.healthCheckNodeIsQuorumCritical();
+  }
+
+  @Test
+  void healthCheckVirtualHosts() {
+    client.healthCheckVirtualHosts();
+  }
+
+  @Test
+  void healthCheckPortListener() {
+    client.healthCheckPortListener(5672);
+  }
+
+  @Test
+  void healthCheckProtocolListener() {
+    client.healthCheckProtocolListener("amqp");
+  }
 }
