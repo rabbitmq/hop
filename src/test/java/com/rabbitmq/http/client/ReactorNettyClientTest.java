@@ -21,6 +21,7 @@ import static com.rabbitmq.http.client.domain.DestinationType.QUEUE;
 import static java.util.Collections.singletonMap;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.fail;
 
 import com.fasterxml.jackson.core.JsonGenerationException;
 import com.fasterxml.jackson.databind.JsonMappingException;
@@ -608,7 +609,9 @@ public class ReactorNettyClientTest {
     if (!isVersion37orLater()) return;
     // given: topic permissions for guest user exist
     String s = "/";
-    client.updateTopicPermissions(s, "guest", new TopicPermissions("amq.topic", ".*", ".*")).block();
+    client
+        .updateTopicPermissions(s, "guest", new TopicPermissions("amq.topic", ".*", ".*"))
+        .block();
 
     // when: topic permissions for vhost / are listed
     Flux<TopicPermissions> xs = client.getTopicPermissionsIn(s);
@@ -1415,7 +1418,9 @@ public class ReactorNettyClientTest {
   void getApiDefinitionsVersionVhostsUsersPermissionsTopicPermissions() throws Exception {
     // given: topic permissions for guest user exist
     if (isVersion37orLater()) {
-      client.updateTopicPermissions("/", "guest", new TopicPermissions("amq.topic", ".*", ".*")).block();
+      client
+          .updateTopicPermissions("/", "guest", new TopicPermissions("amq.topic", ".*", ".*"))
+          .block();
     }
 
     // when: client requests the definitions
@@ -1822,16 +1827,10 @@ public class ReactorNettyClientTest {
     client.publish(v, "amq.default", queue, new OutboundMessage().payload("test")).block();
 
     // when: client tries to delete queue in vhost /
-    Integer status =
-        client
-            .deleteQueue(v, queue, new DeleteQueueParameters(true, false))
-            .flatMap(r -> Mono.just(r.getStatus()))
-            .onErrorReturn(
-                t -> ("Connection prematurely closed BEFORE response".equals(t.getMessage())), 500)
-            .block();
-
-    // then: HTTP status is 400 BAD REQUEST
-    assertThat(status).isEqualTo(400);
+    // then: HTTP status is 400 BAD REQUEST (thrown as exception)
+    HttpClientException ex = assertThrows(HttpClientException.class, () ->
+        client.deleteQueue(v, queue, new DeleteQueueParameters(true, false)).block());
+    assertThat(ex.status()).isEqualTo(400);
 
     // cleanup
     client.deleteQueue(v, queue).block(Duration.ofSeconds(10));
@@ -3492,6 +3491,94 @@ public class ReactorNettyClientTest {
     awaitEventPropagation();
     assertThrows(HttpClientException.class, () -> client.getUser(user1).block());
     assertThrows(HttpClientException.class, () -> client.getUser(user2).block());
+  }
+
+  @Test
+  void getUsersWithoutPermissions() {
+    String username = "user-no-perms-" + System.currentTimeMillis();
+    client.createUser(username, "password".toCharArray(), Collections.emptyList()).block();
+    try {
+      List<UserInfo> users = client.getUsersWithoutPermissions().collectList().block();
+      assertThat(users).isNotNull();
+      assertThat(users.stream().anyMatch(u -> username.equals(u.getName()))).isTrue();
+    } finally {
+      client.deleteUser(username).block();
+    }
+  }
+
+  @Test
+  void vhostDeletionProtection() {
+    String vhost = "vhost-deletion-protection-" + System.currentTimeMillis();
+    client.createVhost(vhost).block();
+    try {
+      client.enableVhostDeletionProtection(vhost).block();
+      try {
+        client.deleteVhost(vhost).block();
+        fail("Should have thrown 412 Precondition Failed");
+      } catch (HttpClientException e) {
+        assertThat(e.status()).isEqualTo(412);
+      }
+      client.disableVhostDeletionProtection(vhost).block();
+      client.deleteVhost(vhost).block();
+      assertThrows(HttpClientException.class, () -> client.getVhost(vhost).block());
+    } catch (Exception e) {
+      try {
+        client.disableVhostDeletionProtection(vhost).block();
+      } catch (Exception ignored) {
+      }
+      try {
+        client.deleteVhost(vhost).block();
+      } catch (Exception ignored) {
+      }
+      throw e;
+    }
+  }
+
+  @Test
+  void getAndSetClusterTags() {
+    Map<String, Object> originalTags = client.getClusterTags().block();
+    try {
+      Map<String, Object> tags = new HashMap<>();
+      tags.put("env", "test");
+      tags.put("version", "1.0");
+      client.setClusterTags(tags).block();
+      Map<String, Object> retrievedTags = client.getClusterTags().block();
+      assertThat(retrievedTags.get("env")).isEqualTo("test");
+      assertThat(retrievedTags.get("version")).isEqualTo("1.0");
+      client.clearClusterTags().block();
+      assertThat(client.getClusterTags().block()).isEmpty();
+    } finally {
+      try {
+        if (originalTags.isEmpty()) {
+          client.clearClusterTags().block();
+        } else {
+          client.setClusterTags(originalTags).block();
+        }
+      } catch (Exception ignored) {
+      }
+    }
+  }
+
+  @Test
+  void enableAllStableFeatureFlags() {
+    client.enableAllStableFeatureFlags().block();
+  }
+
+  @Test
+  void getOAuthConfiguration() {
+    com.rabbitmq.http.client.domain.OAuthConfiguration config =
+        client.getOAuthConfiguration().block();
+    assertThat(config).isNotNull();
+  }
+
+  @Test
+  void getAuthAttemptStatistics() {
+    List<NodeInfo> nodes = client.getNodes().collectList().block();
+    assertThat(nodes).isNotEmpty();
+    String nodeName = nodes.get(0).getName();
+    List<com.rabbitmq.http.client.domain.AuthenticationAttemptStatistics> stats =
+        client.getAuthAttemptStatistics(nodeName).collectList().block();
+    assertThat(stats).isNotNull();
   }
 
   boolean isVersion37orLater() {

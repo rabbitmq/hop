@@ -40,6 +40,7 @@ import org.reactivestreams.Publisher;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.rabbitmq.http.client.domain.AlivenessTestResult;
+import com.rabbitmq.http.client.domain.AuthenticationAttemptStatistics;
 import com.rabbitmq.http.client.domain.BindingInfo;
 import com.rabbitmq.http.client.domain.ChannelInfo;
 import com.rabbitmq.http.client.domain.ClusterId;
@@ -56,6 +57,7 @@ import com.rabbitmq.http.client.domain.GlobalRuntimeParameter;
 import com.rabbitmq.http.client.domain.InboundMessage;
 import com.rabbitmq.http.client.domain.MqttVhostPortInfo;
 import com.rabbitmq.http.client.domain.NodeInfo;
+import com.rabbitmq.http.client.domain.OAuthConfiguration;
 import com.rabbitmq.http.client.domain.OutboundMessage;
 import com.rabbitmq.http.client.domain.OverviewResponse;
 import com.rabbitmq.http.client.domain.PolicyInfo;
@@ -338,6 +340,31 @@ public class ReactorNettyClient {
         return doDelete("vhosts", encodePathSegment(name));
     }
 
+    /**
+     * Enables deletion protection for a virtual host.
+     * When enabled, the virtual host cannot be deleted until protection is disabled.
+     *
+     * @param name the virtual host name
+     * @return HTTP response in a mono
+     * @since 5.5.0
+     * @see <a href="https://www.rabbitmq.com/docs/vhosts">Virtual Hosts</a>
+     */
+    public Mono<HttpResponse> enableVhostDeletionProtection(String name) {
+        return doPostWithoutBody("vhosts", encodePathSegment(name), "deletion", "protection");
+    }
+
+    /**
+     * Disables deletion protection for a virtual host.
+     *
+     * @param name the virtual host name
+     * @return HTTP response in a mono
+     * @since 5.5.0
+     * @see <a href="https://www.rabbitmq.com/docs/vhosts">Virtual Hosts</a>
+     */
+    public Mono<HttpResponse> disableVhostDeletionProtection(String name) {
+        return doDelete("vhosts", encodePathSegment(name), "deletion", "protection");
+    }
+
     public Flux<UserPermissions> getPermissionsIn(String vhost) {
         return doGetFlux(UserPermissions.class, "vhosts", encodePathSegment(vhost), "permissions");
     }
@@ -364,6 +391,19 @@ public class ReactorNettyClient {
 
     public Mono<HttpResponse> deleteUser(String username) {
         return doDelete("users", encodePathSegment(username));
+    }
+
+    /**
+     * Lists users in the internal database that do not have access to any virtual hosts.
+     * This is useful for finding users that may need permissions granted, or are not used
+     * and should be cleaned up.
+     *
+     * @return flux of users without permissions
+     * @since 5.5.0
+     * @see <a href="https://www.rabbitmq.com/docs/access-control">Access Control</a>
+     */
+    public Flux<UserInfo> getUsersWithoutPermissions() {
+        return doGetFlux(UserInfo.class, "users", "without-permissions");
     }
 
     public Mono<HttpResponse> createUser(String username, char[] password, List<String> tags) {
@@ -529,6 +569,53 @@ public class ReactorNettyClient {
         return doPut(Collections.singletonMap("name", name), "cluster-name");
     }
 
+    /**
+     * Returns cluster metadata tags.
+     *
+     * @return map of cluster tags in a mono
+     * @since 5.5.0
+     * @see <a href="https://www.rabbitmq.com/docs/parameters">Parameters and Policies</a>
+     */
+    @SuppressWarnings("unchecked")
+    public Mono<Map<String, Object>> getClusterTags() {
+        return getGlobalParameter("cluster_tags")
+                .map(param -> {
+                    if (param != null && param.getValue() instanceof Map) {
+                        return (Map<String, Object>) param.getValue();
+                    }
+                    return Collections.<String, Object>emptyMap();
+                })
+                .onErrorResume(HttpClientException.class, e -> {
+                    if (e.status() == 404) {
+                        return Mono.just(Collections.emptyMap());
+                    }
+                    return Mono.error(e);
+                });
+    }
+
+    /**
+     * Sets cluster metadata tags.
+     *
+     * @param tags the tags to set
+     * @return HTTP response in a mono
+     * @since 5.5.0
+     * @see <a href="https://www.rabbitmq.com/docs/parameters">Parameters and Policies</a>
+     */
+    public Mono<HttpResponse> setClusterTags(Map<String, Object> tags) {
+        return setGlobalParameter("cluster_tags", tags);
+    }
+
+    /**
+     * Clears all cluster metadata tags.
+     *
+     * @return HTTP response in a mono
+     * @since 5.5.0
+     * @see <a href="https://www.rabbitmq.com/docs/parameters">Parameters and Policies</a>
+     */
+    public Mono<HttpResponse> clearClusterTags() {
+        return deleteGlobalParameter("cluster_tags");
+    }
+
     @SuppressWarnings({"unchecked", "rawtypes"})
     public Flux<Map> getExtensions() {
         return doGetFlux(Map.class, "extensions");
@@ -571,6 +658,22 @@ public class ReactorNettyClient {
      */
     public Mono<HttpResponse> enableFeatureFlag(String name) {
         return doPut(Collections.emptyMap(), "feature-flags", encodePathSegment(name), "enable");
+    }
+
+    /**
+     * Enables all stable feature flags.
+     * This iterates through all feature flags and enables those that are stable and disabled.
+     *
+     * @return mono that completes when all flags are enabled
+     * @since 5.5.0
+     * @see <a href="https://www.rabbitmq.com/docs/feature-flags">Feature Flags</a>
+     */
+    public Mono<Void> enableAllStableFeatureFlags() {
+        return getFeatureFlags()
+                .filter(flag -> flag.getState() == com.rabbitmq.http.client.domain.FeatureFlagState.DISABLED
+                        && flag.getStability() == com.rabbitmq.http.client.domain.FeatureFlagStability.STABLE)
+                .flatMap(flag -> enableFeatureFlag(flag.getName()))
+                .then();
     }
 
     /**
@@ -645,6 +748,28 @@ public class ReactorNettyClient {
      */
     public Mono<Void> healthCheckVirtualHosts() {
         return doGetMono(Object.class, "health", "checks", "virtual-hosts").then();
+    }
+
+    /**
+     * Returns the current OAuth 2.0 configuration.
+     *
+     * @return OAuth configuration in a mono
+     * @since 5.5.0
+     * @see <a href="https://www.rabbitmq.com/docs/oauth2">OAuth 2 Guide</a>
+     */
+    public Mono<OAuthConfiguration> getOAuthConfiguration() {
+        return doGetMono(OAuthConfiguration.class, "auth");
+    }
+
+    /**
+     * Returns authentication attempt statistics for a given node.
+     *
+     * @param nodeName the name of the node
+     * @return flux of authentication attempt statistics per protocol
+     * @since 5.5.0
+     */
+    public Flux<AuthenticationAttemptStatistics> getAuthAttemptStatistics(String nodeName) {
+        return doGetFlux(AuthenticationAttemptStatistics.class, "auth", "attempts", encodePathSegment(nodeName));
     }
 
     /**
@@ -799,6 +924,32 @@ public class ReactorNettyClient {
      */
     public Flux<StreamConsumer> getStreamConsumers(String vhost, String stream) {
         return doGetFlux(StreamConsumer.class, "stream", "consumers", encodePathSegment(vhost), encodePathSegment(stream));
+    }
+
+    /**
+     * Returns stream publishers on a specific stream connection.
+     *
+     * @param vhost the virtual host name
+     * @param connectionName the connection name
+     * @return flux of stream publishers on the connection
+     * @since 5.5.0
+     * @see <a href="https://www.rabbitmq.com/docs/streams">RabbitMQ Streams</a>
+     */
+    public Flux<StreamPublisher> getStreamPublishersOnConnection(String vhost, String connectionName) {
+        return doGetFlux(StreamPublisher.class, "stream", "connections", encodePathSegment(vhost), encodePathSegment(connectionName), "publishers");
+    }
+
+    /**
+     * Returns stream consumers on a specific stream connection.
+     *
+     * @param vhost the virtual host name
+     * @param connectionName the connection name
+     * @return flux of stream consumers on the connection
+     * @since 5.5.0
+     * @see <a href="https://www.rabbitmq.com/docs/streams">RabbitMQ Streams</a>
+     */
+    public Flux<StreamConsumer> getStreamConsumersOnConnection(String vhost, String connectionName) {
+        return doGetFlux(StreamConsumer.class, "stream", "connections", encodePathSegment(vhost), encodePathSegment(connectionName), "consumers");
     }
 
     /**
@@ -1439,6 +1590,22 @@ public class ReactorNettyClient {
                 .map(ReactorNettyClient::toHttpResponse);
     }
 
+    private Mono<HttpResponse> doPostWithoutBody(String... pathSegments) {
+        return client.headersWhen(authorizedHeader())
+                .post()
+                .uri(uri(pathSegments))
+                .response()
+                .doOnNext(applyResponseCallback())
+                .doOnNext(response -> {
+                    if (response.status().code() >= 500) {
+                        throw new HttpServerException(response.status().code(), response.status().reasonPhrase());
+                    } else if (response.status().code() >= 400) {
+                        throw new HttpClientException(response.status().code(), response.status().reasonPhrase());
+                    }
+                })
+                .map(ReactorNettyClient::toHttpResponse);
+    }
+
     private <T> Mono<T> doPostMono(Object body, Class<T> type, String... pathSegments) {
         return Mono.from(client.headersWhen(authorizedHeader())
                 .headers(JSON_HEADER)
@@ -1500,6 +1667,18 @@ public class ReactorNettyClient {
                 .uri(uri)
                 .response()
                 .doOnNext(applyResponseCallback())
+                .doOnNext(response -> {
+                    int statusCode = response.status().code();
+                    // 404 is acceptable for DELETE (idempotent operation)
+                    if (statusCode == 404) {
+                        return;
+                    }
+                    if (statusCode >= 500) {
+                        throw new HttpServerException(statusCode, response.status().reasonPhrase());
+                    } else if (statusCode >= 400) {
+                        throw new HttpClientException(statusCode, response.status().reasonPhrase());
+                    }
+                })
                 .map(ReactorNettyClient::toHttpResponse);
     }
 

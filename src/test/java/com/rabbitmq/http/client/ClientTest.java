@@ -2296,17 +2296,7 @@ public class ClientTest {
 
   @Test
   void getApiShovels() {
-    // given: required vhosts, queue and exchange exist
-    try {
-      client.createVhost("vh1");
-    } catch (Exception e) {
-      // vhost may already exist
-    }
-    try {
-      client.createVhost("vh2");
-    } catch (Exception e) {
-      // vhost may already exist
-    }
+    // given: required vhosts (created by CI), queue and exchange exist
     client.declareQueue("vh1", "queue1", new QueueInfo(false, false, false));
     client.declareExchange("vh2", "exchange1", new ExchangeInfo("direct", false, false));
 
@@ -2816,5 +2806,92 @@ public class ClientTest {
     Thread.sleep(1000);
     assertThat(client.getUser(user1)).isNull();
     assertThat(client.getUser(user2)).isNull();
+  }
+
+  @Test
+  void getUsersWithoutPermissions() {
+    String username = "user-no-perms-" + System.currentTimeMillis();
+    client.createUser(username, "password".toCharArray(), Collections.emptyList());
+    try {
+      List<UserInfo> users = client.getUsersWithoutPermissions();
+      assertThat(users).isNotNull();
+      assertThat(users.stream().anyMatch(u -> username.equals(u.getName()))).isTrue();
+    } finally {
+      client.deleteUser(username);
+    }
+  }
+
+  @Test
+  void vhostDeletionProtection() {
+    String vhost = "vhost-deletion-protection-" + System.currentTimeMillis();
+    client.createVhost(vhost);
+    try {
+      client.enableVhostDeletionProtection(vhost);
+      try {
+        client.deleteVhost(vhost);
+        Assertions.fail("Should have thrown 412 Precondition Failed");
+      } catch (Exception e) {
+        assertThat(exceptionStatus(e)).isEqualTo(412);
+      }
+      client.disableVhostDeletionProtection(vhost);
+      client.deleteVhost(vhost);
+      assertThat(client.getVhost(vhost)).isNull();
+    } catch (Exception e) {
+      try {
+        client.disableVhostDeletionProtection(vhost);
+      } catch (Exception ignored) {
+      }
+      try {
+        client.deleteVhost(vhost);
+      } catch (Exception ignored) {
+      }
+      throw e;
+    }
+  }
+
+  @Test
+  void getAndSetClusterTags() {
+    Map<String, Object> originalTags = client.getClusterTags();
+    try {
+      Map<String, Object> tags = new HashMap<>();
+      tags.put("env", "test");
+      tags.put("version", "1.0");
+      client.setClusterTags(tags);
+      Map<String, Object> retrievedTags = client.getClusterTags();
+      assertThat(retrievedTags.get("env")).isEqualTo("test");
+      assertThat(retrievedTags.get("version")).isEqualTo("1.0");
+      client.clearClusterTags();
+      assertThat(client.getClusterTags()).isEmpty();
+    } finally {
+      try {
+        if (originalTags.isEmpty()) {
+          client.clearClusterTags();
+        } else {
+          client.setClusterTags(originalTags);
+        }
+      } catch (Exception ignored) {
+      }
+    }
+  }
+
+  @Test
+  void enableAllStableFeatureFlags() {
+    client.enableAllStableFeatureFlags();
+  }
+
+  @Test
+  void getOAuthConfiguration() {
+    com.rabbitmq.http.client.domain.OAuthConfiguration config = client.getOAuthConfiguration();
+    assertThat(config).isNotNull();
+  }
+
+  @Test
+  void getAuthAttemptStatistics() {
+    List<NodeInfo> nodes = client.getNodes();
+    assertThat(nodes).isNotEmpty();
+    String nodeName = nodes.get(0).getName();
+    List<com.rabbitmq.http.client.domain.AuthenticationAttemptStatistics> stats =
+        client.getAuthAttemptStatistics(nodeName);
+    assertThat(stats).isNotNull();
   }
 }
