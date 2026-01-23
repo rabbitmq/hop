@@ -42,6 +42,9 @@ import com.rabbitmq.http.client.domain.DeleteQueueParameters;
 import com.rabbitmq.http.client.domain.DetailsParameters;
 import com.rabbitmq.http.client.domain.ExchangeInfo;
 import com.rabbitmq.http.client.domain.ExchangeType;
+import com.rabbitmq.http.client.domain.FeatureFlag;
+import com.rabbitmq.http.client.domain.FeatureFlagStability;
+import com.rabbitmq.http.client.domain.FeatureFlagState;
 import com.rabbitmq.http.client.domain.InboundMessage;
 import com.rabbitmq.http.client.domain.MessageStats;
 import com.rabbitmq.http.client.domain.MqttVhostPortInfo;
@@ -3190,6 +3193,45 @@ public class ReactorNettyClientTest {
 
     // cleanup
     client.deleteVhost(vhost).block();
+  }
+
+  @Test
+  void getFeatureFlags() {
+    List<FeatureFlag> flags = client.getFeatureFlags().collectList().block();
+    assertThat(flags).isNotEmpty();
+    FeatureFlag flag = flags.get(0);
+    assertThat(flag.getName()).isNotNull();
+    assertThat(flag.getState()).isNotNull();
+    assertThat(flag.getStability()).isNotNull();
+  }
+
+  @Test
+  void enableFeatureFlag() {
+    List<FeatureFlag> flags = client.getFeatureFlags().collectList().block();
+    FeatureFlag disabledFlag =
+        flags.stream()
+            .filter(
+                f ->
+                    f.getState() == FeatureFlagState.DISABLED
+                        && f.getStability() == FeatureFlagStability.STABLE)
+            .findFirst()
+            .orElse(null);
+
+    if (disabledFlag == null) {
+      return;
+    }
+
+    client.enableFeatureFlag(disabledFlag.getName()).block();
+
+    List<FeatureFlag> updatedFlags = client.getFeatureFlags().collectList().block();
+    FeatureFlag enabledFlag =
+        updatedFlags.stream()
+            .filter(f -> f.getName().equals(disabledFlag.getName()))
+            .findFirst()
+            .orElse(null);
+
+    assertThat(enabledFlag).isNotNull();
+    assertThat(enabledFlag.getState()).isEqualTo(FeatureFlagState.ENABLED);
   }
 
   boolean isVersion37orLater() {

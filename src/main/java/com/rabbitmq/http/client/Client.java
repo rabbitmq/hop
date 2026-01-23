@@ -40,6 +40,7 @@ import com.rabbitmq.http.client.domain.Definitions;
 import com.rabbitmq.http.client.domain.DeleteQueueParameters;
 import com.rabbitmq.http.client.domain.DetailsParameters;
 import com.rabbitmq.http.client.domain.ExchangeInfo;
+import com.rabbitmq.http.client.domain.FeatureFlag;
 import com.rabbitmq.http.client.domain.InboundMessage;
 import com.rabbitmq.http.client.domain.MqttVhostPortInfo;
 import com.rabbitmq.http.client.domain.NodeInfo;
@@ -1047,7 +1048,35 @@ public class Client {
     final URI uri = uriWithPath("./definitions/");
     return this.httpLayer.get(uri, Definitions.class);
   }
-  
+
+  //
+  // Feature flags
+  //
+
+  /**
+   * Returns all feature flags.
+   *
+   * @return list of feature flags
+   * @since 5.5.0
+   * @see <a href="https://www.rabbitmq.com/docs/feature-flags">Feature Flags</a>
+   */
+  public List<FeatureFlag> getFeatureFlags() {
+    final URI uri = uriWithPath("./feature-flags/");
+    return Arrays.asList(this.httpLayer.get(uri, FeatureFlag[].class));
+  }
+
+  /**
+   * Enables a feature flag.
+   *
+   * @param name the name of the feature flag to enable
+   * @since 5.5.0
+   * @see <a href="https://www.rabbitmq.com/docs/feature-flags">Feature Flags</a>
+   */
+  public void enableFeatureFlag(String name) {
+    final URI uri = uri().withEncodedPath("./feature-flags").withPath(name).withEncodedPath("enable").get();
+    this.httpLayer.put(uri, Collections.emptyMap());
+  }
+
   //
   // Shovel support
   //

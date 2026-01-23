@@ -36,6 +36,9 @@ import com.rabbitmq.http.client.domain.DestinationType;
 import com.rabbitmq.http.client.domain.DetailsParameters;
 import com.rabbitmq.http.client.domain.ExchangeInfo;
 import com.rabbitmq.http.client.domain.ExchangeType;
+import com.rabbitmq.http.client.domain.FeatureFlag;
+import com.rabbitmq.http.client.domain.FeatureFlagStability;
+import com.rabbitmq.http.client.domain.FeatureFlagState;
 import com.rabbitmq.http.client.domain.InboundMessage;
 import com.rabbitmq.http.client.domain.MessageStats;
 import com.rabbitmq.http.client.domain.MqttVhostPortInfo;
@@ -2517,5 +2520,44 @@ public class ClientTest {
     assertThat(client.getVhostLimits(vhost).getMaxQueues()).isEqualTo(-1);
     assertThat(client.getVhostLimits(vhost).getMaxConnections()).isEqualTo(42);
     client.deleteVhost(vhost);
+  }
+
+  @Test
+  void getFeatureFlags() {
+    List<FeatureFlag> flags = client.getFeatureFlags();
+    assertThat(flags).isNotEmpty();
+    FeatureFlag flag = flags.get(0);
+    assertThat(flag.getName()).isNotNull();
+    assertThat(flag.getState()).isNotNull();
+    assertThat(flag.getStability()).isNotNull();
+  }
+
+  @Test
+  void enableFeatureFlag() {
+    List<FeatureFlag> flags = client.getFeatureFlags();
+    FeatureFlag disabledFlag =
+        flags.stream()
+            .filter(
+                f ->
+                    f.getState() == FeatureFlagState.DISABLED
+                        && f.getStability() == FeatureFlagStability.STABLE)
+            .findFirst()
+            .orElse(null);
+
+    if (disabledFlag == null) {
+      return;
+    }
+
+    client.enableFeatureFlag(disabledFlag.getName());
+
+    List<FeatureFlag> updatedFlags = client.getFeatureFlags();
+    FeatureFlag enabledFlag =
+        updatedFlags.stream()
+            .filter(f -> f.getName().equals(disabledFlag.getName()))
+            .findFirst()
+            .orElse(null);
+
+    assertThat(enabledFlag).isNotNull();
+    assertThat(enabledFlag.getState()).isEqualTo(FeatureFlagState.ENABLED);
   }
 }

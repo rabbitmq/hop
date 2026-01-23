@@ -50,6 +50,7 @@ import com.rabbitmq.http.client.domain.Definitions;
 import com.rabbitmq.http.client.domain.DeleteQueueParameters;
 import com.rabbitmq.http.client.domain.DetailsParameters;
 import com.rabbitmq.http.client.domain.ExchangeInfo;
+import com.rabbitmq.http.client.domain.FeatureFlag;
 import com.rabbitmq.http.client.domain.InboundMessage;
 import com.rabbitmq.http.client.domain.MqttVhostPortInfo;
 import com.rabbitmq.http.client.domain.NodeInfo;
@@ -530,6 +531,29 @@ public class ReactorNettyClient {
 
     public Mono<Definitions> getDefinitions() {
         return doGetMono(Definitions.class, "definitions");
+    }
+
+    /**
+     * Returns all feature flags.
+     *
+     * @return flux of feature flags
+     * @since 5.5.0
+     * @see <a href="https://www.rabbitmq.com/docs/feature-flags">Feature Flags</a>
+     */
+    public Flux<FeatureFlag> getFeatureFlags() {
+        return doGetFlux(FeatureFlag.class, "feature-flags");
+    }
+
+    /**
+     * Enables a feature flag.
+     *
+     * @param name the name of the feature flag to enable
+     * @return HTTP response in a mono
+     * @since 5.5.0
+     * @see <a href="https://www.rabbitmq.com/docs/feature-flags">Feature Flags</a>
+     */
+    public Mono<HttpResponse> enableFeatureFlag(String name) {
+        return doPut(Collections.emptyMap(), "feature-flags", encodePathSegment(name), "enable");
     }
 
     public Flux<QueueInfo> getQueues() {
