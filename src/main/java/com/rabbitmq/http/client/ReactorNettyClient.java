@@ -536,6 +536,18 @@ public class ReactorNettyClient {
     }
 
     /**
+     * Returns definitions for a specific virtual host.
+     *
+     * @param vhost the virtual host name
+     * @return definitions for the virtual host in a mono
+     * @since 5.5.0
+     * @see <a href="https://www.rabbitmq.com/docs/definitions">Definition Export and Import</a>
+     */
+    public Mono<Definitions> getDefinitions(String vhost) {
+        return doGetMono(Definitions.class, "definitions", encodePathSegment(vhost));
+    }
+
+    /**
      * Returns all feature flags.
      *
      * @return flux of feature flags

@@ -2189,6 +2189,21 @@ public class ClientTest {
   }
 
   @Test
+  void getVhostDefinitions() {
+    client.declareQueue("/", "test-vhost-def-queue", new QueueInfo(false, false, false));
+    Definitions d = client.getDefinitions("/");
+    assertThat(d).isNotNull();
+    assertThat(d.getQueues()).isNotEmpty();
+    QueueInfo q =
+        d.getQueues().stream()
+            .filter(qi -> "test-vhost-def-queue".equals(qi.getName()))
+            .findFirst()
+            .orElse(null);
+    assertThat(q).isNotNull();
+    client.deleteQueue("/", "test-vhost-def-queue");
+  }
+
+  @Test
   void getApiParametersShovel() {
     ShovelDetails value =
         new ShovelDetails("amqp://localhost:5672/vh1", "amqp://localhost:5672/vh2", 30, true, null);

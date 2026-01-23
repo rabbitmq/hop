@@ -2242,6 +2242,21 @@ public class ReactorNettyClientTest {
   }
 
   @Test
+  void getVhostDefinitions() {
+    client.declareQueue("/", "test-vhost-def-queue", new QueueInfo(false, false, false)).block();
+    Definitions d = client.getDefinitions("/").block();
+    assertThat(d).isNotNull();
+    assertThat(d.getQueues()).isNotEmpty();
+    QueueInfo q =
+        d.getQueues().stream()
+            .filter(qi -> "test-vhost-def-queue".equals(qi.getName()))
+            .findFirst()
+            .orElse(null);
+    assertThat(q).isNotNull();
+    client.deleteQueue("/", "test-vhost-def-queue").block();
+  }
+
+  @Test
   void putApiParametersShovelShovelDetailsSourcePrefetchCountNotSentIfNotSet() throws Exception {
     // given: a client that retrieves the body of the request
     AtomicReference<String> requestBody = new AtomicReference<>();

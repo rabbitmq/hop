@@ -1051,6 +1051,19 @@ public class Client {
     return this.httpLayer.get(uri, Definitions.class);
   }
 
+  /**
+   * Returns definitions for a specific virtual host.
+   *
+   * @param vhost the virtual host name
+   * @return definitions for the virtual host
+   * @since 5.5.0
+   * @see <a href="https://www.rabbitmq.com/docs/definitions">Definition Export and Import</a>
+   */
+  public Definitions getDefinitions(String vhost) {
+    final URI uri = uri().withEncodedPath("./definitions").withPath(vhost).get();
+    return this.httpLayer.get(uri, Definitions.class);
+  }
+
   //
   // Feature flags
   //
