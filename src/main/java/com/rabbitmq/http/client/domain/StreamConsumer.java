@@ -22,7 +22,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.Map;
 
 /**
- * Information about a stream protocol consumer.
+ * A stream consumer.
  *
  * @since 5.5.0
  * @see <a href="https://www.rabbitmq.com/docs/streams">RabbitMQ Streams</a>

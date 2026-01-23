@@ -16,6 +16,7 @@
 
 package com.rabbitmq.http.client.domain;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 /**
@@ -24,6 +25,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
  * @since 5.5.0
  * @see <a href="https://www.rabbitmq.com/docs/feature-flags">Feature Flags</a>
  */
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class FeatureFlag {
 
     private String name;

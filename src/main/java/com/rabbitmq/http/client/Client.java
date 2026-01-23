@@ -1206,7 +1206,7 @@ public class Client {
   //
 
   /**
-   * Triggers queue leader rebalancing across the cluster.
+   * Triggers queue leader rebalancing.
    *
    * @since 5.5.0
    * @see <a href="https://www.rabbitmq.com/docs/clustering#rebalancing">Queue Leader Rebalancing</a>
@@ -1221,7 +1221,7 @@ public class Client {
   //
 
   /**
-   * Returns all stream protocol connections across the cluster.
+   * Returns all stream connections.
    *
    * @return list of stream connections
    * @since 5.5.0
@@ -1233,7 +1233,7 @@ public class Client {
   }
 
   /**
-   * Returns stream protocol connections in a specific virtual host.
+   * Returns stream connections in a specific virtual host.
    *
    * @param vhost the virtual host name
    * @return list of stream connections
@@ -1246,7 +1246,7 @@ public class Client {
   }
 
   /**
-   * Returns information about a specific stream protocol connection.
+   * Returns information about a specific stream connection.
    *
    * @param vhost the virtual host name
    * @param name the connection name
@@ -1260,7 +1260,7 @@ public class Client {
   }
 
   /**
-   * Closes a stream protocol connection.
+   * Closes a stream connection.
    *
    * @param vhost the virtual host name
    * @param name the connection name
@@ -1273,7 +1273,7 @@ public class Client {
   }
 
   /**
-   * Returns all stream protocol publishers across the cluster.
+   * Returns all stream publishers.
    *
    * @return list of stream publishers
    * @since 5.5.0
@@ -1285,7 +1285,7 @@ public class Client {
   }
 
   /**
-   * Returns stream protocol publishers in a specific virtual host.
+   * Returns stream publishers in a specific virtual host.
    *
    * @param vhost the virtual host name
    * @return list of stream publishers
@@ -1298,7 +1298,7 @@ public class Client {
   }
 
   /**
-   * Returns stream protocol publishers for a specific stream.
+   * Returns stream publishers for a specific stream.
    *
    * @param vhost the virtual host name
    * @param stream the stream name
@@ -1312,7 +1312,7 @@ public class Client {
   }
 
   /**
-   * Returns all stream protocol consumers across the cluster.
+   * Returns all stream consumers.
    *
    * @return list of stream consumers
    * @since 5.5.0
@@ -1324,7 +1324,7 @@ public class Client {
   }
 
   /**
-   * Returns stream protocol consumers in a specific virtual host.
+   * Returns stream consumers in a specific virtual host.
    *
    * @param vhost the virtual host name
    * @return list of stream consumers
@@ -1336,12 +1336,26 @@ public class Client {
     return Arrays.asList(this.httpLayer.get(uri, StreamConsumer[].class));
   }
 
+  /**
+   * Returns stream consumers for a specific stream.
+   *
+   * @param vhost the virtual host name
+   * @param stream the stream name
+   * @return list of stream consumers
+   * @since 5.5.0
+   * @see <a href="https://www.rabbitmq.com/docs/streams">RabbitMQ Streams</a>
+   */
+  public List<StreamConsumer> getStreamConsumers(String vhost, String stream) {
+    final URI uri = uri().withEncodedPath("./stream/consumers").withPath(vhost).withPath(stream).get();
+    return Arrays.asList(this.httpLayer.get(uri, StreamConsumer[].class));
+  }
+
   //
   // Federation links
   //
 
   /**
-   * Returns all federation links across the cluster.
+   * Returns all federation links.
    *
    * @return list of federation links as untyped maps
    * @since 5.5.0

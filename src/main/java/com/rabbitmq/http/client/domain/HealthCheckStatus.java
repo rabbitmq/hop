@@ -16,11 +16,14 @@
 
 package com.rabbitmq.http.client.domain;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+
 /**
  * Health check status response.
  *
  * @since 5.5.0
  */
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class HealthCheckStatus {
 
     private String status;

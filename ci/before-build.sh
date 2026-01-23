@@ -39,6 +39,10 @@ $PLUGINS enable rabbitmq_federation_management
 # Enable mqtt plugin
 $PLUGINS enable rabbitmq_mqtt
 
+# Enable stream plugin
+$PLUGINS enable rabbitmq_stream
+$PLUGINS enable rabbitmq_stream_management
+
 # So that virtual host descriptions are available
 $CTL enable_feature_flag all
 

@@ -20,7 +20,7 @@ import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 /**
- * Information about a stream protocol publisher.
+ * A stream publisher.
  *
  * @since 5.5.0
  * @see <a href="https://www.rabbitmq.com/docs/streams">RabbitMQ Streams</a>

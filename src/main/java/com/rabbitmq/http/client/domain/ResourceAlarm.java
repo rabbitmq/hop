@@ -16,11 +16,14 @@
 
 package com.rabbitmq.http.client.domain;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+
 /**
  * A resource alarm on a node.
  *
  * @since 5.5.0
  */
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class ResourceAlarm {
 
     private String node;

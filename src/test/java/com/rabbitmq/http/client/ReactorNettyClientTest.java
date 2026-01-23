@@ -606,12 +606,16 @@ public class ReactorNettyClientTest {
   @Test
   void getApiVhostsNameTopicPermissionsWhenVhostExists() throws Exception {
     if (!isVersion37orLater()) return;
-    // when: topic permissions for vhost / are listed
+    // given: topic permissions for guest user exist
     String s = "/";
+    client.updateTopicPermissions(s, "guest", new TopicPermissions("amq.topic", ".*", ".*")).block();
+
+    // when: topic permissions for vhost / are listed
     Flux<TopicPermissions> xs = client.getTopicPermissionsIn(s);
 
     // then: they include topic permissions for the guest user
     TopicPermissions x = xs.filter(perm -> perm.getUser().equals("guest")).blockFirst();
+    assertThat(x).isNotNull();
     assertThat(x.getExchange()).isEqualTo("amq.topic");
     assertThat(x.getRead()).isEqualTo(".*");
   }
@@ -748,12 +752,16 @@ public class ReactorNettyClientTest {
   @Test
   void getApiUsersNameTopicPermissionsWhenUserExists() throws Exception {
     if (!isVersion37orLater()) return;
-    // when: topic permissions for user guest are listed
+    // given: topic permissions for guest user exist
     String s = "guest";
+    client.updateTopicPermissions("/", s, new TopicPermissions("amq.topic", ".*", ".*")).block();
+
+    // when: topic permissions for user guest are listed
     Flux<TopicPermissions> xs = client.getTopicPermissionsOf(s);
 
     // then: they include topic permissions for the guest user
     TopicPermissions x = xs.filter(perm -> perm.getUser().equals("guest")).blockFirst();
+    assertThat(x).isNotNull();
     assertThat(x.getExchange()).isEqualTo("amq.topic");
     assertThat(x.getRead()).isEqualTo(".*");
   }
@@ -853,13 +861,17 @@ public class ReactorNettyClientTest {
   @Test
   void getApiTopicPermissions() throws Exception {
     if (!isVersion37orLater()) return;
-    // when: all topic permissions are listed
+    // given: topic permissions for guest user exist
     String s = "guest";
+    client.updateTopicPermissions("/", s, new TopicPermissions("amq.topic", ".*", ".*")).block();
+
+    // when: all topic permissions are listed
     Flux<TopicPermissions> xs = client.getTopicPermissions();
 
     // then: they include topic permissions for user guest in vhost /
     TopicPermissions x =
         xs.filter(perm -> perm.getVhost().equals("/") && perm.getUser().equals(s)).blockFirst();
+    assertThat(x).isNotNull();
     assertThat(x.getExchange()).isEqualTo("amq.topic");
     assertThat(x.getRead()).isEqualTo(".*");
   }
@@ -867,14 +879,18 @@ public class ReactorNettyClientTest {
   @Test
   void getApiTopicPermissionsVhostUserWhenBothVhostAndUserExist() throws Exception {
     if (!isVersion37orLater()) return;
-    // when: topic permissions of user guest in vhost / are listed
+    // given: topic permissions for guest user exist
     String u = "guest";
     String v = "/";
+    client.updateTopicPermissions(v, u, new TopicPermissions("amq.topic", ".*", ".*")).block();
+
+    // when: topic permissions of user guest in vhost / are listed
     Flux<TopicPermissions> xs = client.getTopicPermissions(v, u);
 
     // then: a list of permissions objects is returned
     TopicPermissions x =
         xs.filter(perm -> perm.getVhost().equals(v) && perm.getUser().equals(u)).blockFirst();
+    assertThat(x).isNotNull();
     assertThat(x.getExchange()).isEqualTo("amq.topic");
     assertThat(x.getRead()).isEqualTo(".*");
   }
@@ -1397,6 +1413,11 @@ public class ReactorNettyClientTest {
 
   @Test
   void getApiDefinitionsVersionVhostsUsersPermissionsTopicPermissions() throws Exception {
+    // given: topic permissions for guest user exist
+    if (isVersion37orLater()) {
+      client.updateTopicPermissions("/", "guest", new TopicPermissions("amq.topic", ".*", ".*")).block();
+    }
+
     // when: client requests the definitions
     Definitions d = client.getDefinitions().block();
 
@@ -1412,6 +1433,7 @@ public class ReactorNettyClientTest {
     assertThat(d.getPermissions().get(0).getUser()).isNotNull();
     assertThat(d.getPermissions().get(0).getUser()).isNotEmpty();
     if (isVersion37orLater()) {
+      assertThat(d.getTopicPermissions()).isNotEmpty();
       assertThat(d.getTopicPermissions().get(0).getUser()).isNotNull();
       assertThat(d.getTopicPermissions().get(0).getUser()).isNotEmpty();
     }
@@ -2434,7 +2456,20 @@ public class ReactorNettyClientTest {
 
   @Test
   void getApiShovels() throws Exception {
-    // given: a basic topology
+    // given: required vhosts, queue and exchange exist
+    try {
+      client.createVhost("vh1").block();
+    } catch (Exception e) {
+      // vhost may already exist
+    }
+    try {
+      client.createVhost("vh2").block();
+    } catch (Exception e) {
+      // vhost may already exist
+    }
+    client.declareQueue("vh1", "queue1", new QueueInfo(false, false, false)).block();
+    client.declareExchange("vh2", "exchange1", new ExchangeInfo("direct", false, false)).block();
+
     ShovelDetails value =
         new ShovelDetails("amqp://localhost:5672/vh1", "amqp://localhost:5672/vh2", 30, true, null);
     value.setSourceQueue("queue1");
@@ -2467,6 +2502,8 @@ public class ReactorNettyClientTest {
 
     // cleanup
     client.deleteShovel("/", shovelName).block();
+    client.deleteQueue("vh1", "queue1").block();
+    client.deleteExchange("vh2", "exchange1").block();
   }
 
   @Test
@@ -3443,14 +3480,18 @@ public class ReactorNettyClientTest {
   }
 
   @Test
-  void deleteUsersBulk() {
+  void deleteUsersBulk() throws Exception {
     String user1 = "bulk-del-user-1-" + System.currentTimeMillis();
     String user2 = "bulk-del-user-2-" + System.currentTimeMillis();
     client.createUser(user1, "password".toCharArray(), Arrays.asList("management")).block();
     client.createUser(user2, "password".toCharArray(), Arrays.asList("management")).block();
+    awaitEventPropagation();
     assertThat(client.getUser(user1).block()).isNotNull();
     assertThat(client.getUser(user2).block()).isNotNull();
     client.deleteUsers(Arrays.asList(user1, user2)).block();
+    awaitEventPropagation();
+    assertThrows(HttpClientException.class, () -> client.getUser(user1).block());
+    assertThrows(HttpClientException.class, () -> client.getUser(user2).block());
   }
 
   boolean isVersion37orLater() {
