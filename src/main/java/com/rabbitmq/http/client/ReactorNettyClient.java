@@ -787,6 +787,31 @@ public class ReactorNettyClient {
         return doGetFlux(StreamConsumer.class, "stream", "consumers", encodePathSegment(vhost));
     }
 
+    /**
+     * Returns all federation links across the cluster.
+     *
+     * @return flux of federation links as untyped maps
+     * @since 5.5.0
+     * @see <a href="https://www.rabbitmq.com/docs/federation">Federation Plugin</a>
+     */
+    @SuppressWarnings("rawtypes")
+    public Flux<Map> getFederationLinks() {
+        return doGetFlux(Map.class, "federation-links");
+    }
+
+    /**
+     * Returns federation links in a specific virtual host.
+     *
+     * @param vhost the virtual host name
+     * @return flux of federation links as untyped maps
+     * @since 5.5.0
+     * @see <a href="https://www.rabbitmq.com/docs/federation">Federation Plugin</a>
+     */
+    @SuppressWarnings("rawtypes")
+    public Flux<Map> getFederationLinks(String vhost) {
+        return doGetFlux(Map.class, "federation-links", encodePathSegment(vhost));
+    }
+
     public Flux<QueueInfo> getQueues() {
         return getQueues((DetailsParameters) null);
     }

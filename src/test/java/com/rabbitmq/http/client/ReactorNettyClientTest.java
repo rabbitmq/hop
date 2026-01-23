@@ -3408,6 +3408,20 @@ public class ReactorNettyClientTest {
     assertThat(consumers).isNotNull();
   }
 
+  @Test
+  @SuppressWarnings("rawtypes")
+  void getFederationLinks() {
+    List<Map> links = client.getFederationLinks().collectList().block();
+    assertThat(links).isNotNull();
+  }
+
+  @Test
+  @SuppressWarnings("rawtypes")
+  void getFederationLinksInVhost() {
+    List<Map> links = client.getFederationLinks("/").collectList().block();
+    assertThat(links).isNotNull();
+  }
+
   boolean isVersion37orLater() {
     return TestUtils.isVersion37orLater(brokerVersion);
   }

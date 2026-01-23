@@ -2734,4 +2734,18 @@ public class ClientTest {
     List<StreamConsumer> consumers = client.getStreamConsumers("/");
     assertThat(consumers).isNotNull();
   }
+
+  @Test
+  @SuppressWarnings("rawtypes")
+  void getFederationLinks() {
+    List<Map> links = client.getFederationLinks();
+    assertThat(links).isNotNull();
+  }
+
+  @Test
+  @SuppressWarnings("rawtypes")
+  void getFederationLinksInVhost() {
+    List<Map> links = client.getFederationLinks("/");
+    assertThat(links).isNotNull();
+  }
 }

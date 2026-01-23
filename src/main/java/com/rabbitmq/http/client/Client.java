@@ -1336,6 +1336,37 @@ public class Client {
   }
 
   //
+  // Federation links
+  //
+
+  /**
+   * Returns all federation links across the cluster.
+   *
+   * @return list of federation links as untyped maps
+   * @since 5.5.0
+   * @see <a href="https://www.rabbitmq.com/docs/federation">Federation Plugin</a>
+   */
+  @SuppressWarnings("rawtypes")
+  public List<Map> getFederationLinks() {
+    final URI uri = uriWithPath("./federation-links/");
+    return Arrays.asList(this.httpLayer.get(uri, Map[].class));
+  }
+
+  /**
+   * Returns federation links in a specific virtual host.
+   *
+   * @param vhost the virtual host name
+   * @return list of federation links as untyped maps
+   * @since 5.5.0
+   * @see <a href="https://www.rabbitmq.com/docs/federation">Federation Plugin</a>
+   */
+  @SuppressWarnings("rawtypes")
+  public List<Map> getFederationLinks(String vhost) {
+    final URI uri = uri().withEncodedPath("./federation-links").withPath(vhost).get();
+    return Arrays.asList(this.httpLayer.get(uri, Map[].class));
+  }
+
+  //
   // Shovel support
   //
 
