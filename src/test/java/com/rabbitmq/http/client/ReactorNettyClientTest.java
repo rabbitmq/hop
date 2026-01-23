@@ -3365,6 +3365,11 @@ public class ReactorNettyClientTest {
     assertThat(features).isNotNull();
   }
 
+  @Test
+  void rebalanceQueueLeaders() {
+    client.rebalanceQueueLeaders().block();
+  }
+
   boolean isVersion37orLater() {
     return TestUtils.isVersion37orLater(brokerVersion);
   }

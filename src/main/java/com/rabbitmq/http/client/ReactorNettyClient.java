@@ -666,6 +666,17 @@ public class ReactorNettyClient {
         return doGetFlux(DeprecatedFeature.class, "deprecated-features", "used");
     }
 
+    /**
+     * Triggers queue leader rebalancing across the cluster.
+     *
+     * @return HTTP response in a mono
+     * @since 5.5.0
+     * @see <a href="https://www.rabbitmq.com/docs/clustering#rebalancing">Queue Leader Rebalancing</a>
+     */
+    public Mono<HttpResponse> rebalanceQueueLeaders() {
+        return doPost(Collections.emptyMap(), "rebalance", "queues");
+    }
+
     public Flux<QueueInfo> getQueues() {
         return getQueues((DetailsParameters) null);
     }

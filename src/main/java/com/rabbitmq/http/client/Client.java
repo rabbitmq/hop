@@ -1199,6 +1199,21 @@ public class Client {
   }
 
   //
+  // Queue rebalancing
+  //
+
+  /**
+   * Triggers queue leader rebalancing across the cluster.
+   *
+   * @since 5.5.0
+   * @see <a href="https://www.rabbitmq.com/docs/clustering#rebalancing">Queue Leader Rebalancing</a>
+   */
+  public void rebalanceQueueLeaders() {
+    final URI uri = uriWithPath("./rebalance/queues");
+    this.httpLayer.post(uri, Collections.emptyMap(), null);
+  }
+
+  //
   // Shovel support
   //
 

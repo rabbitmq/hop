@@ -2691,4 +2691,9 @@ public class ClientTest {
     List<DeprecatedFeature> features = client.getDeprecatedFeaturesInUse();
     assertThat(features).isNotNull();
   }
+
+  @Test
+  void rebalanceQueueLeaders() {
+    client.rebalanceQueueLeaders();
+  }
 }
