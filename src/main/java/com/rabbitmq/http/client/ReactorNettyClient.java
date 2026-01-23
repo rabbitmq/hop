@@ -61,6 +61,7 @@ import com.rabbitmq.http.client.domain.QueueInfo;
 import com.rabbitmq.http.client.domain.ShovelInfo;
 import com.rabbitmq.http.client.domain.ShovelStatus;
 import com.rabbitmq.http.client.domain.TopicPermissions;
+import com.rabbitmq.http.client.domain.UserLimits;
 import com.rabbitmq.http.client.domain.UpstreamDetails;
 import com.rabbitmq.http.client.domain.UpstreamInfo;
 import com.rabbitmq.http.client.domain.UpstreamSetDetails;
@@ -966,6 +967,77 @@ public class ReactorNettyClient {
      */
     public Mono<HttpResponse> clearMaxQueuesLimit(String vhost) {
         return doDelete("vhost-limits", encodePathSegment(vhost), "max-queues");
+    }
+
+    /**
+     * Returns the limits (max connections and channels) for all users.
+     *
+     * @return flux of the limits
+     * @since 5.5.0
+     */
+    public Flux<UserLimits> getUserLimits() {
+        return doGetFlux(UserLimits.class, "user-limits");
+    }
+
+    /**
+     * Returns the limits (max connections and channels) for a given user.
+     *
+     * @param username the username
+     * @return mono of the limits for this user
+     * @since 5.5.0
+     */
+    public Mono<UserLimits> getUserLimits(String username) {
+        return doGetMono(UserLimits.class, "user-limits", encodePathSegment(username))
+                .map(limits -> limits.getUser() == null ?
+                        new UserLimits(username, -1, -1) : limits);
+    }
+
+    /**
+     * Sets the max number (limit) of connections for a user.
+     *
+     * @param username the username
+     * @param limit the max number of connections allowed
+     * @return HTTP response in a mono
+     * @since 5.5.0
+     */
+    public Mono<HttpResponse> limitUserMaxConnections(String username, int limit) {
+        return doPut(Collections.singletonMap("value", limit),
+                "user-limits", encodePathSegment(username), "max-connections");
+    }
+
+    /**
+     * Sets the max number (limit) of channels for a user.
+     *
+     * @param username the username
+     * @param limit the max number of channels allowed
+     * @return HTTP response in a mono
+     * @since 5.5.0
+     */
+    public Mono<HttpResponse> limitUserMaxChannels(String username, int limit) {
+        return doPut(Collections.singletonMap("value", limit),
+                "user-limits", encodePathSegment(username), "max-channels");
+    }
+
+    /**
+     * Clears the connection limit for a user.
+     *
+     * @param username the username
+     * @return HTTP response in a mono
+     * @since 5.5.0
+     */
+    public Mono<HttpResponse> clearUserMaxConnectionsLimit(String username) {
+        return doDelete("user-limits", encodePathSegment(username), "max-connections");
+    }
+
+    /**
+     * Clears the channel limit for a user.
+     *
+     * @param username the username
+     * @return HTTP response in a mono
+     * @since 5.5.0
+     */
+    public Mono<HttpResponse> clearUserMaxChannelsLimit(String username) {
+        return doDelete("user-limits", encodePathSegment(username), "max-channels");
     }
 
     private <T> Mono<T> doGetMono(Class<T> type, String... pathSegments) {

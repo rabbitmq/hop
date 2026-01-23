@@ -62,6 +62,7 @@ import com.rabbitmq.http.client.domain.UpstreamSetDetails;
 import com.rabbitmq.http.client.domain.UpstreamSetInfo;
 import com.rabbitmq.http.client.domain.UserConnectionInfo;
 import com.rabbitmq.http.client.domain.UserInfo;
+import com.rabbitmq.http.client.domain.UserLimits;
 import com.rabbitmq.http.client.domain.UserPermissions;
 import com.rabbitmq.http.client.domain.VhostInfo;
 import com.rabbitmq.http.client.domain.VhostLimits;
@@ -2559,5 +2560,77 @@ public class ClientTest {
 
     assertThat(enabledFlag).isNotNull();
     assertThat(enabledFlag.getState()).isEqualTo(FeatureFlagState.ENABLED);
+  }
+
+  @Test
+  void getUserLimitsWithLimits() {
+    String username = "user-with-limits";
+    client.createUser(username, "password".toCharArray(), Collections.emptyList());
+    try {
+      client.limitUserMaxConnections(username, 10);
+      client.limitUserMaxChannels(username, 100);
+      List<UserLimits> limits = client.getUserLimits();
+      UserLimits userLimits =
+          limits.stream().filter(l -> username.equals(l.getUser())).findFirst().orElse(null);
+      assertThat(userLimits).isNotNull();
+      assertThat(userLimits.getMaxConnections()).isEqualTo(10);
+      assertThat(userLimits.getMaxChannels()).isEqualTo(100);
+    } finally {
+      client.deleteUser(username);
+    }
+  }
+
+  @Test
+  void getUserLimitsForUser() {
+    String username = "user-with-limits-2";
+    client.createUser(username, "password".toCharArray(), Collections.emptyList());
+    try {
+      client.limitUserMaxConnections(username, 20);
+      client.limitUserMaxChannels(username, 200);
+      UserLimits limits = client.getUserLimits(username);
+      assertThat(limits.getMaxConnections()).isEqualTo(20);
+      assertThat(limits.getMaxChannels()).isEqualTo(200);
+    } finally {
+      client.deleteUser(username);
+    }
+  }
+
+  @Test
+  void getUserLimitsForUserWithNoLimits() {
+    String username = "user-without-limits";
+    client.createUser(username, "password".toCharArray(), Collections.emptyList());
+    try {
+      UserLimits limits = client.getUserLimits(username);
+      assertThat(limits.getMaxConnections()).isEqualTo(-1);
+      assertThat(limits.getMaxChannels()).isEqualTo(-1);
+    } finally {
+      client.deleteUser(username);
+    }
+  }
+
+  @Test
+  void clearUserMaxConnectionsLimit() {
+    String username = "user-max-connections-limit";
+    client.createUser(username, "password".toCharArray(), Collections.emptyList());
+    try {
+      client.limitUserMaxConnections(username, 42);
+      client.clearUserMaxConnectionsLimit(username);
+      assertThat(client.getUserLimits(username).getMaxConnections()).isEqualTo(-1);
+    } finally {
+      client.deleteUser(username);
+    }
+  }
+
+  @Test
+  void clearUserMaxChannelsLimit() {
+    String username = "user-max-channels-limit";
+    client.createUser(username, "password".toCharArray(), Collections.emptyList());
+    try {
+      client.limitUserMaxChannels(username, 42);
+      client.clearUserMaxChannelsLimit(username);
+      assertThat(client.getUserLimits(username).getMaxChannels()).isEqualTo(-1);
+    } finally {
+      client.deleteUser(username);
+    }
   }
 }

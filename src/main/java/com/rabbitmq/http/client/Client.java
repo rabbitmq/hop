@@ -53,6 +53,7 @@ import com.rabbitmq.http.client.domain.QueueInfo;
 import com.rabbitmq.http.client.domain.ShovelInfo;
 import com.rabbitmq.http.client.domain.ShovelStatus;
 import com.rabbitmq.http.client.domain.TopicPermissions;
+import com.rabbitmq.http.client.domain.UserLimits;
 import com.rabbitmq.http.client.domain.UpstreamDetails;
 import com.rabbitmq.http.client.domain.UpstreamInfo;
 import com.rabbitmq.http.client.domain.UpstreamSetDetails;
@@ -1323,6 +1324,79 @@ public class Client {
    */
   public void clearMaxQueuesLimit(String vhost) {
     final URI uri = uri().withEncodedPath("./vhost-limits").withPath(vhost).withEncodedPath("max-queues").get();
+    this.deleteIgnoring404(uri);
+  }
+
+  /**
+   * Returns limits for all users that have limits set.
+   *
+   * @return list of user limits
+   * @since 5.5.0
+   */
+  public List<UserLimits> getUserLimits() {
+    final URI uri = uriWithPath("./user-limits/");
+    return asListOrNull(getForObjectReturningNullOn404(uri, UserLimits[].class));
+  }
+
+  /**
+   * Returns the limits (max connections and channels) for a given user.
+   *
+   * @param username the username
+   * @return the limits for this user
+   * @since 5.5.0
+   */
+  public UserLimits getUserLimits(String username) {
+    final URI uri = uri().withEncodedPath("./user-limits").withPath(username).get();
+    UserLimits limits = this.httpLayer.get(uri, UserLimits.class);
+    if (limits != null && limits.getUser() == null) {
+      limits = new UserLimits(username, -1, -1);
+    }
+    return limits;
+  }
+
+  /**
+   * Sets the max number (limit) of connections for a user.
+   *
+   * @param username the username
+   * @param limit the max number of connections allowed
+   * @since 5.5.0
+   */
+  public void limitUserMaxConnections(String username, int limit) {
+    final URI uri = uri().withEncodedPath("./user-limits").withPath(username).withEncodedPath("max-connections").get();
+    this.httpLayer.put(uri, Collections.singletonMap("value", limit));
+  }
+
+  /**
+   * Sets the max number (limit) of channels for a user.
+   *
+   * @param username the username
+   * @param limit the max number of channels allowed
+   * @since 5.5.0
+   */
+  public void limitUserMaxChannels(String username, int limit) {
+    final URI uri = uri().withEncodedPath("./user-limits").withPath(username).withEncodedPath("max-channels").get();
+    this.httpLayer.put(uri, Collections.singletonMap("value", limit));
+  }
+
+  /**
+   * Clears the connection limit for a user.
+   *
+   * @param username the username
+   * @since 5.5.0
+   */
+  public void clearUserMaxConnectionsLimit(String username) {
+    final URI uri = uri().withEncodedPath("./user-limits").withPath(username).withEncodedPath("max-connections").get();
+    this.deleteIgnoring404(uri);
+  }
+
+  /**
+   * Clears the channel limit for a user.
+   *
+   * @param username the username
+   * @since 5.5.0
+   */
+  public void clearUserMaxChannelsLimit(String username) {
+    final URI uri = uri().withEncodedPath("./user-limits").withPath(username).withEncodedPath("max-channels").get();
     this.deleteIgnoring404(uri);
   }
 

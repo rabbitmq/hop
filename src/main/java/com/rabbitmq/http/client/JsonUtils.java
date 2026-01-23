@@ -36,12 +36,15 @@ import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.rabbitmq.http.client.domain.ChannelDetails;
 import com.rabbitmq.http.client.domain.CurrentUserDetails;
 import com.rabbitmq.http.client.domain.UserInfo;
+import com.rabbitmq.http.client.domain.UserLimits;
 import com.rabbitmq.http.client.domain.VhostLimits;
 
 final class JsonUtils {
 
   static final JsonDeserializer<VhostLimits> VHOST_LIMITS_DESERIALIZER_INSTANCE =
       new VhostLimitsDeserializer();
+  static final JsonDeserializer<UserLimits> USER_LIMITS_DESERIALIZER_INSTANCE =
+      new UserLimitsDeserializer();
   static final JsonDeserializer<CurrentUserDetails> CURRENT_USER_DETAILS_DESERIALIZER_INSTANCE =
       new CurrentUserDetailsDeserializer();
   static final JsonDeserializer<UserInfo> USER_INFO_DESERIALIZER_INSTANCE =
@@ -64,6 +67,7 @@ final class JsonUtils {
     objectMapper.disable(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES);
     SimpleModule module = new SimpleModule();
     module.addDeserializer(VhostLimits.class, JsonUtils.VHOST_LIMITS_DESERIALIZER_INSTANCE);
+    module.addDeserializer(UserLimits.class, JsonUtils.USER_LIMITS_DESERIALIZER_INSTANCE);
     module.addDeserializer(UserInfo.class, JsonUtils.USER_INFO_DESERIALIZER_INSTANCE);
     module.addDeserializer(
         CurrentUserDetails.class, JsonUtils.CURRENT_USER_DETAILS_DESERIALIZER_INSTANCE);
@@ -97,6 +101,43 @@ final class JsonUtils {
           get(node, VHOST_FIELD),
           getLimit(value, MAX_QUEUES_FIELD),
           getLimit(value, MAX_CONNECTIONS_FIELD));
+    }
+
+    private int getLimit(JsonNode value, String name) {
+      JsonNode limit = value.get(name);
+      if (limit == null) {
+        return -1;
+      } else {
+        return limit.asInt(-1);
+      }
+    }
+  }
+
+  private static final class UserLimitsDeserializer extends StdDeserializer<UserLimits> {
+    private static final String USER_FIELD = "user";
+    private static final String VALUE_FIELD = "value";
+    private static final String MAX_CONNECTIONS_FIELD = "max-connections";
+    private static final String MAX_CHANNELS_FIELD = "max-channels";
+    private static final long serialVersionUID = -1881403692606830844L;
+
+    private UserLimitsDeserializer() {
+      super(UserLimits.class);
+    }
+
+    @Override
+    public UserLimits deserialize(JsonParser jp, DeserializationContext ctxt) throws IOException {
+      JsonNode node = jp.getCodec().readTree(jp);
+      if (node.isArray()) {
+        if (node.isEmpty()) {
+          return new UserLimits(null, -1, -1);
+        }
+        node = node.get(0);
+      }
+      JsonNode value = node.get(VALUE_FIELD);
+      return new UserLimits(
+          get(node, USER_FIELD),
+          getLimit(value, MAX_CONNECTIONS_FIELD),
+          getLimit(value, MAX_CHANNELS_FIELD));
     }
 
     private int getLimit(JsonNode value, String name) {

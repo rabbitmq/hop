@@ -64,6 +64,7 @@ import com.rabbitmq.http.client.domain.UpstreamInfo;
 import com.rabbitmq.http.client.domain.UpstreamSetDetails;
 import com.rabbitmq.http.client.domain.UpstreamSetInfo;
 import com.rabbitmq.http.client.domain.UserInfo;
+import com.rabbitmq.http.client.domain.UserLimits;
 import com.rabbitmq.http.client.domain.UserPermissions;
 import com.rabbitmq.http.client.domain.VhostInfo;
 import com.rabbitmq.http.client.domain.VhostLimits;
@@ -3232,6 +3233,78 @@ public class ReactorNettyClientTest {
 
     assertThat(enabledFlag).isNotNull();
     assertThat(enabledFlag.getState()).isEqualTo(FeatureFlagState.ENABLED);
+  }
+
+  @Test
+  void getUserLimitsWithLimits() {
+    String username = "user-with-limits";
+    client.createUser(username, "password".toCharArray(), Collections.emptyList()).block();
+    try {
+      client.limitUserMaxConnections(username, 10).block();
+      client.limitUserMaxChannels(username, 100).block();
+      List<UserLimits> limits = client.getUserLimits().collectList().block();
+      UserLimits userLimits =
+          limits.stream().filter(l -> username.equals(l.getUser())).findFirst().orElse(null);
+      assertThat(userLimits).isNotNull();
+      assertThat(userLimits.getMaxConnections()).isEqualTo(10);
+      assertThat(userLimits.getMaxChannels()).isEqualTo(100);
+    } finally {
+      client.deleteUser(username).block();
+    }
+  }
+
+  @Test
+  void getUserLimitsForUser() {
+    String username = "user-with-limits-2";
+    client.createUser(username, "password".toCharArray(), Collections.emptyList()).block();
+    try {
+      client.limitUserMaxConnections(username, 20).block();
+      client.limitUserMaxChannels(username, 200).block();
+      UserLimits limits = client.getUserLimits(username).block();
+      assertThat(limits.getMaxConnections()).isEqualTo(20);
+      assertThat(limits.getMaxChannels()).isEqualTo(200);
+    } finally {
+      client.deleteUser(username).block();
+    }
+  }
+
+  @Test
+  void getUserLimitsForUserWithNoLimits() {
+    String username = "user-without-limits";
+    client.createUser(username, "password".toCharArray(), Collections.emptyList()).block();
+    try {
+      UserLimits limits = client.getUserLimits(username).block();
+      assertThat(limits.getMaxConnections()).isEqualTo(-1);
+      assertThat(limits.getMaxChannels()).isEqualTo(-1);
+    } finally {
+      client.deleteUser(username).block();
+    }
+  }
+
+  @Test
+  void clearUserMaxConnectionsLimit() {
+    String username = "user-max-connections-limit";
+    client.createUser(username, "password".toCharArray(), Collections.emptyList()).block();
+    try {
+      client.limitUserMaxConnections(username, 42).block();
+      client.clearUserMaxConnectionsLimit(username).block();
+      assertThat(client.getUserLimits(username).block().getMaxConnections()).isEqualTo(-1);
+    } finally {
+      client.deleteUser(username).block();
+    }
+  }
+
+  @Test
+  void clearUserMaxChannelsLimit() {
+    String username = "user-max-channels-limit";
+    client.createUser(username, "password".toCharArray(), Collections.emptyList()).block();
+    try {
+      client.limitUserMaxChannels(username, 42).block();
+      client.clearUserMaxChannelsLimit(username).block();
+      assertThat(client.getUserLimits(username).block().getMaxChannels()).isEqualTo(-1);
+    } finally {
+      client.deleteUser(username).block();
+    }
   }
 
   boolean isVersion37orLater() {
