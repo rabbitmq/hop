@@ -40,6 +40,7 @@ import com.rabbitmq.http.client.domain.ExchangeType;
 import com.rabbitmq.http.client.domain.FeatureFlag;
 import com.rabbitmq.http.client.domain.FeatureFlagStability;
 import com.rabbitmq.http.client.domain.FeatureFlagState;
+import com.rabbitmq.http.client.domain.GlobalRuntimeParameter;
 import com.rabbitmq.http.client.domain.InboundMessage;
 import com.rabbitmq.http.client.domain.MessageStats;
 import com.rabbitmq.http.client.domain.MqttVhostPortInfo;
@@ -2747,5 +2748,22 @@ public class ClientTest {
   void getFederationLinksInVhost() {
     List<Map> links = client.getFederationLinks("/");
     assertThat(links).isNotNull();
+  }
+
+  @Test
+  void getGlobalParameters() {
+    List<GlobalRuntimeParameter<?>> params = client.getGlobalParameters();
+    assertThat(params).isNotNull();
+  }
+
+  @Test
+  void setAndDeleteGlobalParameter() {
+    String paramName = "test-param-" + System.currentTimeMillis();
+    client.setGlobalParameter(paramName, "test-value");
+    GlobalRuntimeParameter<?> param = client.getGlobalParameter(paramName);
+    assertThat(param).isNotNull();
+    assertThat(param.getName()).isEqualTo(paramName);
+    assertThat(param.getValue()).isEqualTo("test-value");
+    client.deleteGlobalParameter(paramName);
   }
 }

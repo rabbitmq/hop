@@ -52,6 +52,7 @@ import com.rabbitmq.http.client.domain.DeprecatedFeature;
 import com.rabbitmq.http.client.domain.DetailsParameters;
 import com.rabbitmq.http.client.domain.ExchangeInfo;
 import com.rabbitmq.http.client.domain.FeatureFlag;
+import com.rabbitmq.http.client.domain.GlobalRuntimeParameter;
 import com.rabbitmq.http.client.domain.InboundMessage;
 import com.rabbitmq.http.client.domain.MqttVhostPortInfo;
 import com.rabbitmq.http.client.domain.NodeInfo;
@@ -810,6 +811,59 @@ public class ReactorNettyClient {
     @SuppressWarnings("rawtypes")
     public Flux<Map> getFederationLinks(String vhost) {
         return doGetFlux(Map.class, "federation-links", encodePathSegment(vhost));
+    }
+
+    /**
+     * Returns all global runtime parameters.
+     *
+     * @return flux of global parameters
+     * @since 5.5.0
+     * @see <a href="https://www.rabbitmq.com/docs/parameters">Parameters and Policies</a>
+     */
+    @SuppressWarnings("rawtypes")
+    public Flux<GlobalRuntimeParameter> getGlobalParameters() {
+        return doGetFlux(GlobalRuntimeParameter.class, "global-parameters");
+    }
+
+    /**
+     * Returns a specific global runtime parameter.
+     *
+     * @param name the parameter name
+     * @return the global parameter in a mono
+     * @since 5.5.0
+     * @see <a href="https://www.rabbitmq.com/docs/parameters">Parameters and Policies</a>
+     */
+    @SuppressWarnings("rawtypes")
+    public Mono<GlobalRuntimeParameter> getGlobalParameter(String name) {
+        return doGetMono(GlobalRuntimeParameter.class, "global-parameters", encodePathSegment(name));
+    }
+
+    /**
+     * Sets a global runtime parameter.
+     *
+     * @param name the parameter name
+     * @param value the parameter value
+     * @return HTTP response in a mono
+     * @since 5.5.0
+     * @see <a href="https://www.rabbitmq.com/docs/parameters">Parameters and Policies</a>
+     */
+    public Mono<HttpResponse> setGlobalParameter(String name, Object value) {
+        GlobalRuntimeParameter<Object> param = new GlobalRuntimeParameter<>();
+        param.setName(name);
+        param.setValue(value);
+        return doPut(param, "global-parameters", encodePathSegment(name));
+    }
+
+    /**
+     * Deletes a global runtime parameter.
+     *
+     * @param name the parameter name
+     * @return HTTP response in a mono
+     * @since 5.5.0
+     * @see <a href="https://www.rabbitmq.com/docs/parameters">Parameters and Policies</a>
+     */
+    public Mono<HttpResponse> deleteGlobalParameter(String name) {
+        return doDelete("global-parameters", encodePathSegment(name));
     }
 
     public Flux<QueueInfo> getQueues() {

@@ -42,6 +42,7 @@ import com.rabbitmq.http.client.domain.DeprecatedFeature;
 import com.rabbitmq.http.client.domain.DetailsParameters;
 import com.rabbitmq.http.client.domain.ExchangeInfo;
 import com.rabbitmq.http.client.domain.FeatureFlag;
+import com.rabbitmq.http.client.domain.GlobalRuntimeParameter;
 import com.rabbitmq.http.client.domain.InboundMessage;
 import com.rabbitmq.http.client.domain.MqttVhostPortInfo;
 import com.rabbitmq.http.client.domain.NodeInfo;
@@ -1364,6 +1365,65 @@ public class Client {
   public List<Map> getFederationLinks(String vhost) {
     final URI uri = uri().withEncodedPath("./federation-links").withPath(vhost).get();
     return Arrays.asList(this.httpLayer.get(uri, Map[].class));
+  }
+
+  //
+  // Global parameters
+  //
+
+  /**
+   * Returns all global runtime parameters.
+   *
+   * @return list of global parameters
+   * @since 5.5.0
+   * @see <a href="https://www.rabbitmq.com/docs/parameters">Parameters and Policies</a>
+   */
+  @SuppressWarnings({"rawtypes", "unchecked"})
+  public List<GlobalRuntimeParameter<?>> getGlobalParameters() {
+    final URI uri = uriWithPath("./global-parameters/");
+    return Arrays.asList(this.httpLayer.get(uri, GlobalRuntimeParameter[].class));
+  }
+
+  /**
+   * Returns a specific global runtime parameter.
+   *
+   * @param name the parameter name
+   * @return the global parameter
+   * @since 5.5.0
+   * @see <a href="https://www.rabbitmq.com/docs/parameters">Parameters and Policies</a>
+   */
+  @SuppressWarnings("rawtypes")
+  public GlobalRuntimeParameter<?> getGlobalParameter(String name) {
+    final URI uri = uri().withEncodedPath("./global-parameters").withPath(name).get();
+    return this.httpLayer.get(uri, GlobalRuntimeParameter.class);
+  }
+
+  /**
+   * Sets a global runtime parameter.
+   *
+   * @param name the parameter name
+   * @param value the parameter value
+   * @since 5.5.0
+   * @see <a href="https://www.rabbitmq.com/docs/parameters">Parameters and Policies</a>
+   */
+  public void setGlobalParameter(String name, Object value) {
+    final URI uri = uri().withEncodedPath("./global-parameters").withPath(name).get();
+    GlobalRuntimeParameter<Object> param = new GlobalRuntimeParameter<>();
+    param.setName(name);
+    param.setValue(value);
+    this.httpLayer.put(uri, param);
+  }
+
+  /**
+   * Deletes a global runtime parameter.
+   *
+   * @param name the parameter name
+   * @since 5.5.0
+   * @see <a href="https://www.rabbitmq.com/docs/parameters">Parameters and Policies</a>
+   */
+  public void deleteGlobalParameter(String name) {
+    final URI uri = uri().withEncodedPath("./global-parameters").withPath(name).get();
+    this.httpLayer.delete(uri, null);
   }
 
   //

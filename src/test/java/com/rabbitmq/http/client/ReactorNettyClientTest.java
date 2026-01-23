@@ -46,6 +46,7 @@ import com.rabbitmq.http.client.domain.ExchangeType;
 import com.rabbitmq.http.client.domain.FeatureFlag;
 import com.rabbitmq.http.client.domain.FeatureFlagStability;
 import com.rabbitmq.http.client.domain.FeatureFlagState;
+import com.rabbitmq.http.client.domain.GlobalRuntimeParameter;
 import com.rabbitmq.http.client.domain.InboundMessage;
 import com.rabbitmq.http.client.domain.MessageStats;
 import com.rabbitmq.http.client.domain.MqttVhostPortInfo;
@@ -3420,6 +3421,25 @@ public class ReactorNettyClientTest {
   void getFederationLinksInVhost() {
     List<Map> links = client.getFederationLinks("/").collectList().block();
     assertThat(links).isNotNull();
+  }
+
+  @Test
+  @SuppressWarnings("rawtypes")
+  void getGlobalParameters() {
+    List<GlobalRuntimeParameter> params = client.getGlobalParameters().collectList().block();
+    assertThat(params).isNotNull();
+  }
+
+  @Test
+  @SuppressWarnings("rawtypes")
+  void setAndDeleteGlobalParameter() {
+    String paramName = "test-param-" + System.currentTimeMillis();
+    client.setGlobalParameter(paramName, "test-value").block();
+    GlobalRuntimeParameter param = client.getGlobalParameter(paramName).block();
+    assertThat(param).isNotNull();
+    assertThat(param.getName()).isEqualTo(paramName);
+    assertThat(param.getValue()).isEqualTo("test-value");
+    client.deleteGlobalParameter(paramName).block();
   }
 
   boolean isVersion37orLater() {
