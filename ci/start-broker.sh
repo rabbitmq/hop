@@ -13,7 +13,7 @@ wait_for_message() {
 
 mkdir -p rabbitmq-configuration
 
-echo "[rabbitmq_management, rabbitmq_shovel,rabbitmq_shovel_management,rabbitmq_federation,rabbitmq_federation_management,rabbitmq_mqtt]." \
+echo "[rabbitmq_management, rabbitmq_shovel,rabbitmq_shovel_management,rabbitmq_federation,rabbitmq_federation_management,rabbitmq_mqtt,rabbitmq_stream,rabbitmq_stream_management]." \
   > rabbitmq-configuration/enabled_plugins
 
 echo "Running RabbitMQ ${RABBITMQ_IMAGE}"

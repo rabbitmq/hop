@@ -40,6 +40,7 @@ import org.reactivestreams.Publisher;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.rabbitmq.http.client.domain.AlivenessTestResult;
+import com.rabbitmq.http.client.domain.AuthenticationAttemptStatistics;
 import com.rabbitmq.http.client.domain.BindingInfo;
 import com.rabbitmq.http.client.domain.ChannelInfo;
 import com.rabbitmq.http.client.domain.ClusterId;
@@ -48,18 +49,25 @@ import com.rabbitmq.http.client.domain.ConsumerDetails;
 import com.rabbitmq.http.client.domain.CurrentUserDetails;
 import com.rabbitmq.http.client.domain.Definitions;
 import com.rabbitmq.http.client.domain.DeleteQueueParameters;
+import com.rabbitmq.http.client.domain.DeprecatedFeature;
 import com.rabbitmq.http.client.domain.DetailsParameters;
 import com.rabbitmq.http.client.domain.ExchangeInfo;
+import com.rabbitmq.http.client.domain.FeatureFlag;
+import com.rabbitmq.http.client.domain.GlobalRuntimeParameter;
 import com.rabbitmq.http.client.domain.InboundMessage;
 import com.rabbitmq.http.client.domain.MqttVhostPortInfo;
 import com.rabbitmq.http.client.domain.NodeInfo;
+import com.rabbitmq.http.client.domain.OAuthConfiguration;
 import com.rabbitmq.http.client.domain.OutboundMessage;
 import com.rabbitmq.http.client.domain.OverviewResponse;
 import com.rabbitmq.http.client.domain.PolicyInfo;
 import com.rabbitmq.http.client.domain.QueueInfo;
 import com.rabbitmq.http.client.domain.ShovelInfo;
 import com.rabbitmq.http.client.domain.ShovelStatus;
+import com.rabbitmq.http.client.domain.StreamConsumer;
+import com.rabbitmq.http.client.domain.StreamPublisher;
 import com.rabbitmq.http.client.domain.TopicPermissions;
+import com.rabbitmq.http.client.domain.UserLimits;
 import com.rabbitmq.http.client.domain.UpstreamDetails;
 import com.rabbitmq.http.client.domain.UpstreamInfo;
 import com.rabbitmq.http.client.domain.UpstreamSetDetails;
@@ -332,6 +340,31 @@ public class ReactorNettyClient {
         return doDelete("vhosts", encodePathSegment(name));
     }
 
+    /**
+     * Enables deletion protection for a virtual host.
+     * When enabled, the virtual host cannot be deleted until protection is disabled.
+     *
+     * @param name the virtual host name
+     * @return HTTP response in a mono
+     * @since 5.5.0
+     * @see <a href="https://www.rabbitmq.com/docs/vhosts">Virtual Hosts</a>
+     */
+    public Mono<HttpResponse> enableVhostDeletionProtection(String name) {
+        return doPostWithoutBody("vhosts", encodePathSegment(name), "deletion", "protection");
+    }
+
+    /**
+     * Disables deletion protection for a virtual host.
+     *
+     * @param name the virtual host name
+     * @return HTTP response in a mono
+     * @since 5.5.0
+     * @see <a href="https://www.rabbitmq.com/docs/vhosts">Virtual Hosts</a>
+     */
+    public Mono<HttpResponse> disableVhostDeletionProtection(String name) {
+        return doDelete("vhosts", encodePathSegment(name), "deletion", "protection");
+    }
+
     public Flux<UserPermissions> getPermissionsIn(String vhost) {
         return doGetFlux(UserPermissions.class, "vhosts", encodePathSegment(vhost), "permissions");
     }
@@ -358,6 +391,19 @@ public class ReactorNettyClient {
 
     public Mono<HttpResponse> deleteUser(String username) {
         return doDelete("users", encodePathSegment(username));
+    }
+
+    /**
+     * Lists users in the internal database that do not have access to any virtual hosts.
+     * This is useful for finding users that may need permissions granted, or are not used
+     * and should be cleaned up.
+     *
+     * @return flux of users without permissions
+     * @since 5.5.0
+     * @see <a href="https://www.rabbitmq.com/docs/access-control">Access Control</a>
+     */
+    public Flux<UserInfo> getUsersWithoutPermissions() {
+        return doGetFlux(UserInfo.class, "users", "without-permissions");
     }
 
     public Mono<HttpResponse> createUser(String username, char[] password, List<String> tags) {
@@ -523,6 +569,53 @@ public class ReactorNettyClient {
         return doPut(Collections.singletonMap("name", name), "cluster-name");
     }
 
+    /**
+     * Returns cluster metadata tags.
+     *
+     * @return map of cluster tags in a mono
+     * @since 5.5.0
+     * @see <a href="https://www.rabbitmq.com/docs/parameters">Parameters and Policies</a>
+     */
+    @SuppressWarnings("unchecked")
+    public Mono<Map<String, Object>> getClusterTags() {
+        return getGlobalParameter("cluster_tags")
+                .map(param -> {
+                    if (param != null && param.getValue() instanceof Map) {
+                        return (Map<String, Object>) param.getValue();
+                    }
+                    return Collections.<String, Object>emptyMap();
+                })
+                .onErrorResume(HttpClientException.class, e -> {
+                    if (e.status() == 404) {
+                        return Mono.just(Collections.emptyMap());
+                    }
+                    return Mono.error(e);
+                });
+    }
+
+    /**
+     * Sets cluster metadata tags.
+     *
+     * @param tags the tags to set
+     * @return HTTP response in a mono
+     * @since 5.5.0
+     * @see <a href="https://www.rabbitmq.com/docs/parameters">Parameters and Policies</a>
+     */
+    public Mono<HttpResponse> setClusterTags(Map<String, Object> tags) {
+        return setGlobalParameter("cluster_tags", tags);
+    }
+
+    /**
+     * Clears all cluster metadata tags.
+     *
+     * @return HTTP response in a mono
+     * @since 5.5.0
+     * @see <a href="https://www.rabbitmq.com/docs/parameters">Parameters and Policies</a>
+     */
+    public Mono<HttpResponse> clearClusterTags() {
+        return deleteGlobalParameter("cluster_tags");
+    }
+
     @SuppressWarnings({"unchecked", "rawtypes"})
     public Flux<Map> getExtensions() {
         return doGetFlux(Map.class, "extensions");
@@ -530,6 +623,424 @@ public class ReactorNettyClient {
 
     public Mono<Definitions> getDefinitions() {
         return doGetMono(Definitions.class, "definitions");
+    }
+
+    /**
+     * Returns definitions for a specific virtual host.
+     *
+     * @param vhost the virtual host name
+     * @return definitions for the virtual host in a mono
+     * @since 5.5.0
+     * @see <a href="https://www.rabbitmq.com/docs/definitions">Definition Export and Import</a>
+     */
+    public Mono<Definitions> getDefinitions(String vhost) {
+        return doGetMono(Definitions.class, "definitions", encodePathSegment(vhost));
+    }
+
+    /**
+     * Returns all feature flags.
+     *
+     * @return flux of feature flags
+     * @since 5.5.0
+     * @see <a href="https://www.rabbitmq.com/docs/feature-flags">Feature Flags</a>
+     */
+    public Flux<FeatureFlag> getFeatureFlags() {
+        return doGetFlux(FeatureFlag.class, "feature-flags");
+    }
+
+    /**
+     * Enables a feature flag.
+     *
+     * @param name the name of the feature flag to enable
+     * @return HTTP response in a mono
+     * @since 5.5.0
+     * @see <a href="https://www.rabbitmq.com/docs/feature-flags">Feature Flags</a>
+     */
+    public Mono<HttpResponse> enableFeatureFlag(String name) {
+        return doPut(Collections.emptyMap(), "feature-flags", encodePathSegment(name), "enable");
+    }
+
+    /**
+     * Enables all stable feature flags.
+     * This iterates through all feature flags and enables those that are stable and disabled.
+     *
+     * @return mono that completes when all flags are enabled
+     * @since 5.5.0
+     * @see <a href="https://www.rabbitmq.com/docs/feature-flags">Feature Flags</a>
+     */
+    public Mono<Void> enableAllStableFeatureFlags() {
+        return getFeatureFlags()
+                .filter(flag -> flag.getState() == com.rabbitmq.http.client.domain.FeatureFlagState.DISABLED
+                        && flag.getStability() == com.rabbitmq.http.client.domain.FeatureFlagStability.STABLE)
+                .flatMap(flag -> enableFeatureFlag(flag.getName()))
+                .then();
+    }
+
+    /**
+     * Performs a cluster-wide health check for any active resource alarms.
+     * The returned Mono will error with an exception if the check fails (503).
+     *
+     * @return mono that completes on success
+     * @since 5.5.0
+     * @see <a href="https://www.rabbitmq.com/docs/monitoring#health-checks">Health Checks</a>
+     */
+    public Mono<Void> healthCheckClusterAlarms() {
+        return doGetMono(Object.class, "health", "checks", "alarms").then();
+    }
+
+    /**
+     * Performs a health check for alarms on the local node only.
+     * The returned Mono will error with an exception if the check fails (503).
+     *
+     * @return mono that completes on success
+     * @since 5.5.0
+     * @see <a href="https://www.rabbitmq.com/docs/monitoring#health-checks">Health Checks</a>
+     */
+    public Mono<Void> healthCheckLocalAlarms() {
+        return doGetMono(Object.class, "health", "checks", "local-alarms").then();
+    }
+
+    /**
+     * Checks if a specific port has an active listener.
+     * The returned Mono will error with an exception if the check fails (503).
+     *
+     * @param port the port to check
+     * @return mono that completes on success
+     * @since 5.5.0
+     * @see <a href="https://www.rabbitmq.com/docs/monitoring#health-checks">Health Checks</a>
+     */
+    public Mono<Void> healthCheckPortListener(int port) {
+        return doGetMono(Object.class, "health", "checks", "port-listener", String.valueOf(port)).then();
+    }
+
+    /**
+     * Checks if a specific protocol listener is active.
+     * The returned Mono will error with an exception if the check fails (503).
+     *
+     * @param protocol the protocol to check (e.g., "amqp", "mqtt", "stomp")
+     * @return mono that completes on success
+     * @since 5.5.0
+     * @see <a href="https://www.rabbitmq.com/docs/monitoring#health-checks">Health Checks</a>
+     */
+    public Mono<Void> healthCheckProtocolListener(String protocol) {
+        return doGetMono(Object.class, "health", "checks", "protocol-listener", encodePathSegment(protocol)).then();
+    }
+
+    /**
+     * Checks if the target node is critical for maintaining quorum.
+     * The returned Mono will error with an exception if the check fails (503).
+     *
+     * @return mono that completes on success
+     * @since 5.5.0
+     * @see <a href="https://www.rabbitmq.com/docs/monitoring#health-checks">Health Checks</a>
+     */
+    public Mono<Void> healthCheckNodeIsQuorumCritical() {
+        return doGetMono(Object.class, "health", "checks", "node-is-quorum-critical").then();
+    }
+
+    /**
+     * Checks if all virtual hosts are running.
+     * The returned Mono will error with an exception if the check fails (503).
+     *
+     * @return mono that completes on success
+     * @since 5.5.0
+     * @see <a href="https://www.rabbitmq.com/docs/monitoring#health-checks">Health Checks</a>
+     */
+    public Mono<Void> healthCheckVirtualHosts() {
+        return doGetMono(Object.class, "health", "checks", "virtual-hosts").then();
+    }
+
+    /**
+     * Returns the current OAuth 2.0 configuration.
+     *
+     * @return OAuth configuration in a mono
+     * @since 5.5.0
+     * @see <a href="https://www.rabbitmq.com/docs/oauth2">OAuth 2 Guide</a>
+     */
+    public Mono<OAuthConfiguration> getOAuthConfiguration() {
+        return doGetMono(OAuthConfiguration.class, "auth");
+    }
+
+    /**
+     * Returns authentication attempt statistics for a given node.
+     *
+     * @param nodeName the name of the node
+     * @return flux of authentication attempt statistics per protocol
+     * @since 5.5.0
+     */
+    public Flux<AuthenticationAttemptStatistics> getAuthAttemptStatistics(String nodeName) {
+        return doGetFlux(AuthenticationAttemptStatistics.class, "auth", "attempts", encodePathSegment(nodeName));
+    }
+
+    /**
+     * Returns all deprecated features.
+     *
+     * @return flux of deprecated features
+     * @since 5.5.0
+     * @see <a href="https://www.rabbitmq.com/docs/deprecated">Deprecated Features</a>
+     */
+    public Flux<DeprecatedFeature> getDeprecatedFeatures() {
+        return doGetFlux(DeprecatedFeature.class, "deprecated-features");
+    }
+
+    /**
+     * Returns deprecated features that are currently in use.
+     *
+     * @return flux of deprecated features in use
+     * @since 5.5.0
+     * @see <a href="https://www.rabbitmq.com/docs/deprecated">Deprecated Features</a>
+     */
+    public Flux<DeprecatedFeature> getDeprecatedFeaturesInUse() {
+        return doGetFlux(DeprecatedFeature.class, "deprecated-features", "used");
+    }
+
+    /**
+     * Triggers queue leader rebalancing.
+     *
+     * @return HTTP response in a mono
+     * @since 5.5.0
+     * @see <a href="https://www.rabbitmq.com/docs/clustering#rebalancing">Queue Leader Rebalancing</a>
+     */
+    public Mono<HttpResponse> rebalanceQueueLeaders() {
+        return doPost(Collections.emptyMap(), "rebalance", "queues");
+    }
+
+    /**
+     * Returns all stream connections.
+     *
+     * @return flux of stream connections
+     * @since 5.5.0
+     * @see <a href="https://www.rabbitmq.com/docs/streams">RabbitMQ Streams</a>
+     */
+    public Flux<ConnectionInfo> getStreamConnections() {
+        return doGetFlux(ConnectionInfo.class, "stream", "connections");
+    }
+
+    /**
+     * Returns stream connections in a specific virtual host.
+     *
+     * @param vhost the virtual host name
+     * @return flux of stream connections
+     * @since 5.5.0
+     * @see <a href="https://www.rabbitmq.com/docs/streams">RabbitMQ Streams</a>
+     */
+    public Flux<ConnectionInfo> getStreamConnections(String vhost) {
+        return doGetFlux(ConnectionInfo.class, "stream", "connections", encodePathSegment(vhost));
+    }
+
+    /**
+     * Returns information about a specific stream connection.
+     *
+     * @param vhost the virtual host name
+     * @param name the connection name
+     * @return stream connection info in a mono
+     * @since 5.5.0
+     * @see <a href="https://www.rabbitmq.com/docs/streams">RabbitMQ Streams</a>
+     */
+    public Mono<ConnectionInfo> getStreamConnection(String vhost, String name) {
+        return doGetMono(ConnectionInfo.class, "stream", "connections", encodePathSegment(vhost), encodePathSegment(name));
+    }
+
+    /**
+     * Closes a stream connection.
+     *
+     * @param vhost the virtual host name
+     * @param name the connection name
+     * @return HTTP response in a mono
+     * @since 5.5.0
+     * @see <a href="https://www.rabbitmq.com/docs/streams">RabbitMQ Streams</a>
+     */
+    public Mono<HttpResponse> closeStreamConnection(String vhost, String name) {
+        return doDelete("stream", "connections", encodePathSegment(vhost), encodePathSegment(name));
+    }
+
+    /**
+     * Returns all stream publishers.
+     *
+     * @return flux of stream publishers
+     * @since 5.5.0
+     * @see <a href="https://www.rabbitmq.com/docs/streams">RabbitMQ Streams</a>
+     */
+    public Flux<StreamPublisher> getStreamPublishers() {
+        return doGetFlux(StreamPublisher.class, "stream", "publishers");
+    }
+
+    /**
+     * Returns stream publishers in a specific virtual host.
+     *
+     * @param vhost the virtual host name
+     * @return flux of stream publishers
+     * @since 5.5.0
+     * @see <a href="https://www.rabbitmq.com/docs/streams">RabbitMQ Streams</a>
+     */
+    public Flux<StreamPublisher> getStreamPublishers(String vhost) {
+        return doGetFlux(StreamPublisher.class, "stream", "publishers", encodePathSegment(vhost));
+    }
+
+    /**
+     * Returns stream publishers for a specific stream.
+     *
+     * @param vhost the virtual host name
+     * @param stream the stream name
+     * @return flux of stream publishers
+     * @since 5.5.0
+     * @see <a href="https://www.rabbitmq.com/docs/streams">RabbitMQ Streams</a>
+     */
+    public Flux<StreamPublisher> getStreamPublishers(String vhost, String stream) {
+        return doGetFlux(StreamPublisher.class, "stream", "publishers", encodePathSegment(vhost), encodePathSegment(stream));
+    }
+
+    /**
+     * Returns all stream consumers.
+     *
+     * @return flux of stream consumers
+     * @since 5.5.0
+     * @see <a href="https://www.rabbitmq.com/docs/streams">RabbitMQ Streams</a>
+     */
+    public Flux<StreamConsumer> getStreamConsumers() {
+        return doGetFlux(StreamConsumer.class, "stream", "consumers");
+    }
+
+    /**
+     * Returns stream consumers in a specific virtual host.
+     *
+     * @param vhost the virtual host name
+     * @return flux of stream consumers
+     * @since 5.5.0
+     * @see <a href="https://www.rabbitmq.com/docs/streams">RabbitMQ Streams</a>
+     */
+    public Flux<StreamConsumer> getStreamConsumers(String vhost) {
+        return doGetFlux(StreamConsumer.class, "stream", "consumers", encodePathSegment(vhost));
+    }
+
+    /**
+     * Returns stream consumers for a specific stream.
+     *
+     * @param vhost the virtual host name
+     * @param stream the stream name
+     * @return flux of stream consumers
+     * @since 5.5.0
+     * @see <a href="https://www.rabbitmq.com/docs/streams">RabbitMQ Streams</a>
+     */
+    public Flux<StreamConsumer> getStreamConsumers(String vhost, String stream) {
+        return doGetFlux(StreamConsumer.class, "stream", "consumers", encodePathSegment(vhost), encodePathSegment(stream));
+    }
+
+    /**
+     * Returns stream publishers on a specific stream connection.
+     *
+     * @param vhost the virtual host name
+     * @param connectionName the connection name
+     * @return flux of stream publishers on the connection
+     * @since 5.5.0
+     * @see <a href="https://www.rabbitmq.com/docs/streams">RabbitMQ Streams</a>
+     */
+    public Flux<StreamPublisher> getStreamPublishersOnConnection(String vhost, String connectionName) {
+        return doGetFlux(StreamPublisher.class, "stream", "connections", encodePathSegment(vhost), encodePathSegment(connectionName), "publishers");
+    }
+
+    /**
+     * Returns stream consumers on a specific stream connection.
+     *
+     * @param vhost the virtual host name
+     * @param connectionName the connection name
+     * @return flux of stream consumers on the connection
+     * @since 5.5.0
+     * @see <a href="https://www.rabbitmq.com/docs/streams">RabbitMQ Streams</a>
+     */
+    public Flux<StreamConsumer> getStreamConsumersOnConnection(String vhost, String connectionName) {
+        return doGetFlux(StreamConsumer.class, "stream", "connections", encodePathSegment(vhost), encodePathSegment(connectionName), "consumers");
+    }
+
+    /**
+     * Returns all federation links.
+     *
+     * @return flux of federation links as untyped maps
+     * @since 5.5.0
+     * @see <a href="https://www.rabbitmq.com/docs/federation">Federation Plugin</a>
+     */
+    @SuppressWarnings("rawtypes")
+    public Flux<Map> getFederationLinks() {
+        return doGetFlux(Map.class, "federation-links");
+    }
+
+    /**
+     * Returns federation links in a specific virtual host.
+     *
+     * @param vhost the virtual host name
+     * @return flux of federation links as untyped maps
+     * @since 5.5.0
+     * @see <a href="https://www.rabbitmq.com/docs/federation">Federation Plugin</a>
+     */
+    @SuppressWarnings("rawtypes")
+    public Flux<Map> getFederationLinks(String vhost) {
+        return doGetFlux(Map.class, "federation-links", encodePathSegment(vhost));
+    }
+
+    /**
+     * Returns all global runtime parameters.
+     *
+     * @return flux of global parameters
+     * @since 5.5.0
+     * @see <a href="https://www.rabbitmq.com/docs/parameters">Parameters and Policies</a>
+     */
+    @SuppressWarnings("rawtypes")
+    public Flux<GlobalRuntimeParameter> getGlobalParameters() {
+        return doGetFlux(GlobalRuntimeParameter.class, "global-parameters");
+    }
+
+    /**
+     * Returns a specific global runtime parameter.
+     *
+     * @param name the parameter name
+     * @return the global parameter in a mono
+     * @since 5.5.0
+     * @see <a href="https://www.rabbitmq.com/docs/parameters">Parameters and Policies</a>
+     */
+    @SuppressWarnings("rawtypes")
+    public Mono<GlobalRuntimeParameter> getGlobalParameter(String name) {
+        return doGetMono(GlobalRuntimeParameter.class, "global-parameters", encodePathSegment(name));
+    }
+
+    /**
+     * Sets a global runtime parameter.
+     *
+     * @param name the parameter name
+     * @param value the parameter value
+     * @return HTTP response in a mono
+     * @since 5.5.0
+     * @see <a href="https://www.rabbitmq.com/docs/parameters">Parameters and Policies</a>
+     */
+    public Mono<HttpResponse> setGlobalParameter(String name, Object value) {
+        GlobalRuntimeParameter<Object> param = new GlobalRuntimeParameter<>();
+        param.setName(name);
+        param.setValue(value);
+        return doPut(param, "global-parameters", encodePathSegment(name));
+    }
+
+    /**
+     * Deletes a global runtime parameter.
+     *
+     * @param name the parameter name
+     * @return HTTP response in a mono
+     * @since 5.5.0
+     * @see <a href="https://www.rabbitmq.com/docs/parameters">Parameters and Policies</a>
+     */
+    public Mono<HttpResponse> deleteGlobalParameter(String name) {
+        return doDelete("global-parameters", encodePathSegment(name));
+    }
+
+    /**
+     * Deletes multiple users in a single operation.
+     *
+     * @param usernames the list of usernames to delete
+     * @return HTTP response in a mono
+     * @since 5.5.0
+     * @see <a href="https://www.rabbitmq.com/docs/access-control">Access Control</a>
+     */
+    public Mono<HttpResponse> deleteUsers(List<String> usernames) {
+        Map<String, Object> body = Collections.singletonMap("users", usernames);
+        return doPost(body, "users", "bulk-delete");
     }
 
     public Flux<QueueInfo> getQueues() {
@@ -944,6 +1455,77 @@ public class ReactorNettyClient {
         return doDelete("vhost-limits", encodePathSegment(vhost), "max-queues");
     }
 
+    /**
+     * Returns the limits (max connections and channels) for all users.
+     *
+     * @return flux of the limits
+     * @since 5.5.0
+     */
+    public Flux<UserLimits> getUserLimits() {
+        return doGetFlux(UserLimits.class, "user-limits");
+    }
+
+    /**
+     * Returns the limits (max connections and channels) for a given user.
+     *
+     * @param username the username
+     * @return mono of the limits for this user
+     * @since 5.5.0
+     */
+    public Mono<UserLimits> getUserLimits(String username) {
+        return doGetMono(UserLimits.class, "user-limits", encodePathSegment(username))
+                .map(limits -> limits.getUser() == null ?
+                        new UserLimits(username, -1, -1) : limits);
+    }
+
+    /**
+     * Sets the max number (limit) of connections for a user.
+     *
+     * @param username the username
+     * @param limit the max number of connections allowed
+     * @return HTTP response in a mono
+     * @since 5.5.0
+     */
+    public Mono<HttpResponse> limitUserMaxConnections(String username, int limit) {
+        return doPut(Collections.singletonMap("value", limit),
+                "user-limits", encodePathSegment(username), "max-connections");
+    }
+
+    /**
+     * Sets the max number (limit) of channels for a user.
+     *
+     * @param username the username
+     * @param limit the max number of channels allowed
+     * @return HTTP response in a mono
+     * @since 5.5.0
+     */
+    public Mono<HttpResponse> limitUserMaxChannels(String username, int limit) {
+        return doPut(Collections.singletonMap("value", limit),
+                "user-limits", encodePathSegment(username), "max-channels");
+    }
+
+    /**
+     * Clears the connection limit for a user.
+     *
+     * @param username the username
+     * @return HTTP response in a mono
+     * @since 5.5.0
+     */
+    public Mono<HttpResponse> clearUserMaxConnectionsLimit(String username) {
+        return doDelete("user-limits", encodePathSegment(username), "max-connections");
+    }
+
+    /**
+     * Clears the channel limit for a user.
+     *
+     * @param username the username
+     * @return HTTP response in a mono
+     * @since 5.5.0
+     */
+    public Mono<HttpResponse> clearUserMaxChannelsLimit(String username) {
+        return doDelete("user-limits", encodePathSegment(username), "max-channels");
+    }
+
     private <T> Mono<T> doGetMono(Class<T> type, String... pathSegments) {
        return doGetMono(type, null, pathSegments);
     }
@@ -1008,6 +1590,22 @@ public class ReactorNettyClient {
                 .map(ReactorNettyClient::toHttpResponse);
     }
 
+    private Mono<HttpResponse> doPostWithoutBody(String... pathSegments) {
+        return client.headersWhen(authorizedHeader())
+                .post()
+                .uri(uri(pathSegments))
+                .response()
+                .doOnNext(applyResponseCallback())
+                .doOnNext(response -> {
+                    if (response.status().code() >= 500) {
+                        throw new HttpServerException(response.status().code(), response.status().reasonPhrase());
+                    } else if (response.status().code() >= 400) {
+                        throw new HttpClientException(response.status().code(), response.status().reasonPhrase());
+                    }
+                })
+                .map(ReactorNettyClient::toHttpResponse);
+    }
+
     private <T> Mono<T> doPostMono(Object body, Class<T> type, String... pathSegments) {
         return Mono.from(client.headersWhen(authorizedHeader())
                 .headers(JSON_HEADER)
@@ -1069,6 +1667,18 @@ public class ReactorNettyClient {
                 .uri(uri)
                 .response()
                 .doOnNext(applyResponseCallback())
+                .doOnNext(response -> {
+                    int statusCode = response.status().code();
+                    // 404 is acceptable for DELETE (idempotent operation)
+                    if (statusCode == 404) {
+                        return;
+                    }
+                    if (statusCode >= 500) {
+                        throw new HttpServerException(statusCode, response.status().reasonPhrase());
+                    } else if (statusCode >= 400) {
+                        throw new HttpClientException(statusCode, response.status().reasonPhrase());
+                    }
+                })
                 .map(ReactorNettyClient::toHttpResponse);
     }
 

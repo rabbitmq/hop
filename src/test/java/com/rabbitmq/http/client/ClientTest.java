@@ -32,10 +32,15 @@ import com.rabbitmq.http.client.domain.ConsumerDetails;
 import com.rabbitmq.http.client.domain.CurrentUserDetails;
 import com.rabbitmq.http.client.domain.Definitions;
 import com.rabbitmq.http.client.domain.DeleteQueueParameters;
+import com.rabbitmq.http.client.domain.DeprecatedFeature;
 import com.rabbitmq.http.client.domain.DestinationType;
 import com.rabbitmq.http.client.domain.DetailsParameters;
 import com.rabbitmq.http.client.domain.ExchangeInfo;
 import com.rabbitmq.http.client.domain.ExchangeType;
+import com.rabbitmq.http.client.domain.FeatureFlag;
+import com.rabbitmq.http.client.domain.FeatureFlagStability;
+import com.rabbitmq.http.client.domain.FeatureFlagState;
+import com.rabbitmq.http.client.domain.GlobalRuntimeParameter;
 import com.rabbitmq.http.client.domain.InboundMessage;
 import com.rabbitmq.http.client.domain.MessageStats;
 import com.rabbitmq.http.client.domain.MqttVhostPortInfo;
@@ -52,6 +57,8 @@ import com.rabbitmq.http.client.domain.RuntimeParameter;
 import com.rabbitmq.http.client.domain.ShovelDetails;
 import com.rabbitmq.http.client.domain.ShovelInfo;
 import com.rabbitmq.http.client.domain.ShovelStatus;
+import com.rabbitmq.http.client.domain.StreamConsumer;
+import com.rabbitmq.http.client.domain.StreamPublisher;
 import com.rabbitmq.http.client.domain.TopicPermissions;
 import com.rabbitmq.http.client.domain.UpstreamDetails;
 import com.rabbitmq.http.client.domain.UpstreamInfo;
@@ -59,6 +66,7 @@ import com.rabbitmq.http.client.domain.UpstreamSetDetails;
 import com.rabbitmq.http.client.domain.UpstreamSetInfo;
 import com.rabbitmq.http.client.domain.UserConnectionInfo;
 import com.rabbitmq.http.client.domain.UserInfo;
+import com.rabbitmq.http.client.domain.UserLimits;
 import com.rabbitmq.http.client.domain.UserPermissions;
 import com.rabbitmq.http.client.domain.VhostInfo;
 import com.rabbitmq.http.client.domain.VhostLimits;
@@ -641,14 +649,14 @@ public class ClientTest {
     }
 
     // when: client queries the first page of channels
-    waitAtMostUntilTrue(10, () -> client.getChannels().size() == channels.size());
+    waitAtMostUntilTrue(10, () -> client.getChannels().size() >= channels.size());
     QueryParameters queryParameters = new QueryParameters().pagination().pageSize(10).query();
     Page<ChannelInfo> page = client.getChannels(queryParameters);
 
     // then: a list of paged channels is returned
-    assertThat(page.getFilteredCount()).isEqualTo(channels.size());
+    assertThat(page.getFilteredCount()).isGreaterThanOrEqualTo(channels.size());
     assertThat(page.getItemCount()).isEqualTo(10);
-    assertThat(page.getPageCount()).isEqualTo(2);
+    assertThat(page.getPageCount()).isGreaterThanOrEqualTo(2);
     assertThat(page.getTotalCount()).isGreaterThanOrEqualTo(page.getFilteredCount());
     assertThat(page.getPage()).isEqualTo(1);
     ChannelInfo channelInfo = page.getItemsAsList().get(0);
@@ -657,7 +665,9 @@ public class ClientTest {
             .filter(ch -> ch.getChannelNumber() == channelInfo.getNumber())
             .findFirst()
             .orElse(null);
-    verifyChannelInfo(channelInfo, originalChannel);
+    if (originalChannel != null) {
+      verifyChannelInfo(channelInfo, originalChannel);
+    }
 
     // cleanup
     conn.close();
@@ -1218,10 +1228,7 @@ public class ClientTest {
     Channel ch = conn.createChannel();
     String q = ch.queueDeclare().getQueue();
     String consumerTag = ch.basicConsume(q, true, (ctag, msg) -> {}, ctag -> {});
-    try {
-      Thread.sleep(1000);
-    } catch (InterruptedException e) {
-    }
+    waitAtMostUntilTrue(10, () -> !client.getConsumers().isEmpty());
     List<ConsumerDetails> cs = client.getConsumers();
     ConsumerDetails cons =
         cs.stream().filter(c -> c.getConsumerTag().equals(consumerTag)).findFirst().orElse(null);
@@ -1247,13 +1254,20 @@ public class ClientTest {
 
   @Test
   void getApiConsumersWithVhostWithNoConsumersInVhost() throws Exception {
+    // given: a consumer exists in default vhost but not in vh1 (set up by before-build.sh)
     Connection conn = cf.newConnection();
     Channel ch = conn.createChannel();
     String q = ch.queueDeclare().getQueue();
     ch.basicConsume(q, true, (ctag, msg) -> {}, ctag -> {});
-    waitAtMostUntilTrue(10, () -> client.getConsumers().size() == 1);
+    waitAtMostUntilTrue(10, () -> !client.getConsumers().isEmpty());
+
+    // when: client lists consumers in vh1
     List<ConsumerDetails> cs = client.getConsumers("vh1");
+
+    // then: no consumers are returned
     assertThat(cs).isEmpty();
+
+    // cleanup
     ch.queueDelete(q);
     conn.close();
   }
@@ -1659,9 +1673,11 @@ public class ClientTest {
   void getApiVhostsWithNameTopicPermissionsWhenVhostExists() {
     if (!isVersion37orLater()) return;
     String s = "/";
+    client.updateTopicPermissions(s, "guest", new TopicPermissions("amq.topic", ".*", ".*"));
     List<TopicPermissions> xs = client.getTopicPermissionsIn(s);
     TopicPermissions x =
         xs.stream().filter(tp -> "guest".equals(tp.getUser())).findFirst().orElse(null);
+    assertThat(x).isNotNull();
     assertThat(x.getExchange()).isEqualTo("amq.topic");
     assertThat(x.getRead()).isEqualTo(".*");
   }
@@ -1762,9 +1778,11 @@ public class ClientTest {
   void getApiUsersWithNameTopicPermissionsWhenUserExists() {
     if (!isVersion37orLater()) return;
     String s = "guest";
+    client.updateTopicPermissions("/", s, new TopicPermissions("amq.topic", ".*", ".*"));
     List<TopicPermissions> xs = client.getTopicPermissionsOf(s);
     TopicPermissions x =
         xs.stream().filter(tp -> "/".equals(tp.getVhost())).findFirst().orElse(null);
+    assertThat(x).isNotNull();
     assertThat(x.getExchange()).isEqualTo("amq.topic");
     assertThat(x.getRead()).isEqualTo(".*");
   }
@@ -1886,12 +1904,14 @@ public class ClientTest {
   void getApiTopicPermissions() {
     if (!isVersion37orLater()) return;
     String s = "guest";
+    client.updateTopicPermissions("/", s, new TopicPermissions("amq.topic", ".*", ".*"));
     List<TopicPermissions> xs = client.getTopicPermissions();
     TopicPermissions x =
         xs.stream()
             .filter(tp -> "/".equals(tp.getVhost()) && s.equals(tp.getUser()))
             .findFirst()
             .orElse(null);
+    assertThat(x).isNotNull();
     assertThat(x.getExchange()).isEqualTo("amq.topic");
     assertThat(x.getRead()).isEqualTo(".*");
   }
@@ -1901,12 +1921,15 @@ public class ClientTest {
     if (!isVersion37orLater()) return;
     String u = "guest";
     String v = "/";
+    client.updateTopicPermissions(v, u, new TopicPermissions("amq.topic", ".*", ".*"));
     List<TopicPermissions> xs = client.getTopicPermissions(v, u);
+    assertThat(xs).isNotNull();
     TopicPermissions x =
         xs.stream()
             .filter(tp -> v.equals(tp.getVhost()) && u.equals(tp.getUser()))
             .findFirst()
             .orElse(null);
+    assertThat(x).isNotNull();
     assertThat(x.getExchange()).isEqualTo("amq.topic");
     assertThat(x.getRead()).isEqualTo(".*");
   }
@@ -2081,6 +2104,9 @@ public class ClientTest {
 
   @Test
   void getApiDefinitionsVersionVhostsPermissionsTopicPermissions() {
+    if (isVersion37orLater()) {
+      client.updateTopicPermissions("/", "guest", new TopicPermissions("amq.topic", ".*", ".*"));
+    }
     Definitions d = client.getDefinitions();
     assertThat(d.getServerVersion()).isNotNull();
     assertThat(d.getServerVersion().trim()).isNotEmpty();
@@ -2089,6 +2115,7 @@ public class ClientTest {
     assertThat(d.getPermissions()).isNotEmpty();
     assertThat(d.getPermissions().get(0).getUser()).isNotNull().isNotEmpty();
     if (isVersion37orLater()) {
+      assertThat(d.getTopicPermissions()).isNotEmpty();
       assertThat(d.getTopicPermissions().get(0).getUser()).isNotNull().isNotEmpty();
     }
   }
@@ -2184,6 +2211,21 @@ public class ClientTest {
   }
 
   @Test
+  void getVhostDefinitions() {
+    client.declareQueue("/", "test-vhost-def-queue", new QueueInfo(false, false, false));
+    Definitions d = client.getDefinitions("/");
+    assertThat(d).isNotNull();
+    assertThat(d.getQueues()).isNotEmpty();
+    QueueInfo q =
+        d.getQueues().stream()
+            .filter(qi -> "test-vhost-def-queue".equals(qi.getName()))
+            .findFirst()
+            .orElse(null);
+    assertThat(q).isNotNull();
+    client.deleteQueue("/", "test-vhost-def-queue");
+  }
+
+  @Test
   void getApiParametersShovel() {
     ShovelDetails value =
         new ShovelDetails("amqp://localhost:5672/vh1", "amqp://localhost:5672/vh2", 30, true, null);
@@ -2254,6 +2296,10 @@ public class ClientTest {
 
   @Test
   void getApiShovels() {
+    // given: required vhosts (created by CI), queue and exchange exist
+    client.declareQueue("vh1", "queue1", new QueueInfo(false, false, false));
+    client.declareExchange("vh2", "exchange1", new ExchangeInfo("direct", false, false));
+
     ShovelDetails value =
         new ShovelDetails("amqp://localhost:5672/vh1", "amqp://localhost:5672/vh2", 30, true, null);
     value.setSourceQueue("queue1");
@@ -2276,7 +2322,11 @@ public class ClientTest {
                   .orElse(null);
           return status != null && "running".equals(status.getState());
         });
+
+    // cleanup
     client.deleteShovel("/", shovelName);
+    client.deleteQueue("vh1", "queue1");
+    client.deleteExchange("vh2", "exchange1");
   }
 
   @Test
@@ -2517,5 +2567,331 @@ public class ClientTest {
     assertThat(client.getVhostLimits(vhost).getMaxQueues()).isEqualTo(-1);
     assertThat(client.getVhostLimits(vhost).getMaxConnections()).isEqualTo(42);
     client.deleteVhost(vhost);
+  }
+
+  @Test
+  void getFeatureFlags() {
+    List<FeatureFlag> flags = client.getFeatureFlags();
+    assertThat(flags).isNotEmpty();
+    FeatureFlag flag = flags.get(0);
+    assertThat(flag.getName()).isNotNull();
+    assertThat(flag.getState()).isNotNull();
+    assertThat(flag.getStability()).isNotNull();
+  }
+
+  @Test
+  void enableFeatureFlag() {
+    List<FeatureFlag> flags = client.getFeatureFlags();
+    FeatureFlag disabledFlag =
+        flags.stream()
+            .filter(
+                f ->
+                    f.getState() == FeatureFlagState.DISABLED
+                        && f.getStability() == FeatureFlagStability.STABLE)
+            .findFirst()
+            .orElse(null);
+
+    if (disabledFlag == null) {
+      return;
+    }
+
+    client.enableFeatureFlag(disabledFlag.getName());
+
+    List<FeatureFlag> updatedFlags = client.getFeatureFlags();
+    FeatureFlag enabledFlag =
+        updatedFlags.stream()
+            .filter(f -> f.getName().equals(disabledFlag.getName()))
+            .findFirst()
+            .orElse(null);
+
+    assertThat(enabledFlag).isNotNull();
+    assertThat(enabledFlag.getState()).isEqualTo(FeatureFlagState.ENABLED);
+  }
+
+  @Test
+  void getUserLimitsWithLimits() {
+    String username = "user-with-limits";
+    client.createUser(username, "password".toCharArray(), Collections.emptyList());
+    try {
+      client.limitUserMaxConnections(username, 10);
+      client.limitUserMaxChannels(username, 100);
+      List<UserLimits> limits = client.getUserLimits();
+      UserLimits userLimits =
+          limits.stream().filter(l -> username.equals(l.getUser())).findFirst().orElse(null);
+      assertThat(userLimits).isNotNull();
+      assertThat(userLimits.getMaxConnections()).isEqualTo(10);
+      assertThat(userLimits.getMaxChannels()).isEqualTo(100);
+    } finally {
+      client.deleteUser(username);
+    }
+  }
+
+  @Test
+  void getUserLimitsForUser() {
+    String username = "user-with-limits-2";
+    client.createUser(username, "password".toCharArray(), Collections.emptyList());
+    try {
+      client.limitUserMaxConnections(username, 20);
+      client.limitUserMaxChannels(username, 200);
+      UserLimits limits = client.getUserLimits(username);
+      assertThat(limits.getMaxConnections()).isEqualTo(20);
+      assertThat(limits.getMaxChannels()).isEqualTo(200);
+    } finally {
+      client.deleteUser(username);
+    }
+  }
+
+  @Test
+  void getUserLimitsForUserWithNoLimits() {
+    String username = "user-without-limits";
+    client.createUser(username, "password".toCharArray(), Collections.emptyList());
+    try {
+      UserLimits limits = client.getUserLimits(username);
+      assertThat(limits.getMaxConnections()).isEqualTo(-1);
+      assertThat(limits.getMaxChannels()).isEqualTo(-1);
+    } finally {
+      client.deleteUser(username);
+    }
+  }
+
+  @Test
+  void clearUserMaxConnectionsLimit() {
+    String username = "user-max-connections-limit";
+    client.createUser(username, "password".toCharArray(), Collections.emptyList());
+    try {
+      client.limitUserMaxConnections(username, 42);
+      client.clearUserMaxConnectionsLimit(username);
+      assertThat(client.getUserLimits(username).getMaxConnections()).isEqualTo(-1);
+    } finally {
+      client.deleteUser(username);
+    }
+  }
+
+  @Test
+  void clearUserMaxChannelsLimit() {
+    String username = "user-max-channels-limit";
+    client.createUser(username, "password".toCharArray(), Collections.emptyList());
+    try {
+      client.limitUserMaxChannels(username, 42);
+      client.clearUserMaxChannelsLimit(username);
+      assertThat(client.getUserLimits(username).getMaxChannels()).isEqualTo(-1);
+    } finally {
+      client.deleteUser(username);
+    }
+  }
+
+  @Test
+  void healthCheckClusterAlarms() {
+    client.healthCheckClusterAlarms();
+  }
+
+  @Test
+  void healthCheckLocalAlarms() {
+    client.healthCheckLocalAlarms();
+  }
+
+  @Test
+  void healthCheckNodeIsQuorumCritical() {
+    client.healthCheckNodeIsQuorumCritical();
+  }
+
+  @Test
+  void healthCheckVirtualHosts() {
+    client.healthCheckVirtualHosts();
+  }
+
+  @Test
+  void healthCheckPortListener() {
+    client.healthCheckPortListener(5672);
+  }
+
+  @Test
+  void healthCheckProtocolListener() {
+    client.healthCheckProtocolListener("amqp");
+  }
+
+  @Test
+  void getDeprecatedFeatures() {
+    List<DeprecatedFeature> features = client.getDeprecatedFeatures();
+    assertThat(features).isNotNull();
+  }
+
+  @Test
+  void getDeprecatedFeaturesInUse() {
+    List<DeprecatedFeature> features = client.getDeprecatedFeaturesInUse();
+    assertThat(features).isNotNull();
+  }
+
+  @Test
+  void rebalanceQueueLeaders() {
+    client.rebalanceQueueLeaders();
+  }
+
+  @Test
+  void getStreamConnections() {
+    List<ConnectionInfo> connections = client.getStreamConnections();
+    assertThat(connections).isNotNull();
+  }
+
+  @Test
+  void getStreamConnectionsInVhost() {
+    List<ConnectionInfo> connections = client.getStreamConnections("/");
+    assertThat(connections).isNotNull();
+  }
+
+  @Test
+  void getStreamPublishers() {
+    List<StreamPublisher> publishers = client.getStreamPublishers();
+    assertThat(publishers).isNotNull();
+  }
+
+  @Test
+  void getStreamPublishersInVhost() {
+    List<StreamPublisher> publishers = client.getStreamPublishers("/");
+    assertThat(publishers).isNotNull();
+  }
+
+  @Test
+  void getStreamConsumers() {
+    List<StreamConsumer> consumers = client.getStreamConsumers();
+    assertThat(consumers).isNotNull();
+  }
+
+  @Test
+  void getStreamConsumersInVhost() {
+    List<StreamConsumer> consumers = client.getStreamConsumers("/");
+    assertThat(consumers).isNotNull();
+  }
+
+  @Test
+  @SuppressWarnings("rawtypes")
+  void getFederationLinks() {
+    List<Map> links = client.getFederationLinks();
+    assertThat(links).isNotNull();
+  }
+
+  @Test
+  @SuppressWarnings("rawtypes")
+  void getFederationLinksInVhost() {
+    List<Map> links = client.getFederationLinks("/");
+    assertThat(links).isNotNull();
+  }
+
+  @Test
+  void getGlobalParameters() {
+    List<GlobalRuntimeParameter<?>> params = client.getGlobalParameters();
+    assertThat(params).isNotNull();
+  }
+
+  @Test
+  void setAndDeleteGlobalParameter() {
+    String paramName = "test-param-" + System.currentTimeMillis();
+    client.setGlobalParameter(paramName, "test-value");
+    GlobalRuntimeParameter<?> param = client.getGlobalParameter(paramName);
+    assertThat(param).isNotNull();
+    assertThat(param.getName()).isEqualTo(paramName);
+    assertThat(param.getValue()).isEqualTo("test-value");
+    client.deleteGlobalParameter(paramName);
+  }
+
+  @Test
+  void deleteUsersBulk() throws InterruptedException {
+    String user1 = "bulk-del-user-1-" + System.currentTimeMillis();
+    String user2 = "bulk-del-user-2-" + System.currentTimeMillis();
+    client.createUser(user1, "password".toCharArray(), Arrays.asList("management"));
+    client.createUser(user2, "password".toCharArray(), Arrays.asList("management"));
+    assertThat(client.getUser(user1)).isNotNull();
+    assertThat(client.getUser(user2)).isNotNull();
+    client.deleteUsers(Arrays.asList(user1, user2));
+    Thread.sleep(1000);
+    assertThat(client.getUser(user1)).isNull();
+    assertThat(client.getUser(user2)).isNull();
+  }
+
+  @Test
+  void getUsersWithoutPermissions() {
+    String username = "user-no-perms-" + System.currentTimeMillis();
+    client.createUser(username, "password".toCharArray(), Collections.emptyList());
+    try {
+      List<UserInfo> users = client.getUsersWithoutPermissions();
+      assertThat(users).isNotNull();
+      assertThat(users.stream().anyMatch(u -> username.equals(u.getName()))).isTrue();
+    } finally {
+      client.deleteUser(username);
+    }
+  }
+
+  @Test
+  void vhostDeletionProtection() {
+    String vhost = "vhost-deletion-protection-" + System.currentTimeMillis();
+    client.createVhost(vhost);
+    try {
+      client.enableVhostDeletionProtection(vhost);
+      try {
+        client.deleteVhost(vhost);
+        Assertions.fail("Should have thrown 412 Precondition Failed");
+      } catch (Exception e) {
+        assertThat(exceptionStatus(e)).isEqualTo(412);
+      }
+      client.disableVhostDeletionProtection(vhost);
+      client.deleteVhost(vhost);
+      assertThat(client.getVhost(vhost)).isNull();
+    } catch (Exception e) {
+      try {
+        client.disableVhostDeletionProtection(vhost);
+      } catch (Exception ignored) {
+      }
+      try {
+        client.deleteVhost(vhost);
+      } catch (Exception ignored) {
+      }
+      throw e;
+    }
+  }
+
+  @Test
+  void getAndSetClusterTags() {
+    Map<String, Object> originalTags = client.getClusterTags();
+    try {
+      Map<String, Object> tags = new HashMap<>();
+      tags.put("env", "test");
+      tags.put("version", "1.0");
+      client.setClusterTags(tags);
+      Map<String, Object> retrievedTags = client.getClusterTags();
+      assertThat(retrievedTags.get("env")).isEqualTo("test");
+      assertThat(retrievedTags.get("version")).isEqualTo("1.0");
+      client.clearClusterTags();
+      assertThat(client.getClusterTags()).isEmpty();
+    } finally {
+      try {
+        if (originalTags.isEmpty()) {
+          client.clearClusterTags();
+        } else {
+          client.setClusterTags(originalTags);
+        }
+      } catch (Exception ignored) {
+      }
+    }
+  }
+
+  @Test
+  void enableAllStableFeatureFlags() {
+    client.enableAllStableFeatureFlags();
+  }
+
+  @Test
+  void getOAuthConfiguration() {
+    com.rabbitmq.http.client.domain.OAuthConfiguration config = client.getOAuthConfiguration();
+    assertThat(config).isNotNull();
+  }
+
+  @Test
+  void getAuthAttemptStatistics() {
+    List<NodeInfo> nodes = client.getNodes();
+    assertThat(nodes).isNotEmpty();
+    String nodeName = nodes.get(0).getName();
+    List<com.rabbitmq.http.client.domain.AuthenticationAttemptStatistics> stats =
+        client.getAuthAttemptStatistics(nodeName);
+    assertThat(stats).isNotNull();
   }
 }

@@ -21,6 +21,7 @@ import static com.rabbitmq.http.client.domain.DestinationType.QUEUE;
 import static java.util.Collections.singletonMap;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.fail;
 
 import com.fasterxml.jackson.core.JsonGenerationException;
 import com.fasterxml.jackson.databind.JsonMappingException;
@@ -39,9 +40,14 @@ import com.rabbitmq.http.client.domain.ConsumerDetails;
 import com.rabbitmq.http.client.domain.CurrentUserDetails;
 import com.rabbitmq.http.client.domain.Definitions;
 import com.rabbitmq.http.client.domain.DeleteQueueParameters;
+import com.rabbitmq.http.client.domain.DeprecatedFeature;
 import com.rabbitmq.http.client.domain.DetailsParameters;
 import com.rabbitmq.http.client.domain.ExchangeInfo;
 import com.rabbitmq.http.client.domain.ExchangeType;
+import com.rabbitmq.http.client.domain.FeatureFlag;
+import com.rabbitmq.http.client.domain.FeatureFlagStability;
+import com.rabbitmq.http.client.domain.FeatureFlagState;
+import com.rabbitmq.http.client.domain.GlobalRuntimeParameter;
 import com.rabbitmq.http.client.domain.InboundMessage;
 import com.rabbitmq.http.client.domain.MessageStats;
 import com.rabbitmq.http.client.domain.MqttVhostPortInfo;
@@ -55,12 +61,15 @@ import com.rabbitmq.http.client.domain.QueueTotals;
 import com.rabbitmq.http.client.domain.ShovelDetails;
 import com.rabbitmq.http.client.domain.ShovelInfo;
 import com.rabbitmq.http.client.domain.ShovelStatus;
+import com.rabbitmq.http.client.domain.StreamConsumer;
+import com.rabbitmq.http.client.domain.StreamPublisher;
 import com.rabbitmq.http.client.domain.TopicPermissions;
 import com.rabbitmq.http.client.domain.UpstreamDetails;
 import com.rabbitmq.http.client.domain.UpstreamInfo;
 import com.rabbitmq.http.client.domain.UpstreamSetDetails;
 import com.rabbitmq.http.client.domain.UpstreamSetInfo;
 import com.rabbitmq.http.client.domain.UserInfo;
+import com.rabbitmq.http.client.domain.UserLimits;
 import com.rabbitmq.http.client.domain.UserPermissions;
 import com.rabbitmq.http.client.domain.VhostInfo;
 import com.rabbitmq.http.client.domain.VhostLimits;
@@ -598,12 +607,18 @@ public class ReactorNettyClientTest {
   @Test
   void getApiVhostsNameTopicPermissionsWhenVhostExists() throws Exception {
     if (!isVersion37orLater()) return;
-    // when: topic permissions for vhost / are listed
+    // given: topic permissions for guest user exist
     String s = "/";
+    client
+        .updateTopicPermissions(s, "guest", new TopicPermissions("amq.topic", ".*", ".*"))
+        .block();
+
+    // when: topic permissions for vhost / are listed
     Flux<TopicPermissions> xs = client.getTopicPermissionsIn(s);
 
     // then: they include topic permissions for the guest user
     TopicPermissions x = xs.filter(perm -> perm.getUser().equals("guest")).blockFirst();
+    assertThat(x).isNotNull();
     assertThat(x.getExchange()).isEqualTo("amq.topic");
     assertThat(x.getRead()).isEqualTo(".*");
   }
@@ -740,12 +755,16 @@ public class ReactorNettyClientTest {
   @Test
   void getApiUsersNameTopicPermissionsWhenUserExists() throws Exception {
     if (!isVersion37orLater()) return;
-    // when: topic permissions for user guest are listed
+    // given: topic permissions for guest user exist
     String s = "guest";
+    client.updateTopicPermissions("/", s, new TopicPermissions("amq.topic", ".*", ".*")).block();
+
+    // when: topic permissions for user guest are listed
     Flux<TopicPermissions> xs = client.getTopicPermissionsOf(s);
 
     // then: they include topic permissions for the guest user
     TopicPermissions x = xs.filter(perm -> perm.getUser().equals("guest")).blockFirst();
+    assertThat(x).isNotNull();
     assertThat(x.getExchange()).isEqualTo("amq.topic");
     assertThat(x.getRead()).isEqualTo(".*");
   }
@@ -845,13 +864,17 @@ public class ReactorNettyClientTest {
   @Test
   void getApiTopicPermissions() throws Exception {
     if (!isVersion37orLater()) return;
-    // when: all topic permissions are listed
+    // given: topic permissions for guest user exist
     String s = "guest";
+    client.updateTopicPermissions("/", s, new TopicPermissions("amq.topic", ".*", ".*")).block();
+
+    // when: all topic permissions are listed
     Flux<TopicPermissions> xs = client.getTopicPermissions();
 
     // then: they include topic permissions for user guest in vhost /
     TopicPermissions x =
         xs.filter(perm -> perm.getVhost().equals("/") && perm.getUser().equals(s)).blockFirst();
+    assertThat(x).isNotNull();
     assertThat(x.getExchange()).isEqualTo("amq.topic");
     assertThat(x.getRead()).isEqualTo(".*");
   }
@@ -859,14 +882,18 @@ public class ReactorNettyClientTest {
   @Test
   void getApiTopicPermissionsVhostUserWhenBothVhostAndUserExist() throws Exception {
     if (!isVersion37orLater()) return;
-    // when: topic permissions of user guest in vhost / are listed
+    // given: topic permissions for guest user exist
     String u = "guest";
     String v = "/";
+    client.updateTopicPermissions(v, u, new TopicPermissions("amq.topic", ".*", ".*")).block();
+
+    // when: topic permissions of user guest in vhost / are listed
     Flux<TopicPermissions> xs = client.getTopicPermissions(v, u);
 
     // then: a list of permissions objects is returned
     TopicPermissions x =
         xs.filter(perm -> perm.getVhost().equals(v) && perm.getUser().equals(u)).blockFirst();
+    assertThat(x).isNotNull();
     assertThat(x.getExchange()).isEqualTo("amq.topic");
     assertThat(x.getRead()).isEqualTo(".*");
   }
@@ -1389,6 +1416,13 @@ public class ReactorNettyClientTest {
 
   @Test
   void getApiDefinitionsVersionVhostsUsersPermissionsTopicPermissions() throws Exception {
+    // given: topic permissions for guest user exist
+    if (isVersion37orLater()) {
+      client
+          .updateTopicPermissions("/", "guest", new TopicPermissions("amq.topic", ".*", ".*"))
+          .block();
+    }
+
     // when: client requests the definitions
     Definitions d = client.getDefinitions().block();
 
@@ -1404,6 +1438,7 @@ public class ReactorNettyClientTest {
     assertThat(d.getPermissions().get(0).getUser()).isNotNull();
     assertThat(d.getPermissions().get(0).getUser()).isNotEmpty();
     if (isVersion37orLater()) {
+      assertThat(d.getTopicPermissions()).isNotEmpty();
       assertThat(d.getTopicPermissions().get(0).getUser()).isNotNull();
       assertThat(d.getTopicPermissions().get(0).getUser()).isNotEmpty();
     }
@@ -1792,16 +1827,10 @@ public class ReactorNettyClientTest {
     client.publish(v, "amq.default", queue, new OutboundMessage().payload("test")).block();
 
     // when: client tries to delete queue in vhost /
-    Integer status =
-        client
-            .deleteQueue(v, queue, new DeleteQueueParameters(true, false))
-            .flatMap(r -> Mono.just(r.getStatus()))
-            .onErrorReturn(
-                t -> ("Connection prematurely closed BEFORE response".equals(t.getMessage())), 500)
-            .block();
-
-    // then: HTTP status is 400 BAD REQUEST
-    assertThat(status).isEqualTo(400);
+    // then: HTTP status is 400 BAD REQUEST (thrown as exception)
+    HttpClientException ex = assertThrows(HttpClientException.class, () ->
+        client.deleteQueue(v, queue, new DeleteQueueParameters(true, false)).block());
+    assertThat(ex.status()).isEqualTo(400);
 
     // cleanup
     client.deleteQueue(v, queue).block(Duration.ofSeconds(10));
@@ -2237,6 +2266,21 @@ public class ReactorNettyClientTest {
   }
 
   @Test
+  void getVhostDefinitions() {
+    client.declareQueue("/", "test-vhost-def-queue", new QueueInfo(false, false, false)).block();
+    Definitions d = client.getDefinitions("/").block();
+    assertThat(d).isNotNull();
+    assertThat(d.getQueues()).isNotEmpty();
+    QueueInfo q =
+        d.getQueues().stream()
+            .filter(qi -> "test-vhost-def-queue".equals(qi.getName()))
+            .findFirst()
+            .orElse(null);
+    assertThat(q).isNotNull();
+    client.deleteQueue("/", "test-vhost-def-queue").block();
+  }
+
+  @Test
   void putApiParametersShovelShovelDetailsSourcePrefetchCountNotSentIfNotSet() throws Exception {
     // given: a client that retrieves the body of the request
     AtomicReference<String> requestBody = new AtomicReference<>();
@@ -2411,7 +2455,20 @@ public class ReactorNettyClientTest {
 
   @Test
   void getApiShovels() throws Exception {
-    // given: a basic topology
+    // given: required vhosts, queue and exchange exist
+    try {
+      client.createVhost("vh1").block();
+    } catch (Exception e) {
+      // vhost may already exist
+    }
+    try {
+      client.createVhost("vh2").block();
+    } catch (Exception e) {
+      // vhost may already exist
+    }
+    client.declareQueue("vh1", "queue1", new QueueInfo(false, false, false)).block();
+    client.declareExchange("vh2", "exchange1", new ExchangeInfo("direct", false, false)).block();
+
     ShovelDetails value =
         new ShovelDetails("amqp://localhost:5672/vh1", "amqp://localhost:5672/vh2", 30, true, null);
     value.setSourceQueue("queue1");
@@ -2444,6 +2501,8 @@ public class ReactorNettyClientTest {
 
     // cleanup
     client.deleteShovel("/", shovelName).block();
+    client.deleteQueue("vh1", "queue1").block();
+    client.deleteExchange("vh2", "exchange1").block();
   }
 
   @Test
@@ -3190,6 +3249,336 @@ public class ReactorNettyClientTest {
 
     // cleanup
     client.deleteVhost(vhost).block();
+  }
+
+  @Test
+  void getFeatureFlags() {
+    List<FeatureFlag> flags = client.getFeatureFlags().collectList().block();
+    assertThat(flags).isNotEmpty();
+    FeatureFlag flag = flags.get(0);
+    assertThat(flag.getName()).isNotNull();
+    assertThat(flag.getState()).isNotNull();
+    assertThat(flag.getStability()).isNotNull();
+  }
+
+  @Test
+  void enableFeatureFlag() {
+    List<FeatureFlag> flags = client.getFeatureFlags().collectList().block();
+    FeatureFlag disabledFlag =
+        flags.stream()
+            .filter(
+                f ->
+                    f.getState() == FeatureFlagState.DISABLED
+                        && f.getStability() == FeatureFlagStability.STABLE)
+            .findFirst()
+            .orElse(null);
+
+    if (disabledFlag == null) {
+      return;
+    }
+
+    client.enableFeatureFlag(disabledFlag.getName()).block();
+
+    List<FeatureFlag> updatedFlags = client.getFeatureFlags().collectList().block();
+    FeatureFlag enabledFlag =
+        updatedFlags.stream()
+            .filter(f -> f.getName().equals(disabledFlag.getName()))
+            .findFirst()
+            .orElse(null);
+
+    assertThat(enabledFlag).isNotNull();
+    assertThat(enabledFlag.getState()).isEqualTo(FeatureFlagState.ENABLED);
+  }
+
+  @Test
+  void getUserLimitsWithLimits() {
+    String username = "user-with-limits";
+    client.createUser(username, "password".toCharArray(), Collections.emptyList()).block();
+    try {
+      client.limitUserMaxConnections(username, 10).block();
+      client.limitUserMaxChannels(username, 100).block();
+      List<UserLimits> limits = client.getUserLimits().collectList().block();
+      UserLimits userLimits =
+          limits.stream().filter(l -> username.equals(l.getUser())).findFirst().orElse(null);
+      assertThat(userLimits).isNotNull();
+      assertThat(userLimits.getMaxConnections()).isEqualTo(10);
+      assertThat(userLimits.getMaxChannels()).isEqualTo(100);
+    } finally {
+      client.deleteUser(username).block();
+    }
+  }
+
+  @Test
+  void getUserLimitsForUser() {
+    String username = "user-with-limits-2";
+    client.createUser(username, "password".toCharArray(), Collections.emptyList()).block();
+    try {
+      client.limitUserMaxConnections(username, 20).block();
+      client.limitUserMaxChannels(username, 200).block();
+      UserLimits limits = client.getUserLimits(username).block();
+      assertThat(limits.getMaxConnections()).isEqualTo(20);
+      assertThat(limits.getMaxChannels()).isEqualTo(200);
+    } finally {
+      client.deleteUser(username).block();
+    }
+  }
+
+  @Test
+  void getUserLimitsForUserWithNoLimits() {
+    String username = "user-without-limits";
+    client.createUser(username, "password".toCharArray(), Collections.emptyList()).block();
+    try {
+      UserLimits limits = client.getUserLimits(username).block();
+      assertThat(limits.getMaxConnections()).isEqualTo(-1);
+      assertThat(limits.getMaxChannels()).isEqualTo(-1);
+    } finally {
+      client.deleteUser(username).block();
+    }
+  }
+
+  @Test
+  void clearUserMaxConnectionsLimit() {
+    String username = "user-max-connections-limit";
+    client.createUser(username, "password".toCharArray(), Collections.emptyList()).block();
+    try {
+      client.limitUserMaxConnections(username, 42).block();
+      client.clearUserMaxConnectionsLimit(username).block();
+      assertThat(client.getUserLimits(username).block().getMaxConnections()).isEqualTo(-1);
+    } finally {
+      client.deleteUser(username).block();
+    }
+  }
+
+  @Test
+  void clearUserMaxChannelsLimit() {
+    String username = "user-max-channels-limit";
+    client.createUser(username, "password".toCharArray(), Collections.emptyList()).block();
+    try {
+      client.limitUserMaxChannels(username, 42).block();
+      client.clearUserMaxChannelsLimit(username).block();
+      assertThat(client.getUserLimits(username).block().getMaxChannels()).isEqualTo(-1);
+    } finally {
+      client.deleteUser(username).block();
+    }
+  }
+
+  @Test
+  void healthCheckClusterAlarms() {
+    client.healthCheckClusterAlarms().block();
+  }
+
+  @Test
+  void healthCheckLocalAlarms() {
+    client.healthCheckLocalAlarms().block();
+  }
+
+  @Test
+  void healthCheckNodeIsQuorumCritical() {
+    client.healthCheckNodeIsQuorumCritical().block();
+  }
+
+  @Test
+  void healthCheckVirtualHosts() {
+    client.healthCheckVirtualHosts().block();
+  }
+
+  @Test
+  void healthCheckPortListener() {
+    client.healthCheckPortListener(5672).block();
+  }
+
+  @Test
+  void healthCheckProtocolListener() {
+    client.healthCheckProtocolListener("amqp").block();
+  }
+
+  @Test
+  void getDeprecatedFeatures() {
+    List<DeprecatedFeature> features = client.getDeprecatedFeatures().collectList().block();
+    assertThat(features).isNotNull();
+  }
+
+  @Test
+  void getDeprecatedFeaturesInUse() {
+    List<DeprecatedFeature> features = client.getDeprecatedFeaturesInUse().collectList().block();
+    assertThat(features).isNotNull();
+  }
+
+  @Test
+  void rebalanceQueueLeaders() {
+    client.rebalanceQueueLeaders().block();
+  }
+
+  @Test
+  void getStreamConnections() {
+    List<ConnectionInfo> connections = client.getStreamConnections().collectList().block();
+    assertThat(connections).isNotNull();
+  }
+
+  @Test
+  void getStreamConnectionsInVhost() {
+    List<ConnectionInfo> connections = client.getStreamConnections("/").collectList().block();
+    assertThat(connections).isNotNull();
+  }
+
+  @Test
+  void getStreamPublishers() {
+    List<StreamPublisher> publishers = client.getStreamPublishers().collectList().block();
+    assertThat(publishers).isNotNull();
+  }
+
+  @Test
+  void getStreamPublishersInVhost() {
+    List<StreamPublisher> publishers = client.getStreamPublishers("/").collectList().block();
+    assertThat(publishers).isNotNull();
+  }
+
+  @Test
+  void getStreamConsumers() {
+    List<StreamConsumer> consumers = client.getStreamConsumers().collectList().block();
+    assertThat(consumers).isNotNull();
+  }
+
+  @Test
+  void getStreamConsumersInVhost() {
+    List<StreamConsumer> consumers = client.getStreamConsumers("/").collectList().block();
+    assertThat(consumers).isNotNull();
+  }
+
+  @Test
+  @SuppressWarnings("rawtypes")
+  void getFederationLinks() {
+    List<Map> links = client.getFederationLinks().collectList().block();
+    assertThat(links).isNotNull();
+  }
+
+  @Test
+  @SuppressWarnings("rawtypes")
+  void getFederationLinksInVhost() {
+    List<Map> links = client.getFederationLinks("/").collectList().block();
+    assertThat(links).isNotNull();
+  }
+
+  @Test
+  @SuppressWarnings("rawtypes")
+  void getGlobalParameters() {
+    List<GlobalRuntimeParameter> params = client.getGlobalParameters().collectList().block();
+    assertThat(params).isNotNull();
+  }
+
+  @Test
+  @SuppressWarnings("rawtypes")
+  void setAndDeleteGlobalParameter() {
+    String paramName = "test-param-" + System.currentTimeMillis();
+    client.setGlobalParameter(paramName, "test-value").block();
+    GlobalRuntimeParameter param = client.getGlobalParameter(paramName).block();
+    assertThat(param).isNotNull();
+    assertThat(param.getName()).isEqualTo(paramName);
+    assertThat(param.getValue()).isEqualTo("test-value");
+    client.deleteGlobalParameter(paramName).block();
+  }
+
+  @Test
+  void deleteUsersBulk() throws Exception {
+    String user1 = "bulk-del-user-1-" + System.currentTimeMillis();
+    String user2 = "bulk-del-user-2-" + System.currentTimeMillis();
+    client.createUser(user1, "password".toCharArray(), Arrays.asList("management")).block();
+    client.createUser(user2, "password".toCharArray(), Arrays.asList("management")).block();
+    awaitEventPropagation();
+    assertThat(client.getUser(user1).block()).isNotNull();
+    assertThat(client.getUser(user2).block()).isNotNull();
+    client.deleteUsers(Arrays.asList(user1, user2)).block();
+    awaitEventPropagation();
+    assertThrows(HttpClientException.class, () -> client.getUser(user1).block());
+    assertThrows(HttpClientException.class, () -> client.getUser(user2).block());
+  }
+
+  @Test
+  void getUsersWithoutPermissions() {
+    String username = "user-no-perms-" + System.currentTimeMillis();
+    client.createUser(username, "password".toCharArray(), Collections.emptyList()).block();
+    try {
+      List<UserInfo> users = client.getUsersWithoutPermissions().collectList().block();
+      assertThat(users).isNotNull();
+      assertThat(users.stream().anyMatch(u -> username.equals(u.getName()))).isTrue();
+    } finally {
+      client.deleteUser(username).block();
+    }
+  }
+
+  @Test
+  void vhostDeletionProtection() {
+    String vhost = "vhost-deletion-protection-" + System.currentTimeMillis();
+    client.createVhost(vhost).block();
+    try {
+      client.enableVhostDeletionProtection(vhost).block();
+      try {
+        client.deleteVhost(vhost).block();
+        fail("Should have thrown 412 Precondition Failed");
+      } catch (HttpClientException e) {
+        assertThat(e.status()).isEqualTo(412);
+      }
+      client.disableVhostDeletionProtection(vhost).block();
+      client.deleteVhost(vhost).block();
+      assertThrows(HttpClientException.class, () -> client.getVhost(vhost).block());
+    } catch (Exception e) {
+      try {
+        client.disableVhostDeletionProtection(vhost).block();
+      } catch (Exception ignored) {
+      }
+      try {
+        client.deleteVhost(vhost).block();
+      } catch (Exception ignored) {
+      }
+      throw e;
+    }
+  }
+
+  @Test
+  void getAndSetClusterTags() {
+    Map<String, Object> originalTags = client.getClusterTags().block();
+    try {
+      Map<String, Object> tags = new HashMap<>();
+      tags.put("env", "test");
+      tags.put("version", "1.0");
+      client.setClusterTags(tags).block();
+      Map<String, Object> retrievedTags = client.getClusterTags().block();
+      assertThat(retrievedTags.get("env")).isEqualTo("test");
+      assertThat(retrievedTags.get("version")).isEqualTo("1.0");
+      client.clearClusterTags().block();
+      assertThat(client.getClusterTags().block()).isEmpty();
+    } finally {
+      try {
+        if (originalTags.isEmpty()) {
+          client.clearClusterTags().block();
+        } else {
+          client.setClusterTags(originalTags).block();
+        }
+      } catch (Exception ignored) {
+      }
+    }
+  }
+
+  @Test
+  void enableAllStableFeatureFlags() {
+    client.enableAllStableFeatureFlags().block();
+  }
+
+  @Test
+  void getOAuthConfiguration() {
+    com.rabbitmq.http.client.domain.OAuthConfiguration config =
+        client.getOAuthConfiguration().block();
+    assertThat(config).isNotNull();
+  }
+
+  @Test
+  void getAuthAttemptStatistics() {
+    List<NodeInfo> nodes = client.getNodes().collectList().block();
+    assertThat(nodes).isNotEmpty();
+    String nodeName = nodes.get(0).getName();
+    List<com.rabbitmq.http.client.domain.AuthenticationAttemptStatistics> stats =
+        client.getAuthAttemptStatistics(nodeName).collectList().block();
+    assertThat(stats).isNotNull();
   }
 
   boolean isVersion37orLater() {

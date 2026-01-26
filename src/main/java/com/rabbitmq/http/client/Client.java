@@ -30,6 +30,7 @@ import javax.net.ssl.SSLContext;
 
 import com.rabbitmq.http.client.HttpLayer.HttpLayerFactory;
 import com.rabbitmq.http.client.domain.AlivenessTestResult;
+import com.rabbitmq.http.client.domain.AuthenticationAttemptStatistics;
 import com.rabbitmq.http.client.domain.BindingInfo;
 import com.rabbitmq.http.client.domain.ChannelInfo;
 import com.rabbitmq.http.client.domain.ClusterId;
@@ -38,8 +39,14 @@ import com.rabbitmq.http.client.domain.ConsumerDetails;
 import com.rabbitmq.http.client.domain.CurrentUserDetails;
 import com.rabbitmq.http.client.domain.Definitions;
 import com.rabbitmq.http.client.domain.DeleteQueueParameters;
+import com.rabbitmq.http.client.domain.DeprecatedFeature;
 import com.rabbitmq.http.client.domain.DetailsParameters;
 import com.rabbitmq.http.client.domain.ExchangeInfo;
+import com.rabbitmq.http.client.domain.FeatureFlag;
+import com.rabbitmq.http.client.domain.FeatureFlagStability;
+import com.rabbitmq.http.client.domain.FeatureFlagState;
+import com.rabbitmq.http.client.domain.OAuthConfiguration;
+import com.rabbitmq.http.client.domain.GlobalRuntimeParameter;
 import com.rabbitmq.http.client.domain.InboundMessage;
 import com.rabbitmq.http.client.domain.MqttVhostPortInfo;
 import com.rabbitmq.http.client.domain.NodeInfo;
@@ -51,7 +58,10 @@ import com.rabbitmq.http.client.domain.QueryParameters;
 import com.rabbitmq.http.client.domain.QueueInfo;
 import com.rabbitmq.http.client.domain.ShovelInfo;
 import com.rabbitmq.http.client.domain.ShovelStatus;
+import com.rabbitmq.http.client.domain.StreamConsumer;
+import com.rabbitmq.http.client.domain.StreamPublisher;
 import com.rabbitmq.http.client.domain.TopicPermissions;
+import com.rabbitmq.http.client.domain.UserLimits;
 import com.rabbitmq.http.client.domain.UpstreamDetails;
 import com.rabbitmq.http.client.domain.UpstreamInfo;
 import com.rabbitmq.http.client.domain.UpstreamSetDetails;
@@ -417,6 +427,31 @@ public class Client {
   public void deleteVhost(String name) {
     final URI uri = uri().withEncodedPath("./vhosts/").withPath(name).get();
     deleteIgnoring404(uri);
+  }
+
+  /**
+   * Enables deletion protection for a virtual host.
+   * When enabled, the virtual host cannot be deleted until protection is disabled.
+   *
+   * @param name the virtual host name
+   * @since 5.5.0
+   * @see <a href="https://www.rabbitmq.com/docs/vhosts">Virtual Hosts</a>
+   */
+  public void enableVhostDeletionProtection(String name) {
+    final URI uri = uri().withEncodedPath("./vhosts").withPath(name).withEncodedPath("deletion/protection").get();
+    this.httpLayer.post(uri, Collections.emptyMap(), null);
+  }
+
+  /**
+   * Disables deletion protection for a virtual host.
+   *
+   * @param name the virtual host name
+   * @since 5.5.0
+   * @see <a href="https://www.rabbitmq.com/docs/vhosts">Virtual Hosts</a>
+   */
+  public void disableVhostDeletionProtection(String name) {
+    final URI uri = uri().withEncodedPath("./vhosts").withPath(name).withEncodedPath("deletion/protection").get();
+    this.httpLayer.delete(uri, null);
   }
 
   public List<UserPermissions> getPermissionsIn(String vhost) {
@@ -791,6 +826,20 @@ public class Client {
     this.deleteIgnoring404(uri().withEncodedPath("./users").withPath(username).get());
   }
 
+  /**
+   * Lists users in the internal database that do not have access to any virtual hosts.
+   * This is useful for finding users that may need permissions granted, or are not used
+   * and should be cleaned up.
+   *
+   * @return list of users without permissions
+   * @since 5.5.0
+   * @see <a href="https://www.rabbitmq.com/docs/access-control">Access Control</a>
+   */
+  public List<UserInfo> getUsersWithoutPermissions() {
+    final URI uri = uriWithPath("./users/without-permissions");
+    return Arrays.asList(this.httpLayer.get(uri, UserInfo[].class));
+  }
+
   public void updatePermissions(String vhost, String username, UserPermissions permissions) {
     final URI uri = uri().withEncodedPath("./permissions").withPath(vhost).withPath(username).get();
     this.httpLayer.put(uri, permissions);
@@ -1037,6 +1086,50 @@ public class Client {
     this.httpLayer.put(uri, m);
   }
 
+  /**
+   * Returns cluster metadata tags.
+   *
+   * @return map of cluster tags
+   * @since 5.5.0
+   * @see <a href="https://www.rabbitmq.com/docs/parameters">Parameters and Policies</a>
+   */
+  @SuppressWarnings("unchecked")
+  public Map<String, Object> getClusterTags() {
+    try {
+      GlobalRuntimeParameter<?> param = getGlobalParameter("cluster_tags");
+      if (param != null && param.getValue() instanceof Map) {
+        return (Map<String, Object>) param.getValue();
+      }
+    } catch (HttpClientException e) {
+      if (e.status() == 404) {
+        return Collections.emptyMap();
+      }
+      throw e;
+    }
+    return Collections.emptyMap();
+  }
+
+  /**
+   * Sets cluster metadata tags.
+   *
+   * @param tags the tags to set
+   * @since 5.5.0
+   * @see <a href="https://www.rabbitmq.com/docs/parameters">Parameters and Policies</a>
+   */
+  public void setClusterTags(Map<String, Object> tags) {
+    setGlobalParameter("cluster_tags", tags);
+  }
+
+  /**
+   * Clears all cluster metadata tags.
+   *
+   * @since 5.5.0
+   * @see <a href="https://www.rabbitmq.com/docs/parameters">Parameters and Policies</a>
+   */
+  public void clearClusterTags() {
+    deleteGlobalParameter("cluster_tags");
+  }
+
   @SuppressWarnings({"unchecked","rawtypes"})
   public List<Map> getExtensions() {
     final URI uri = uriWithPath("./extensions/");
@@ -1047,7 +1140,483 @@ public class Client {
     final URI uri = uriWithPath("./definitions/");
     return this.httpLayer.get(uri, Definitions.class);
   }
-  
+
+  /**
+   * Returns definitions for a specific virtual host.
+   *
+   * @param vhost the virtual host name
+   * @return definitions for the virtual host
+   * @since 5.5.0
+   * @see <a href="https://www.rabbitmq.com/docs/definitions">Definition Export and Import</a>
+   */
+  public Definitions getDefinitions(String vhost) {
+    final URI uri = uri().withEncodedPath("./definitions").withPath(vhost).get();
+    return this.httpLayer.get(uri, Definitions.class);
+  }
+
+  //
+  // Feature flags
+  //
+
+  /**
+   * Returns all feature flags.
+   *
+   * @return list of feature flags
+   * @since 5.5.0
+   * @see <a href="https://www.rabbitmq.com/docs/feature-flags">Feature Flags</a>
+   */
+  public List<FeatureFlag> getFeatureFlags() {
+    final URI uri = uriWithPath("./feature-flags/");
+    return Arrays.asList(this.httpLayer.get(uri, FeatureFlag[].class));
+  }
+
+  /**
+   * Enables a feature flag.
+   *
+   * @param name the name of the feature flag to enable
+   * @since 5.5.0
+   * @see <a href="https://www.rabbitmq.com/docs/feature-flags">Feature Flags</a>
+   */
+  public void enableFeatureFlag(String name) {
+    final URI uri = uri().withEncodedPath("./feature-flags").withPath(name).withEncodedPath("enable").get();
+    this.httpLayer.put(uri, Collections.emptyMap());
+  }
+
+  /**
+   * Enables all stable feature flags.
+   * This iterates through all feature flags and enables those that are stable and disabled.
+   *
+   * @since 5.5.0
+   * @see <a href="https://www.rabbitmq.com/docs/feature-flags">Feature Flags</a>
+   */
+  public void enableAllStableFeatureFlags() {
+    List<FeatureFlag> flags = getFeatureFlags();
+    for (FeatureFlag flag : flags) {
+      if (flag.getState() == FeatureFlagState.DISABLED
+          && flag.getStability() == FeatureFlagStability.STABLE) {
+        enableFeatureFlag(flag.getName());
+      }
+    }
+  }
+
+  //
+  // Health checks
+  //
+
+  /**
+   * Performs a cluster-wide health check for any active resource alarms.
+   * Throws {@link HttpServerException} with status 503 if the check fails.
+   *
+   * @since 5.5.0
+   * @see <a href="https://www.rabbitmq.com/docs/monitoring#health-checks">Health Checks</a>
+   */
+  public void healthCheckClusterAlarms() {
+    final URI uri = uriWithPath("./health/checks/alarms");
+    this.httpLayer.get(uri, Object.class);
+  }
+
+  /**
+   * Performs a health check for alarms on the local node only.
+   * Throws {@link HttpServerException} with status 503 if the check fails.
+   *
+   * @since 5.5.0
+   * @see <a href="https://www.rabbitmq.com/docs/monitoring#health-checks">Health Checks</a>
+   */
+  public void healthCheckLocalAlarms() {
+    final URI uri = uriWithPath("./health/checks/local-alarms");
+    this.httpLayer.get(uri, Object.class);
+  }
+
+  /**
+   * Checks if a specific port has an active listener.
+   * Throws {@link HttpServerException} with status 503 if the check fails.
+   *
+   * @param port the port to check
+   * @since 5.5.0
+   * @see <a href="https://www.rabbitmq.com/docs/monitoring#health-checks">Health Checks</a>
+   */
+  public void healthCheckPortListener(int port) {
+    final URI uri = uri().withEncodedPath("./health/checks/port-listener").withEncodedPath(String.valueOf(port)).get();
+    this.httpLayer.get(uri, Object.class);
+  }
+
+  /**
+   * Checks if a specific protocol listener is active.
+   * Throws {@link HttpServerException} with status 503 if the check fails.
+   *
+   * @param protocol the protocol to check (e.g., "amqp", "mqtt", "stomp")
+   * @since 5.5.0
+   * @see <a href="https://www.rabbitmq.com/docs/monitoring#health-checks">Health Checks</a>
+   */
+  public void healthCheckProtocolListener(String protocol) {
+    final URI uri = uri().withEncodedPath("./health/checks/protocol-listener").withPath(protocol).get();
+    this.httpLayer.get(uri, Object.class);
+  }
+
+  /**
+   * Checks if the target node is critical for maintaining quorum.
+   * Throws {@link HttpServerException} with status 503 if the check fails.
+   *
+   * @since 5.5.0
+   * @see <a href="https://www.rabbitmq.com/docs/monitoring#health-checks">Health Checks</a>
+   */
+  public void healthCheckNodeIsQuorumCritical() {
+    final URI uri = uriWithPath("./health/checks/node-is-quorum-critical");
+    this.httpLayer.get(uri, Object.class);
+  }
+
+  /**
+   * Checks if all virtual hosts are running.
+   * Throws {@link HttpServerException} with status 503 if the check fails.
+   *
+   * @since 5.5.0
+   * @see <a href="https://www.rabbitmq.com/docs/monitoring#health-checks">Health Checks</a>
+   */
+  public void healthCheckVirtualHosts() {
+    final URI uri = uriWithPath("./health/checks/virtual-hosts");
+    this.httpLayer.get(uri, Object.class);
+  }
+
+  //
+  // Authentication
+  //
+
+  /**
+   * Returns the current OAuth 2.0 configuration.
+   *
+   * @return OAuth configuration
+   * @since 5.5.0
+   * @see <a href="https://www.rabbitmq.com/docs/oauth2">OAuth 2 Guide</a>
+   */
+  public OAuthConfiguration getOAuthConfiguration() {
+    final URI uri = uriWithPath("./auth");
+    return this.httpLayer.get(uri, OAuthConfiguration.class);
+  }
+
+  /**
+   * Returns authentication attempt statistics for a given node.
+   *
+   * @param nodeName the name of the node
+   * @return list of authentication attempt statistics per protocol
+   * @since 5.5.0
+   */
+  public List<AuthenticationAttemptStatistics> getAuthAttemptStatistics(String nodeName) {
+    final URI uri = uri().withEncodedPath("./auth/attempts").withPath(nodeName).get();
+    return Arrays.asList(this.httpLayer.get(uri, AuthenticationAttemptStatistics[].class));
+  }
+
+  //
+  // Deprecated features
+  //
+
+  /**
+   * Returns all deprecated features.
+   *
+   * @return list of deprecated features
+   * @since 5.5.0
+   * @see <a href="https://www.rabbitmq.com/docs/deprecated">Deprecated Features</a>
+   */
+  public List<DeprecatedFeature> getDeprecatedFeatures() {
+    final URI uri = uriWithPath("./deprecated-features/");
+    return Arrays.asList(this.httpLayer.get(uri, DeprecatedFeature[].class));
+  }
+
+  /**
+   * Returns deprecated features that are currently in use.
+   *
+   * @return list of deprecated features in use
+   * @since 5.5.0
+   * @see <a href="https://www.rabbitmq.com/docs/deprecated">Deprecated Features</a>
+   */
+  public List<DeprecatedFeature> getDeprecatedFeaturesInUse() {
+    final URI uri = uriWithPath("./deprecated-features/used");
+    return Arrays.asList(this.httpLayer.get(uri, DeprecatedFeature[].class));
+  }
+
+  //
+  // Queue rebalancing
+  //
+
+  /**
+   * Triggers queue leader rebalancing.
+   *
+   * @since 5.5.0
+   * @see <a href="https://www.rabbitmq.com/docs/clustering#rebalancing">Queue Leader Rebalancing</a>
+   */
+  public void rebalanceQueueLeaders() {
+    final URI uri = uriWithPath("./rebalance/queues");
+    this.httpLayer.post(uri, Collections.emptyMap(), null);
+  }
+
+  //
+  // Stream protocol support
+  //
+
+  /**
+   * Returns all stream connections.
+   *
+   * @return list of stream connections
+   * @since 5.5.0
+   * @see <a href="https://www.rabbitmq.com/docs/streams">RabbitMQ Streams</a>
+   */
+  public List<ConnectionInfo> getStreamConnections() {
+    final URI uri = uriWithPath("./stream/connections/");
+    return Arrays.asList(this.httpLayer.get(uri, ConnectionInfo[].class));
+  }
+
+  /**
+   * Returns stream connections in a specific virtual host.
+   *
+   * @param vhost the virtual host name
+   * @return list of stream connections
+   * @since 5.5.0
+   * @see <a href="https://www.rabbitmq.com/docs/streams">RabbitMQ Streams</a>
+   */
+  public List<ConnectionInfo> getStreamConnections(String vhost) {
+    final URI uri = uri().withEncodedPath("./stream/connections").withPath(vhost).get();
+    return Arrays.asList(this.httpLayer.get(uri, ConnectionInfo[].class));
+  }
+
+  /**
+   * Returns information about a specific stream connection.
+   *
+   * @param vhost the virtual host name
+   * @param name the connection name
+   * @return stream connection info
+   * @since 5.5.0
+   * @see <a href="https://www.rabbitmq.com/docs/streams">RabbitMQ Streams</a>
+   */
+  public ConnectionInfo getStreamConnection(String vhost, String name) {
+    final URI uri = uri().withEncodedPath("./stream/connections").withPath(vhost).withPath(name).get();
+    return this.httpLayer.get(uri, ConnectionInfo.class);
+  }
+
+  /**
+   * Closes a stream connection.
+   *
+   * @param vhost the virtual host name
+   * @param name the connection name
+   * @since 5.5.0
+   * @see <a href="https://www.rabbitmq.com/docs/streams">RabbitMQ Streams</a>
+   */
+  public void closeStreamConnection(String vhost, String name) {
+    final URI uri = uri().withEncodedPath("./stream/connections").withPath(vhost).withPath(name).get();
+    this.httpLayer.delete(uri, null);
+  }
+
+  /**
+   * Returns all stream publishers.
+   *
+   * @return list of stream publishers
+   * @since 5.5.0
+   * @see <a href="https://www.rabbitmq.com/docs/streams">RabbitMQ Streams</a>
+   */
+  public List<StreamPublisher> getStreamPublishers() {
+    final URI uri = uriWithPath("./stream/publishers/");
+    return Arrays.asList(this.httpLayer.get(uri, StreamPublisher[].class));
+  }
+
+  /**
+   * Returns stream publishers in a specific virtual host.
+   *
+   * @param vhost the virtual host name
+   * @return list of stream publishers
+   * @since 5.5.0
+   * @see <a href="https://www.rabbitmq.com/docs/streams">RabbitMQ Streams</a>
+   */
+  public List<StreamPublisher> getStreamPublishers(String vhost) {
+    final URI uri = uri().withEncodedPath("./stream/publishers").withPath(vhost).get();
+    return Arrays.asList(this.httpLayer.get(uri, StreamPublisher[].class));
+  }
+
+  /**
+   * Returns stream publishers for a specific stream.
+   *
+   * @param vhost the virtual host name
+   * @param stream the stream name
+   * @return list of stream publishers
+   * @since 5.5.0
+   * @see <a href="https://www.rabbitmq.com/docs/streams">RabbitMQ Streams</a>
+   */
+  public List<StreamPublisher> getStreamPublishers(String vhost, String stream) {
+    final URI uri = uri().withEncodedPath("./stream/publishers").withPath(vhost).withPath(stream).get();
+    return Arrays.asList(this.httpLayer.get(uri, StreamPublisher[].class));
+  }
+
+  /**
+   * Returns all stream consumers.
+   *
+   * @return list of stream consumers
+   * @since 5.5.0
+   * @see <a href="https://www.rabbitmq.com/docs/streams">RabbitMQ Streams</a>
+   */
+  public List<StreamConsumer> getStreamConsumers() {
+    final URI uri = uriWithPath("./stream/consumers/");
+    return Arrays.asList(this.httpLayer.get(uri, StreamConsumer[].class));
+  }
+
+  /**
+   * Returns stream consumers in a specific virtual host.
+   *
+   * @param vhost the virtual host name
+   * @return list of stream consumers
+   * @since 5.5.0
+   * @see <a href="https://www.rabbitmq.com/docs/streams">RabbitMQ Streams</a>
+   */
+  public List<StreamConsumer> getStreamConsumers(String vhost) {
+    final URI uri = uri().withEncodedPath("./stream/consumers").withPath(vhost).get();
+    return Arrays.asList(this.httpLayer.get(uri, StreamConsumer[].class));
+  }
+
+  /**
+   * Returns stream consumers for a specific stream.
+   *
+   * @param vhost the virtual host name
+   * @param stream the stream name
+   * @return list of stream consumers
+   * @since 5.5.0
+   * @see <a href="https://www.rabbitmq.com/docs/streams">RabbitMQ Streams</a>
+   */
+  public List<StreamConsumer> getStreamConsumers(String vhost, String stream) {
+    final URI uri = uri().withEncodedPath("./stream/consumers").withPath(vhost).withPath(stream).get();
+    return Arrays.asList(this.httpLayer.get(uri, StreamConsumer[].class));
+  }
+
+  /**
+   * Returns stream publishers on a specific stream connection.
+   *
+   * @param vhost the virtual host name
+   * @param connectionName the connection name
+   * @return list of stream publishers on the connection
+   * @since 5.5.0
+   * @see <a href="https://www.rabbitmq.com/docs/streams">RabbitMQ Streams</a>
+   */
+  public List<StreamPublisher> getStreamPublishersOnConnection(String vhost, String connectionName) {
+    final URI uri = uri().withEncodedPath("./stream/connections").withPath(vhost).withPath(connectionName).withEncodedPath("publishers").get();
+    return Arrays.asList(this.httpLayer.get(uri, StreamPublisher[].class));
+  }
+
+  /**
+   * Returns stream consumers on a specific stream connection.
+   *
+   * @param vhost the virtual host name
+   * @param connectionName the connection name
+   * @return list of stream consumers on the connection
+   * @since 5.5.0
+   * @see <a href="https://www.rabbitmq.com/docs/streams">RabbitMQ Streams</a>
+   */
+  public List<StreamConsumer> getStreamConsumersOnConnection(String vhost, String connectionName) {
+    final URI uri = uri().withEncodedPath("./stream/connections").withPath(vhost).withPath(connectionName).withEncodedPath("consumers").get();
+    return Arrays.asList(this.httpLayer.get(uri, StreamConsumer[].class));
+  }
+
+  //
+  // Federation links
+  //
+
+  /**
+   * Returns all federation links.
+   *
+   * @return list of federation links as untyped maps
+   * @since 5.5.0
+   * @see <a href="https://www.rabbitmq.com/docs/federation">Federation Plugin</a>
+   */
+  @SuppressWarnings("rawtypes")
+  public List<Map> getFederationLinks() {
+    final URI uri = uriWithPath("./federation-links/");
+    return Arrays.asList(this.httpLayer.get(uri, Map[].class));
+  }
+
+  /**
+   * Returns federation links in a specific virtual host.
+   *
+   * @param vhost the virtual host name
+   * @return list of federation links as untyped maps
+   * @since 5.5.0
+   * @see <a href="https://www.rabbitmq.com/docs/federation">Federation Plugin</a>
+   */
+  @SuppressWarnings("rawtypes")
+  public List<Map> getFederationLinks(String vhost) {
+    final URI uri = uri().withEncodedPath("./federation-links").withPath(vhost).get();
+    return Arrays.asList(this.httpLayer.get(uri, Map[].class));
+  }
+
+  //
+  // Global parameters
+  //
+
+  /**
+   * Returns all global runtime parameters.
+   *
+   * @return list of global parameters
+   * @since 5.5.0
+   * @see <a href="https://www.rabbitmq.com/docs/parameters">Parameters and Policies</a>
+   */
+  @SuppressWarnings({"rawtypes", "unchecked"})
+  public List<GlobalRuntimeParameter<?>> getGlobalParameters() {
+    final URI uri = uriWithPath("./global-parameters/");
+    return Arrays.asList(this.httpLayer.get(uri, GlobalRuntimeParameter[].class));
+  }
+
+  /**
+   * Returns a specific global runtime parameter.
+   *
+   * @param name the parameter name
+   * @return the global parameter
+   * @since 5.5.0
+   * @see <a href="https://www.rabbitmq.com/docs/parameters">Parameters and Policies</a>
+   */
+  @SuppressWarnings("rawtypes")
+  public GlobalRuntimeParameter<?> getGlobalParameter(String name) {
+    final URI uri = uri().withEncodedPath("./global-parameters").withPath(name).get();
+    return this.httpLayer.get(uri, GlobalRuntimeParameter.class);
+  }
+
+  /**
+   * Sets a global runtime parameter.
+   *
+   * @param name the parameter name
+   * @param value the parameter value
+   * @since 5.5.0
+   * @see <a href="https://www.rabbitmq.com/docs/parameters">Parameters and Policies</a>
+   */
+  public void setGlobalParameter(String name, Object value) {
+    final URI uri = uri().withEncodedPath("./global-parameters").withPath(name).get();
+    GlobalRuntimeParameter<Object> param = new GlobalRuntimeParameter<>();
+    param.setName(name);
+    param.setValue(value);
+    this.httpLayer.put(uri, param);
+  }
+
+  /**
+   * Deletes a global runtime parameter.
+   *
+   * @param name the parameter name
+   * @since 5.5.0
+   * @see <a href="https://www.rabbitmq.com/docs/parameters">Parameters and Policies</a>
+   */
+  public void deleteGlobalParameter(String name) {
+    final URI uri = uri().withEncodedPath("./global-parameters").withPath(name).get();
+    this.httpLayer.delete(uri, null);
+  }
+
+  //
+  // Bulk operations
+  //
+
+  /**
+   * Deletes multiple users in a single operation.
+   *
+   * @param usernames the list of usernames to delete
+   * @since 5.5.0
+   * @see <a href="https://www.rabbitmq.com/docs/access-control">Access Control</a>
+   */
+  public void deleteUsers(List<String> usernames) {
+    final URI uri = uriWithPath("./users/bulk-delete");
+    Map<String, Object> body = Collections.singletonMap("users", usernames);
+    this.httpLayer.post(uri, body, null);
+  }
+
   //
   // Shovel support
   //
@@ -1294,6 +1863,79 @@ public class Client {
    */
   public void clearMaxQueuesLimit(String vhost) {
     final URI uri = uri().withEncodedPath("./vhost-limits").withPath(vhost).withEncodedPath("max-queues").get();
+    this.deleteIgnoring404(uri);
+  }
+
+  /**
+   * Returns limits for all users that have limits set.
+   *
+   * @return list of user limits
+   * @since 5.5.0
+   */
+  public List<UserLimits> getUserLimits() {
+    final URI uri = uriWithPath("./user-limits/");
+    return asListOrNull(getForObjectReturningNullOn404(uri, UserLimits[].class));
+  }
+
+  /**
+   * Returns the limits (max connections and channels) for a given user.
+   *
+   * @param username the username
+   * @return the limits for this user
+   * @since 5.5.0
+   */
+  public UserLimits getUserLimits(String username) {
+    final URI uri = uri().withEncodedPath("./user-limits").withPath(username).get();
+    UserLimits limits = this.httpLayer.get(uri, UserLimits.class);
+    if (limits != null && limits.getUser() == null) {
+      limits = new UserLimits(username, -1, -1);
+    }
+    return limits;
+  }
+
+  /**
+   * Sets the max number (limit) of connections for a user.
+   *
+   * @param username the username
+   * @param limit the max number of connections allowed
+   * @since 5.5.0
+   */
+  public void limitUserMaxConnections(String username, int limit) {
+    final URI uri = uri().withEncodedPath("./user-limits").withPath(username).withEncodedPath("max-connections").get();
+    this.httpLayer.put(uri, Collections.singletonMap("value", limit));
+  }
+
+  /**
+   * Sets the max number (limit) of channels for a user.
+   *
+   * @param username the username
+   * @param limit the max number of channels allowed
+   * @since 5.5.0
+   */
+  public void limitUserMaxChannels(String username, int limit) {
+    final URI uri = uri().withEncodedPath("./user-limits").withPath(username).withEncodedPath("max-channels").get();
+    this.httpLayer.put(uri, Collections.singletonMap("value", limit));
+  }
+
+  /**
+   * Clears the connection limit for a user.
+   *
+   * @param username the username
+   * @since 5.5.0
+   */
+  public void clearUserMaxConnectionsLimit(String username) {
+    final URI uri = uri().withEncodedPath("./user-limits").withPath(username).withEncodedPath("max-connections").get();
+    this.deleteIgnoring404(uri);
+  }
+
+  /**
+   * Clears the channel limit for a user.
+   *
+   * @param username the username
+   * @since 5.5.0
+   */
+  public void clearUserMaxChannelsLimit(String username) {
+    final URI uri = uri().withEncodedPath("./user-limits").withPath(username).withEncodedPath("max-channels").get();
     this.deleteIgnoring404(uri);
   }
 
