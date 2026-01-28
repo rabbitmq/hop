@@ -2173,7 +2173,7 @@ public class ReactorNettyClientTest {
   }
 
   @Test
-  void getApiDefinitionsQueues() throws Exception {
+  void getApiDefinitionsQueues() {
     // given: a basic topology
     client.declareQueue("/", "queue1", new QueueInfo(false, false, false)).block();
     client.declareQueue("/", "queue2", new QueueInfo(false, false, false)).block();
@@ -2383,7 +2383,7 @@ public class ReactorNettyClientTest {
 
     // cleanup
     client.deleteShovel("/", "shovel1").block();
-    client.deleteQueue("/", "queue1").block();
+    client.deleteQueue("vh1", "queue1").block();
   }
 
   @Test
@@ -2429,7 +2429,7 @@ public class ReactorNettyClientTest {
 
     // cleanup
     client.deleteShovel("/", "shovel1").block();
-    client.deleteQueue("/", "queue1").block();
+    client.deleteQueue("vh1", "queue1").block();
   }
 
   @Test
@@ -2450,22 +2450,12 @@ public class ReactorNettyClientTest {
 
     // cleanup
     client.deleteShovel("/", "shovel1").block();
-    client.deleteQueue("/", "queue1").block();
+    client.deleteQueue("vh1", "queue1").block();
   }
 
   @Test
-  void getApiShovels() throws Exception {
+  void getApiShovels() {
     // given: required vhosts, queue and exchange exist
-    try {
-      client.createVhost("vh1").block();
-    } catch (Exception e) {
-      // vhost may already exist
-    }
-    try {
-      client.createVhost("vh2").block();
-    } catch (Exception e) {
-      // vhost may already exist
-    }
     client.declareQueue("vh1", "queue1", new QueueInfo(false, false, false)).block();
     client.declareExchange("vh2", "exchange1", new ExchangeInfo("direct", false, false)).block();
 

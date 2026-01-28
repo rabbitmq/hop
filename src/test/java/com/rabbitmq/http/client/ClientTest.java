@@ -2199,7 +2199,6 @@ public class ClientTest {
     client.declareShovel("/", new ShovelInfo("shovel1", value));
     Definitions d = client.getDefinitions();
     List<RuntimeParameter<Object>> parameters = d.getParameters();
-    List<RuntimeParameter<Object>> globalParameters = d.getGlobalParameters();
     assertThat(parameters).isNotEmpty();
     RuntimeParameter<Object> parameter =
         parameters.stream().filter(p -> "shovel1".equals(p.getName())).findFirst().orElse(null);
@@ -2207,7 +2206,7 @@ public class ClientTest {
     assertThat(parameter.getComponent()).isEqualTo("shovel");
     assertThat(parameter.getValue() instanceof Map).isTrue();
     client.deleteShovel("/", "shovel1");
-    client.deleteQueue("/", "queue1");
+    client.deleteQueue("vh1", "queue1");
   }
 
   @Test
@@ -2243,7 +2242,7 @@ public class ClientTest {
     assertThat(s.getDetails().getSourcePrefetchCount()).isEqualTo(50L);
     assertThat(s.getDetails().isDestinationAddTimestampHeader()).isTrue();
     client.deleteShovel("/", "shovel1");
-    client.deleteQueue("/", "queue1");
+    client.deleteQueue("vh1", "queue1");
   }
 
   @Test
@@ -2264,7 +2263,7 @@ public class ClientTest {
     assertThat(s).isNotNull();
     assertThat(s.getDetails().getSourceURIs()).hasSize(2);
     client.deleteShovel("/", "shovel2");
-    client.deleteQueue("/", "queue1");
+    client.deleteQueue("vh1", "queue1");
   }
 
   @Test
@@ -2289,7 +2288,7 @@ public class ClientTest {
     } catch (Exception e) {
     }
     try {
-      client.deleteQueue("/", "queue1");
+      client.deleteQueue("vh1", "queue1");
     } catch (Exception e) {
     }
   }
