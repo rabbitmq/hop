@@ -1828,8 +1828,10 @@ public class ReactorNettyClientTest {
 
     // when: client tries to delete queue in vhost /
     // then: HTTP status is 400 BAD REQUEST (thrown as exception)
-    HttpClientException ex = assertThrows(HttpClientException.class, () ->
-        client.deleteQueue(v, queue, new DeleteQueueParameters(true, false)).block());
+    HttpClientException ex =
+        assertThrows(
+            HttpClientException.class,
+            () -> client.deleteQueue(v, queue, new DeleteQueueParameters(true, false)).block());
     assertThat(ex.status()).isEqualTo(400);
 
     // cleanup
