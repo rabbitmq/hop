@@ -151,6 +151,10 @@ public class Client {
   }
 
   /**
+   * Provides an overview of the most commonly used cluster metrics.
+   *
+   * <p>Requires the {@code management} user tag. Does not modify state.
+   *
    * @return cluster state overview
    */
   public OverviewResponse getOverview() {
@@ -163,13 +167,22 @@ public class Client {
    *
    * @param vhost vhost to use to perform aliveness check in
    * @return true if the check succeeded
+   * @deprecated This endpoint is a no-op since RabbitMQ 3.12.4 and has been removed
+   * in RabbitMQ 4.0. Use the health check endpoints instead.
+   * @see #healthCheckClusterAlarms()
+   * @see #healthCheckLocalAlarms()
    */
+  @Deprecated
   public boolean alivenessTest(String vhost) {
     final URI uri = uri().withEncodedPath("./aliveness-test").withPath(vhost).get();
     return this.httpLayer.get(uri, AlivenessTestResult.class).isSuccessful();
   }
 
   /**
+   * Returns information about the authenticated user.
+   *
+   * <p>Requires the {@code management} user tag. Does not modify state.
+   *
    * @return information about the user used by this client instance
    */
   public CurrentUserDetails whoAmI() {
@@ -180,6 +193,8 @@ public class Client {
   /**
    * Retrieves state and metrics information for all nodes in the cluster.
    *
+   * <p>Requires the {@code monitoring} user tag. Does not modify state.
+   *
    * @return list of nodes in the cluster
    */
   public List<NodeInfo> getNodes() {
@@ -189,6 +204,8 @@ public class Client {
 
   /**
    * Retrieves state and metrics information for individual node.
+   *
+   * <p>Requires the {@code monitoring} user tag. Does not modify state.
    *
    * @param name node name
    * @return node information
@@ -201,6 +218,9 @@ public class Client {
   /**
    * Retrieves state and metrics information for all client connections across the cluster.
    *
+   * <p>Requires the {@code monitoring} user tag for all connections, or {@code management}
+   * for own connections only. Does not modify state.
+   *
    * @return list of connections across the cluster
    */
   public List<ConnectionInfo> getConnections() {
@@ -210,9 +230,12 @@ public class Client {
 
   /**
    * Retrieves state and metrics information for all client connections across the cluster
-   * using query parameters
+   * using query parameters.
    *
-   * @param queryParameters
+   * <p>Requires the {@code monitoring} user tag for all connections, or {@code management}
+   * for own connections only. Does not modify state.
+   *
+   * @param queryParameters pagination and filtering parameters
    * @return list of connections across the cluster
    */
   @SuppressWarnings("unchecked")
@@ -230,6 +253,8 @@ public class Client {
   /**
    * Retrieves state and metrics information for individual client connection.
    *
+   * <p>Requires the {@code monitoring} user tag. Does not modify state.
+   *
    * @param name connection name
    * @return connection information
    */
@@ -239,9 +264,13 @@ public class Client {
   }
 
   /**
-   * Lists connection that belong to a specific user (used the provided username
+   * Lists connections that belong to a specific user (used the provided username
    * during authentication).
+   *
+   * <p>Requires the {@code monitoring} user tag. Does not modify state.
+   *
    * @param username username
+   * @return list of connections for the user
    */
   public List<UserConnectionInfo> getConnectionsOfUser(String username) {
     final URI uri = uri().withEncodedPath("./connections/username/").withPath(username).get();
@@ -251,6 +280,9 @@ public class Client {
   /**
    * Forcefully closes individual connection.
    * The client will receive a <i>connection.close</i> method frame.
+   *
+   * <p>Requires the {@code administrator} user tag for other users' connections,
+   * or {@code management} for own connections.
    *
    * @param name connection name
    */
@@ -264,6 +296,8 @@ public class Client {
    * (used the provided username during authentication).
    * The client will receive a <i>connection.close</i> method frame.
    *
+   * <p>Requires the {@code administrator} user tag.
+   *
    * @param username username
    */
   public void closeAllConnectionsOfUser(String username) {
@@ -274,6 +308,9 @@ public class Client {
   /**
    * Forcefully closes individual connection with a user-provided message.
    * The client will receive a <i>connection.close</i> method frame.
+   *
+   * <p>Requires the {@code administrator} user tag for other users' connections,
+   * or {@code management} for own connections.
    *
    * @param name connection name
    * @param reason the reason of closing
@@ -290,6 +327,9 @@ public class Client {
   /**
    * Retrieves state and metrics information for all consumers across the cluster.
    *
+   * <p>Requires the {@code management} user tag and {@code read} permissions.
+   * Does not modify state.
+   *
    * @return list of consumers across the cluster
    */
   public List<ConsumerDetails> getConsumers() {
@@ -299,6 +339,9 @@ public class Client {
 
   /**
    * Retrieves state and metrics information for all consumers across an individual virtual host.
+   *
+   * <p>Requires the {@code management} user tag and {@code read} permissions on the vhost.
+   * Does not modify state.
    *
    * @param vhost name of the virtual host
    * @return list of consumers in the virtual host (across all nodes)
@@ -311,6 +354,9 @@ public class Client {
   /**
    * Retrieves state and metrics information for all channels across the cluster.
    *
+   * <p>Requires the {@code monitoring} user tag for all channels, or {@code management}
+   * for own channels only. Does not modify state.
+   *
    * @return list of channels across the cluster
    */
   public List<ChannelInfo> getChannels() {
@@ -319,10 +365,13 @@ public class Client {
   }
 
   /**
-   * Retrieves state and metrics information for all channels across the cluster.
-   * using query parameters
+   * Retrieves state and metrics information for all channels across the cluster
+   * using query parameters.
    *
-   * @param queryParameters
+   * <p>Requires the {@code monitoring} user tag for all channels, or {@code management}
+   * for own channels only. Does not modify state.
+   *
+   * @param queryParameters pagination and filtering parameters
    * @return list of channels across the cluster
    */
   @SuppressWarnings("unchecked")
@@ -339,6 +388,9 @@ public class Client {
 
   /**
    * Retrieves state and metrics information for all channels on individual connection.
+   *
+   * <p>Requires the {@code monitoring} user tag. Does not modify state.
+   *
    * @param connectionName the connection name to retrieve channels
    * @return list of channels on the connection
    */
@@ -350,6 +402,8 @@ public class Client {
   /**
    * Retrieves state and metrics information for individual channel.
    *
+   * <p>Requires the {@code monitoring} user tag. Does not modify state.
+   *
    * @param name channel name
    * @return channel information
    */
@@ -358,11 +412,27 @@ public class Client {
     return this.httpLayer.get(uri, ChannelInfo.class);
   }
 
+  /**
+   * Lists virtual hosts in the cluster.
+   *
+   * <p>Requires the {@code monitoring} user tag for all vhosts, or {@code management}
+   * for accessible vhosts only. Does not modify state.
+   *
+   * @return list of virtual hosts
+   */
   public List<VhostInfo> getVhosts() {
     final URI uri = uriWithPath("./vhosts/");
     return Arrays.asList(this.httpLayer.get(uri, VhostInfo[].class));
   }
 
+  /**
+   * Returns information about a virtual host.
+   *
+   * <p>Requires the {@code management} user tag. Does not modify state.
+   *
+   * @param name virtual host name
+   * @return virtual host information
+   */
   public VhostInfo getVhost(String name) {
     final URI uri = uri().withEncodedPath("./vhosts").withPath(name).get();
     return getForObjectReturningNullOn404(uri, VhostInfo.class);
@@ -371,6 +441,8 @@ public class Client {
   /**
    * Create a virtual host with name, tracing flag, and metadata.
    * Note metadata (description and tags) are supported as of RabbitMQ 3.8.
+   *
+   * <p>Requires the {@code administrator} user tag.
    *
    * @param name        name of the virtual host
    * @param tracing     whether tracing is enabled or not
@@ -399,6 +471,8 @@ public class Client {
    * Create a virtual host with name and metadata.
    * Note metadata (description and tags) are supported as of RabbitMQ 3.8.
    *
+   * <p>Requires the {@code administrator} user tag.
+   *
    * @param name        name of the virtual host
    * @param description virtual host description (requires RabbitMQ 3.8 or more)
    * @param tags        virtual host tags (requires RabbitMQ 3.8 or more)
@@ -411,6 +485,8 @@ public class Client {
   /**
    * Create a virtual host with name and tracing flag.
    *
+   * <p>Requires the {@code administrator} user tag.
+   *
    * @param name    name of the virtual host
    * @param tracing whether tracing is enabled or not
    * @since 3.4.0
@@ -419,11 +495,25 @@ public class Client {
     this.createVhost(name, tracing, null);
   }
 
+  /**
+   * Creates a virtual host with the given name.
+   *
+   * <p>Requires the {@code administrator} user tag.
+   *
+   * @param name name of the virtual host
+   */
   public void createVhost(String name) {
     final URI uri = uri().withEncodedPath("./vhosts/").withPath(name).get();
     this.httpLayer.put(uri, null);
   }
 
+  /**
+   * Deletes a virtual host.
+   *
+   * <p>Requires the {@code administrator} user tag.
+   *
+   * @param name name of the virtual host to delete
+   */
   public void deleteVhost(String name) {
     final URI uri = uri().withEncodedPath("./vhosts/").withPath(name).get();
     deleteIgnoring404(uri);
@@ -432,6 +522,10 @@ public class Client {
   /**
    * Enables deletion protection for a virtual host.
    * When enabled, the virtual host cannot be deleted until protection is disabled.
+   *
+   * <p>Requires RabbitMQ 4.1.0 or later.
+   *
+   * <p>Requires the {@code administrator} user tag.
    *
    * @param name the virtual host name
    * @since 5.5.0
@@ -445,6 +539,10 @@ public class Client {
   /**
    * Disables deletion protection for a virtual host.
    *
+   * <p>Requires RabbitMQ 4.1.0 or later.
+   *
+   * <p>Requires the {@code administrator} user tag.
+   *
    * @param name the virtual host name
    * @since 5.5.0
    * @see <a href="https://www.rabbitmq.com/docs/vhosts">Virtual Hosts</a>
@@ -454,57 +552,138 @@ public class Client {
     this.httpLayer.delete(uri, null);
   }
 
+  /**
+   * Lists permissions in a virtual host.
+   *
+   * <p>Requires the {@code administrator} user tag.
+   *
+   * @param vhost virtual host name
+   * @return list of permissions in the virtual host
+   */
   public List<UserPermissions> getPermissionsIn(String vhost) {
     final URI uri = uri().withEncodedPath("./vhosts/").withPath(vhost).withEncodedPath("/permissions").get();
     UserPermissions[] result = this.getForObjectReturningNullOn404(uri, UserPermissions[].class);
     return asListOrNull(result);
   }
 
+  /**
+   * Lists permissions for a specific user.
+   *
+   * <p>Requires the {@code administrator} user tag.
+   *
+   * @param username username
+   * @return list of permissions for the user
+   */
   public List<UserPermissions> getPermissionsOf(String username) {
     final URI uri = uri().withEncodedPath("./users/").withPath(username).withEncodedPath("/permissions").get();
     UserPermissions[] result = this.getForObjectReturningNullOn404(uri, UserPermissions[].class);
     return asListOrNull(result);
   }
 
+  /**
+   * Lists all permissions in the cluster.
+   *
+   * <p>Requires the {@code administrator} user tag.
+   *
+   * @return list of permissions
+   */
   public List<UserPermissions> getPermissions() {
     final URI uri = uri().withEncodedPath("./permissions").get();
     UserPermissions[] result = this.getForObjectReturningNullOn404(uri, UserPermissions[].class);
     return asListOrNull(result);
   }
 
+  /**
+   * Gets permissions for a user in a virtual host.
+   *
+   * <p>Requires the {@code administrator} user tag.
+   *
+   * @param vhost virtual host name
+   * @param username username
+   * @return permissions for the user in the virtual host
+   */
   public UserPermissions getPermissions(String vhost, String username) {
     final URI uri = uri().withEncodedPath("./permissions").withPath(vhost).withPath(username).get();
     return this.getForObjectReturningNullOn404(uri, UserPermissions.class);
   }
 
+  /**
+   * Lists all topic permissions in a virtual host.
+   *
+   * <p>Requires the {@code administrator} user tag.
+   *
+   * @param vhost virtual host name
+   * @return list of topic permissions in the virtual host
+   */
   public List<TopicPermissions> getTopicPermissionsIn(String vhost) {
     final URI uri = uri().withEncodedPath("./vhosts").withPath(vhost).withEncodedPath("topic-permissions").get();
     TopicPermissions[] result = this.getForObjectReturningNullOn404(uri, TopicPermissions[].class);
     return asListOrNull(result);
   }
 
+  /**
+   * Lists all topic permissions of a user.
+   *
+   * <p>Requires the {@code administrator} user tag.
+   *
+   * @param username username
+   * @return list of topic permissions for the user
+   */
   public List<TopicPermissions> getTopicPermissionsOf(String username) {
     final URI uri = uri().withEncodedPath("./users").withPath(username).withEncodedPath("topic-permissions").get();
     TopicPermissions[] result = this.getForObjectReturningNullOn404(uri, TopicPermissions[].class);
     return asListOrNull(result);
   }
 
+  /**
+   * Lists all topic permissions in the cluster.
+   *
+   * <p>Requires the {@code administrator} user tag.
+   *
+   * @return list of all topic permissions
+   */
   public List<TopicPermissions> getTopicPermissions() {
     final URI uri = uriWithPath("./topic-permissions");
     TopicPermissions[] result = this.getForObjectReturningNullOn404(uri, TopicPermissions[].class);
     return asListOrNull(result);
   }
 
+  /**
+   * Gets topic permissions for a user in a specific virtual host.
+   *
+   * <p>Requires the {@code administrator} user tag.
+   *
+   * @param vhost virtual host name
+   * @param username username
+   * @return list of topic permissions for the user in the virtual host
+   */
   public List<TopicPermissions> getTopicPermissions(String vhost, String username) {
     final URI uri = uri().withEncodedPath("./topic-permissions").withPath(vhost).withPath(username).get();
     return asListOrNull(this.getForObjectReturningNullOn404(uri, TopicPermissions[].class));
   }
 
+  /**
+   * Lists all exchanges across the cluster.
+   *
+   * <p>Requires the {@code monitoring} user tag for all vhosts, or {@code management}
+   * for accessible vhosts only. Does not modify state.
+   *
+   * @return list of exchanges
+   */
   public List<ExchangeInfo> getExchanges() {
     final URI uri = uriWithPath("./exchanges/");
     return Arrays.asList(this.httpLayer.get(uri, ExchangeInfo[].class));
   }
 
+  /**
+   * Lists all exchanges across the cluster with pagination.
+   *
+   * <p>Requires the {@code monitoring} user tag for all vhosts, or {@code management}
+   * for accessible vhosts only. Does not modify state.
+   *
+   * @param queryParameters pagination and filtering parameters
+   * @return page of exchanges
+   */
   @SuppressWarnings("unchecked")
   public Page<ExchangeInfo> getExchanges(QueryParameters queryParameters) {
     final URI uri = uri().withEncodedPath("./exchanges").withQueryParameters(queryParameters).get();
@@ -517,12 +696,31 @@ public class Client {
     }
   }
 
+  /**
+   * Lists all exchanges in the given virtual host.
+   *
+   * <p>Requires the {@code management} user tag and {@code read} permissions on the vhost.
+   * Does not modify state.
+   *
+   * @param vhost virtual host name
+   * @return list of exchanges in the virtual host
+   */
   public List<ExchangeInfo> getExchanges(String vhost) {
     final URI uri = uri().withEncodedPath("./exchanges").withPath(vhost).get();
     final ExchangeInfo[] result = this.getForObjectReturningNullOn404(uri, ExchangeInfo[].class);
     return asListOrNull(result);
   }
 
+  /**
+   * Lists exchanges in the given virtual host with pagination.
+   *
+   * <p>Requires the {@code management} user tag and {@code read} permissions on the vhost.
+   * Does not modify state.
+   *
+   * @param vhost virtual host name
+   * @param queryParameters pagination and filtering parameters
+   * @return page of exchanges in the virtual host
+   */
   @SuppressWarnings("unchecked")
   public Page<ExchangeInfo> getExchanges(String vhost, QueryParameters queryParameters) {
     final URI uri = uri().withEncodedPath("./exchanges").withPath(vhost).withQueryParameters(queryParameters).get();
@@ -535,16 +733,43 @@ public class Client {
     }
   }
 
+  /**
+   * Returns information about an exchange.
+   *
+   * <p>Requires the {@code management} user tag and {@code read} permissions on the vhost.
+   * Does not modify state.
+   *
+   * @param vhost virtual host name
+   * @param name exchange name
+   * @return exchange information
+   */
   public ExchangeInfo getExchange(String vhost, String name) {
     final URI uri = uri().withEncodedPath("./exchanges").withPath(vhost).withPath(name).get();
     return this.getForObjectReturningNullOn404(uri, ExchangeInfo.class);
   }
 
+  /**
+   * Declares an exchange.
+   *
+   * <p>Requires the {@code management} user tag and {@code configure} permissions on the vhost.
+   *
+   * @param vhost virtual host name
+   * @param name exchange name
+   * @param info exchange information
+   */
   public void declareExchange(String vhost, String name, ExchangeInfo info) {
     final URI uri = uri().withEncodedPath("./exchanges").withPath(vhost).withPath(name).get();
     this.httpLayer.put(uri, info);
   }
 
+  /**
+   * Deletes an exchange.
+   *
+   * <p>Requires the {@code management} user tag and {@code configure} permissions on the vhost.
+   *
+   * @param vhost virtual host name
+   * @param name exchange name
+   */
   public void deleteExchange(String vhost, String name) {
     this.deleteIgnoring404(uri().withEncodedPath("./exchanges").withPath(vhost).withPath(name).get());
   }
@@ -557,6 +782,8 @@ public class Client {
    * <p>
    * Use this method for test or development code only.
    * In production, use AMQP 0-9-1 or any other messaging protocol that uses a long-lived connection.
+   *
+   * <p>Requires the {@code management} user tag and {@code write} permissions on the exchange.
    *
    * @param vhost the virtual host to use
    * @param exchange the target exchange
@@ -585,10 +812,27 @@ public class Client {
     }
   }
 
+  /**
+   * Lists all queues and streams across the cluster.
+   *
+   * <p>Requires the {@code monitoring} user tag for all vhosts, or {@code management}
+   * for accessible vhosts only. Does not modify state.
+   *
+   * @return list of queues
+   */
   public List<QueueInfo> getQueues() {
     return this.getQueues((DetailsParameters) null);
   }
 
+  /**
+   * Lists all queues and streams across the cluster with details parameters.
+   *
+   * <p>Requires the {@code monitoring} user tag for all vhosts, or {@code management}
+   * for accessible vhosts only. Does not modify state.
+   *
+   * @param detailsParameters optional details parameters
+   * @return list of queues
+   */
   public List<QueueInfo> getQueues(DetailsParameters detailsParameters) {
     final URI uri = uri().withEncodedPath("./queues")
         .withQueryParameters(detailsParameters == null ? Collections.emptyMap() :
@@ -597,10 +841,29 @@ public class Client {
     return Arrays.asList(this.httpLayer.get(uri, QueueInfo[].class));
   }
 
+  /**
+   * Lists all queues and streams in the given virtual host.
+   *
+   * <p>Requires the {@code management} user tag and {@code read} permissions on the vhost.
+   * Does not modify state.
+   *
+   * @param vhost virtual host name
+   * @return list of queues in the virtual host
+   */
   public List<QueueInfo> getQueues(String vhost) {
     return this.getQueues(vhost, (DetailsParameters) null);
   }
 
+  /**
+   * Lists all queues and streams in the given virtual host with details parameters.
+   *
+   * <p>Requires the {@code management} user tag and {@code read} permissions on the vhost.
+   * Does not modify state.
+   *
+   * @param vhost virtual host name
+   * @param detailsParameters optional details parameters
+   * @return list of queues in the virtual host
+   */
   public List<QueueInfo> getQueues(String vhost, DetailsParameters detailsParameters) {
     final URI uri = uri().withEncodedPath("./queues")
         .withPath(vhost)
@@ -611,6 +874,16 @@ public class Client {
     return asListOrNull(result);
   }
 
+  /**
+   * Lists queues and streams in the given virtual host with pagination.
+   *
+   * <p>Requires the {@code management} user tag and {@code read} permissions on the vhost.
+   * Does not modify state.
+   *
+   * @param vhost virtual host name
+   * @param queryParameters pagination and filtering parameters
+   * @return page of queues in the virtual host
+   */
   @SuppressWarnings("unchecked")
   public Page<QueueInfo> getQueues(String vhost, QueryParameters queryParameters) {
     final URI uri = uri().withEncodedPath("./queues").withPath(vhost).withQueryParameters(queryParameters).get();
@@ -623,6 +896,17 @@ public class Client {
     }
   }
 
+  /**
+   * Returns information about a queue or stream.
+   *
+   * <p>Requires the {@code management} user tag and {@code read} permissions on the vhost.
+   * Does not modify state.
+   *
+   * @param vhost virtual host name
+   * @param name queue name
+   * @param detailsParameters optional details parameters
+   * @return queue information
+   */
   public QueueInfo getQueue(String vhost, String name, DetailsParameters detailsParameters) {
     final URI uri = uri().withEncodedPath("./queues")
         .withPath(vhost)
@@ -633,10 +917,29 @@ public class Client {
     return this.getForObjectReturningNullOn404(uri, QueueInfo.class);
   }
 
+  /**
+   * Returns information about a queue or stream.
+   *
+   * <p>Requires the {@code management} user tag and {@code read} permissions on the vhost.
+   * Does not modify state.
+   *
+   * @param vhost virtual host name
+   * @param name queue name
+   * @return queue information
+   */
   public QueueInfo getQueue(String vhost, String name) {
     return getQueue(vhost, name, null);
   }
 
+  /**
+   * Lists all queues and streams across the cluster with pagination.
+   *
+   * <p>Requires the {@code monitoring} user tag for all vhosts, or {@code management}
+   * for accessible vhosts only. Does not modify state.
+   *
+   * @param queryParameters pagination and filtering parameters
+   * @return page of queues
+   */
   @SuppressWarnings("unchecked")
   public Page<QueueInfo> getQueues(QueryParameters queryParameters) {
     final URI uri = uri().withEncodedPath("./queues").withQueryParameters(queryParameters).get();
@@ -649,30 +952,82 @@ public class Client {
     }
   }
 
+  /**
+   * Declares a policy.
+   *
+   * <p>Requires the {@code policymaker} user tag.
+   *
+   * @param vhost virtual host name
+   * @param name policy name
+   * @param info policy information
+   */
   public void declarePolicy(String vhost, String name, PolicyInfo info) {
     final URI uri = uri().withEncodedPath("./policies").withPath(vhost).withPath(name).get();
     this.httpLayer.put(uri, info);
   }
 
+  /**
+   * Declares an operator policy.
+   *
+   * <p>Requires the {@code administrator} user tag.
+   *
+   * @param vhost virtual host name
+   * @param name operator policy name
+   * @param info policy information
+   */
   public void declareOperatorPolicy(String vhost, String name, PolicyInfo info) {
     final URI uri = uri().withEncodedPath("./operator-policies").withPath(vhost).withPath(name).get();
     this.httpLayer.put(uri, info);
   }
 
+  /**
+   * Declares a queue.
+   *
+   * <p>Requires the {@code management} user tag and {@code configure} permissions on the vhost.
+   *
+   * @param vhost virtual host name
+   * @param name queue name
+   * @param info queue information
+   */
   public void declareQueue(String vhost, String name, QueueInfo info) {
     final URI uri = uri().withEncodedPath("./queues").withPath(vhost).withPath(name).get();
     this.httpLayer.put(uri, info);
   }
 
+  /**
+   * Purges a queue, removing all messages.
+   *
+   * <p>Requires the {@code management} user tag and {@code read} permissions on the vhost.
+   *
+   * @param vhost virtual host name
+   * @param name queue name
+   */
   public void purgeQueue(String vhost, String name) {
     this.deleteIgnoring404(uri().withEncodedPath("./queues").withPath(vhost).withPath(name)
             .withEncodedPath("contents/").get());
   }
 
+  /**
+   * Deletes a queue.
+   *
+   * <p>Requires the {@code management} user tag and {@code configure} permissions on the vhost.
+   *
+   * @param vhost virtual host name
+   * @param name queue name
+   */
   public void deleteQueue(String vhost, String name) {
     this.deleteIgnoring404(uri().withEncodedPath("./queues").withPath(vhost).withPath(name).get());
   }
 
+  /**
+   * Deletes a queue with additional parameters.
+   *
+   * <p>Requires the {@code management} user tag and {@code configure} permissions on the vhost.
+   *
+   * @param vhost virtual host name
+   * @param name queue name
+   * @param deleteInfo additional delete parameters
+   */
   public void deleteQueue(String vhost, String name, DeleteQueueParameters deleteInfo) {
     this.deleteIgnoring404(uri().withEncodedPath("./queues").withPath(vhost).withPath(name)
             .withQueryParameters(deleteInfo.getAsQueryParams()).get());
@@ -685,6 +1040,8 @@ public class Client {
      * <b>DO NOT USE THIS METHOD IN PRODUCTION</b>. Getting messages with the HTTP API
      * is intended for diagnostics or tests. It does not implement reliable delivery
      * and so should be treated as a sysadmin's tool rather than a general API for messaging.
+     *
+     * <p>Requires the {@code management} user tag and {@code read} permissions on the queue.
      *
      * @param vhost    the virtual host the target queue is in
      * @param queue    the queue to consume from
@@ -718,6 +1075,8 @@ public class Client {
      * is intended for diagnostics or tests. It does not implement reliable delivery
      * and so should be treated as a sysadmin's tool rather than a general API for messaging.
      *
+     * <p>Requires the {@code management} user tag and {@code read} permissions on the queue.
+     *
      * @param vhost    the virtual host the target queue is in
      * @param queue    the queue to consume from
      * @param count    the maximum number of messages to get
@@ -740,6 +1099,8 @@ public class Client {
      * is intended for diagnostics or tests. It does not implement reliable delivery
      * and so should be treated as a sysadmin's tool rather than a general API for messaging.
      *
+     * <p>Requires the {@code management} user tag and {@code read} permissions on the queue.
+     *
      * @param vhost the virtual host the target queue is in
      * @param queue the queue to consume from
      * @return the message, null if the queue is empty
@@ -756,24 +1117,64 @@ public class Client {
         }
     }
 
+  /**
+   * Deletes a policy.
+   *
+   * <p>Requires the {@code policymaker} user tag.
+   *
+   * @param vhost virtual host name
+   * @param name policy name
+   */
   public void deletePolicy(String vhost, String name) {
     this.deleteIgnoring404(uri().withEncodedPath("./policies").withPath(vhost).withPath(name).get());
   }
 
+  /**
+   * Deletes an operator policy.
+   *
+   * <p>Requires the {@code administrator} user tag.
+   *
+   * @param vhost virtual host name
+   * @param name operator policy name
+   */
   public void deleteOperatorPolicy(String vhost, String name) {
     this.deleteIgnoring404(uri().withEncodedPath("./operator-policies").withPath(vhost).withPath(name).get());
   }
 
+  /**
+   * Lists users in the internal database.
+   *
+   * <p>Requires the {@code administrator} user tag.
+   *
+   * @return list of users
+   */
   public List<UserInfo> getUsers() {
     final URI uri = uriWithPath("./users/");
     return Arrays.asList(this.httpLayer.get(uri, UserInfo[].class));
   }
 
+  /**
+   * Returns information about a user in the internal database.
+   *
+   * <p>Requires the {@code administrator} user tag.
+   *
+   * @param username username
+   * @return user information
+   */
   public UserInfo getUser(String username) {
     final URI uri = uri().withEncodedPath("./users").withPath(username).get();
     return this.getForObjectReturningNullOn404(uri, UserInfo.class);
   }
 
+  /**
+   * Adds a user to the internal database.
+   *
+   * <p>Requires the {@code administrator} user tag.
+   *
+   * @param username username
+   * @param password password
+   * @param tags user tags
+   */
   public void createUser(String username, char[] password, List<String> tags) {
     if(username == null) {
       throw new IllegalArgumentException("username cannot be null");
@@ -790,6 +1191,15 @@ public class Client {
     this.httpLayer.put(uri, body);
   }
 
+  /**
+   * Adds a user to the internal database with a pre-hashed password.
+   *
+   * <p>Requires the {@code administrator} user tag.
+   *
+   * @param username username
+   * @param passwordHash pre-hashed password
+   * @param tags user tags
+   */
   public void createUserWithPasswordHash(String username, char[] passwordHash, List<String> tags) {
     if(username == null) {
       throw new IllegalArgumentException("username cannot be null");
@@ -807,6 +1217,15 @@ public class Client {
     this.httpLayer.put(uri, body);
   }
 
+  /**
+   * Updates a user in the internal database.
+   *
+   * <p>Requires the {@code administrator} user tag.
+   *
+   * @param username username
+   * @param password password (null to keep existing)
+   * @param tags user tags
+   */
   public void updateUser(String username, char[] password, List<String> tags) {
     if(username == null) {
       throw new IllegalArgumentException("username cannot be null");
@@ -822,6 +1241,13 @@ public class Client {
     this.httpLayer.put(uri, body);
   }
 
+  /**
+   * Deletes a user from the internal database.
+   *
+   * <p>Requires the {@code administrator} user tag.
+   *
+   * @param username username
+   */
   public void deleteUser(String username) {
     this.deleteIgnoring404(uri().withEncodedPath("./users").withPath(username).get());
   }
@@ -830,6 +1256,8 @@ public class Client {
    * Lists users in the internal database that do not have access to any virtual hosts.
    * This is useful for finding users that may need permissions granted, or are not used
    * and should be cleaned up.
+   *
+   * <p>Requires the {@code administrator} user tag.
    *
    * @return list of users without permissions
    * @since 5.5.0
@@ -840,53 +1268,134 @@ public class Client {
     return Arrays.asList(this.httpLayer.get(uri, UserInfo[].class));
   }
 
+  /**
+   * Declares permissions for a user in a virtual host.
+   *
+   * <p>Requires the {@code administrator} user tag.
+   *
+   * @param vhost virtual host name
+   * @param username username
+   * @param permissions permissions to grant
+   */
   public void updatePermissions(String vhost, String username, UserPermissions permissions) {
     final URI uri = uri().withEncodedPath("./permissions").withPath(vhost).withPath(username).get();
     this.httpLayer.put(uri, permissions);
   }
 
+  /**
+   * Revokes user permissions in a specific virtual host.
+   *
+   * <p>Requires the {@code administrator} user tag.
+   *
+   * @param vhost virtual host name
+   * @param username username
+   */
   public void clearPermissions(String vhost, String username) {
     final URI uri = uri().withEncodedPath("./permissions").withPath(vhost).withPath(username).get();
     deleteIgnoring404(uri);
   }
 
+  /**
+   * Sets topic permissions in a specific virtual host.
+   *
+   * <p>Requires the {@code administrator} user tag.
+   *
+   * @param vhost virtual host name
+   * @param username username
+   * @param permissions topic permissions to set
+   */
   public void updateTopicPermissions(String vhost, String username, TopicPermissions permissions) {
     final URI uri = uri().withEncodedPath("./topic-permissions").withPath(vhost).withPath(username).get();
     this.httpLayer.put(uri, permissions);
   }
 
+  /**
+   * Clears topic permissions for a user in a specific virtual host.
+   *
+   * <p>Requires the {@code administrator} user tag.
+   *
+   * @param vhost virtual host name
+   * @param username username
+   */
   public void clearTopicPermissions(String vhost, String username) {
     final URI uri = uri().withEncodedPath("./topic-permissions").withPath(vhost).withPath(username).get();
     deleteIgnoring404(uri);
   }
 
+  /**
+   * Lists all policies in the cluster.
+   *
+   * <p>Requires the {@code policymaker} user tag. Does not modify state.
+   *
+   * @return list of policies
+   */
   public List<PolicyInfo> getPolicies() {
     final URI uri = uriWithPath("./policies/");
     return Arrays.asList(this.httpLayer.get(uri, PolicyInfo[].class));
   }
 
+  /**
+   * Lists policies in a virtual host.
+   *
+   * <p>Requires the {@code policymaker} user tag. Does not modify state.
+   *
+   * @param vhost virtual host name
+   * @return list of policies in the virtual host
+   */
   public List<PolicyInfo> getPolicies(String vhost) {
     final URI uri = uri().withEncodedPath("./policies").withPath(vhost).get();
     final PolicyInfo[] result = this.getForObjectReturningNullOn404(uri, PolicyInfo[].class);
     return asListOrNull(result);
   }
 
+  /**
+   * Lists all operator policies in the cluster.
+   *
+   * <p>Requires the {@code administrator} user tag.
+   *
+   * @return list of operator policies
+   */
   public List<PolicyInfo> getOperatorPolicies() {
     final URI uri = uriWithPath("./operator-policies/");
     return Arrays.asList(this.httpLayer.get(uri, PolicyInfo[].class));
   }
 
+  /**
+   * Lists operator policies in a virtual host.
+   *
+   * <p>Requires the {@code administrator} user tag.
+   *
+   * @param vhost virtual host name
+   * @return list of operator policies in the virtual host
+   */
   public List<PolicyInfo> getOperatorPolicies(String vhost) {
     final URI uri = uri().withEncodedPath("./operator-policies").withPath(vhost).get();
     final PolicyInfo[] result = this.getForObjectReturningNullOn404(uri, PolicyInfo[].class);
     return asListOrNull(result);
   }
 
+  /**
+   * Lists all bindings across the cluster.
+   *
+   * <p>Requires the {@code monitoring} user tag for all vhosts, or {@code management}
+   * for accessible vhosts only. Does not modify state.
+   *
+   * @return list of bindings
+   */
   public List<BindingInfo> getBindings() {
     final URI uri = uriWithPath("./bindings/");
     return Arrays.asList(this.httpLayer.get(uri, BindingInfo[].class));
   }
 
+  /**
+   * Lists all bindings in the given virtual host.
+   *
+   * <p>Requires the {@code management} user tag and {@code read} permissions on the vhost.
+   * Does not modify state.
+   *
+   * @param vhost virtual host name
+   * @return list of bindings in the virtual host
+   */
   public List<BindingInfo> getBindings(String vhost) {
     final URI uri = uri().withEncodedPath("./bindings").withPath(vhost).get();
     return Arrays.asList(this.httpLayer.get(uri, BindingInfo[].class));
@@ -895,6 +1404,9 @@ public class Client {
   /**
    * Returns a list of bindings where provided exchange is the source (other things are
    * bound to it).
+   *
+   * <p>Requires the {@code management} user tag and {@code read} permissions on the vhost.
+   * Does not modify state.
    *
    * @param vhost    vhost of the exchange
    * @param exchange source exchange name
@@ -910,6 +1422,9 @@ public class Client {
    * Returns a list of bindings where provided exchange is the destination (it is
    * bound to another exchange).
    *
+   * <p>Requires the {@code management} user tag and {@code read} permissions on the vhost.
+   * Does not modify state.
+   *
    * @param vhost    vhost of the exchange
    * @param exchange destination exchange name
    * @return list of bindings
@@ -924,6 +1439,9 @@ public class Client {
   /**
    * Returns a list of bindings where provided queue is the destination.
    *
+   * <p>Requires the {@code management} user tag and {@code read} permissions on the vhost.
+   * Does not modify state.
+   *
    * @param vhost    vhost of the exchange
    * @param queue    destination queue name
    * @return list of bindings
@@ -934,6 +1452,17 @@ public class Client {
     return asListOrNull(result);
   }
 
+  /**
+   * Lists bindings between an exchange and a queue.
+   *
+   * <p>Requires the {@code management} user tag and {@code read} permissions on the vhost.
+   * Does not modify state.
+   *
+   * @param vhost virtual host name
+   * @param exchange exchange name
+   * @param queue queue name
+   * @return list of bindings between the exchange and queue
+   */
   public List<BindingInfo> getQueueBindingsBetween(String vhost, String exchange, String queue) {
     final URI uri = uri().withEncodedPath("./bindings").withPath(vhost).withEncodedPath("e").withPath(exchange)
             .withEncodedPath("q").withPath(queue).get();
@@ -941,6 +1470,17 @@ public class Client {
     return asListOrNull(result);
   }
 
+  /**
+   * Lists bindings between two exchanges.
+   *
+   * <p>Requires the {@code management} user tag and {@code read} permissions on the vhost.
+   * Does not modify state.
+   *
+   * @param vhost virtual host name
+   * @param source source exchange name
+   * @param destination destination exchange name
+   * @return list of bindings between the exchanges
+   */
   public List<BindingInfo> getExchangeBindingsBetween(String vhost, String source, String destination) {
     final URI uri = uri().withEncodedPath("./bindings").withPath(vhost).withEncodedPath("e").withPath(source)
             .withEncodedPath("e").withPath(destination).get();
@@ -950,6 +1490,10 @@ public class Client {
 
   /**
    * Binds a queue to an exchange.
+   *
+   * <p>Requires the {@code management} user tag and {@code write} permissions on the queue
+   * and {@code read} permissions on the exchange.
+   *
    * @param vhost virtual host the queue and exchange are in
    * @param queue the queue name
    * @param exchange the exchange name
@@ -961,6 +1505,10 @@ public class Client {
 
   /**
    * Binds a queue to an exchange.
+   *
+   * <p>Requires the {@code management} user tag and {@code write} permissions on the queue
+   * and {@code read} permissions on the exchange.
+   *
    * @param vhost virtual host the queue and exchange are in
    * @param queue the queue name
    * @param exchange the exchange name
@@ -990,6 +1538,10 @@ public class Client {
 
   /**
    * Unbinds a queue from an exchange.
+   *
+   * <p>Requires the {@code management} user tag and {@code write} permissions on the queue
+   * and {@code read} permissions on the exchange.
+   *
    * @param vhost virtual host the queue and exchange are in
    * @param queue the queue name
    * @param exchange the exchange name
@@ -1012,6 +1564,10 @@ public class Client {
 
   /**
    * Binds a destination exchange to a source one.
+   *
+   * <p>Requires the {@code management} user tag and {@code write} permissions on the destination
+   * and {@code read} permissions on the source.
+   *
    * @param vhost virtual host the exchanges are in
    * @param destination the destination exchange name
    * @param source the source exchange name
@@ -1023,6 +1579,10 @@ public class Client {
 
   /**
    * Binds a destination exchange to a source one.
+   *
+   * <p>Requires the {@code management} user tag and {@code write} permissions on the destination
+   * and {@code read} permissions on the source.
+   *
    * @param vhost virtual host the exchanges are in
    * @param destination the destination exchange name
    * @param source the source exchange name
@@ -1052,6 +1612,10 @@ public class Client {
 
   /**
    * Unbinds a destination exchange from a source one.
+   *
+   * <p>Requires the {@code management} user tag and {@code write} permissions on the destination
+   * and {@code read} permissions on the source.
+   *
    * @param vhost virtual host the exchanges are in
    * @param destination the destination exchange name
    * @param source the source exchange name
@@ -1072,10 +1636,24 @@ public class Client {
             .withEncodedPath("e").withPath(destination).withPath(routingKey).get());
   }
 
+  /**
+   * Gets cluster name (identifier).
+   *
+   * <p>Requires the {@code management} user tag. Does not modify state.
+   *
+   * @return cluster identity
+   */
   public ClusterId getClusterName() {
     return this.httpLayer.get(uriWithPath("./cluster-name"), ClusterId.class);
   }
 
+  /**
+   * Sets cluster name (identifier).
+   *
+   * <p>Requires the {@code administrator} user tag.
+   *
+   * @param name the new cluster name
+   */
   public void setClusterName(String name) {
     if(name== null || name.isEmpty()) {
       throw new IllegalArgumentException("name cannot be null or blank");
@@ -1088,6 +1666,8 @@ public class Client {
 
   /**
    * Returns cluster metadata tags.
+   *
+   * <p>Requires the {@code policymaker} user tag. Does not modify state.
    *
    * @return map of cluster tags
    * @since 5.5.0
@@ -1112,6 +1692,8 @@ public class Client {
   /**
    * Sets cluster metadata tags.
    *
+   * <p>Requires the {@code administrator} user tag.
+   *
    * @param tags the tags to set
    * @since 5.5.0
    * @see <a href="https://www.rabbitmq.com/docs/parameters">Parameters and Policies</a>
@@ -1123,6 +1705,8 @@ public class Client {
   /**
    * Clears all cluster metadata tags.
    *
+   * <p>Requires the {@code administrator} user tag.
+   *
    * @since 5.5.0
    * @see <a href="https://www.rabbitmq.com/docs/parameters">Parameters and Policies</a>
    */
@@ -1130,12 +1714,26 @@ public class Client {
     deleteGlobalParameter("cluster_tags");
   }
 
+  /**
+   * Lists extensions available in the cluster.
+   *
+   * <p>Requires the {@code management} user tag. Does not modify state.
+   *
+   * @return list of extensions
+   */
   @SuppressWarnings({"unchecked","rawtypes"})
   public List<Map> getExtensions() {
     final URI uri = uriWithPath("./extensions/");
     return Arrays.asList(this.httpLayer.get(uri, Map[].class));
   }
 
+  /**
+   * Exports cluster-wide definitions.
+   *
+   * <p>Requires the {@code administrator} user tag.
+   *
+   * @return cluster definitions
+   */
   public Definitions getDefinitions() {
     final URI uri = uriWithPath("./definitions/");
     return this.httpLayer.get(uri, Definitions.class);
@@ -1143,6 +1741,8 @@ public class Client {
 
   /**
    * Returns definitions for a specific virtual host.
+   *
+   * <p>Requires the {@code administrator} user tag.
    *
    * @param vhost the virtual host name
    * @return definitions for the virtual host
@@ -1161,6 +1761,8 @@ public class Client {
   /**
    * Returns all feature flags.
    *
+   * <p>Requires the {@code monitoring} user tag. Does not modify state.
+   *
    * @return list of feature flags
    * @since 5.5.0
    * @see <a href="https://www.rabbitmq.com/docs/feature-flags">Feature Flags</a>
@@ -1172,6 +1774,8 @@ public class Client {
 
   /**
    * Enables a feature flag.
+   *
+   * <p>Requires the {@code administrator} user tag.
    *
    * @param name the name of the feature flag to enable
    * @since 5.5.0
@@ -1185,6 +1789,8 @@ public class Client {
   /**
    * Enables all stable feature flags.
    * This iterates through all feature flags and enables those that are stable and disabled.
+   *
+   * <p>Requires the {@code administrator} user tag.
    *
    * @since 5.5.0
    * @see <a href="https://www.rabbitmq.com/docs/feature-flags">Feature Flags</a>
@@ -1207,6 +1813,8 @@ public class Client {
    * Performs a cluster-wide health check for any active resource alarms.
    * Throws {@link HttpServerException} with status 503 if the check fails.
    *
+   * <p>No authentication required. Does not modify state.
+   *
    * @since 5.5.0
    * @see <a href="https://www.rabbitmq.com/docs/monitoring#health-checks">Health Checks</a>
    */
@@ -1219,6 +1827,8 @@ public class Client {
    * Performs a health check for alarms on the local node only.
    * Throws {@link HttpServerException} with status 503 if the check fails.
    *
+   * <p>No authentication required. Does not modify state.
+   *
    * @since 5.5.0
    * @see <a href="https://www.rabbitmq.com/docs/monitoring#health-checks">Health Checks</a>
    */
@@ -1230,6 +1840,8 @@ public class Client {
   /**
    * Checks if a specific port has an active listener.
    * Throws {@link HttpServerException} with status 503 if the check fails.
+   *
+   * <p>No authentication required. Does not modify state.
    *
    * @param port the port to check
    * @since 5.5.0
@@ -1244,6 +1856,8 @@ public class Client {
    * Checks if a specific protocol listener is active.
    * Throws {@link HttpServerException} with status 503 if the check fails.
    *
+   * <p>No authentication required. Does not modify state.
+   *
    * @param protocol the protocol to check (e.g., "amqp", "mqtt", "stomp")
    * @since 5.5.0
    * @see <a href="https://www.rabbitmq.com/docs/monitoring#health-checks">Health Checks</a>
@@ -1257,6 +1871,8 @@ public class Client {
    * Checks if the target node is critical for maintaining quorum.
    * Throws {@link HttpServerException} with status 503 if the check fails.
    *
+   * <p>No authentication required. Does not modify state.
+   *
    * @since 5.5.0
    * @see <a href="https://www.rabbitmq.com/docs/monitoring#health-checks">Health Checks</a>
    */
@@ -1268,6 +1884,8 @@ public class Client {
   /**
    * Checks if all virtual hosts are running.
    * Throws {@link HttpServerException} with status 503 if the check fails.
+   *
+   * <p>No authentication required. Does not modify state.
    *
    * @since 5.5.0
    * @see <a href="https://www.rabbitmq.com/docs/monitoring#health-checks">Health Checks</a>
@@ -1284,6 +1902,8 @@ public class Client {
   /**
    * Returns the current OAuth 2.0 configuration.
    *
+   * <p>Requires the {@code management} user tag. Does not modify state.
+   *
    * @return OAuth configuration
    * @since 5.5.0
    * @see <a href="https://www.rabbitmq.com/docs/oauth2">OAuth 2 Guide</a>
@@ -1295,6 +1915,8 @@ public class Client {
 
   /**
    * Returns authentication attempt statistics for a given node.
+   *
+   * <p>Requires the {@code monitoring} user tag. Does not modify state.
    *
    * @param nodeName the name of the node
    * @return list of authentication attempt statistics per protocol
@@ -1312,6 +1934,10 @@ public class Client {
   /**
    * Returns all deprecated features.
    *
+   * <p>Requires RabbitMQ 3.13.0 or later.
+   *
+   * <p>Requires the {@code monitoring} user tag. Does not modify state.
+   *
    * @return list of deprecated features
    * @since 5.5.0
    * @see <a href="https://www.rabbitmq.com/docs/deprecated">Deprecated Features</a>
@@ -1323,6 +1949,10 @@ public class Client {
 
   /**
    * Returns deprecated features that are currently in use.
+   *
+   * <p>Requires RabbitMQ 3.13.0 or later.
+   *
+   * <p>Requires the {@code monitoring} user tag. Does not modify state.
    *
    * @return list of deprecated features in use
    * @since 5.5.0
@@ -1338,7 +1968,9 @@ public class Client {
   //
 
   /**
-   * Triggers queue leader rebalancing.
+   * Triggers queue leader rebalancing across the cluster.
+   *
+   * <p>Requires the {@code administrator} user tag.
    *
    * @since 5.5.0
    * @see <a href="https://www.rabbitmq.com/docs/clustering#rebalancing">Queue Leader Rebalancing</a>
@@ -1355,6 +1987,8 @@ public class Client {
   /**
    * Returns all stream connections.
    *
+   * <p>Requires the {@code monitoring} user tag. Does not modify state.
+   *
    * @return list of stream connections
    * @since 5.5.0
    * @see <a href="https://www.rabbitmq.com/docs/streams">RabbitMQ Streams</a>
@@ -1366,6 +2000,9 @@ public class Client {
 
   /**
    * Returns stream connections in a specific virtual host.
+   *
+   * <p>Requires the {@code management} user tag and {@code read} permissions on the vhost.
+   * Does not modify state.
    *
    * @param vhost the virtual host name
    * @return list of stream connections
@@ -1379,6 +2016,9 @@ public class Client {
 
   /**
    * Returns information about a specific stream connection.
+   *
+   * <p>Requires the {@code management} user tag and {@code read} permissions on the vhost.
+   * Does not modify state.
    *
    * @param vhost the virtual host name
    * @param name the connection name
@@ -1394,6 +2034,9 @@ public class Client {
   /**
    * Closes a stream connection.
    *
+   * <p>Requires the {@code administrator} user tag for other users' connections,
+   * or {@code management} for own connections.
+   *
    * @param vhost the virtual host name
    * @param name the connection name
    * @since 5.5.0
@@ -1407,6 +2050,8 @@ public class Client {
   /**
    * Returns all stream publishers.
    *
+   * <p>Requires the {@code monitoring} user tag. Does not modify state.
+   *
    * @return list of stream publishers
    * @since 5.5.0
    * @see <a href="https://www.rabbitmq.com/docs/streams">RabbitMQ Streams</a>
@@ -1418,6 +2063,9 @@ public class Client {
 
   /**
    * Returns stream publishers in a specific virtual host.
+   *
+   * <p>Requires the {@code management} user tag and {@code read} permissions on the vhost.
+   * Does not modify state.
    *
    * @param vhost the virtual host name
    * @return list of stream publishers
@@ -1431,6 +2079,9 @@ public class Client {
 
   /**
    * Returns stream publishers for a specific stream.
+   *
+   * <p>Requires the {@code management} user tag and {@code read} permissions on the vhost.
+   * Does not modify state.
    *
    * @param vhost the virtual host name
    * @param stream the stream name
@@ -1446,6 +2097,8 @@ public class Client {
   /**
    * Returns all stream consumers.
    *
+   * <p>Requires the {@code monitoring} user tag. Does not modify state.
+   *
    * @return list of stream consumers
    * @since 5.5.0
    * @see <a href="https://www.rabbitmq.com/docs/streams">RabbitMQ Streams</a>
@@ -1457,6 +2110,9 @@ public class Client {
 
   /**
    * Returns stream consumers in a specific virtual host.
+   *
+   * <p>Requires the {@code management} user tag and {@code read} permissions on the vhost.
+   * Does not modify state.
    *
    * @param vhost the virtual host name
    * @return list of stream consumers
@@ -1470,6 +2126,9 @@ public class Client {
 
   /**
    * Returns stream consumers for a specific stream.
+   *
+   * <p>Requires the {@code management} user tag and {@code read} permissions on the vhost.
+   * Does not modify state.
    *
    * @param vhost the virtual host name
    * @param stream the stream name
@@ -1485,6 +2144,9 @@ public class Client {
   /**
    * Returns stream publishers on a specific stream connection.
    *
+   * <p>Requires the {@code management} user tag and {@code read} permissions on the vhost.
+   * Does not modify state.
+   *
    * @param vhost the virtual host name
    * @param connectionName the connection name
    * @return list of stream publishers on the connection
@@ -1498,6 +2160,9 @@ public class Client {
 
   /**
    * Returns stream consumers on a specific stream connection.
+   *
+   * <p>Requires the {@code management} user tag and {@code read} permissions on the vhost.
+   * Does not modify state.
    *
    * @param vhost the virtual host name
    * @param connectionName the connection name
@@ -1517,6 +2182,8 @@ public class Client {
   /**
    * Returns all federation links.
    *
+   * <p>Requires the {@code monitoring} user tag. Does not modify state.
+   *
    * @return list of federation links as untyped maps
    * @since 5.5.0
    * @see <a href="https://www.rabbitmq.com/docs/federation">Federation Plugin</a>
@@ -1529,6 +2196,8 @@ public class Client {
 
   /**
    * Returns federation links in a specific virtual host.
+   *
+   * <p>Requires the {@code monitoring} user tag. Does not modify state.
    *
    * @param vhost the virtual host name
    * @return list of federation links as untyped maps
@@ -1548,6 +2217,8 @@ public class Client {
   /**
    * Returns all global runtime parameters.
    *
+   * <p>Requires the {@code policymaker} user tag. Does not modify state.
+   *
    * @return list of global parameters
    * @since 5.5.0
    * @see <a href="https://www.rabbitmq.com/docs/parameters">Parameters and Policies</a>
@@ -1560,6 +2231,8 @@ public class Client {
 
   /**
    * Returns a specific global runtime parameter.
+   *
+   * <p>Requires the {@code policymaker} user tag. Does not modify state.
    *
    * @param name the parameter name
    * @return the global parameter
@@ -1574,6 +2247,8 @@ public class Client {
 
   /**
    * Sets a global runtime parameter.
+   *
+   * <p>Requires the {@code administrator} user tag.
    *
    * @param name the parameter name
    * @param value the parameter value
@@ -1591,6 +2266,8 @@ public class Client {
   /**
    * Deletes a global runtime parameter.
    *
+   * <p>Requires the {@code administrator} user tag.
+   *
    * @param name the parameter name
    * @since 5.5.0
    * @see <a href="https://www.rabbitmq.com/docs/parameters">Parameters and Policies</a>
@@ -1606,6 +2283,8 @@ public class Client {
 
   /**
    * Deletes multiple users in a single operation.
+   *
+   * <p>Requires the {@code administrator} user tag.
    *
    * @param usernames the list of usernames to delete
    * @since 5.5.0
@@ -1623,9 +2302,11 @@ public class Client {
 
   /**
    * Declares a shovel.
-   * 
+   *
+   * <p>Requires the {@code policymaker} user tag.
+   *
    * @param vhost virtual host where to declare the shovel
-   * @param info Shovel info. 
+   * @param info Shovel info
    */
   public void declareShovel(String vhost, ShovelInfo info) {
     Map<String, Object> props = info.getDetails().getPublishProperties();
@@ -1637,9 +2318,11 @@ public class Client {
   }
 
   /**
-   * Returns virtual host shovels.
-   * 
-   * @return Shovels.
+   * Returns all shovel definitions.
+   *
+   * <p>Requires the {@code policymaker} user tag. Does not modify state.
+   *
+   * @return list of shovels
    */
   public List<ShovelInfo> getShovels() {
     final URI uri = uriWithPath("./parameters/shovel/");
@@ -1647,10 +2330,12 @@ public class Client {
   }
 
   /**
-   * Returns virtual host shovels.
-   * 
-   * @param vhost Virtual host from where search shovels.
-   * @return Shovels.
+   * Returns shovel definitions in a specific virtual host.
+   *
+   * <p>Requires the {@code policymaker} user tag. Does not modify state.
+   *
+   * @param vhost virtual host name
+   * @return list of shovels
    */
   public List<ShovelInfo> getShovels(String vhost) {
     final URI uri = uri().withEncodedPath("./parameters/shovel").withPath(vhost).get();
@@ -1659,9 +2344,11 @@ public class Client {
   }
 
   /**
-   * Returns virtual host shovels.
-   * 
-   * @return Shovels.
+   * Returns status of all shovels.
+   *
+   * <p>Requires the {@code monitoring} user tag. Does not modify state.
+   *
+   * @return list of shovel statuses
    */
   public List<ShovelStatus> getShovelsStatus() {
     final URI uri = uriWithPath("./shovels/");
@@ -1669,10 +2356,12 @@ public class Client {
   }
 
   /**
-   * Returns virtual host shovels.
-   * 
-   * @param vhost Virtual host from where search shovels.
-   * @return Shovels.
+   * Returns status of shovels in a specific virtual host.
+   *
+   * <p>Requires the {@code monitoring} user tag. Does not modify state.
+   *
+   * @param vhost virtual host name
+   * @return list of shovel statuses
    */
   public List<ShovelStatus> getShovelsStatus(String vhost) {
     final URI uri = uri().withEncodedPath("./shovels").withPath(vhost).get();
@@ -1682,9 +2371,11 @@ public class Client {
 
   /**
    * Deletes the specified shovel from specified virtual host.
-   * 
+   *
+   * <p>Requires the {@code policymaker} user tag.
+   *
    * @param vhost virtual host from where to delete the shovel
-   * @param shovelname Shovel to be deleted.
+   * @param shovelname shovel to be deleted
    */
   public void deleteShovel(String vhost, String shovelname) {
 	    this.deleteIgnoring404(uri().withEncodedPath("./parameters/shovel").withPath(vhost).withPath(shovelname).get());
@@ -1695,7 +2386,10 @@ public class Client {
   //
 
   /**
-   * Declares an upstream
+   * Declares a federation upstream.
+   *
+   * <p>Requires the {@code policymaker} user tag.
+   *
    * @param vhost virtual host for which to declare the upstream
    * @param name name of the upstream to declare
    * @param details upstream arguments
@@ -1713,7 +2407,10 @@ public class Client {
   }
 
   /**
-   * Deletes an upstream
+   * Deletes a federation upstream.
+   *
+   * <p>Requires the {@code policymaker} user tag.
+   *
    * @param vhost virtual host for which to delete the upstream
    * @param name name of the upstream to delete
    */
@@ -1722,7 +2419,9 @@ public class Client {
   }
 
   /**
-   * Returns a list of upstreams for "/" virtual host
+   * Returns a list of federation upstreams for "/" virtual host.
+   *
+   * <p>Requires the {@code policymaker} user tag. Does not modify state.
    *
    * @return upstream info
    */
@@ -1732,9 +2431,11 @@ public class Client {
   }
 
   /**
-   * Returns a list of upstreams
+   * Returns a list of federation upstreams in a virtual host.
    *
-   * @param vhost virtual host the upstreams are in.
+   * <p>Requires the {@code policymaker} user tag. Does not modify state.
+   *
+   * @param vhost virtual host the upstreams are in
    * @return upstream info
    */
   public List<UpstreamInfo> getUpstreams(String vhost) {
@@ -1743,7 +2444,10 @@ public class Client {
   }
 
   /**
-   * Declares an upstream set.
+   * Declares a federation upstream set.
+   *
+   * <p>Requires the {@code policymaker} user tag.
+   *
    * @param vhost virtual host for which to declare the upstream set
    * @param name name of the upstream set to declare
    * @param details upstream set arguments
@@ -1764,7 +2468,10 @@ public class Client {
   }
 
   /**
-   * Deletes an upstream set
+   * Deletes a federation upstream set.
+   *
+   * <p>Requires the {@code policymaker} user tag.
+   *
    * @param vhost virtual host for which to delete the upstream set
    * @param name name of the upstream set to delete
    */
@@ -1773,9 +2480,11 @@ public class Client {
   }
 
   /**
-   * Returns a list of upstream sets for "/" virtual host
+   * Returns a list of federation upstream sets for "/" virtual host.
    *
-   * @return upstream info
+   * <p>Requires the {@code policymaker} user tag. Does not modify state.
+   *
+   * @return upstream set info
    */
   public List<UpstreamSetInfo> getUpstreamSets() {
     return getParameters("federation-upstream-set", new ParameterizedTypeReference<List<UpstreamSetInfo>>() {
@@ -1783,9 +2492,11 @@ public class Client {
   }
 
   /**
-   * Returns a list of upstream sets.
+   * Returns a list of federation upstream sets in a virtual host.
    *
-   * @param vhost Virtual host from where to get upstreams.
+   * <p>Requires the {@code policymaker} user tag. Does not modify state.
+   *
+   * @param vhost virtual host name
    * @return upstream set info
    */
   public List<UpstreamSetInfo> getUpstreamSets(String vhost) {
@@ -1795,6 +2506,8 @@ public class Client {
 
   /**
    * Returns the limits (max queues and connections) for all virtual hosts.
+   *
+   * <p>Requires the {@code administrator} user tag.
    *
    * @return the limits
    * @since 3.7.0
@@ -1806,6 +2519,8 @@ public class Client {
 
   /**
    * Returns the limits (max queues and connections) for a given virtual host.
+   *
+   * <p>Requires the {@code administrator} user tag.
    *
    * @param vhost the virtual host
    * @return the limits for this virtual host
@@ -1823,6 +2538,8 @@ public class Client {
   /**
    * Sets the max number (limit) of connections for a virtual host.
    *
+   * <p>Requires the {@code administrator} user tag.
+   *
    * @param vhost the virtual host
    * @param limit the max number of connections allowed
    * @since 3.7.0
@@ -1834,6 +2551,8 @@ public class Client {
 
   /**
    * Sets the max number (limit) of queues for a virtual host.
+   *
+   * <p>Requires the {@code administrator} user tag.
    *
    * @param vhost the virtual host
    * @param limit the max number of queues allowed
@@ -1847,6 +2566,8 @@ public class Client {
   /**
    * Clears the connection limit for a virtual host.
    *
+   * <p>Requires the {@code administrator} user tag.
+   *
    * @param vhost the virtual host
    * @since 3.7.0
    */
@@ -1857,6 +2578,8 @@ public class Client {
 
   /**
    * Clears the queue limit for a virtual host.
+   *
+   * <p>Requires the {@code administrator} user tag.
    *
    * @param vhost the virtual host
    * @since 3.7.0
@@ -1869,6 +2592,8 @@ public class Client {
   /**
    * Returns limits for all users that have limits set.
    *
+   * <p>Requires the {@code administrator} user tag.
+   *
    * @return list of user limits
    * @since 5.5.0
    */
@@ -1879,6 +2604,8 @@ public class Client {
 
   /**
    * Returns the limits (max connections and channels) for a given user.
+   *
+   * <p>Requires the {@code administrator} user tag. Does not modify state.
    *
    * @param username the username
    * @return the limits for this user
@@ -1896,6 +2623,8 @@ public class Client {
   /**
    * Sets the max number (limit) of connections for a user.
    *
+   * <p>Requires the {@code administrator} user tag.
+   *
    * @param username the username
    * @param limit the max number of connections allowed
    * @since 5.5.0
@@ -1907,6 +2636,8 @@ public class Client {
 
   /**
    * Sets the max number (limit) of channels for a user.
+   *
+   * <p>Requires the {@code administrator} user tag.
    *
    * @param username the username
    * @param limit the max number of channels allowed
@@ -1920,6 +2651,8 @@ public class Client {
   /**
    * Clears the connection limit for a user.
    *
+   * <p>Requires the {@code administrator} user tag.
+   *
    * @param username the username
    * @since 5.5.0
    */
@@ -1931,6 +2664,8 @@ public class Client {
   /**
    * Clears the channel limit for a user.
    *
+   * <p>Requires the {@code administrator} user tag.
+   *
    * @param username the username
    * @since 5.5.0
    */
@@ -1939,14 +2674,34 @@ public class Client {
     this.deleteIgnoring404(uri);
   }
 
+  /**
+   * Returns the MQTT port to virtual host mapping.
+   *
+   * <p>Requires the {@code administrator} user tag. Does not modify state.
+   *
+   * @return the MQTT port to virtual host mapping, or null if not set
+   */
   public MqttVhostPortInfo getMqttPortToVhostMapping(){
     return getGlobalParameters("mqtt_port_to_vhost_mapping", new ParameterizedTypeReference<>() {});
   }
 
+  /**
+   * Deletes the MQTT port to virtual host mapping.
+   *
+   * <p>Requires the {@code administrator} user tag.
+   */
   public void deleteMqttPortToVhostMapping() {
     this.deleteIgnoring404(uri().withEncodedPath("./global-parameters/mqtt_port_to_vhost_mapping").get());
   }
 
+  /**
+   * Sets the MQTT port to virtual host mapping.
+   *
+   * <p>Requires the {@code administrator} user tag.
+   *
+   * @param portMappings a map of TCP port numbers to virtual host names
+   * @throws IllegalArgumentException if any virtual host name is blank
+   */
   public void setMqttPortToVhostMapping(Map<Integer, String> portMappings) {
     for (String vhost : portMappings.values()){
       if (vhost.isBlank()) {
