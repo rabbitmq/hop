@@ -24,6 +24,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.lang.reflect.Array;
 import java.nio.charset.StandardCharsets;
+import java.time.Duration;
 import java.util.Base64;
 import java.util.Collections;
 import java.util.HashMap;
@@ -62,6 +63,7 @@ import com.rabbitmq.http.client.domain.OutboundMessage;
 import com.rabbitmq.http.client.domain.OverviewResponse;
 import com.rabbitmq.http.client.domain.PolicyInfo;
 import com.rabbitmq.http.client.domain.QueueInfo;
+import com.rabbitmq.http.client.domain.ReachabilityProbeOutcome;
 import com.rabbitmq.http.client.domain.ShovelInfo;
 import com.rabbitmq.http.client.domain.ShovelStatus;
 import com.rabbitmq.http.client.domain.StreamConsumer;
@@ -472,6 +474,16 @@ public class ReactorNettyClient {
 
     public Mono<CurrentUserDetails> whoAmI() {
         return doGetMono(CurrentUserDetails.class, "whoami");
+    }
+
+    public Mono<ReachabilityProbeOutcome> probeReachability() {
+        long start = System.nanoTime();
+        return whoAmI()
+            .map(user -> ReachabilityProbeOutcome.reached(
+                user, Duration.ofNanos(System.nanoTime() - start)))
+            .onErrorResume(e -> Mono.just(
+                ReachabilityProbeOutcome.unreachable(
+                    e instanceof Exception ? (Exception) e : new RuntimeException(e))));
     }
 
     public Flux<UserPermissions> getPermissions() {

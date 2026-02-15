@@ -20,6 +20,7 @@ import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.time.Duration;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
@@ -56,6 +57,7 @@ import com.rabbitmq.http.client.domain.Page;
 import com.rabbitmq.http.client.domain.PolicyInfo;
 import com.rabbitmq.http.client.domain.QueryParameters;
 import com.rabbitmq.http.client.domain.QueueInfo;
+import com.rabbitmq.http.client.domain.ReachabilityProbeOutcome;
 import com.rabbitmq.http.client.domain.ShovelInfo;
 import com.rabbitmq.http.client.domain.ShovelStatus;
 import com.rabbitmq.http.client.domain.StreamConsumer;
@@ -188,6 +190,25 @@ public class Client {
   public CurrentUserDetails whoAmI() {
     final URI uri = uriWithPath("./whoami/");
     return this.httpLayer.get(uri, CurrentUserDetails.class);
+  }
+
+  /**
+   * Probes the node for reachability and credential validity.
+   *
+   * <p>Returns a result indicating whether the node was reached and the credentials
+   * were accepted, or an error if the node could not be reached.
+   *
+   * @return the probe outcome
+   */
+  public ReachabilityProbeOutcome probeReachability() {
+    long start = System.nanoTime();
+    try {
+      CurrentUserDetails user = whoAmI();
+      Duration d = Duration.ofNanos(System.nanoTime() - start);
+      return ReachabilityProbeOutcome.reached(user, d);
+    } catch (Exception e) {
+      return ReachabilityProbeOutcome.unreachable(e);
+    }
   }
 
   /**
