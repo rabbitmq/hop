@@ -74,6 +74,28 @@ public class UserInfo {
     this.tags = Arrays.asList(tags.split(","));
   }
 
+  public boolean canAccessHttpApi() {
+    if (tags == null) {
+      return false;
+    }
+    return tags.contains("management") || tags.contains("monitoring")
+        || tags.contains("policymaker") || tags.contains("administrator");
+  }
+
+  public boolean isAdministrator() {
+    if (tags == null) {
+      return false;
+    }
+    return tags.contains("administrator");
+  }
+
+  public boolean canAccessMonitoringEndpoints() {
+    if (tags == null) {
+      return false;
+    }
+    return tags.contains("monitoring") || tags.contains("administrator");
+  }
+
   @Override
   public String toString() {
     return "UserInfo{" +

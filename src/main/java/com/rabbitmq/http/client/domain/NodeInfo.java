@@ -524,4 +524,15 @@ public class NodeInfo {
     this.enabledPlugins = enabledPlugins;
   }
 
+  public String getRabbitmqVersion() {
+    if (erlangApps == null) {
+      return null;
+    }
+    return erlangApps.stream()
+        .filter(app -> "rabbit".equals(app.getName()))
+        .map(ErlangApp::getVersion)
+        .findFirst()
+        .orElse(null);
+  }
+
 }

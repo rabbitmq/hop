@@ -58,6 +58,74 @@ public class NetworkListener {
     this.port = port;
   }
 
+  public String getHumanFriendlyName() {
+    if (protocol == null) {
+      return null;
+    }
+    switch (protocol) {
+      case "amqp":
+        return "AMQP 1.0 and 0-9-1";
+      case "amqp/ssl":
+        return "AMQP 1.0 and 0-9-1 with TLS";
+      case "mqtt":
+        return "MQTT";
+      case "mqtt/ssl":
+        return "MQTT with TLS";
+      case "stomp":
+        return "STOMP";
+      case "stomp/ssl":
+        return "STOMP with TLS";
+      case "stream":
+        return "Stream Protocol";
+      case "stream/ssl":
+        return "Stream Protocol with TLS";
+      case "http/web-mqtt":
+        return "MQTT over WebSockets";
+      case "https/web-mqtt":
+        return "MQTT over WebSockets with TLS";
+      case "http/web-stomp":
+        return "STOMP over WebSockets";
+      case "https/web-stomp":
+        return "STOMP over WebSockets with TLS";
+      case "http/web-amqp":
+        return "AMQP 1.0 over WebSockets";
+      case "https/web-amqp":
+        return "AMQP 1.0 over WebSockets with TLS";
+      case "http/prometheus":
+        return "Prometheus";
+      case "https/prometheus":
+        return "Prometheus with TLS";
+      case "http":
+        return "HTTP API";
+      case "https":
+        return "HTTP API with TLS";
+      case "clustering":
+        return "Inter-node and CLI Tool Communication";
+      default:
+        return protocol;
+    }
+  }
+
+  public boolean hasTlsEnabled() {
+    if (protocol == null) {
+      return false;
+    }
+    switch (protocol) {
+      case "amqp/ssl":
+      case "mqtt/ssl":
+      case "stomp/ssl":
+      case "stream/ssl":
+      case "https/web-mqtt":
+      case "https/web-stomp":
+      case "https/web-amqp":
+      case "https/prometheus":
+      case "https":
+        return true;
+      default:
+        return false;
+    }
+  }
+
   @Override
   public String toString() {
     return "NetworkListener{" +

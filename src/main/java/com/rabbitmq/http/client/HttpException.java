@@ -16,6 +16,13 @@
 
 package com.rabbitmq.http.client;
 
+import java.io.InterruptedIOException;
+import java.net.ConnectException;
+import java.net.SocketTimeoutException;
+import java.net.http.HttpTimeoutException;
+import javax.net.ssl.SSLException;
+import javax.net.ssl.SSLHandshakeException;
+
 /**
  * Base exception.
  */
@@ -29,5 +36,52 @@ public class HttpException extends RuntimeException {
 
     public HttpException(String message) {
         super(message);
+    }
+
+    public boolean isConnectionError() {
+        Throwable cause = getCause();
+        if (cause instanceof ConnectException) {
+            return !isTlsRelated(cause);
+        }
+        return false;
+    }
+
+    public boolean isTimeout() {
+        Throwable cause = getCause();
+        if (cause instanceof HttpTimeoutException) {
+            return true;
+        }
+        if (cause instanceof SocketTimeoutException) {
+            return true;
+        }
+        if (cause instanceof InterruptedIOException) {
+            String message = cause.getMessage();
+            return message != null && message.contains("timed out");
+        }
+        return false;
+    }
+
+    public boolean isTlsHandshakeError() {
+        Throwable current = getCause();
+        while (current != null) {
+            if (current instanceof SSLHandshakeException) {
+                return true;
+            }
+            if (current instanceof SSLException && isTlsRelated(current)) {
+                return true;
+            }
+            current = current.getCause();
+        }
+        return false;
+    }
+
+    private static boolean isTlsRelated(Throwable t) {
+        String message = t.getMessage();
+        if (message == null) {
+            return false;
+        }
+        String lower = message.toLowerCase();
+        return lower.contains("ssl") || lower.contains("tls")
+            || lower.contains("certificate") || lower.contains("handshake");
     }
 }
