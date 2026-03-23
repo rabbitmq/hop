@@ -839,7 +839,7 @@ public class ClientTest {
     Connection conn = openConnection();
     Channel ch = conn.createChannel();
     String q = "hop.publish";
-    ch.queueDeclare(q, false, false, false, null);
+    ch.queueDeclare(q, true, false, false, null);
     ch.queueBind(q, "amq.direct", q);
     CountDownLatch latch = new CountDownLatch(1);
     AtomicReference<String> payloadReference = new AtomicReference<>();
@@ -890,7 +890,7 @@ public class ClientTest {
     Connection conn = openConnection();
     Channel ch = conn.createChannel();
     String q = "hop.queue1";
-    ch.queueDeclare(q, false, false, false, null);
+    ch.queueDeclare(q, true, false, false, null);
 
     // when: client lists bindings of default exchange
     List<BindingInfo> xs = client.getBindingsBySource("/", "");
@@ -1026,7 +1026,7 @@ public class ClientTest {
     List<String> queues = new ArrayList<>();
     for (int i = 0; i <= 15; i++) {
       String qn = "queue-for-paging-test-" + i;
-      ch.queueDeclare(qn, false, false, false, null);
+      ch.queueDeclare(qn, true, false, false, null);
       queues.add(qn);
     }
     QueryParameters queryParameters =
@@ -1050,7 +1050,7 @@ public class ClientTest {
     List<String> queues = new ArrayList<>();
     for (int i = 0; i <= 15; i++) {
       String qn = "queue-for-paging-and-navigating-test-" + i;
-      ch.queueDeclare(qn, false, false, false, null);
+      ch.queueDeclare(qn, true, false, false, null);
       queues.add(qn);
     }
     QueryParameters queryParameters =
@@ -1075,7 +1075,7 @@ public class ClientTest {
     List<String> queues = new ArrayList<>();
     for (int i = 0; i <= 15; i++) {
       String qn = "queue-for-paging-and-details-test-" + i;
-      ch.queueDeclare(qn, false, false, false, null);
+      ch.queueDeclare(qn, true, false, false, null);
       ch.queueBind(qn, "amq.fanout", "");
       queues.add(qn);
     }
@@ -1156,7 +1156,7 @@ public class ClientTest {
     Channel ch = conn.createChannel();
     String s = "hop.q1.exclusive";
     ch.queueDelete(s);
-    String q = ch.queueDeclare(s, false, true, false, null).getQueue();
+    String q = ch.queueDeclare(s, true, true, false, null).getQueue();
     QueueInfo x = client.getQueue("/", q);
     assertThat(x.isExclusive()).isTrue();
     ch.queueDelete(q);
@@ -1214,11 +1214,11 @@ public class ClientTest {
   void putApiQueuesWithVhostWithNameWhenVhostExists() {
     String v = "/";
     String s = "hop.test";
-    client.declareQueue(v, s, new QueueInfo(false, false, false));
+    client.declareQueue(v, s, new QueueInfo(true, false, false));
     List<QueueInfo> xs = client.getQueues(v);
     QueueInfo x = xs.stream().filter(qi -> s.equals(qi.getName())).findFirst().orElse(null);
     assertThat(x).isNotNull();
-    assertThat(x.isDurable()).isFalse();
+    assertThat(x.isDurable()).isTrue();
     client.deleteQueue(v, s);
   }
 
@@ -1310,7 +1310,7 @@ public class ClientTest {
     client.deleteVhost(v);
     String s = "hop.test";
     try {
-      client.declareQueue(v, s, new QueueInfo(false, false, false));
+      client.declareQueue(v, s, new QueueInfo(true, false, false));
       Assertions.fail("Expected exception");
     } catch (Exception e) {
       assertThat(exceptionStatus(e)).isEqualTo(404);
@@ -1321,7 +1321,7 @@ public class ClientTest {
   void deleteApiQueuesWithVhostWithName() {
     String s = UUID.randomUUID().toString();
     String v = "/";
-    client.declareQueue(v, s, new QueueInfo(false, false, false));
+    client.declareQueue(v, s, new QueueInfo(true, false, false));
     List<QueueInfo> xs = client.getQueues(v);
     QueueInfo x = xs.stream().filter(qi -> s.equals(qi.getName())).findFirst().orElse(null);
     assertThat(x).isNotNull();
@@ -1335,7 +1335,7 @@ public class ClientTest {
   void deleteApiQueuesWithVhostWithNameIfEmptyTrue() {
     String queue = UUID.randomUUID().toString();
     String v = "/";
-    client.declareQueue(v, queue, new QueueInfo(false, false, false));
+    client.declareQueue(v, queue, new QueueInfo(true, false, false));
     client.publish(v, "amq.default", queue, new OutboundMessage().payload("test"));
     try {
       client.deleteQueue(v, queue, new DeleteQueueParameters(true, false));
@@ -1399,7 +1399,7 @@ public class ClientTest {
     Channel ch = conn.createChannel();
     String x = "amq.topic";
     String q = "hop.test";
-    ch.queueDeclare(q, false, false, false, null);
+    ch.queueDeclare(q, true, false, false, null);
     ch.queueBind(q, x, "hop.*");
     List<BindingInfo> xs = client.getBindings("/");
     BindingInfo b =
@@ -1422,7 +1422,7 @@ public class ClientTest {
     Channel ch = conn.createChannel();
     String x = "amq.topic";
     String q = "hop.test";
-    ch.queueDeclare(q, false, false, false, null);
+    ch.queueDeclare(q, true, false, false, null);
     ch.queueBind(q, x, "hop.*");
     List<BindingInfo> xs = client.getQueueBindings("/", q);
     BindingInfo b =
@@ -1445,7 +1445,7 @@ public class ClientTest {
     Channel ch = conn.createChannel();
     String x = "amq.topic";
     String q = "hop.test";
-    ch.queueDeclare(q, false, false, false, null);
+    ch.queueDeclare(q, true, false, false, null);
     ch.queueBind(q, x, "hop.*");
     List<BindingInfo> xs = client.getQueueBindingsBetween("/", x, q);
     BindingInfo b = xs.get(0);
@@ -1499,7 +1499,7 @@ public class ClientTest {
     String v = "/";
     String x = "amq.topic";
     String q = "hop.test";
-    client.declareQueue(v, q, new QueueInfo(false, false, false));
+    client.declareQueue(v, q, new QueueInfo(true, false, false));
     Map<String, Object> args = new HashMap<>();
     args.put("arg1", "value1");
     args.put("arg2", "value2");
@@ -1517,7 +1517,7 @@ public class ClientTest {
     Connection conn = openConnection();
     Channel ch = conn.createChannel();
     String q = "hop.get";
-    ch.queueDeclare(q, false, false, false, null);
+    ch.queueDeclare(q, true, false, false, null);
     ch.confirmSelect();
     int messageCount = 5;
     AMQP.BasicProperties properties =
@@ -1548,7 +1548,7 @@ public class ClientTest {
     Connection conn = openConnection();
     Channel ch = conn.createChannel();
     String q = "hop.get";
-    ch.queueDeclare(q, false, false, false, null);
+    ch.queueDeclare(q, true, false, false, null);
     ch.confirmSelect();
     ch.basicPublish("", q, null, "payload".getBytes(Charset.forName("UTF-8")));
     ch.waitForConfirms(5_000);
@@ -1566,7 +1566,7 @@ public class ClientTest {
     Channel ch = conn.createChannel();
     String q = "hop.test";
     ch.queueDelete(q);
-    ch.queueDeclare(q, false, false, false, null);
+    ch.queueDeclare(q, true, false, false, null);
     ch.queueBind(q, "amq.fanout", "");
     ch.confirmSelect();
     for (int i = 0; i < 100; i++) {
@@ -2129,9 +2129,9 @@ public class ClientTest {
 
   @Test
   void getApiDefinitionsQueues() {
-    client.declareQueue("/", "queue1", new QueueInfo(false, false, false));
-    client.declareQueue("/", "queue2", new QueueInfo(false, false, false));
-    client.declareQueue("/", "queue3", new QueueInfo(false, false, false));
+    client.declareQueue("/", "queue1", new QueueInfo(true, false, false));
+    client.declareQueue("/", "queue2", new QueueInfo(true, false, false));
+    client.declareQueue("/", "queue3", new QueueInfo(true, false, false));
     Definitions d = client.getDefinitions();
     assertThat(d.getQueues()).isNotEmpty();
     assertThat(d.getQueues().size()).isGreaterThanOrEqualTo(3);
@@ -2141,7 +2141,7 @@ public class ClientTest {
             .findFirst()
             .orElse(null);
     assertThat(q).isNotNull();
-    assertThat(q.isDurable()).isFalse();
+    assertThat(q.isDurable()).isTrue();
     client.deleteQueue("/", "queue1");
     client.deleteQueue("/", "queue2");
     client.deleteQueue("/", "queue3");
@@ -2169,7 +2169,7 @@ public class ClientTest {
 
   @Test
   void getApiDefinitionsBindings() {
-    client.declareQueue("/", "queue1", new QueueInfo(false, false, false));
+    client.declareQueue("/", "queue1", new QueueInfo(true, false, false));
     client.bindQueue("/", "queue1", "amq.fanout", "");
     Definitions d = client.getDefinitions();
     assertThat(d.getBindings()).isNotEmpty();
@@ -2211,7 +2211,7 @@ public class ClientTest {
 
   @Test
   void getVhostDefinitions() {
-    client.declareQueue("/", "test-vhost-def-queue", new QueueInfo(false, false, false));
+    client.declareQueue("/", "test-vhost-def-queue", new QueueInfo(true, false, false));
     Definitions d = client.getDefinitions("/");
     assertThat(d).isNotNull();
     assertThat(d.getQueues()).isNotEmpty();
@@ -2296,7 +2296,7 @@ public class ClientTest {
   @Test
   void getApiShovels() {
     // given: required vhosts (created by CI), queue and exchange exist
-    client.declareQueue("vh1", "queue1", new QueueInfo(false, false, false));
+    client.declareQueue("vh1", "queue1", new QueueInfo(true, false, false));
     client.declareExchange("vh2", "exchange1", new ExchangeInfo("direct", false, false));
 
     ShovelDetails value =

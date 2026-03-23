@@ -1609,7 +1609,7 @@ public class ReactorNettyClientTest {
     Channel ch = conn.createChannel();
     String s = "hop.q1.exclusive";
     ch.queueDelete(s);
-    String q = ch.queueDeclare(s, false, true, false, null).getQueue();
+    String q = ch.queueDeclare(s, true, true, false, null).getQueue();
 
     // when: client fetches info of the queue
     QueueInfo x = client.getQueue("/", q).block();
@@ -1721,7 +1721,7 @@ public class ReactorNettyClientTest {
 
     // when: client declares a queue hop.test
     String s = "hop.test";
-    client.declareQueue(v, s, new QueueInfo(false, false, false)).block();
+    client.declareQueue(v, s, new QueueInfo(true, false, false)).block();
 
     // and: client lists queues in vhost /
     Flux<QueueInfo> xs = client.getQueues(v);
@@ -1731,7 +1731,7 @@ public class ReactorNettyClientTest {
     assertThat(x).isNotNull();
     assertThat(x.getVhost()).isEqualTo(v);
     assertThat(x.getName()).isEqualTo(s);
-    assertThat(x.isDurable()).isFalse();
+    assertThat(x.isDurable()).isTrue();
     assertThat(x.isExclusive()).isFalse();
     assertThat(x.isAutoDelete()).isFalse();
 
@@ -1779,7 +1779,7 @@ public class ReactorNettyClientTest {
     // so we handle both 404 and the error
     Integer status =
         client
-            .declareQueue(v, s, new QueueInfo(false, false, false))
+            .declareQueue(v, s, new QueueInfo(true, false, false))
             .flatMap(r -> Mono.just(r.getStatus()))
             .onErrorReturn(
                 t -> ("Connection prematurely closed BEFORE response".equals(t.getMessage())), 500)
@@ -1794,7 +1794,7 @@ public class ReactorNettyClientTest {
     String s = UUID.randomUUID().toString();
     // given: queue in vhost /
     String v = "/";
-    client.declareQueue(v, s, new QueueInfo(false, false, false)).block();
+    client.declareQueue(v, s, new QueueInfo(true, false, false)).block();
 
     Flux<QueueInfo> xs = client.getQueues(v);
     QueueInfo x = xs.filter(q -> q.getName().equals(s)).blockFirst();
@@ -1816,7 +1816,7 @@ public class ReactorNettyClientTest {
     String queue = UUID.randomUUID().toString();
     // given: queue in vhost /
     String v = "/";
-    client.declareQueue(v, queue, new QueueInfo(false, false, false)).block();
+    client.declareQueue(v, queue, new QueueInfo(true, false, false)).block();
 
     Flux<QueueInfo> xs = client.getQueues(v);
     QueueInfo x = xs.filter(q -> q.getName().equals(queue)).blockFirst();
@@ -1900,7 +1900,7 @@ public class ReactorNettyClientTest {
     Channel ch = conn.createChannel();
     String x = "amq.topic";
     String q = "hop.test";
-    ch.queueDeclare(q, false, false, false, null);
+    ch.queueDeclare(q, true, false, false, null);
     ch.queueBind(q, x, "hop.*");
 
     // when: all queue bindings are listed
@@ -1929,7 +1929,7 @@ public class ReactorNettyClientTest {
     Channel ch = conn.createChannel();
     String x = "amq.topic";
     String q = "hop.test";
-    ch.queueDeclare(q, false, false, false, null);
+    ch.queueDeclare(q, true, false, false, null);
     ch.queueBind(q, x, "hop.*");
 
     // when: all queue bindings are listed
@@ -1958,7 +1958,7 @@ public class ReactorNettyClientTest {
     Channel ch = conn.createChannel();
     String x = "amq.topic";
     String q = "hop.test";
-    ch.queueDeclare(q, false, false, false, null);
+    ch.queueDeclare(q, true, false, false, null);
     ch.queueBind(q, x, "hop.*");
 
     // when: bindings between hop.test and amq.topic are listed
@@ -2038,7 +2038,7 @@ public class ReactorNettyClientTest {
     String v = "/";
     String x = "amq.topic";
     String q = "hop.test";
-    client.declareQueue(v, q, new QueueInfo(false, false, false)).block();
+    client.declareQueue(v, q, new QueueInfo(true, false, false)).block();
     Map<String, Object> args = new HashMap<>();
     args.put("arg1", "value1");
     args.put("arg2", "value2");
@@ -2069,7 +2069,7 @@ public class ReactorNettyClientTest {
     Connection conn = openConnection();
     Channel ch = conn.createChannel();
     String q = "hop.get";
-    ch.queueDeclare(q, false, false, false, null);
+    ch.queueDeclare(q, true, false, false, null);
     ch.confirmSelect();
     int messageCount = 5;
     AMQP.BasicProperties properties =
@@ -2125,7 +2125,7 @@ public class ReactorNettyClientTest {
     Connection conn = openConnection();
     Channel ch = conn.createChannel();
     String q = "hop.get";
-    ch.queueDeclare(q, false, false, false, null);
+    ch.queueDeclare(q, true, false, false, null);
     ch.confirmSelect();
     ch.basicPublish("", q, null, "payload".getBytes(Charset.forName("UTF-8")));
     ch.waitForConfirms(5_000);
@@ -2152,7 +2152,7 @@ public class ReactorNettyClientTest {
     Channel ch = conn.createChannel();
     String q = "hop.test";
     ch.queueDelete(q);
-    ch.queueDeclare(q, false, false, false, null);
+    ch.queueDeclare(q, true, false, false, null);
     ch.queueBind(q, "amq.fanout", "");
     ch.confirmSelect();
     for (int i = 0; i < 100; i++) {
@@ -2177,9 +2177,9 @@ public class ReactorNettyClientTest {
   @Test
   void getApiDefinitionsQueues() {
     // given: a basic topology
-    client.declareQueue("/", "queue1", new QueueInfo(false, false, false)).block();
-    client.declareQueue("/", "queue2", new QueueInfo(false, false, false)).block();
-    client.declareQueue("/", "queue3", new QueueInfo(false, false, false)).block();
+    client.declareQueue("/", "queue1", new QueueInfo(true, false, false)).block();
+    client.declareQueue("/", "queue2", new QueueInfo(true, false, false)).block();
+    client.declareQueue("/", "queue3", new QueueInfo(true, false, false)).block();
 
     // when: client requests the definitions
     Definitions d = client.getDefinitions().block();
@@ -2195,7 +2195,7 @@ public class ReactorNettyClientTest {
     assertThat(q).isNotNull();
     assertThat(q.getVhost()).isEqualTo("/");
     assertThat(q.getName()).isEqualTo("queue1");
-    assertThat(q.isDurable()).isFalse();
+    assertThat(q.isDurable()).isTrue();
     assertThat(q.isExclusive()).isFalse();
     assertThat(q.isAutoDelete()).isFalse();
 
@@ -2239,7 +2239,7 @@ public class ReactorNettyClientTest {
   @Test
   void getApiDefinitionsBindings() throws Exception {
     // given: a basic topology
-    client.declareQueue("/", "queue1", new QueueInfo(false, false, false)).block();
+    client.declareQueue("/", "queue1", new QueueInfo(true, false, false)).block();
     client.bindQueue("/", "queue1", "amq.fanout", "").block();
 
     // when: client requests the definitions
@@ -2269,7 +2269,7 @@ public class ReactorNettyClientTest {
 
   @Test
   void getVhostDefinitions() {
-    client.declareQueue("/", "test-vhost-def-queue", new QueueInfo(false, false, false)).block();
+    client.declareQueue("/", "test-vhost-def-queue", new QueueInfo(true, false, false)).block();
     Definitions d = client.getDefinitions("/").block();
     assertThat(d).isNotNull();
     assertThat(d.getQueues()).isNotEmpty();
@@ -2458,7 +2458,7 @@ public class ReactorNettyClientTest {
   @Test
   void getApiShovels() {
     // given: required vhosts, queue and exchange exist
-    client.declareQueue("vh1", "queue1", new QueueInfo(false, false, false)).block();
+    client.declareQueue("vh1", "queue1", new QueueInfo(true, false, false)).block();
     client.declareExchange("vh2", "exchange1", new ExchangeInfo("direct", false, false)).block();
 
     ShovelDetails value =
@@ -2525,7 +2525,7 @@ public class ReactorNettyClientTest {
     Connection conn = openConnection();
     Channel ch = conn.createChannel();
     String q = "hop.publish";
-    ch.queueDeclare(q, false, false, false, null);
+    ch.queueDeclare(q, true, false, false, null);
     ch.queueBind(q, "amq.direct", q);
     CountDownLatch latch = new CountDownLatch(1);
     AtomicReference<String> payloadReference = new AtomicReference<>();
@@ -2633,7 +2633,7 @@ public class ReactorNettyClientTest {
     Connection conn = openConnection();
     Channel ch = conn.createChannel();
     String q = "hop.queue1";
-    ch.queueDeclare(q, false, false, false, null);
+    ch.queueDeclare(q, true, false, false, null);
 
     // when: client lists bindings of default exchange
     Flux<BindingInfo> xs = client.getExchangeBindingsBySource("/", "");
