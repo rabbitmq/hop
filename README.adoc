@@ -38,9 +38,7 @@ Hop requires Java 11 or later.
 
 == Maven Artifacts
 
-image:https://maven-badges.herokuapp.com/maven-central/com.rabbitmq/http-client/badge.svg["Maven Central", link="https://maven-badges.herokuapp.com/maven-central/com.rabbitmq/http-client"]
-
-Project artifacts are available from Maven Central.
+Project artifacts are available from [Maven Central](https://central.sonatype.com/artifact/com.rabbitmq/http-client).
 
 === Dependency Manager Configuration
 
