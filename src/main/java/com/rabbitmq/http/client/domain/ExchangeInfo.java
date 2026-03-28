@@ -46,6 +46,12 @@ public class ExchangeInfo {
     this.internal = internal;
     this.arguments = arguments;
   }
+  public ExchangeInfo(ExchangeType exchangeType, boolean durable, boolean autoDelete) {
+    this(exchangeType.getType(), durable, autoDelete, false, new HashMap<String, Object>());
+  }
+  public ExchangeInfo(ExchangeType exchangeType, boolean durable, boolean autoDelete, boolean internal, Map<String, Object> arguments) {
+    this(exchangeType.getType(), durable, autoDelete, internal, arguments);
+  }
 
   public String getName() {
     return name;

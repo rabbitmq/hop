@@ -119,7 +119,7 @@ public class NodeInfo {
   private String osPid;
 
   @JsonProperty("exchange_types")
-  List<ExchangeType> exchangeTypes;
+  List<AvailableExchangeType> exchangeTypes;
   @JsonProperty("auth_mechanisms")
   List<AuthMechanism> authMechanisms;
   @JsonProperty("applications")
@@ -271,11 +271,11 @@ public class NodeInfo {
     this.osPid = osPid;
   }
 
-  public List<ExchangeType> getExchangeTypes() {
+  public List<AvailableExchangeType> getAvailableExchangeTypes() {
     return exchangeTypes;
   }
 
-  public void setExchangeTypes(List<ExchangeType> exchangeTypes) {
+  public void setAvailableExchangeTypes(List<AvailableExchangeType> exchangeTypes) {
     this.exchangeTypes = exchangeTypes;
   }
 
