@@ -32,6 +32,7 @@ import com.rabbitmq.client.Channel;
 import com.rabbitmq.client.Connection;
 import com.rabbitmq.client.ConnectionFactory;
 import com.rabbitmq.http.client.domain.AckMode;
+import com.rabbitmq.http.client.domain.AvailableExchangeType;
 import com.rabbitmq.http.client.domain.BindingInfo;
 import com.rabbitmq.http.client.domain.ChannelInfo;
 import com.rabbitmq.http.client.domain.ClusterId;
@@ -43,7 +44,6 @@ import com.rabbitmq.http.client.domain.DeleteQueueParameters;
 import com.rabbitmq.http.client.domain.DeprecatedFeature;
 import com.rabbitmq.http.client.domain.DetailsParameters;
 import com.rabbitmq.http.client.domain.ExchangeInfo;
-import com.rabbitmq.http.client.domain.AvailableExchangeType;
 import com.rabbitmq.http.client.domain.FeatureFlag;
 import com.rabbitmq.http.client.domain.FeatureFlagStability;
 import com.rabbitmq.http.client.domain.FeatureFlagState;
@@ -155,7 +155,9 @@ public class ReactorNettyClientTest {
 
     OverviewResponse res = client.getOverview().block();
     List<String> xts =
-        res.getAvailableExchangeTypes().stream().map(AvailableExchangeType::getName).collect(Collectors.toList());
+        res.getAvailableExchangeTypes().stream()
+            .map(AvailableExchangeType::getName)
+            .collect(Collectors.toList());
 
     // then: the response is converted successfully
     assertThat(res.getNode()).startsWith("rabbit@");
