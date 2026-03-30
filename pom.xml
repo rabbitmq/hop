@@ -40,7 +40,7 @@
     <junit.version>5.14.3</junit.version>
     <junit-platform.version>1.14.3</junit-platform.version>
     <assertj.version>3.27.7</assertj.version>
-    <httpclient.version>4.5.14</httpclient.version>
+    <httpclient5.version>5.6</httpclient5.version>
     <amqp-client.version>5.29.0</amqp-client.version>
     <logback.version>1.2.13</logback.version>
     <bouncycastle.version>1.83</bouncycastle.version>
@@ -73,9 +73,9 @@
       <optional>true</optional>
     </dependency>
     <dependency>
-      <groupId>org.apache.httpcomponents</groupId>
-      <artifactId>httpclient</artifactId>
-      <version>${httpclient.version}</version>
+      <groupId>org.apache.httpcomponents.client5</groupId>
+      <artifactId>httpclient5</artifactId>
+      <version>${httpclient5.version}</version>
       <scope>test</scope>
     </dependency>
     <dependency>
