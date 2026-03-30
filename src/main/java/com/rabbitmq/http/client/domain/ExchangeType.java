@@ -1,5 +1,5 @@
 /*
- * Copyright 2015 the original author or authors.
+ * Copyright 2015-2026 the original author or authors.
  *
  *  Licensed under the Apache License, Version 2.0 (the "License");
  *  you may not use this file except in compliance with the License.
@@ -16,54 +16,41 @@
 
 package com.rabbitmq.http.client.domain;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
+import java.util.Map;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
-public class ExchangeType {
-  private String name;
-  private String description;
-  @JsonProperty("internal_purpose")
-  private String internalPurpose;
-  private boolean enabled;
+public enum ExchangeType {
+  DIRECT("direct"),
+  FANOUT("fanout"),
+  TOPIC("topic"),
+  HEADERS("headers"),
+  CONSISTENT_HASH("x-consistent-hash"),
+  MODULUS_HASH("x-modulus-hash"),
+  LOCAL_RANDOM("x-local-random"),
+  RANDOM("x-random"),
+  JMS_TOPIC("x-jms-topic"),
+  RECENT_HISTORY("x-recent-history");
 
-  public String getName() {
-    return name;
+  private static final Map<String, ExchangeType> LOOKUP =
+      Stream.of(values()).collect(Collectors.toMap(ExchangeType::getType, k -> k));
+
+  private final String type;
+
+  ExchangeType(String type) {
+    this.type = type;
   }
 
-  public void setName(String name) {
-    this.name = name;
+  public String getType() {
+    return this.type;
   }
 
-  public String getDescription() {
-    return description;
-  }
-
-  public void setDescription(String description) {
-    this.description = description;
-  }
-
-  public String getInternalPurpose() {
-    return internalPurpose;
-  }
-
-  public void setInternalPurpose(String internalPurpose) {
-    this.internalPurpose = internalPurpose;
-  }
-
-  public boolean isEnabled() {
-    return enabled;
-  }
-
-  public void setEnabled(boolean enabled) {
-    this.enabled = enabled;
+  public static ExchangeType fromType(String type) {
+    return LOOKUP.get(type);
   }
 
   @Override
   public String toString() {
-    return "ExchangeType{" +
-        "name='" + name + '\'' +
-        ", description='" + description + '\'' +
-        ", internalPurpose='" + internalPurpose + '\'' +
-        ", enabled=" + enabled +
-        '}';
+    return this.type;
   }
 }

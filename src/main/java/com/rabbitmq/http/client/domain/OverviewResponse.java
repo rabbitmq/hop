@@ -43,7 +43,7 @@ public class OverviewResponse {
   @JsonProperty("statistics_db_node")
   private String statisticsDbNode;
   @JsonProperty("exchange_types")
-  private List<ExchangeType> exchangeTypes;
+  private List<AvailableExchangeType> exchangeTypes;
   @JsonProperty("message_stats")
   private MessageStats messageStats;
   @JsonProperty("queue_totals")
@@ -148,11 +148,11 @@ public class OverviewResponse {
     this.clusterName = clusterName;
   }
 
-  public List<ExchangeType> getExchangeTypes() {
+  public List<AvailableExchangeType> getAvailableExchangeTypes() {
     return exchangeTypes;
   }
 
-  public void setExchangeTypes(List<ExchangeType> exchangeTypes) {
+  public void setAvailableExchangeTypes(List<AvailableExchangeType> exchangeTypes) {
     this.exchangeTypes = exchangeTypes;
   }
 
