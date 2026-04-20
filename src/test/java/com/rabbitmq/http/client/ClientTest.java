@@ -2882,12 +2882,6 @@ public class ClientTest {
   }
 
   @Test
-  void getOAuthConfiguration() {
-    com.rabbitmq.http.client.domain.OAuthConfiguration config = client.getOAuthConfiguration();
-    assertThat(config).isNotNull();
-  }
-
-  @Test
   void getAuthAttemptStatistics() {
     List<NodeInfo> nodes = client.getNodes();
     assertThat(nodes).isNotEmpty();

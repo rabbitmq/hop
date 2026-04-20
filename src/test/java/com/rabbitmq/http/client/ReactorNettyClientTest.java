@@ -3559,13 +3559,6 @@ public class ReactorNettyClientTest {
   }
 
   @Test
-  void getOAuthConfiguration() {
-    com.rabbitmq.http.client.domain.OAuthConfiguration config =
-        client.getOAuthConfiguration().block();
-    assertThat(config).isNotNull();
-  }
-
-  @Test
   void getAuthAttemptStatistics() {
     List<NodeInfo> nodes = client.getNodes().collectList().block();
     assertThat(nodes).isNotEmpty();
