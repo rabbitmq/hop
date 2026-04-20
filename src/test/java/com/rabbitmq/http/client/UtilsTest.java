@@ -21,11 +21,10 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import com.rabbitmq.http.client.domain.QueryParameters;
 import java.net.URI;
-import java.nio.charset.StandardCharsets;
 import java.util.Map;
 import java.util.stream.Collectors;
 import org.apache.hc.core5.http.NameValuePair;
-import org.apache.hc.core5.net.URLEncodedUtils;
+import org.apache.hc.core5.net.URIBuilder;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -74,9 +73,11 @@ class UtilsTest {
         new QueryParameters().name("some-name").columns().add("name").query();
     URI u = builder.withEncodedPath("one").withQueryParameters(expectedQueryParams).get();
 
+    URIBuilder b = new URIBuilder(u);
     Map<String, String> actualQueryParams =
-        URLEncodedUtils.parse(u, StandardCharsets.UTF_8).stream()
+        b.getQueryParams().stream()
             .collect(Collectors.toMap(NameValuePair::getName, NameValuePair::getValue));
+
     for (Map.Entry<String, String> q : expectedQueryParams.parameters().entrySet()) {
       assertEquals(actualQueryParams.get(q.getKey()), q.getValue());
     }
@@ -89,10 +90,12 @@ class UtilsTest {
 
     URI u =
         builder.withEncodedPath("one").withQueryParameters(expectedQueryParams.parameters()).get();
+    URIBuilder b = new URIBuilder(u);
 
     Map<String, String> actualQueryParams =
-        URLEncodedUtils.parse(u, StandardCharsets.UTF_8).stream()
+        b.getQueryParams().stream()
             .collect(Collectors.toMap(NameValuePair::getName, NameValuePair::getValue));
+
     for (Map.Entry<String, String> q : expectedQueryParams.parameters().entrySet()) {
       assertEquals(actualQueryParams.get(q.getKey()), q.getValue());
     }

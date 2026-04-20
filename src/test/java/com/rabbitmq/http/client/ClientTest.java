@@ -2077,6 +2077,7 @@ public class ClientTest {
   }
 
   @Test
+  @SuppressWarnings("deprecation")
   void getApiAlivenessTestWithVhost() {
     boolean hasSucceeded = client.alivenessTest("/");
     assertThat(hasSucceeded).isTrue();
