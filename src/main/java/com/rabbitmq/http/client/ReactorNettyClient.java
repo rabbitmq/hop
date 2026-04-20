@@ -58,7 +58,6 @@ import com.rabbitmq.http.client.domain.GlobalRuntimeParameter;
 import com.rabbitmq.http.client.domain.InboundMessage;
 import com.rabbitmq.http.client.domain.MqttVhostPortInfo;
 import com.rabbitmq.http.client.domain.NodeInfo;
-import com.rabbitmq.http.client.domain.OAuthConfiguration;
 import com.rabbitmq.http.client.domain.OutboundMessage;
 import com.rabbitmq.http.client.domain.OverviewResponse;
 import com.rabbitmq.http.client.domain.PolicyInfo;
@@ -760,17 +759,6 @@ public class ReactorNettyClient {
      */
     public Mono<Void> healthCheckVirtualHosts() {
         return doGetMono(Object.class, "health", "checks", "virtual-hosts").then();
-    }
-
-    /**
-     * Returns the current OAuth 2.0 configuration.
-     *
-     * @return OAuth configuration in a mono
-     * @since 5.5.0
-     * @see <a href="https://www.rabbitmq.com/docs/oauth2">OAuth 2 Guide</a>
-     */
-    public Mono<OAuthConfiguration> getOAuthConfiguration() {
-        return doGetMono(OAuthConfiguration.class, "auth");
     }
 
     /**

@@ -46,7 +46,6 @@ import com.rabbitmq.http.client.domain.ExchangeInfo;
 import com.rabbitmq.http.client.domain.FeatureFlag;
 import com.rabbitmq.http.client.domain.FeatureFlagStability;
 import com.rabbitmq.http.client.domain.FeatureFlagState;
-import com.rabbitmq.http.client.domain.OAuthConfiguration;
 import com.rabbitmq.http.client.domain.GlobalRuntimeParameter;
 import com.rabbitmq.http.client.domain.InboundMessage;
 import com.rabbitmq.http.client.domain.MqttVhostPortInfo;
@@ -1919,20 +1918,6 @@ public class Client {
   //
   // Authentication
   //
-
-  /**
-   * Returns the current OAuth 2.0 configuration.
-   *
-   * <p>Requires the {@code management} user tag. Does not modify state.
-   *
-   * @return OAuth configuration
-   * @since 5.5.0
-   * @see <a href="https://www.rabbitmq.com/docs/oauth2">OAuth 2 Guide</a>
-   */
-  public OAuthConfiguration getOAuthConfiguration() {
-    final URI uri = uriWithPath("./auth");
-    return this.httpLayer.get(uri, OAuthConfiguration.class);
-  }
 
   /**
    * Returns authentication attempt statistics for a given node.
