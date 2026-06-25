@@ -36,7 +36,15 @@ public class PercentEncoderTest {
   }
 
   @ParameterizedTest
-  @CsvSource({"test,test", "foobar,foobar", "foo bar,foo%20bar", "foo&bar,foo%26bar"})
+  @CsvSource({
+    "test,test",
+    "foobar,foobar",
+    "foo bar,foo%20bar",
+    "foo&bar,foo%26bar",
+    "^queue-*,%5Equeue-*",
+    "queue-+,queue-%2B",
+    "queue;test,queue%3Btest"
+  })
   void encodeParamTest(String param, String expected) {
     assertThat(PercentEncoder.encodeParameter(param)).isEqualTo(expected);
   }
