@@ -54,6 +54,14 @@ final class PercentEncoder {
     QUERY_PARAM.set('?');
     QUERY_PARAM.clear('=');
     QUERY_PARAM.clear('&');
+
+    // considered safe by RFC 3986, but need to be encoded in the wild
+    // W3C HTML 4.01 Specification (Section 17.13.4 - Form Content Types)
+    // "Space characters are replaced by '+'"
+    QUERY_PARAM.clear('+');
+    // W3C HTML 4.01 Specification (Appendix B.2.2 - Ampersands in URI attribute values):
+    // "We recommend that HTTP server implementors ... support the use of ";" in place of "&""
+    QUERY_PARAM.clear(';');
   }
 
   static String encodePathSegment(String segment) {
