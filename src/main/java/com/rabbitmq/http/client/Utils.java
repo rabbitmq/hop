@@ -85,8 +85,10 @@ final class Utils {
         String userInfo = null;
         try {
             userInfo = new URI(url).toURL().getUserInfo();
-        } catch (MalformedURLException | URISyntaxException e) {
-            throw new IllegalArgumentException("Malformed URL", e);
+        } catch (URISyntaxException e) {
+            throw convertUriSyntaxException(e);
+        } catch (MalformedURLException e) {
+            throw convertMalformedUrlException(e);
         }
         if (userInfo == null) {
             throw new IllegalArgumentException("Could not extract password from URL. " +
@@ -123,8 +125,10 @@ final class Utils {
         URL url1 = null;
         try {
             url1 = new URI(url).toURL();
-        } catch (MalformedURLException | URISyntaxException e) {
-            throw new IllegalArgumentException("URL is malformed");
+        } catch (URISyntaxException e) {
+            throw convertUriSyntaxException(e);
+        } catch (MalformedURLException e) {
+            throw convertMalformedUrlException(e);
         }
         return url.replace(url1.getUserInfo() + "@", "");
     }
@@ -188,6 +192,14 @@ final class Utils {
 
     static String base64(String in) {
         return Base64.getEncoder().encodeToString(in.getBytes(StandardCharsets.UTF_8));
+    }
+
+    static RuntimeException convertUriSyntaxException(URISyntaxException e) {
+        return new IllegalArgumentException("Invalid URI syntax (" + e.getReason() + " at index " + e.getIndex() + ")");
+    }
+
+    static RuntimeException convertMalformedUrlException(MalformedURLException e) {
+        return new IllegalArgumentException("URL is malformed");
     }
 
 }

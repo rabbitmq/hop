@@ -16,6 +16,7 @@
 
 package com.rabbitmq.http.client;
 
+import static com.rabbitmq.http.client.Utils.convertUriSyntaxException;
 import static com.rabbitmq.http.client.Utils.notNull;
 
 import java.net.MalformedURLException;
@@ -66,14 +67,14 @@ public class ClientParameters {
         try {
             this.url = new URI(url).toURL();
         } catch (URISyntaxException e) {
-            throw new IllegalArgumentException("URL is malformed");
+            throw convertUriSyntaxException(e);
         }
         if (this.url.getUserInfo() != null) {
             // URL contains credentials, setting the appropriate parameters
             try {
                 this.url = new URI(Utils.urlWithoutCredentials(url)).toURL();
             } catch (URISyntaxException e) {
-                throw new IllegalArgumentException("URL is malformed");
+                throw convertUriSyntaxException(e);
             }
             String[] usernamePassword = Utils.extractUsernamePassword(url);
             this.username = usernamePassword[0];
