@@ -134,6 +134,16 @@ class UtilsTest {
   }
 
   @Test
+  void extractUsernamePasswordThrowsIllegalArgumentExceptionForIncorrectUri() {
+    assertThatThrownBy(
+            () ->
+                Utils.extractUsernamePassword(
+                    "https://svc-account:P@ssW0rd With Space!@broker.internal/api"))
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessage("Invalid URI syntax (Illegal character in authority at index 28)");
+  }
+
+  @Test
   void urlWithoutCredentialsNotEncoded() {
     // when: "credentials do not need encoding in the URL"
     String urlWithoutCredentials =
