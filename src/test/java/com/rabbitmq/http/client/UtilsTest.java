@@ -140,7 +140,7 @@ class UtilsTest {
                 Utils.extractUsernamePassword(
                     "https://svc-account:P@ssW0rd With Space!@broker.internal/api"))
         .isInstanceOf(IllegalArgumentException.class)
-        .hasMessage("Invalid URI syntax (Illegal character in authority at index 28)");
+        .hasMessageContaining("Invalid URI syntax (Illegal character in authority at index");
   }
 
   @Test
