@@ -402,13 +402,16 @@ public class ReactorNettyClientTest {
     Channel ch = conn.createChannel();
 
     // when: client lists channels on that connection
-    Flux<ConnectionInfo> xs = awaitEventPropagation(() -> client.getConnections());
     // applying filter as some previous connections can still show up the management
     // API
-    List<ConnectionInfo> filtered =
-        xs.toStream()
-            .filter(it -> s.equals(it.getClientProperties().getConnectionName()))
-            .collect(Collectors.toList());
+    Flux<ConnectionInfo> xs =
+        awaitEventPropagation(
+            () ->
+                client
+                    .getConnections()
+                    .filter(it -> s.equals(it.getClientProperties().getConnectionName())));
+
+    List<ConnectionInfo> filtered = xs.toStream().collect(Collectors.toList());
     String cn = filtered.get(0).getName();
 
     Flux<ChannelInfo> chs = awaitEventPropagation(() -> client.getChannels(cn));
