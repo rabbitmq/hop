@@ -279,19 +279,18 @@ public class ReactorNettyClientTest {
   @Test
   void getApiConnectionsNameWithClientProvidedName() throws Exception {
     // given: an open RabbitMQ client connection with client-provided name
-    String s = "client-name";
+    String s = UUID.randomUUID().toString();
     Connection conn = openConnection(s);
 
     // when: client retrieves connection info with the correct name
-    Flux<ConnectionInfo> xs = awaitEventPropagation(() -> client.getConnections());
+    Flux<ConnectionInfo> xs =
+        awaitEventPropagation(
+            () ->
+                client
+                    .getConnections()
+                    .filter(c -> s.equals(c.getClientProperties().getConnectionName())));
 
-    ConnectionInfo x =
-        client
-            .getConnection(
-                xs.filter(c -> s.equals(c.getClientProperties().getConnectionName()))
-                    .blockFirst()
-                    .getName())
-            .block();
+    ConnectionInfo x = client.getConnection(xs.blockFirst().getName()).block();
 
     // then: the info is returned
     verifyConnectionInfo(x);

@@ -476,12 +476,14 @@ public class ClientTest {
     Connection conn = openConnection(s);
 
     // when: client retrieves connection info with the correct name
-    List<ConnectionInfo> xs = awaitEventPropagation(() -> client.getConnections());
     // applying filter as some previous connections can still show up in the management API
-    xs =
-        xs.stream()
-            .filter(ci -> s.equals(ci.getClientProperties().getConnectionName()))
-            .collect(Collectors.toList());
+    List<ConnectionInfo> xs =
+        awaitEventPropagation(
+            () ->
+                client.getConnections().stream()
+                    .filter(ci -> s.equals(ci.getClientProperties().getConnectionName()))
+                    .collect(Collectors.toList()));
+
     ConnectionInfo x = client.getConnection(xs.get(0).getName());
 
     // then: the info is returned
