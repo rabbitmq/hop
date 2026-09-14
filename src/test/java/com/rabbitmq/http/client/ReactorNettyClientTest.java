@@ -16,6 +16,7 @@
 package com.rabbitmq.http.client;
 
 import static com.rabbitmq.http.client.TestUtils.isVersion36orLater;
+import static com.rabbitmq.http.client.TestUtils.isVersion44orLater;
 import static com.rabbitmq.http.client.domain.DestinationType.EXCHANGE;
 import static com.rabbitmq.http.client.domain.DestinationType.QUEUE;
 import static java.util.Collections.singletonMap;
@@ -644,7 +645,8 @@ public class ReactorNettyClientTest {
   }
 
   @Test
-  void getApiUsers() throws Exception {
+  @SuppressWarnings("deprecation")
+  void getApiUsers() {
     // when: users are listed
     Flux<UserInfo> xs = client.getUsers();
     String version = client.getOverview().block().getServerVersion();
@@ -652,7 +654,12 @@ public class ReactorNettyClientTest {
     // then: a list of users is returned
     UserInfo x = xs.filter(user -> user.getName().equals("guest")).blockFirst();
     assertThat(x.getName()).isEqualTo("guest");
-    assertThat(x.getPasswordHash()).isNotNull();
+    assertThat(x.hasPassword()).isTrue();
+    if (isVersion44orLater(version)) {
+      assertThat(x.getPasswordHash()).isNull();
+    } else {
+      assertThat(x.getPasswordHash()).isNotNull();
+    }
     if (isVersion36orLater(version)) {
       assertThat(x.getHashingAlgorithm()).isNotNull();
     }
@@ -660,14 +667,20 @@ public class ReactorNettyClientTest {
   }
 
   @Test
-  void getApiUsersNameWhenUserExists() throws Exception {
+  @SuppressWarnings("deprecation")
+  void getApiUsersNameWhenUserExists() {
     // when: user guest if fetched
     UserInfo x = client.getUser("guest").block();
     String version = client.getOverview().block().getServerVersion();
 
     // then: user info returned
     assertThat(x.getName()).isEqualTo("guest");
-    assertThat(x.getPasswordHash()).isNotNull();
+    assertThat(x.hasPassword()).isTrue();
+    if (isVersion44orLater(version)) {
+      assertThat(x.getPasswordHash()).isNull();
+    } else {
+      assertThat(x.getPasswordHash()).isNotNull();
+    }
     if (isVersion36orLater(version)) {
       assertThat(x.getHashingAlgorithm()).isNotNull();
     }
@@ -675,7 +688,7 @@ public class ReactorNettyClientTest {
   }
 
   @Test
-  void getApiUsersNameWhenUserDoesNotExist() throws Exception {
+  void getApiUsersNameWhenUserDoesNotExist() {
     // when: user lolwut if fetched
     // then: mono throws exception
     HttpClientException exception =
