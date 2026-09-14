@@ -13,27 +13,49 @@
  *  See the License for the specific language governing permissions and
  *  limitations under the License.
  */
-
 package com.rabbitmq.http.client.domain;
 
 import java.util.Arrays;
 import java.util.List;
 
-import com.fasterxml.jackson.annotation.JsonProperty;
-
 public class UserInfo {
   private String name;
-  @JsonProperty("password_hash")
+
+  @Deprecated
   private String passwordHash;
-  @JsonProperty("hashing_algorithm")
+
   private String hashingAlgorithm;
   private List<String> tags;
+  private boolean hasPassword;
 
+  /**
+   * Deprecated as of RabbitMQ 4.4.
+   * @deprecated RabbitMQ APIs no longer return password hashes.
+   * Use {@link #UserInfo(String, String, List, boolean)} instead.
+   */
+  @Deprecated
   public UserInfo(String name, String passwordHash, String hashingAlgorithm, List<String> tags) {
-    this.name = name;
+    this(name, hashingAlgorithm, tags, resolveLegacyHasPassword(passwordHash));
     this.passwordHash = passwordHash;
+  }
+
+  /**
+   *
+   * @param name
+   * @param hashingAlgorithm
+   * @param tags
+   * @param hasPassword
+   * @since 5.8.0
+   */
+  public UserInfo(String name, String hashingAlgorithm, List<String> tags, boolean hasPassword) {
+    this.name = name;
     this.hashingAlgorithm = hashingAlgorithm;
     this.tags = tags;
+    this.hasPassword = hasPassword;
+  }
+
+  private static boolean resolveLegacyHasPassword(String passwordHash) {
+    return passwordHash != null;
   }
 
   public String getName() {
@@ -52,24 +74,42 @@ public class UserInfo {
     this.hashingAlgorithm = hashingAlgorithm;
   }
 
+  /**
+   * Deprecated as of RabbitMQ 4.4.
+   * @deprecated RabbitMQ APIs no longer return password hashes.
+   * This will return null on newer brokers. Use {@link #hasPassword()} instead.
+   */
+  @Deprecated
   public String getPasswordHash() {
     return passwordHash;
   }
 
+  /**
+   * Deprecated as of RabbitMQ 4.4.
+   * @deprecated RabbitMQ APIs no longer return password hashes.
+   */
+  @Deprecated
   public void setPasswordHash(String passwordHash) {
     this.passwordHash = passwordHash;
+  }
+
+  /**
+   * Whether the user has a password or not.
+   * @return whether the user has a password or not
+   * @since 5.8.0
+   */
+  public boolean hasPassword() {
+    return hasPassword;
   }
 
   public List<String> getTags() {
     return tags;
   }
 
-  @JsonProperty("tags")
   public void setTags(List<String> tags) {
     this.tags = tags;
   }
 
-  @JsonProperty("tags")
   public void setTags(String tags) {
     this.tags = Arrays.asList(tags.split(","));
   }
@@ -101,6 +141,7 @@ public class UserInfo {
     return "UserInfo{" +
         "name='" + name + '\'' +
         ", passwordHash='" + passwordHash + '\'' +
+        ", hasPassword=" + hasPassword +
         ", tags=" + tags +
         '}';
   }

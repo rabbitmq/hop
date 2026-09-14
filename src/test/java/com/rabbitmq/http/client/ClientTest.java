@@ -16,6 +16,7 @@
 package com.rabbitmq.http.client;
 
 import static com.rabbitmq.http.client.TestUtils.isVersion36orLater;
+import static com.rabbitmq.http.client.TestUtils.isVersion44orLater;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import com.rabbitmq.client.AMQP;
@@ -1700,7 +1701,12 @@ public class ClientTest {
     String version = client.getOverview().getServerVersion();
     UserInfo x = xs.stream().filter(u -> "guest".equals(u.getName())).findFirst().orElse(null);
     assertThat(x.getName()).isEqualTo("guest");
-    assertThat(x.getPasswordHash()).isNotNull();
+    assertThat(x.hasPassword()).isTrue();
+    if (isVersion44orLater(version)) {
+      assertThat(x.getPasswordHash()).isNull();
+    } else {
+      assertThat(x.getPasswordHash()).isNotNull();
+    }
     if (isVersion36orLater(version)) {
       assertThat(x.getHashingAlgorithm()).isNotNull();
     }
@@ -1712,7 +1718,12 @@ public class ClientTest {
     UserInfo x = client.getUser("guest");
     String version = client.getOverview().getServerVersion();
     assertThat(x.getName()).isEqualTo("guest");
-    assertThat(x.getPasswordHash()).isNotNull();
+    assertThat(x.hasPassword()).isTrue();
+    if (isVersion44orLater(version)) {
+      assertThat(x.getPasswordHash()).isNull();
+    } else {
+      assertThat(x.getPasswordHash()).isNotNull();
+    }
     if (isVersion36orLater(version)) {
       assertThat(x.getHashingAlgorithm()).isNotNull();
     }

@@ -191,8 +191,10 @@ final class JsonUtils {
   private static final class UserInfoDeserializer extends UserDeserializer<UserInfo> {
     private static final long serialVersionUID = -1871403623406830843L;
 
-    private static final String PASSWORD_HASH_FIELD = "password_hash";
+
+    private static final String PASSWORD_HASH_FIELD = "password_hash"; // deleted in RabbitMQ 4.4
     private static final String HASHING_ALGORITHM_FIELD = "hashing_algorithm";
+    private static final String HAS_PASSWORD_FIELD = "has_password"; // new in RabbitMQ 4.4
 
     private UserInfoDeserializer() {
       super(UserInfo.class);
@@ -202,11 +204,26 @@ final class JsonUtils {
     public UserInfo deserialize(JsonParser jp, DeserializationContext ctxt) throws IOException {
       JsonNode node = jp.getCodec().readTree(jp);
 
-      return new UserInfo(
-          getUsername(node),
-          get(node, PASSWORD_HASH_FIELD),
-          get(node, HASHING_ALGORITHM_FIELD),
-          getTags(node));
+      String name = getUsername(node);
+      String hashingAlgorithm = get(node, HASHING_ALGORITHM_FIELD);
+      List<String> tags = getTags(node);
+
+      if (node.hasNonNull(HAS_PASSWORD_FIELD)) {
+        // RabbitMQ 4.4+
+        return new UserInfo(
+            name,
+            hashingAlgorithm,
+            tags,
+            node.get(HAS_PASSWORD_FIELD).asBoolean()
+        );
+      } else {
+        return new UserInfo(
+            name,
+            get(node, PASSWORD_HASH_FIELD),
+            hashingAlgorithm,
+            tags
+        );
+      }
     }
   }
 
