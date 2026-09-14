@@ -201,6 +201,7 @@ final class JsonUtils {
     }
 
     @Override
+    @SuppressWarnings("deprecation")
     public UserInfo deserialize(JsonParser jp, DeserializationContext ctxt) throws IOException {
       JsonNode node = jp.getCodec().readTree(jp);
 
