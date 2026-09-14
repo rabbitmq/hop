@@ -645,7 +645,8 @@ public class ReactorNettyClientTest {
   }
 
   @Test
-  void getApiUsers() throws Exception {
+  @SuppressWarnings("deprecation")
+  void getApiUsers() {
     // when: users are listed
     Flux<UserInfo> xs = client.getUsers();
     String version = client.getOverview().block().getServerVersion();
@@ -666,6 +667,7 @@ public class ReactorNettyClientTest {
   }
 
   @Test
+  @SuppressWarnings("deprecation")
   void getApiUsersNameWhenUserExists() {
     // when: user guest if fetched
     UserInfo x = client.getUser("guest").block();

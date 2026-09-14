@@ -1696,6 +1696,7 @@ public class ClientTest {
   }
 
   @Test
+  @SuppressWarnings("deprecation")
   void getApiUsers() {
     List<UserInfo> xs = client.getUsers();
     String version = client.getOverview().getServerVersion();
@@ -1714,6 +1715,7 @@ public class ClientTest {
   }
 
   @Test
+  @SuppressWarnings("deprecation")
   void getApiUsersWithNameWhenUserExists() {
     UserInfo x = client.getUser("guest");
     String version = client.getOverview().getServerVersion();
