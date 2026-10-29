@@ -73,7 +73,7 @@ import com.rabbitmq.http.client.domain.UserPermissions;
 import com.rabbitmq.http.client.domain.VhostInfo;
 import com.rabbitmq.http.client.domain.VhostLimits;
 
-public class Client {
+public class Client implements AutoCloseable {
 
   private final HttpLayer httpLayer;
   protected final URI rootUri;
@@ -149,6 +149,17 @@ public class Client {
           JdkHttpClientHttpLayer.configure().create() :
           parameters.getHttpLayerFactory();
     this.httpLayer = httpLayerFactory.create(parameters);
+  }
+
+  /**
+   * Closes the underlying {@link HttpLayer}.
+   *
+   * @see HttpLayer#close()
+   * @since 5.8.0
+   */
+  @Override
+  public void close() {
+    this.httpLayer.close();
   }
 
   /**

@@ -28,7 +28,7 @@ import java.util.Map;
  *
  * @since 4.0.0
  */
-public interface HttpLayer {
+public interface HttpLayer extends AutoCloseable {
 
   /**
    * GET operation when the expected class does not use generics.
@@ -79,6 +79,14 @@ public interface HttpLayer {
    * @param headers
    */
   void delete(URI uri, Map<String, String> headers);
+
+  /**
+   * Releases the resources held by this HTTP layer. A no-op by default.
+   *
+   * @since 5.8.0
+   */
+  @Override
+  default void close() {}
 
   /**
    * Contract to create the {@link HttpLayer}.
