@@ -235,6 +235,23 @@ public final class JdkHttpClientHttpLayer implements HttpLayer {
     }
   }
 
+  /**
+   * Closes the underlying {@link HttpClient}. A no-op on JDK versions older than 21, where {@link HttpClient} is
+   * not {@link AutoCloseable}.
+   *
+   * @since 5.8.0
+   */
+  @Override
+  public void close() {
+    if (this.client instanceof AutoCloseable) {
+      try {
+        ((AutoCloseable) this.client).close();
+      } catch (Exception e) {
+        throw new HttpException(e);
+      }
+    }
+  }
+
   private static class Factory implements HttpLayerFactory {
 
     private final Consumer<HttpClient.Builder> clientBuilderConsumer;

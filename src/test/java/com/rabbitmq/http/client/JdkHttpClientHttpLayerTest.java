@@ -174,6 +174,50 @@ public class JdkHttpClientHttpLayerTest {
   }
 
   @Test
+  void clientCloseClosesTheHttpLayer() throws Exception {
+    AtomicBoolean closed = new AtomicBoolean(false);
+    HttpLayerFactory factory =
+        parameters ->
+            new HttpLayer() {
+              @Override
+              public <T> T get(URI uri, Class<T> responseClass) {
+                return null;
+              }
+
+              @Override
+              public <T> T get(URI uri, ParameterizedTypeReference<T> typeReference) {
+                return null;
+              }
+
+              @Override
+              public <T> T post(URI uri, Object requestBody, Class<T> responseClass) {
+                return null;
+              }
+
+              @Override
+              public void put(URI uri, Object requestBody) {}
+
+              @Override
+              public void delete(URI uri, Map<String, String> headers) {}
+
+              @Override
+              public void close() {
+                closed.set(true);
+              }
+            };
+    try (Client ignored =
+        new Client(
+            new ClientParameters()
+                .url("http://localhost:15672/api/")
+                .username("guest")
+                .password("guest")
+                .httpLayerFactory(factory))) {
+      assertThat(closed).isFalse();
+    }
+    assertThat(closed).isTrue();
+  }
+
+  @Test
   void tls() throws Exception {
     int port = randomNetworkPort();
     HttpHandler httpHandler = staticHandler("[]");
