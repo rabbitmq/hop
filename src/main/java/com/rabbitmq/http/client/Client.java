@@ -26,6 +26,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import javax.net.ssl.SSLContext;
 
@@ -75,6 +76,7 @@ import com.rabbitmq.http.client.domain.VhostLimits;
 
 public class Client implements AutoCloseable {
 
+  private final AtomicBoolean closed = new AtomicBoolean(false);
   private final HttpLayer httpLayer;
   protected final URI rootUri;
 
@@ -159,7 +161,9 @@ public class Client implements AutoCloseable {
    */
   @Override
   public void close() {
-    this.httpLayer.close();
+    if (this.closed.compareAndSet(false, true)) {
+      this.httpLayer.close();
+    }
   }
 
   /**

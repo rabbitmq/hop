@@ -31,6 +31,7 @@ import java.net.http.HttpResponse.BodyHandlers;
 import java.time.Duration;
 import java.util.Collections;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
@@ -50,6 +51,7 @@ public final class JdkHttpClientHttpLayer implements HttpLayer {
   private static final Duration REQUEST_TIMEOUT = Duration.ofSeconds(60);
   private static final Duration CONNECT_TIMEOUT = Duration.ofSeconds(30);
 
+  private final AtomicBoolean closed = new AtomicBoolean(false);
   private final HttpClient client;
   private final ObjectMapper mapper;
   private final Consumer<HttpRequest.Builder> requestBuilderConsumer;
@@ -243,11 +245,13 @@ public final class JdkHttpClientHttpLayer implements HttpLayer {
    */
   @Override
   public void close() {
-    if (this.client instanceof AutoCloseable) {
-      try {
-        ((AutoCloseable) this.client).close();
-      } catch (Exception e) {
-        throw new HttpException(e);
+    if (this.closed.compareAndSet(false, true)) {
+      if (this.client instanceof AutoCloseable) {
+        try {
+          ((AutoCloseable) this.client).close();
+        } catch (Exception e) {
+          throw new HttpException(e);
+        }
       }
     }
   }
