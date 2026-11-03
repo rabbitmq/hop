@@ -135,10 +135,9 @@ class UtilsTest {
 
   @Test
   void extractUsernamePasswordThrowsIllegalArgumentExceptionForIncorrectUri() {
-    assertThatThrownBy(
-            () ->
-                Utils.extractUsernamePassword(
-                    "https://svc-account:P@ssW0rd With Space!@broker.internal/api"))
+    assertThatThrownBy(() ->
+            Utils.extractUsernamePassword(
+                "https://svc-account:P@ssW0rd With Space!@broker.internal/api"))
         .isInstanceOf(IllegalArgumentException.class)
         .hasMessageContaining("Invalid URI syntax (Illegal character in authority at index");
   }

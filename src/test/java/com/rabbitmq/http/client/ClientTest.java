@@ -479,11 +479,10 @@ public class ClientTest {
     // when: client retrieves connection info with the correct name
     // applying filter as some previous connections can still show up in the management API
     List<ConnectionInfo> xs =
-        awaitEventPropagation(
-            () ->
-                client.getConnections().stream()
-                    .filter(ci -> s.equals(ci.getClientProperties().getConnectionName()))
-                    .collect(Collectors.toList()));
+        awaitEventPropagation(() ->
+            client.getConnections().stream()
+                .filter(ci -> s.equals(ci.getClientProperties().getConnectionName()))
+                .collect(Collectors.toList()));
 
     ConnectionInfo x = client.getConnection(xs.get(0).getName());
 
@@ -903,11 +902,10 @@ public class ClientTest {
     // then: there is an automatic binding for hop.queue1
     BindingInfo x =
         xs.stream()
-            .filter(
-                b ->
-                    "".equals(b.getSource())
-                        && DestinationType.QUEUE.equals(b.getDestinationType())
-                        && q.equals(b.getDestination()))
+            .filter(b ->
+                "".equals(b.getSource())
+                    && DestinationType.QUEUE.equals(b.getDestinationType())
+                    && q.equals(b.getDestination()))
             .findFirst()
             .orElse(null);
     assertThat(x).isNotNull();
@@ -933,11 +931,10 @@ public class ClientTest {
     // then: there is a binding for hop.exchange1
     BindingInfo x =
         xs.stream()
-            .filter(
-                b ->
-                    src.equals(b.getSource())
-                        && DestinationType.EXCHANGE.equals(b.getDestinationType())
-                        && dest.equals(b.getDestination()))
+            .filter(b ->
+                src.equals(b.getSource())
+                    && DestinationType.EXCHANGE.equals(b.getDestinationType())
+                    && dest.equals(b.getDestination()))
             .findFirst()
             .orElse(null);
     assertThat(x).isNotNull();
@@ -988,17 +985,16 @@ public class ClientTest {
     Channel ch = conn.createChannel();
     String q = ch.queueDeclare().getQueue();
     ExecutorService executorService = Executors.newSingleThreadExecutor();
-    executorService.submit(
-        () -> {
-          while (!Thread.currentThread().isInterrupted()) {
-            try {
-              ch.basicPublish("", q, null, "".getBytes(StandardCharsets.UTF_8));
-              Thread.sleep(10);
-            } catch (Exception e) {
-              return;
-            }
-          }
-        });
+    executorService.submit(() -> {
+      while (!Thread.currentThread().isInterrupted()) {
+        try {
+          ch.basicPublish("", q, null, "".getBytes(StandardCharsets.UTF_8));
+          Thread.sleep(10);
+        } catch (Exception e) {
+          return;
+        }
+      }
+    });
     DetailsParameters detailsParameters =
         new DetailsParameters().messageRates(60, 5).lengths(60, 5);
     Supplier<QueueInfo> request =
@@ -1085,17 +1081,16 @@ public class ClientTest {
       queues.add(qn);
     }
     ExecutorService executorService = Executors.newSingleThreadExecutor();
-    executorService.submit(
-        () -> {
-          while (!Thread.currentThread().isInterrupted()) {
-            try {
-              ch.basicPublish("amq.fanout", "", null, "".getBytes(StandardCharsets.UTF_8));
-              Thread.sleep(10);
-            } catch (Exception e) {
-              return;
-            }
-          }
-        });
+    executorService.submit(() -> {
+      while (!Thread.currentThread().isInterrupted()) {
+        try {
+          ch.basicPublish("amq.fanout", "", null, "".getBytes(StandardCharsets.UTF_8));
+          Thread.sleep(10);
+        } catch (Exception e) {
+          return;
+        }
+      }
+    });
     QueryParameters queryParameters =
         new DetailsParameters()
             .messageRates(60, 5)
@@ -1174,17 +1169,16 @@ public class ClientTest {
     Connection conn = cf.newConnection();
     Channel ch = conn.createChannel();
     String q = ch.queueDeclare().getQueue();
-    executorService.submit(
-        () -> {
-          while (!Thread.currentThread().isInterrupted()) {
-            try {
-              ch.basicPublish("", q, null, "".getBytes(StandardCharsets.UTF_8));
-              Thread.sleep(10);
-            } catch (Exception e) {
-              return;
-            }
-          }
-        });
+    executorService.submit(() -> {
+      while (!Thread.currentThread().isInterrupted()) {
+        try {
+          ch.basicPublish("", q, null, "".getBytes(StandardCharsets.UTF_8));
+          Thread.sleep(10);
+        } catch (Exception e) {
+          return;
+        }
+      }
+    });
     Supplier<QueueInfo> request =
         () -> client.getQueue("/", q, new DetailsParameters().messageRates(60, 5).lengths(60, 5));
     waitAtMostUntilTrue(
@@ -1365,9 +1359,8 @@ public class ClientTest {
     List<BindingInfo> xs = client.getBindings();
     long count =
         xs.stream()
-            .filter(
-                b ->
-                    DestinationType.QUEUE.equals(b.getDestinationType()) && x.equals(b.getSource()))
+            .filter(b ->
+                DestinationType.QUEUE.equals(b.getDestinationType()) && x.equals(b.getSource()))
             .count();
     assertThat(count).isGreaterThanOrEqualTo(3);
     ch.queueDelete(q1);
@@ -1388,9 +1381,8 @@ public class ClientTest {
     List<BindingInfo> xs = client.getBindings("/");
     long count =
         xs.stream()
-            .filter(
-                b ->
-                    DestinationType.QUEUE.equals(b.getDestinationType()) && x.equals(b.getSource()))
+            .filter(b ->
+                DestinationType.QUEUE.equals(b.getDestinationType()) && x.equals(b.getSource()))
             .count();
     assertThat(count).isGreaterThanOrEqualTo(2);
     ch.queueDelete(q1);
@@ -1409,11 +1401,10 @@ public class ClientTest {
     List<BindingInfo> xs = client.getBindings("/");
     BindingInfo b =
         xs.stream()
-            .filter(
-                bi ->
-                    DestinationType.QUEUE.equals(bi.getDestinationType())
-                        && x.equals(bi.getSource())
-                        && q.equals(bi.getDestination()))
+            .filter(bi ->
+                DestinationType.QUEUE.equals(bi.getDestinationType())
+                    && x.equals(bi.getSource())
+                    && q.equals(bi.getDestination()))
             .findFirst()
             .orElse(null);
     assertThat(b).isNotNull();
@@ -1432,11 +1423,10 @@ public class ClientTest {
     List<BindingInfo> xs = client.getQueueBindings("/", q);
     BindingInfo b =
         xs.stream()
-            .filter(
-                bi ->
-                    DestinationType.QUEUE.equals(bi.getDestinationType())
-                        && x.equals(bi.getSource())
-                        && q.equals(bi.getDestination()))
+            .filter(bi ->
+                DestinationType.QUEUE.equals(bi.getDestinationType())
+                    && x.equals(bi.getSource())
+                    && q.equals(bi.getDestination()))
             .findFirst()
             .orElse(null);
     assertThat(b).isNotNull();
@@ -2194,11 +2184,10 @@ public class ClientTest {
     assertThat(d.getBindings().size()).isGreaterThanOrEqualTo(1);
     BindingInfo b =
         d.getBindings().stream()
-            .filter(
-                bi ->
-                    "amq.fanout".equals(bi.getSource())
-                        && "queue1".equals(bi.getDestination())
-                        && DestinationType.QUEUE.equals(bi.getDestinationType()))
+            .filter(bi ->
+                "amq.fanout".equals(bi.getSource())
+                    && "queue1".equals(bi.getDestination())
+                    && DestinationType.QUEUE.equals(bi.getDestinationType()))
             .findFirst()
             .orElse(null);
     assertThat(b).isNotNull();
@@ -2601,10 +2590,9 @@ public class ClientTest {
     List<FeatureFlag> flags = client.getFeatureFlags();
     FeatureFlag disabledFlag =
         flags.stream()
-            .filter(
-                f ->
-                    f.getState() == FeatureFlagState.DISABLED
-                        && f.getStability() == FeatureFlagStability.STABLE)
+            .filter(f ->
+                f.getState() == FeatureFlagState.DISABLED
+                    && f.getStability() == FeatureFlagStability.STABLE)
             .findFirst()
             .orElse(null);
 

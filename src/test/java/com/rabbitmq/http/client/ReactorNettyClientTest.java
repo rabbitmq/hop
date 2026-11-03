@@ -200,9 +200,8 @@ public class ReactorNettyClientTest {
     HttpClient httpClient =
         HttpClient.create()
             .baseUrl("http://localhost:" + managementPort() + "/api/")
-            .doAfterRequest(
-                (request, connection) ->
-                    authorization.set(request.requestHeaders().get("authorization")));
+            .doAfterRequest((request, connection) ->
+                authorization.set(request.requestHeaders().get("authorization")));
 
     ReactorNettyClient localClient =
         new ReactorNettyClient(
@@ -285,11 +284,10 @@ public class ReactorNettyClientTest {
 
     // when: client retrieves connection info with the correct name
     Flux<ConnectionInfo> xs =
-        awaitEventPropagation(
-            () ->
-                client
-                    .getConnections()
-                    .filter(c -> s.equals(c.getClientProperties().getConnectionName())));
+        awaitEventPropagation(() ->
+            client
+                .getConnections()
+                .filter(c -> s.equals(c.getClientProperties().getConnectionName())));
 
     ConnectionInfo x = client.getConnection(xs.blockFirst().getName()).block();
 
@@ -342,11 +340,10 @@ public class ReactorNettyClientTest {
     String s = "client-name";
     Connection conn = openConnection(s);
     AtomicReference<String> closingMessage = new AtomicReference<>();
-    conn.addShutdownListener(
-        e -> {
-          closingMessage.set(e.getMessage());
-          latch.countDown();
-        });
+    conn.addShutdownListener(e -> {
+      closingMessage.set(e.getMessage());
+      latch.countDown();
+    });
     assertThat(conn.isOpen()).isTrue();
 
     // when: client closes the connection
@@ -406,11 +403,10 @@ public class ReactorNettyClientTest {
     // applying filter as some previous connections can still show up the management
     // API
     Flux<ConnectionInfo> xs =
-        awaitEventPropagation(
-            () ->
-                client
-                    .getConnections()
-                    .filter(it -> s.equals(it.getClientProperties().getConnectionName())));
+        awaitEventPropagation(() ->
+            client
+                .getConnections()
+                .filter(it -> s.equals(it.getClientProperties().getConnectionName())));
 
     List<ConnectionInfo> filtered = xs.toStream().collect(Collectors.toList());
     String cn = filtered.get(0).getName();
@@ -1925,11 +1921,10 @@ public class ReactorNettyClientTest {
 
     // then: the amq.fanout binding is listed
     long count =
-        xs.filter(
-                b ->
-                    b.getDestinationType() == QUEUE
-                        && b.getSource().equals(x)
-                        && b.getDestination().equals(q))
+        xs.filter(b ->
+                b.getDestinationType() == QUEUE
+                    && b.getSource().equals(x)
+                    && b.getDestination().equals(q))
             .count()
             .block();
     assertThat(count).isEqualTo(1);
@@ -1954,11 +1949,10 @@ public class ReactorNettyClientTest {
 
     // then: the amq.fanout binding is listed
     long count =
-        xs.filter(
-                b ->
-                    b.getDestinationType() == QUEUE
-                        && b.getSource().equals(x)
-                        && b.getDestination().equals(q))
+        xs.filter(b ->
+                b.getDestinationType() == QUEUE
+                    && b.getSource().equals(x)
+                    && b.getDestination().equals(q))
             .count()
             .block();
     assertThat(count).isEqualTo(1);
@@ -2267,11 +2261,10 @@ public class ReactorNettyClientTest {
     assertThat(d.getBindings()).hasSizeGreaterThanOrEqualTo(1);
     BindingInfo b =
         d.getBindings().stream()
-            .filter(
-                it ->
-                    it.getSource().equals("amq.fanout")
-                        && it.getDestination().equals("queue1")
-                        && it.getDestinationType() == QUEUE)
+            .filter(it ->
+                it.getSource().equals("amq.fanout")
+                    && it.getDestination().equals("queue1")
+                    && it.getDestinationType() == QUEUE)
             .findFirst()
             .orElse(null);
     assertThat(b).isNotNull();
@@ -2632,11 +2625,10 @@ public class ReactorNettyClientTest {
 
     // then: there is a binding for hop.exchange1
     Flux<BindingInfo> x =
-        xs.filter(
-            b ->
-                b.getSource().equals(src)
-                    && b.getDestinationType() == EXCHANGE
-                    && b.getDestination().equals(dest));
+        xs.filter(b ->
+            b.getSource().equals(src)
+                && b.getDestinationType() == EXCHANGE
+                && b.getDestination().equals(dest));
     assertThat(x.hasElements().block()).isTrue();
 
     // cleanup
@@ -2657,11 +2649,10 @@ public class ReactorNettyClientTest {
 
     // then: there is an automatic binding for hop.queue1
     Flux<BindingInfo> x =
-        xs.filter(
-            b ->
-                b.getSource().equals("")
-                    && b.getDestinationType() == QUEUE
-                    && b.getDestination().equals(q));
+        xs.filter(b ->
+            b.getSource().equals("")
+                && b.getDestinationType() == QUEUE
+                && b.getDestination().equals(q));
     assertThat(x.hasElements().block()).isTrue();
 
     // cleanup
@@ -3275,10 +3266,9 @@ public class ReactorNettyClientTest {
     List<FeatureFlag> flags = client.getFeatureFlags().collectList().block();
     FeatureFlag disabledFlag =
         flags.stream()
-            .filter(
-                f ->
-                    f.getState() == FeatureFlagState.DISABLED
-                        && f.getStability() == FeatureFlagStability.STABLE)
+            .filter(f ->
+                f.getState() == FeatureFlagState.DISABLED
+                    && f.getStability() == FeatureFlagStability.STABLE)
             .findFirst()
             .orElse(null);
 

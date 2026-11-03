@@ -32,11 +32,10 @@ public class AppTest {
         JdkHttpClientHttpLayer.configure()
             .clientBuilderConsumer(
                 clientBuilder -> clientBuilder.connectTimeout(Duration.ofSeconds(10)))
-            .requestBuilderConsumer(
-                requestBuilder ->
-                    requestBuilder
-                        .timeout(Duration.ofSeconds(10))
-                        .setHeader("Authorization", authorization("guest", "guest")))
+            .requestBuilderConsumer(requestBuilder ->
+                requestBuilder
+                    .timeout(Duration.ofSeconds(10))
+                    .setHeader("Authorization", authorization("guest", "guest")))
             .create();
 
     Client c =
