@@ -18,7 +18,7 @@ Hop is designed to be easy to use from other JVM languages, primarily Groovy,
 Scala, and Kotlin.
 
 N.B. that Clojure already includes an HTTP API client as part of
-http://clojurerabbitmq.info[Langohr], and you should use Langohr instead.
+Langohr, and you should use Langohr instead.
 
 == Reactive
 
