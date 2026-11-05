@@ -2232,6 +2232,38 @@ public class ClientTest {
   }
 
   @Test
+  void importDefinitions() {
+    String queue = "import-def-" + UUID.randomUUID();
+    client.declareQueue("/", queue, new QueueInfo(true, false, false));
+    Definitions d = client.getDefinitions();
+    client.deleteQueue("/", queue);
+    assertThat(client.getQueue("/", queue)).isNull();
+
+    client.importDefinitions(d);
+
+    QueueInfo imported = client.getQueue("/", queue);
+    assertThat(imported).isNotNull();
+    assertThat(imported.isDurable()).isTrue();
+    client.deleteQueue("/", queue);
+  }
+
+  @Test
+  void importVhostDefinitions() {
+    String queue = "import-vhost-def-" + UUID.randomUUID();
+    client.declareQueue("/", queue, new QueueInfo(true, false, false));
+    Definitions d = client.getDefinitions("/");
+    client.deleteQueue("/", queue);
+    assertThat(client.getQueue("/", queue)).isNull();
+
+    client.importDefinitions(d, "/");
+
+    QueueInfo imported = client.getQueue("/", queue);
+    assertThat(imported).isNotNull();
+    assertThat(imported.isDurable()).isTrue();
+    client.deleteQueue("/", queue);
+  }
+
+  @Test
   void getApiParametersShovel() {
     ShovelDetails value =
         new ShovelDetails("amqp://localhost:5672/vh1", "amqp://localhost:5672/vh2", 30, true, null);

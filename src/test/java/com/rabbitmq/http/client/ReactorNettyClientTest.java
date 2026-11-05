@@ -2293,6 +2293,42 @@ public class ReactorNettyClientTest {
   }
 
   @Test
+  void importDefinitions() {
+    String queue = "import-def-" + UUID.randomUUID();
+    client.declareQueue("/", queue, new QueueInfo(true, false, false)).block();
+    Definitions d = client.getDefinitions().block();
+    client.deleteQueue("/", queue).block();
+    HttpClientException missing =
+        assertThrows(HttpClientException.class, () -> client.getQueue("/", queue).block());
+    assertThat(missing.status()).isEqualTo(404);
+
+    client.importDefinitions(d).block();
+
+    QueueInfo imported = client.getQueue("/", queue).block();
+    assertThat(imported).isNotNull();
+    assertThat(imported.isDurable()).isTrue();
+    client.deleteQueue("/", queue).block();
+  }
+
+  @Test
+  void importVhostDefinitions() {
+    String queue = "import-vhost-def-" + UUID.randomUUID();
+    client.declareQueue("/", queue, new QueueInfo(true, false, false)).block();
+    Definitions d = client.getDefinitions("/").block();
+    client.deleteQueue("/", queue).block();
+    HttpClientException missing =
+        assertThrows(HttpClientException.class, () -> client.getQueue("/", queue).block());
+    assertThat(missing.status()).isEqualTo(404);
+
+    client.importDefinitions(d, "/").block();
+
+    QueueInfo imported = client.getQueue("/", queue).block();
+    assertThat(imported).isNotNull();
+    assertThat(imported.isDurable()).isTrue();
+    client.deleteQueue("/", queue).block();
+  }
+
+  @Test
   void putApiParametersShovelShovelDetailsSourcePrefetchCountNotSentIfNotSet() throws Exception {
     // given: a client that retrieves the body of the request
     AtomicReference<String> requestBody = new AtomicReference<>();

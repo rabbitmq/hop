@@ -649,6 +649,31 @@ public class ReactorNettyClient {
     }
 
     /**
+     * Imports cluster-wide definitions.
+     *
+     * @param definitions the cluster definitions
+     * @return HTTP response in a mono
+     * @since 5.8.0
+     * @see <a href="https://www.rabbitmq.com/docs/definitions">Definition Export and Import</a>
+     */
+    public Mono<HttpResponse> importDefinitions(Definitions definitions) {
+        return doPost(definitions, "definitions");
+    }
+
+    /**
+     * Imports definitions for a specific virtual host.
+     *
+     * @param definitions definitions for the virtual host
+     * @param vhost the virtual host name
+     * @return HTTP response in a mono
+     * @since 5.8.0
+     * @see <a href="https://www.rabbitmq.com/docs/definitions">Definition Export and Import</a>
+     */
+    public Mono<HttpResponse> importDefinitions(Definitions definitions, String vhost) {
+        return doPost(definitions, "definitions", encodePathSegment(vhost));
+    }
+
+    /**
      * Returns all feature flags.
      *
      * @return flux of feature flags
