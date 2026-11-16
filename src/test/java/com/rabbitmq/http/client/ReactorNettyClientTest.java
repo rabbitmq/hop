@@ -1442,6 +1442,15 @@ public class ReactorNettyClientTest {
     // then: broker definitions are returned
     assertThat(d.getServerVersion()).isNotNull();
     assertThat(d.getServerVersion().trim()).isNotEmpty();
+    assertThat(d.getRabbitmqVersion()).isNotNull().isNotEmpty();
+    assertThat(d.getProductName()).isNotNull().isNotEmpty();
+    assertThat(d.getProductVersion()).isNotNull().isNotEmpty();
+    assertThat(d.getPolicies()).isNotNull();
+    if (isVersion41orLater()) {
+      assertThat(d.getRabbitmqDefinitionFormat()).isEqualTo("cluster");
+      assertThat(d.getOriginalClusterName()).isNotNull().isNotEmpty();
+      assertThat(d.getExplanation()).isNotNull().isNotEmpty();
+    }
     assertThat(d.getVhosts()).isNotEmpty();
     assertThat(d.getVhosts().get(0).getName()).isNotEmpty();
     assertThat(d.getUsers()).isNotEmpty();
@@ -2295,9 +2304,27 @@ public class ReactorNettyClientTest {
   @Test
   void importDefinitions() {
     String queue = "import-def-" + UUID.randomUUID();
+    String policy = "import-def-policy-" + UUID.randomUUID();
+    Map<String, Object> policyDefinition = new HashMap<>();
+    policyDefinition.put("expires", 30000);
     client.declareQueue("/", queue, new QueueInfo(true, false, false)).block();
+    client
+        .declarePolicy(
+            "/", policy, new PolicyInfo("^" + queue + "$", 0, "queues", policyDefinition))
+        .block();
     Definitions d = client.getDefinitions().block();
+    assertThat(d.getRabbitmqVersion()).isNotNull().isNotEmpty();
+    assertThat(d.getProductName()).isNotNull().isNotEmpty();
+    assertThat(d.getProductVersion()).isNotNull().isNotEmpty();
+    assertThat(d.getPolicies()).isNotNull();
+    assertThat(d.getPolicies().stream().anyMatch(p -> policy.equals(p.getName()))).isTrue();
+    if (isVersion41orLater()) {
+      assertThat(d.getRabbitmqDefinitionFormat()).isEqualTo("cluster");
+      assertThat(d.getOriginalClusterName()).isNotNull().isNotEmpty();
+      assertThat(d.getExplanation()).isNotNull().isNotEmpty();
+    }
     client.deleteQueue("/", queue).block();
+    client.deletePolicy("/", policy).block();
     HttpClientException missing =
         assertThrows(HttpClientException.class, () -> client.getQueue("/", queue).block());
     assertThat(missing.status()).isEqualTo(404);
@@ -2307,15 +2334,37 @@ public class ReactorNettyClientTest {
     QueueInfo imported = client.getQueue("/", queue).block();
     assertThat(imported).isNotNull();
     assertThat(imported.isDurable()).isTrue();
+    PolicyInfo importedPolicy =
+        client.getPolicies("/").filter(p -> policy.equals(p.getName())).blockFirst();
+    assertThat(importedPolicy).isNotNull();
+    assertThat(importedPolicy.getPattern()).isEqualTo("^" + queue + "$");
     client.deleteQueue("/", queue).block();
+    client.deletePolicy("/", policy).block();
   }
 
   @Test
   void importVhostDefinitions() {
     String queue = "import-vhost-def-" + UUID.randomUUID();
+    String policy = "import-vhost-def-policy-" + UUID.randomUUID();
+    Map<String, Object> policyDefinition = new HashMap<>();
+    policyDefinition.put("expires", 30000);
     client.declareQueue("/", queue, new QueueInfo(true, false, false)).block();
+    client
+        .declarePolicy(
+            "/", policy, new PolicyInfo("^" + queue + "$", 0, "queues", policyDefinition))
+        .block();
     Definitions d = client.getDefinitions("/").block();
+    assertThat(d.getPolicies()).isNotNull();
+    assertThat(d.getPolicies().stream().anyMatch(p -> policy.equals(p.getName()))).isTrue();
+    if (isVersion41orLater()) {
+      assertThat(d.getRabbitmqVersion()).isNotNull().isNotEmpty();
+      assertThat(d.getProductName()).isNotNull().isNotEmpty();
+      assertThat(d.getProductVersion()).isNotNull().isNotEmpty();
+      assertThat(d.getRabbitmqDefinitionFormat()).isEqualTo("single_virtual_host");
+      assertThat(d.getExplanation()).isNotNull().isNotEmpty();
+    }
     client.deleteQueue("/", queue).block();
+    client.deletePolicy("/", policy).block();
     HttpClientException missing =
         assertThrows(HttpClientException.class, () -> client.getQueue("/", queue).block());
     assertThat(missing.status()).isEqualTo(404);
@@ -2325,7 +2374,12 @@ public class ReactorNettyClientTest {
     QueueInfo imported = client.getQueue("/", queue).block();
     assertThat(imported).isNotNull();
     assertThat(imported.isDurable()).isTrue();
+    PolicyInfo importedPolicy =
+        client.getPolicies("/").filter(p -> policy.equals(p.getName())).blockFirst();
+    assertThat(importedPolicy).isNotNull();
+    assertThat(importedPolicy.getPattern()).isEqualTo("^" + queue + "$");
     client.deleteQueue("/", queue).block();
+    client.deletePolicy("/", policy).block();
   }
 
   @Test
@@ -3615,5 +3669,9 @@ public class ReactorNettyClientTest {
 
   boolean isVersion38orLater() {
     return TestUtils.isVersion38orLater(brokerVersion);
+  }
+
+  boolean isVersion41orLater() {
+    return TestUtils.isVersion41orLater(brokerVersion);
   }
 }

@@ -325,6 +325,10 @@ public class ClientTest {
     return TestUtils.isVersion310orLater(brokerVersion);
   }
 
+  boolean isVersion41orLater() {
+    return TestUtils.isVersion41orLater(brokerVersion);
+  }
+
   @Test
   void userInfoDecoding() throws Exception {
     // when: username and password are encoded in the URL
@@ -2118,6 +2122,15 @@ public class ClientTest {
     Definitions d = client.getDefinitions();
     assertThat(d.getServerVersion()).isNotNull();
     assertThat(d.getServerVersion().trim()).isNotEmpty();
+    assertThat(d.getRabbitmqVersion()).isNotNull().isNotEmpty();
+    assertThat(d.getProductName()).isNotNull().isNotEmpty();
+    assertThat(d.getProductVersion()).isNotNull().isNotEmpty();
+    assertThat(d.getPolicies()).isNotNull();
+    if (isVersion41orLater()) {
+      assertThat(d.getRabbitmqDefinitionFormat()).isEqualTo("cluster");
+      assertThat(d.getOriginalClusterName()).isNotNull().isNotEmpty();
+      assertThat(d.getExplanation()).isNotNull().isNotEmpty();
+    }
     assertThat(d.getVhosts()).isNotEmpty();
     assertThat(d.getVhosts().get(0).getName()).isNotEmpty();
     assertThat(d.getPermissions()).isNotEmpty();
@@ -2234,9 +2247,25 @@ public class ClientTest {
   @Test
   void importDefinitions() {
     String queue = "import-def-" + UUID.randomUUID();
+    String policy = "import-def-policy-" + UUID.randomUUID();
+    Map<String, Object> policyDefinition = new HashMap<>();
+    policyDefinition.put("expires", 30000);
     client.declareQueue("/", queue, new QueueInfo(true, false, false));
+    client.declarePolicy(
+        "/", policy, new PolicyInfo("^" + queue + "$", 0, "queues", policyDefinition));
     Definitions d = client.getDefinitions();
+    assertThat(d.getRabbitmqVersion()).isNotNull().isNotEmpty();
+    assertThat(d.getProductName()).isNotNull().isNotEmpty();
+    assertThat(d.getProductVersion()).isNotNull().isNotEmpty();
+    assertThat(d.getPolicies()).isNotNull();
+    assertThat(d.getPolicies().stream().anyMatch(p -> policy.equals(p.getName()))).isTrue();
+    if (isVersion41orLater()) {
+      assertThat(d.getRabbitmqDefinitionFormat()).isEqualTo("cluster");
+      assertThat(d.getOriginalClusterName()).isNotNull().isNotEmpty();
+      assertThat(d.getExplanation()).isNotNull().isNotEmpty();
+    }
     client.deleteQueue("/", queue);
+    client.deletePolicy("/", policy);
     assertThat(client.getQueue("/", queue)).isNull();
 
     client.importDefinitions(d);
@@ -2244,15 +2273,38 @@ public class ClientTest {
     QueueInfo imported = client.getQueue("/", queue);
     assertThat(imported).isNotNull();
     assertThat(imported.isDurable()).isTrue();
+    PolicyInfo importedPolicy =
+        client.getPolicies("/").stream()
+            .filter(p -> policy.equals(p.getName()))
+            .findFirst()
+            .orElse(null);
+    assertThat(importedPolicy).isNotNull();
+    assertThat(importedPolicy.getPattern()).isEqualTo("^" + queue + "$");
     client.deleteQueue("/", queue);
+    client.deletePolicy("/", policy);
   }
 
   @Test
   void importVhostDefinitions() {
     String queue = "import-vhost-def-" + UUID.randomUUID();
+    String policy = "import-vhost-def-policy-" + UUID.randomUUID();
+    Map<String, Object> policyDefinition = new HashMap<>();
+    policyDefinition.put("expires", 30000);
     client.declareQueue("/", queue, new QueueInfo(true, false, false));
+    client.declarePolicy(
+        "/", policy, new PolicyInfo("^" + queue + "$", 0, "queues", policyDefinition));
     Definitions d = client.getDefinitions("/");
+    assertThat(d.getPolicies()).isNotNull();
+    assertThat(d.getPolicies().stream().anyMatch(p -> policy.equals(p.getName()))).isTrue();
+    if (isVersion41orLater()) {
+      assertThat(d.getRabbitmqVersion()).isNotNull().isNotEmpty();
+      assertThat(d.getProductName()).isNotNull().isNotEmpty();
+      assertThat(d.getProductVersion()).isNotNull().isNotEmpty();
+      assertThat(d.getRabbitmqDefinitionFormat()).isEqualTo("single_virtual_host");
+      assertThat(d.getExplanation()).isNotNull().isNotEmpty();
+    }
     client.deleteQueue("/", queue);
+    client.deletePolicy("/", policy);
     assertThat(client.getQueue("/", queue)).isNull();
 
     client.importDefinitions(d, "/");
@@ -2260,7 +2312,15 @@ public class ClientTest {
     QueueInfo imported = client.getQueue("/", queue);
     assertThat(imported).isNotNull();
     assertThat(imported.isDurable()).isTrue();
+    PolicyInfo importedPolicy =
+        client.getPolicies("/").stream()
+            .filter(p -> policy.equals(p.getName()))
+            .findFirst()
+            .orElse(null);
+    assertThat(importedPolicy).isNotNull();
+    assertThat(importedPolicy.getPattern()).isEqualTo("^" + queue + "$");
     client.deleteQueue("/", queue);
+    client.deletePolicy("/", policy);
   }
 
   @Test
