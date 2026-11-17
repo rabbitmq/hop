@@ -1788,6 +1788,33 @@ public class Client implements AutoCloseable {
     final URI uri = uri().withEncodedPath("./definitions").withPath(vhost).get();
     return this.httpLayer.get(uri, Definitions.class);
   }
+  
+  /**
+   * Imports cluster-wide definitions.
+   *
+   * <p>Requires the {@code administrator} user tag.
+   *
+   * @param the cluster definitions
+   * @see <a href="https://www.rabbitmq.com/docs/definitions">Definition Export and Import</a>
+   */
+  public void importDefinitions(Definitions definitions) {
+    final URI uri = uriWithPath("./definitions/");
+    this.httpLayer.post(uri, definitions, null);
+  }
+
+  /**
+   * Imports definitions for a specific virtual host.
+   *
+   * <p>Requires the {@code administrator} user tag.
+   *
+   * @param definitions for the virtual host
+   * @param vhost the virtual host name
+   * @see <a href="https://www.rabbitmq.com/docs/definitions">Definition Export and Import</a>
+   */
+  public void importDefinitions(Definitions definitions, String vhost) {
+    final URI uri = uri().withEncodedPath("./definitions").withPath(vhost).get();
+    this.httpLayer.post(uri, definitions, null);
+  }
 
   //
   // Feature flags

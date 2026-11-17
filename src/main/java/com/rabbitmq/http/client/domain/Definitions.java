@@ -27,6 +27,23 @@ public class Definitions {
     @JsonProperty("rabbit_version")
     private String serverVersion;
 
+    @JsonProperty("rabbitmq_version")
+    private String rabbitmqVersion;
+
+    @JsonProperty("product_name")
+    private String productName;
+
+    @JsonProperty("product_version")
+    private String productVersion;
+
+    private String explanation;
+
+    @JsonProperty("rabbitmq_definition_format")
+    private String rabbitmqDefinitionFormat;
+
+    @JsonProperty("original_cluster_name")
+    private String originalClusterName;
+
     private List<VhostInfo> vhosts = new ArrayList<VhostInfo>();
 
     private List<UserInfo> users = new ArrayList<UserInfo>();
@@ -41,6 +58,8 @@ public class Definitions {
     @JsonProperty("global_parameters")
     private List<RuntimeParameter<Object>> globalParameters = new ArrayList<>();
 
+    private List<PolicyInfo> policies = new ArrayList<>();
+
     private List<QueueInfo> queues = new ArrayList<QueueInfo>();
 
     private List<ExchangeInfo> exchanges = new ArrayList<ExchangeInfo>();
@@ -53,6 +72,54 @@ public class Definitions {
 
     public void setServerVersion(String serverVersion) {
         this.serverVersion = serverVersion;
+    }
+
+    public String getRabbitmqVersion() {
+        return rabbitmqVersion;
+    }
+
+    public void setRabbitmqVersion(String rabbitmqVersion) {
+        this.rabbitmqVersion = rabbitmqVersion;
+    }
+
+    public String getProductName() {
+        return productName;
+    }
+
+    public void setProductName(String productName) {
+        this.productName = productName;
+    }
+
+    public String getProductVersion() {
+        return productVersion;
+    }
+
+    public void setProductVersion(String productVersion) {
+        this.productVersion = productVersion;
+    }
+
+    public String getExplanation() {
+        return explanation;
+    }
+
+    public void setExplanation(String explanation) {
+        this.explanation = explanation;
+    }
+
+    public String getRabbitmqDefinitionFormat() {
+        return rabbitmqDefinitionFormat;
+    }
+
+    public void setRabbitmqDefinitionFormat(String rabbitmqDefinitionFormat) {
+        this.rabbitmqDefinitionFormat = rabbitmqDefinitionFormat;
+    }
+
+    public String getOriginalClusterName() {
+        return originalClusterName;
+    }
+
+    public void setOriginalClusterName(String originalClusterName) {
+        this.originalClusterName = originalClusterName;
     }
 
     public List<VhostInfo> getVhosts() {
@@ -127,14 +194,29 @@ public class Definitions {
         return globalParameters;
     }
 
+    public List<PolicyInfo> getPolicies() {
+        return policies;
+    }
+
+    public void setPolicies(List<PolicyInfo> policies) {
+        this.policies = policies;
+    }
+
     @Override
     public String toString() {
         return "Definitions{" +
                 "serverVersion='" + serverVersion + '\'' +
+                ", rabbitmqVersion='" + rabbitmqVersion + '\'' +
+                ", productName='" + productName + '\'' +
+                ", productVersion='" + productVersion + '\'' +
+                ", explanation='" + explanation + '\'' +
+                ", rabbitmqDefinitionFormat='" + rabbitmqDefinitionFormat + '\'' +
+                ", originalClusterName='" + originalClusterName + '\'' +
                 ", vhosts=" + vhosts +
                 ", users=" + users +
                 ", permissions=" + permissions +
                 ", topicPermissions=" + topicPermissions +
+                ", policies=" + policies +
                 ", queues=" + queues +
                 ", exchanges=" + exchanges +
                 ", bindings=" + bindings +
