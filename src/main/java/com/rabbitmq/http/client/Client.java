@@ -1795,7 +1795,6 @@ public class Client implements AutoCloseable {
    * <p>Requires the {@code administrator} user tag.
    *
    * @param the cluster definitions
-   * @since 5.8.0
    * @see <a href="https://www.rabbitmq.com/docs/definitions">Definition Export and Import</a>
    */
   public void importDefinitions(Definitions definitions) {
@@ -1810,7 +1809,6 @@ public class Client implements AutoCloseable {
    *
    * @param definitions for the virtual host
    * @param vhost the virtual host name
-   * @since 5.8.0
    * @see <a href="https://www.rabbitmq.com/docs/definitions">Definition Export and Import</a>
    */
   public void importDefinitions(Definitions definitions, String vhost) {
