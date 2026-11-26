@@ -64,6 +64,10 @@ abstract class TestUtils {
     return checkVersionOrLater(currentVersion, "3.10.0");
   }
 
+  static boolean isVersion41orLater(String currentVersion) {
+    return checkVersionOrLater(currentVersion, "4.1.0");
+  }
+
   static boolean isVersion44orLater(String currentVersion) {
     return checkVersionOrLater(currentVersion, "4.4.0");
   }

@@ -18,12 +18,16 @@ package com.rabbitmq.http.client.domain;
 import java.util.Arrays;
 import java.util.List;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 public class UserInfo {
   private String name;
 
   @Deprecated
+  @JsonProperty("password_hash")
   private String passwordHash;
 
+  @JsonProperty("hashing_algorithm")
   private String hashingAlgorithm;
   private List<String> tags;
   private boolean hasPassword;
